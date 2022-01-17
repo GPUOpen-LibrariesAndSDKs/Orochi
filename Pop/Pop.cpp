@@ -1,6 +1,8 @@
 #include <Pop/Pop.h>
 #include <contrib/cuew/include/cuew.h>
 #include <contrib/hipew/include/hipew.h>
+#include <stdio.h>
+
 
 static Api s_api = API_HIP;
 
@@ -37,11 +39,22 @@ hipCtx_t* ppCtx2hip( ppCtx* a )
 {
 	return (hipCtx_t*)a;
 }
+inline
+pprtcResult hiprtc2pp( hiprtcResult a )
+{
+	return (pprtcResult)a;
+}
+inline
+pprtcResult nvrtc2pp( nvrtcResult a )
+{
+	return (pprtcResult)a;
+}
 
 #define __PP_FUNC1( cuname, hipname ) if( s_api == API_CUDA ) return cu2pp( cu##cuname ); if( s_api == API_HIP ) return hip2pp( hip##hipname );
 #define __PP_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cu##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
 #define __PP_CTXT_FUNC( name ) __PP_FUNC1(Ctx##name, name)
 //#define __PP_CTXT_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cuCtx##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
+#define __PPRTC_FUNC1( cuname, hipname ) if( s_api == API_CUDA ) return nvrtc2pp( nvrtc##cuname ); if( s_api == API_HIP ) return hiprtc2pp( hiprtc##hipname );
 
 
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr)
@@ -74,7 +87,15 @@ ppError PPAPI ppGetDeviceCount(int* count)
 	__PP_FUNC1( DeviceGetCount(count), GetDeviceCount(count) );
 	return ppErrorUnknown;
 }
-//ppError PPAPI ppGetDeviceProperties(ppDeviceProp_t* props, int deviceId);
+ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId)
+{
+	if( s_api == API_CUDA )
+	{
+		printf("todo. implement me\n");
+		return ppSuccess;
+	}
+	return hip2pp( hipGetDeviceProperties( (hipDeviceProp_t*)props, deviceId ) );
+}
 ppError PPAPI ppDeviceGet(ppDevice* device, int ordinal)
 {
 	__PP_FUNC( DeviceGet(device, ordinal) );
@@ -119,3 +140,146 @@ ppError PPAPI ppCtxDestroy(ppCtx ctx)
 {
 	return ppErrorUnknown;
 }
+/*
+ppError PPAPI ppCtxPushCurrent(ppCtx ctx);
+ppError PPAPI ppCtxPopCurrent(ppCtx* pctx);
+ppError PPAPI ppCtxSetCurrent(ppCtx ctx);
+ppError PPAPI ppCtxGetCurrent(ppCtx* pctx);
+ppError PPAPI ppCtxGetDevice(ppDevice* device);
+ppError PPAPI ppCtxGetFlags(unsigned int* flags);
+*/
+ppError PPAPI ppCtxSynchronize(void)
+{
+	__PP_FUNC( CtxSynchronize() );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppDeviceSynchronize(void)
+{
+	__PP_FUNC1( CtxSynchronize(), DeviceSynchronize() );
+	return ppErrorUnknown;
+}
+//ppError PPAPI ppCtxGetCacheConfig(hipFuncCache_t* pconfig);
+//ppError PPAPI ppCtxSetCacheConfig(hipFuncCache_t config);
+//ppError PPAPI ppCtxGetSharedMemConfig(hipSharedMemConfig* pConfig);
+//ppError PPAPI ppCtxSetSharedMemConfig(hipSharedMemConfig config);
+ppError PPAPI ppCtxGetApiVersion(ppCtx ctx, unsigned int* version)
+{
+	__PP_FUNC1( CtxGetApiVersion(*ppCtx2cu(&ctx), version ), CtxGetApiVersion(*ppCtx2hip(&ctx), version ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleLoad(ppModule* module, const char* fname)
+{
+	__PP_FUNC1( ModuleLoad( (CUmodule*)module, fname ), ModuleLoad( (hipModule_t*)module, fname ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleLoadData(ppModule* module, const void* image)
+{
+	__PP_FUNC1( ModuleLoadData( (CUmodule*)module, image ), ModuleLoadData( (hipModule_t*)module, image ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleLoadDataEx(ppModule* module, const void* image, unsigned int numOptions, hipJitOption* options, void** optionValues)
+{
+	__PP_FUNC1( ModuleLoadDataEx( (CUmodule*)module, image, numOptions, (CUjit_option*)options, optionValues ),
+		ModuleLoadDataEx( (hipModule_t*)module, image, numOptions, (hipJitOption*)options, optionValues ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleUnload(ppModule module)
+{
+	__PP_FUNC1( ModuleUnload( (CUmodule)module ), ModuleUnload( (hipModule_t)module ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleGetFunction(ppFunction* hfunc, ppModule hmod, const char* name)
+{
+	__PP_FUNC1( ModuleGetFunction( (CUfunction*)hfunc, (CUmodule)hmod, name ), 
+		ModuleGetFunction( (hipFunction_t*)hfunc, (hipModule_t)hmod, name ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppModuleGetGlobal(ppDeviceptr* dptr, size_t* bytes, ppModule hmod, const char* name)
+{
+	__PP_FUNC1( ModuleGetGlobal( dptr, bytes, (CUmodule)hmod, name ), 
+		ModuleGetGlobal( dptr, bytes, (hipModule_t)hmod, name ) );
+	return ppErrorUnknown;
+}
+//ppError PPAPI ppModuleGetTexRef(textureReference** pTexRef, ppModule hmod, const char* name);
+ppError PPAPI ppMemGetInfo(size_t* free, size_t* total)
+{
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMalloc(ppDeviceptr* dptr, size_t bytesize)
+{
+	__PP_FUNC1( MemAlloc(dptr, bytesize), Malloc( dptr, bytesize ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes)
+{
+	return ppErrorUnknown;
+}
+ppError PPAPI ppFree(ppDeviceptr dptr)
+{
+	__PP_FUNC1( MemFree( dptr ), Free( dptr ) );
+	return ppErrorUnknown;
+}
+
+//-------------------
+ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, ppStream hStream, void** kernelParams, void** extra)
+{
+	__PP_FUNC1( LaunchKernel( (CUfunction)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (CUstream)hStream, kernelParams, extra ),
+		ModuleLaunchKernel( (hipFunction_t)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (hipStream_t)hStream, kernelParams, extra ) );
+	return ppErrorUnknown;
+}
+//-------------------
+pprtcResult PPAPI pprtcGetErrorString(pprtcResult result)
+{
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcAddNameExpression(pprtcProgram prog, const char* name_expression)
+{
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcCompileProgram(pprtcProgram prog, int numOptions, const char** options)
+{
+	__PPRTC_FUNC1( CompileProgram( (nvrtcProgram)prog, numOptions, options ),
+		CompileProgram( (hiprtcProgram)prog, numOptions, options ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcCreateProgram(pprtcProgram* prog, const char* src, const char* name, int numHeaders, const char** headers, const char** includeNames)
+{
+	__PPRTC_FUNC1( CreateProgram( (nvrtcProgram*)prog, src, name, numHeaders, headers, includeNames ), 
+		CreateProgram( (hiprtcProgram*)prog, src, name, numHeaders, headers, includeNames ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcDestroyProgram(pprtcProgram* prog)
+{
+	__PPRTC_FUNC1( DestroyProgram( (nvrtcProgram*)prog), 
+		DestroyProgram( (hiprtcProgram*)prog ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcGetLoweredName(pprtcProgram prog, const char* name_expression, const char** lowered_name)
+{
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcGetProgramLog(pprtcProgram prog, char* log)
+{
+	__PPRTC_FUNC1( GetProgramLog( (nvrtcProgram)prog, log ), 
+		GetProgramLog( (hiprtcProgram)prog, log ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcGetProgramLogSize(pprtcProgram prog, size_t* logSizeRet)
+{
+	__PPRTC_FUNC1( GetProgramLogSize( (nvrtcProgram)prog, logSizeRet), 
+		GetProgramLogSize( (hiprtcProgram)prog, logSizeRet ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcGetCode(pprtcProgram prog, char* code)
+{
+	__PPRTC_FUNC1( GetPTX( (nvrtcProgram)prog, code ), 
+		GetCode( (hiprtcProgram)prog, code ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+pprtcResult PPAPI pprtcGetCodeSize(pprtcProgram prog, size_t* codeSizeRet)
+{
+	__PPRTC_FUNC1( GetPTXSize( (nvrtcProgram)prog, codeSizeRet ), 
+		GetCodeSize( (hiprtcProgram)prog, codeSizeRet ) );
+	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+
