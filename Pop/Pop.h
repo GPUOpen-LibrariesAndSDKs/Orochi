@@ -206,6 +206,11 @@ ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInB
 ppError PPAPI ppFree(ppDeviceptr dptr);
 
 
+//----
+ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCount);
+ppError PPAPI ppMemcpyDtoH(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount);
+ppError PPAPI ppMemcpyDtoD(ppDeviceptr dstDevice, ppDeviceptr srcDevice, size_t ByteCount);
+ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N);
 
 
 //----
@@ -234,3 +239,14 @@ enum {
 
 int ppInitialize( Api api, ppU32 flags );
 
+
+#include <stdint.h>
+
+typedef struct dim3 {
+    uint32_t x;  ///< x
+    uint32_t y;  ///< y
+    uint32_t z;  ///< z
+#ifdef __cplusplus
+    constexpr dim3(uint32_t _x = 1, uint32_t _y = 1, uint32_t _z = 1) : x(_x), y(_y), z(_z){};
+#endif
+} dim3;

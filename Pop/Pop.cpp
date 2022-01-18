@@ -2,6 +2,7 @@
 #include <contrib/cuew/include/cuew.h>
 #include <contrib/hipew/include/hipew.h>
 #include <stdio.h>
+#include <string.h>
 
 
 static Api s_api = API_HIP;
@@ -91,6 +92,12 @@ ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId)
 {
 	if( s_api == API_CUDA )
 	{
+		CUdevprop p;
+		cuDeviceGetProperties( &p, deviceId );
+		char name[128];
+		cuDeviceGetName( name, 128, deviceId );
+		strcpy( props->name, name );
+		strcpy( props->gcnArchName, "" );
 		printf("todo. implement me\n");
 		return ppSuccess;
 	}
@@ -217,6 +224,31 @@ ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInB
 ppError PPAPI ppFree(ppDeviceptr dptr)
 {
 	__PP_FUNC1( MemFree( dptr ), Free( dptr ) );
+	return ppErrorUnknown;
+}
+
+//-------------------
+ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCount)
+{
+	__PP_FUNC1( MemcpyHtoD( dstDevice, srcHost, ByteCount ),
+		MemcpyHtoD( dstDevice, srcHost, ByteCount ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMemcpyDtoH(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount)
+{
+	__PP_FUNC1( MemcpyDtoH( dstHost, srcDevice, ByteCount ),
+		MemcpyDtoH( dstHost, srcDevice, ByteCount ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMemcpyDtoD(ppDeviceptr dstDevice, ppDeviceptr srcDevice, size_t ByteCount)
+{
+	__PP_FUNC( MemcpyDtoD( dstDevice, srcDevice, ByteCount ) );
+	return ppErrorUnknown;
+}
+
+ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N)
+{
+	__PP_FUNC( MemsetD32( dstDevice, ui, N ) );
 	return ppErrorUnknown;
 }
 
