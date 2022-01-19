@@ -60,8 +60,17 @@ pprtcResult nvrtc2pp( nvrtcResult a )
 
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr)
 {
+	__PP_FUNC1(GetErrorName((CUresult)error, pStr),
+		GetErrorName((hipError_t)error, pStr));
 	return ppErrorUnknown;
 }
+ppError PPAPI ppGetErrorString(ppError error, const char** pStr)
+{
+	__PP_FUNC1(GetErrorString((CUresult)error, pStr),
+		GetErrorString((hipError_t)error, pStr));
+	return ppErrorUnknown;
+}
+
 ppError PPAPI ppInit(unsigned int Flags)
 {
 	__PP_FUNC( Init(Flags) );
@@ -113,7 +122,14 @@ ppError PPAPI ppDeviceGetName(char* name, int len, ppDevice dev)
 	__PP_FUNC( DeviceGetName(name, len, dev) );
 	return ppErrorUnknown;
 }
-//ppError PPAPI ppDeviceGetAttribute(int* pi, ppDeviceAttribute attrib, ppDe
+
+ppError PPAPI ppDeviceGetAttribute(int* pi, ppDeviceAttribute attrib, ppDevice dev)
+{
+	__PP_FUNC1(DeviceGetAttribute(pi, (CUdevice_attribute)attrib, dev),
+		DeviceGetAttribute(pi, (hipDeviceAttribute_t)attrib, dev));
+	return ppErrorUnknown;
+}
+
 ppError PPAPI ppDeviceComputeCapability(int* major, int* minor, ppDevice dev)
 {
 	return ppErrorUnknown;
@@ -252,6 +268,22 @@ ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N)
 	return ppErrorUnknown;
 }
 
+ppError PPAPI ppMemsetD8(ppDeviceptr dstDevice, unsigned char ui, size_t N)
+{
+	__PP_FUNC(MemsetD8(dstDevice, ui, N));
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMemsetD16(ppDeviceptr dstDevice, unsigned short ui, size_t N)
+{
+	__PP_FUNC(MemsetD16(dstDevice, ui, N));
+	return ppErrorUnknown;
+}
+ppError PPAPI ppMemsetD32(ppDeviceptr dstDevice, unsigned int ui, size_t N)
+{
+	__PP_FUNC(MemsetD32(dstDevice, ui, N));
+	return ppErrorUnknown;
+}
+
 //-------------------
 ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, ppStream hStream, void** kernelParams, void** extra)
 {
@@ -313,5 +345,29 @@ pprtcResult PPAPI pprtcGetCodeSize(pprtcProgram prog, size_t* codeSizeRet)
 	__PPRTC_FUNC1( GetPTXSize( (nvrtcProgram)prog, codeSizeRet ), 
 		GetCodeSize( (hiprtcProgram)prog, codeSizeRet ) );
 	return PPRTC_ERROR_INTERNAL_ERROR;
+}
+
+//-------------------
+
+// Implementation of ppPointerGetAttributes is hacky due to differences between CUDA and HIP
+ppError PPAPI ppPointerGetAttributes(ppPointerAttribute* attr, ppDeviceptr dptr)
+{
+	if (s_api == API_CUDA)
+	{
+		unsigned int data;
+		return cu2pp(cuPointerGetAttribute(&data, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dptr));
+	}
+	if (s_api == API_HIP) 
+		return hip2pp(hipPointerGetAttributes((hipPointerAttribute_t*)attr, (void*)dptr));
+
+	return ppErrorUnknown;
+}
+
+//-----------------
+ppError PPAPI ppStreamCreate(ppStream* stream)
+{
+	__PP_FUNC1( StreamCreate((CUstream*)stream, CU_STREAM_DEFAULT),
+		StreamCreate((hipStream_t*)stream) );
+	return ppErrorUnknown;
 }
 
