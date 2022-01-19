@@ -31,6 +31,8 @@ typedef struct ippArray* ppArray;
 typedef struct ppMipmappedArray_st* ppMipmappedArray;
 typedef struct ippEvent_t* ppEvent;
 typedef struct ippStream_t* ppStream;
+typedef struct ippPointerAttribute_t* ppPointerAttribute;
+typedef int ppDeviceAttribute;
 typedef unsigned long long ppTextureObject;
 
 
@@ -164,6 +166,7 @@ typedef struct ppDeviceProp {
 } ppDeviceProp;
 
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr);
+ppError PPAPI ppGetErrorString(ppError error, const char** pStr);
 ppError PPAPI ppInit(unsigned int Flags);
 ppError PPAPI ppDriverGetVersion(int* driverVersion);
 ppError PPAPI ppGetDevice(int* device);
@@ -171,7 +174,7 @@ ppError PPAPI ppGetDeviceCount(int* count);
 ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId);
 ppError PPAPI ppDeviceGet(ppDevice* device, int ordinal);
 ppError PPAPI ppDeviceGetName(char* name, int len, ppDevice dev);
-//ppError PPAPI ppDeviceGetAttribute(int* pi, ppDeviceAttribute attrib, ppDevice dev);
+ppError PPAPI ppDeviceGetAttribute(int* pi, ppDeviceAttribute attrib, ppDevice dev);
 ppError PPAPI ppDeviceComputeCapability(int* major, int* minor, ppDevice dev);
 ppError PPAPI ppDevicePrimaryCtxRetain(ppCtx* pctx, ppDevice dev);
 ppError PPAPI ppDevicePrimaryCtxRelease(ppDevice dev);
@@ -211,6 +214,9 @@ ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCoun
 ppError PPAPI ppMemcpyDtoH(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount);
 ppError PPAPI ppMemcpyDtoD(ppDeviceptr dstDevice, ppDeviceptr srcDevice, size_t ByteCount);
 ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N);
+ppError PPAPI ppMemsetD8(ppDeviceptr dstDevice, unsigned char ui, size_t N);
+ppError PPAPI ppMemsetD16(ppDeviceptr dstDevice, unsigned short ui, size_t N);
+ppError PPAPI ppMemsetD32(ppDeviceptr dstDevice, unsigned int ui, size_t N);
 
 
 //----
@@ -227,6 +233,12 @@ pprtcResult PPAPI pprtcGetProgramLog(pprtcProgram prog, char* log);
 pprtcResult PPAPI pprtcGetProgramLogSize(pprtcProgram prog, size_t* logSizeRet);
 pprtcResult PPAPI pprtcGetCode(pprtcProgram prog, char* code);
 pprtcResult PPAPI pprtcGetCodeSize(pprtcProgram prog, size_t* codeSizeRet);
+
+//----
+ppError PPAPI ppPointerGetAttributes(ppPointerAttribute* attr, ppDeviceptr dptr);
+
+//----
+ppError PPAPI ppStreamCreate(ppStream* stream);
 
 
 enum {

@@ -66,6 +66,7 @@ static DynamicLibrary hip_lib;
 
 /* Function definitions. */
 thipGetErrorName *hipGetErrorName;
+thipGetErrorString *hipGetErrorName;
 thipInit *hipInit;
 thipDriverGetVersion *hipDriverGetVersion;
 thipGetDevice *hipGetDevice;
@@ -134,6 +135,8 @@ thipMemsetD32Async *hipMemsetD32Async;
 thipArrayCreate *hipArrayCreate;
 thipArrayDestroy *hipArrayDestroy;
 thipArray3DCreate *hipArray3DCreate;
+thipPointerGetAttributes* hipPointerGetAttributes;
+thipStreamCreate* hipStreamCreate;
 thipStreamCreateWithFlags *hipStreamCreateWithFlags;
 thipStreamCreateWithPriority *hipStreamCreateWithPriority;
 thipStreamGetPriority *hipStreamGetPriority;
@@ -289,6 +292,7 @@ static int hipewHipInit(void) {
 
   /* Fetch all function pointers. */
   HIP_LIBRARY_FIND_CHECKED(hipGetErrorName);
+  HIP_LIBRARY_FIND_CHECKED(hipGetErrorString);
   HIP_LIBRARY_FIND_CHECKED(hipInit);
   HIP_LIBRARY_FIND_CHECKED(hipDriverGetVersion);
   HIP_LIBRARY_FIND_CHECKED(hipGetDevice);
@@ -357,6 +361,8 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipArrayCreate);
   HIP_LIBRARY_FIND_CHECKED(hipArrayDestroy);
   HIP_LIBRARY_FIND_CHECKED(hipArray3DCreate);
+  HIP_LIBRARY_FIND_CHECKED(hipPointerGetAttributes);
+  HIP_LIBRARY_FIND_CHECKED(hipStreamCreate);
   HIP_LIBRARY_FIND_CHECKED(hipStreamCreateWithFlags);
   HIP_LIBRARY_FIND_CHECKED(hipStreamCreateWithPriority);
   HIP_LIBRARY_FIND_CHECKED(hipStreamGetPriority);

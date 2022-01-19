@@ -68,6 +68,7 @@ extern "C" {
 #define hipMemsetD32 hipMemsetD32
 #define hipArrayCreate hipArrayCreate
 #define hipArray3DCreate hipArray3DCreate
+#define hipPointerGetAttributes hipPointerGetAttributes
 #define hipTexRefSetAddress hipTexRefSetAddress
 #define hipTexRefGetAddress hipTexRefGetAddress
 #define hipStreamDestroy hipStreamDestroy
@@ -1070,6 +1071,7 @@ typedef enum hiprtcResult {
 
 /* Function types. */
 typedef hipError_t HIPAPI thipGetErrorName(hipError_t error, const char** pStr);
+typedef hipError_t HIPAPI thipGetErrorString(hipError_t error, const char** pStr);
 typedef hipError_t HIPAPI thipInit(unsigned int Flags);
 typedef hipError_t HIPAPI thipDriverGetVersion(int* driverVersion);
 typedef hipError_t HIPAPI thipGetDevice(int* device);
@@ -1144,7 +1146,8 @@ typedef hipError_t HIPAPI thipMemsetD2D32Async(hipDeviceptr_t dstDevice, size_t 
 typedef hipError_t HIPAPI thipArrayCreate(hArray ** pHandle, const HIP_ARRAY_DESCRIPTOR* pAllocateArray);
 typedef hipError_t HIPAPI thipArrayDestroy(hArray hArray);
 typedef hipError_t HIPAPI thipArray3DCreate(hArray * pHandle, const HIP_ARRAY3D_DESCRIPTOR* pAllocateArray);
-typedef hipError_t HIPAPI hipPointerGetAttributes(hipPointerAttribute_t* attributes, const void* ptr);
+typedef hipError_t HIPAPI thipPointerGetAttributes(hipPointerAttribute_t* attributes, const void* ptr);
+typedef hipError_t HIPAPI thipStreamCreate(hipStream_t* phStream);
 typedef hipError_t HIPAPI thipStreamCreateWithFlags(hipStream_t* phStream, unsigned int Flags);
 typedef hipError_t HIPAPI thipStreamCreateWithPriority(hipStream_t* phStream, unsigned int flags, int priority);
 typedef hipError_t HIPAPI thipStreamGetPriority(hipStream_t hStream, int* priority);
@@ -1203,6 +1206,7 @@ typedef hiprtcResult HIPAPI thiprtcGetCodeSize(hiprtcProgram prog, size_t* codeS
 
 /* Function declarations. */
 extern thipGetErrorName *hipGetErrorName;
+extern thipGetErrorString* hipGetErrorString;
 extern thipInit *hipInit;
 extern thipDriverGetVersion *hipDriverGetVersion;
 extern thipGetDevice *hipGetDevice;
@@ -1271,6 +1275,8 @@ extern thipMemsetD32Async *hipMemsetD32Async;
 extern thipArrayCreate *hipArrayCreate;
 extern thipArrayDestroy *hipArrayDestroy;
 extern thipArray3DCreate *hipArray3DCreate;
+extern thipPointerGetAttributes *hipPointerGetAttributes;
+extern thipStreamCreate* hipStreamCreate;
 extern thipStreamCreateWithFlags *hipStreamCreateWithFlags;
 extern thipStreamCreateWithPriority *hipStreamCreateWithPriority;
 extern thipStreamGetPriority *hipStreamGetPriority;
