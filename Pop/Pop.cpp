@@ -74,6 +74,7 @@ pprtcResult nvrtc2pp( nvrtcResult a )
 }
 
 #define __PP_FUNC1( cuname, hipname ) if( s_api == API_CUDA ) return cu2pp( cu##cuname ); if( s_api == API_HIP ) return hip2pp( hip##hipname );
+//#define __PP_FUNC1( cuname, hipname ) if( s_api == API_CUDA || API == API_CUDA ) return cu2pp( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2pp( hip##hipname );
 #define __PP_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cu##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
 #define __PP_CTXT_FUNC( name ) __PP_FUNC1(Ctx##name, name)
 //#define __PP_CTXT_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cuCtx##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
@@ -93,15 +94,16 @@ ppError PPAPI ppGetErrorString(ppError error, const char** pStr)
 	return ppErrorUnknown;
 }
 
+template<Api API>
 ppError PPAPI ppInit(unsigned int Flags)
 {
-	__PP_FUNC( Init(Flags) );
 /*
-	if( s_api == API_CUDA )
-		return cu2pp( cuInit( Flags ) );
-	if( s_api == API_HIP )
-		return hip2pp( hipInit( Flags ) );
+	if( s_api == API_CUDA || API == API_CUDA ) 
+		printf("cuda\n"); 
+	if( s_api == API_HIP || API == API_HIP ) 
+		printf("hip\n");
 */
+	__PP_FUNC( Init(Flags) );
 	return ppErrorUnknown;
 }
 ppError PPAPI ppDriverGetVersion(int* driverVersion)
@@ -183,13 +185,24 @@ ppError PPAPI ppCtxCreate(ppCtx* pctx, unsigned int flags, ppDevice dev)
 }
 ppError PPAPI ppCtxDestroy(ppCtx ctx)
 {
+	__PP_FUNC1( CtxDestroy( *ppCtx2cu(&ctx) ), CtxDestroy( *ppCtx2hip(&ctx) ) );
 	return ppErrorUnknown;
 }
 /*
 ppError PPAPI ppCtxPushCurrent(ppCtx ctx);
 ppError PPAPI ppCtxPopCurrent(ppCtx* pctx);
-ppError PPAPI ppCtxSetCurrent(ppCtx ctx);
-ppError PPAPI ppCtxGetCurrent(ppCtx* pctx);
+*/
+ppError PPAPI ppCtxSetCurrent(ppCtx ctx)
+{
+	__PP_FUNC1( CtxSetCurrent( *ppCtx2cu(&ctx) ), CtxSetCurrent( *ppCtx2hip(&ctx) ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppCtxGetCurrent(ppCtx* pctx)
+{
+	__PP_FUNC1( CtxGetCurrent( ppCtx2cu(pctx) ), CtxGetCurrent( ppCtx2hip(pctx) ) );
+	return ppErrorUnknown;
+}
+/*
 ppError PPAPI ppCtxGetDevice(ppDevice* device);
 ppError PPAPI ppCtxGetFlags(unsigned int* flags);
 */
@@ -222,7 +235,7 @@ ppError PPAPI ppModuleLoadData(ppModule* module, const void* image)
 	__PP_FUNC1( ModuleLoadData( (CUmodule*)module, image ), ModuleLoadData( (hipModule_t*)module, image ) );
 	return ppErrorUnknown;
 }
-ppError PPAPI ppModuleLoadDataEx(ppModule* module, const void* image, unsigned int numOptions, hipJitOption* options, void** optionValues)
+ppError PPAPI ppModuleLoadDataEx(ppModule* module, const void* image, unsigned int numOptions, ppJitOption* options, void** optionValues)
 {
 	__PP_FUNC1( ModuleLoadDataEx( (CUmodule*)module, image, numOptions, (CUjit_option*)options, optionValues ),
 		ModuleLoadDataEx( (hipModule_t*)module, image, numOptions, (hipJitOption*)options, optionValues ) );
@@ -392,4 +405,5 @@ ppError PPAPI ppStreamCreate(ppStream* stream)
 		StreamCreate((hipStream_t*)stream) );
 	return ppErrorUnknown;
 }
+
 
