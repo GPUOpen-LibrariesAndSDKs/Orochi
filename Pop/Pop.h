@@ -23,6 +23,7 @@
 
 enum Api
 {
+    API_AUTOMATIC,
 	API_HIP,
 	API_CUDA,
 };
@@ -53,7 +54,6 @@ typedef struct ppMipmappedArray_st* ppMipmappedArray;
 typedef struct ippEvent_t* ppEvent;
 typedef struct ippStream_t* ppStream;
 typedef struct ippPointerAttribute_t* ppPointerAttribute;
-typedef int ppDeviceAttribute;
 typedef unsigned long long ppTextureObject;
 
 
@@ -65,27 +65,141 @@ enum pprtcResult
 	PPRTC_ERROR_INTERNAL_ERROR = 11,
 };
 
-typedef enum ppJitOption {
-/*    hipJitOptionMaxRegisters = 0,
-    hipJitOptionThreadsPerBlock,
-    hipJitOptionWallTime,
-    hipJitOptionInfoLogBuffer,
-    hipJitOptionInfoLogBufferSizeBytes,
-    hipJitOptionErrorLogBuffer,
-    hipJitOptionErrorLogBufferSizeBytes,
-    hipJitOptionOptimizationLevel,
-    hipJitOptionTargetFromContext,
-    hipJitOptionTarget,
-    hipJitOptionFallbackStrategy,
-    hipJitOptionGenerateDebugInfo,
-    hipJitOptionLogVerbose,
-    hipJitOptionGenerateLineInfo,
-    hipJitOptionCacheMode,
-    hipJitOptionSm3xOpt,
-    hipJitOptionFastCompile,
-    hipJitOptionNumOptions,
-*/
-} ppJitOption;
+
+typedef enum ppDeviceAttribute {
+  ppDeviceAttributeCudaCompatibleBegin = 0,
+  ppDeviceAttributeEccEnabled = ppDeviceAttributeCudaCompatibleBegin, ///< Whether ECC support is enabled.
+  ppDeviceAttributeAccessPolicyMaxWindowSize,        ///< Cuda only. The maximum size of the window policy in bytes.
+  ppDeviceAttributeAsyncEngineCount,                 ///< Cuda only. Asynchronous engines number.
+  ppDeviceAttributeCanMapHostMemory,                 ///< Whether host memory can be mapped into device address space
+  ppDeviceAttributeCanUseHostPointerForRegisteredMem,///< Cuda only. Device can access host registered memory
+                                                      ///< at the same virtual address as the CPU
+  ppDeviceAttributeClockRate,                        ///< Peak clock frequency in kilohertz.
+  ppDeviceAttributeComputeMode,                      ///< Compute mode that device is currently in.
+  ppDeviceAttributeComputePreemptionSupported,       ///< Cuda only. Device supports Compute Preemption.
+  ppDeviceAttributeConcurrentKernels,                ///< Device can possibly execute multiple kernels concurrently.
+  ppDeviceAttributeConcurrentManagedAccess,          ///< Device can coherently access managed memory concurrently with the CPU
+  ppDeviceAttributeCooperativeLaunch,                ///< Support cooperative launch
+  ppDeviceAttributeCooperativeMultiDeviceLaunch,     ///< Support cooperative launch on multiple devices
+  ppDeviceAttributeDeviceOverlap,                    ///< Cuda only. Device can concurrently copy memory and execute a kernel.
+                                                      ///< Deprecated. Use instead asyncEngineCount.
+  ppDeviceAttributeDirectManagedMemAccessFromHost,   ///< Host can directly access managed memory on
+                                                      ///< the device without migration
+  ppDeviceAttributeGlobalL1CacheSupported,           ///< Cuda only. Device supports caching globals in L1
+  ppDeviceAttributeHostNativeAtomicSupported,        ///< Cuda only. Link between the device and the host supports native atomic operations
+  ppDeviceAttributeIntegrated,                       ///< Device is integrated GPU
+  ppDeviceAttributeIsMultiGpuBoard,                  ///< Multiple GPU devices.
+  ppDeviceAttributeKernelExecTimeout,                ///< Run time limit for kernels executed on the device
+  ppDeviceAttributeL2CacheSize,                      ///< Size of L2 cache in bytes. 0 if the device doesn't have L2 cache.
+  ppDeviceAttributeLocalL1CacheSupported,            ///< caching locals in L1 is supported
+  ppDeviceAttributeLuid,                             ///< Cuda only. 8-byte locally unique identifier in 8 bytes. Undefined on TCC and non-Windows platforms
+  ppDeviceAttributeLuidDeviceNodeMask,               ///< Cuda only. Luid device node mask. Undefined on TCC and non-Windows platforms
+  ppDeviceAttributeComputeCapabilityMajor,           ///< Major compute capability version number.
+  ppDeviceAttributeManagedMemory,                    ///< Device supports allocating managed memory on this system
+  ppDeviceAttributeMaxBlocksPerMultiProcessor,       ///< Cuda only. Max block size per multiprocessor
+  ppDeviceAttributeMaxBlockDimX,                     ///< Max block size in width.
+  ppDeviceAttributeMaxBlockDimY,                     ///< Max block size in height.
+  ppDeviceAttributeMaxBlockDimZ,                     ///< Max block size in depth.
+  ppDeviceAttributeMaxGridDimX,                      ///< Max grid size  in width.
+  ppDeviceAttributeMaxGridDimY,                      ///< Max grid size  in height.
+  ppDeviceAttributeMaxGridDimZ,                      ///< Max grid size  in depth.
+  ppDeviceAttributeMaxSurface1D,                     ///< Maximum size of 1D surface.
+  ppDeviceAttributeMaxSurface1DLayered,              ///< Cuda only. Maximum dimensions of 1D layered surface.
+  ppDeviceAttributeMaxSurface2D,                     ///< Maximum dimension (width, height) of 2D surface.
+  ppDeviceAttributeMaxSurface2DLayered,              ///< Cuda only. Maximum dimensions of 2D layered surface.
+  ppDeviceAttributeMaxSurface3D,                     ///< Maximum dimension (width, height, depth) of 3D surface.
+  ppDeviceAttributeMaxSurfaceCubemap,                ///< Cuda only. Maximum dimensions of Cubemap surface.
+  ppDeviceAttributeMaxSurfaceCubemapLayered,         ///< Cuda only. Maximum dimension of Cubemap layered surface.
+  ppDeviceAttributeMaxTexture1DWidth,                ///< Maximum size of 1D texture.
+  ppDeviceAttributeMaxTexture1DLayered,              ///< Cuda only. Maximum dimensions of 1D layered texture.
+  ppDeviceAttributeMaxTexture1DLinear,               ///< Maximum number of elements allocatable in a 1D linear texture.
+                                                      ///< Use cudaDeviceGetTexture1DLinearMaxWidth() instead on Cuda.
+  ppDeviceAttributeMaxTexture1DMipmap,               ///< Cuda only. Maximum size of 1D mipmapped texture.
+  ppDeviceAttributeMaxTexture2DWidth,                ///< Maximum dimension width of 2D texture.
+  ppDeviceAttributeMaxTexture2DHeight,               ///< Maximum dimension hight of 2D texture.
+  ppDeviceAttributeMaxTexture2DGather,               ///< Cuda only. Maximum dimensions of 2D texture if gather operations  performed.
+  ppDeviceAttributeMaxTexture2DLayered,              ///< Cuda only. Maximum dimensions of 2D layered texture.
+  ppDeviceAttributeMaxTexture2DLinear,               ///< Cuda only. Maximum dimensions (width, height, pitch) of 2D textures bound to pitched memory.
+  ppDeviceAttributeMaxTexture2DMipmap,               ///< Cuda only. Maximum dimensions of 2D mipmapped texture.
+  ppDeviceAttributeMaxTexture3DWidth,                ///< Maximum dimension width of 3D texture.
+  ppDeviceAttributeMaxTexture3DHeight,               ///< Maximum dimension height of 3D texture.
+  ppDeviceAttributeMaxTexture3DDepth,                ///< Maximum dimension depth of 3D texture.
+  ppDeviceAttributeMaxTexture3DAlt,                  ///< Cuda only. Maximum dimensions of alternate 3D texture.
+  ppDeviceAttributeMaxTextureCubemap,                ///< Cuda only. Maximum dimensions of Cubemap texture
+  ppDeviceAttributeMaxTextureCubemapLayered,         ///< Cuda only. Maximum dimensions of Cubemap layered texture.
+  ppDeviceAttributeMaxThreadsDim,                    ///< Maximum dimension of a block
+  ppDeviceAttributeMaxThreadsPerBlock,               ///< Maximum number of threads per block.
+  ppDeviceAttributeMaxThreadsPerMultiProcessor,      ///< Maximum resident threads per multiprocessor.
+  ppDeviceAttributeMaxPitch,                         ///< Maximum pitch in bytes allowed by memory copies
+  ppDeviceAttributeMemoryBusWidth,                   ///< Global memory bus width in bits.
+  ppDeviceAttributeMemoryClockRate,                  ///< Peak memory clock frequency in kilohertz.
+  ppDeviceAttributeComputeCapabilityMinor,           ///< Minor compute capability version number.
+  ppDeviceAttributeMultiGpuBoardGroupID,             ///< Cuda only. Unique ID of device group on the same multi-GPU board
+  ppDeviceAttributeMultiprocessorCount,              ///< Number of multiprocessors on the device.
+  ppDeviceAttributeName,                             ///< Device name.
+  ppDeviceAttributePageableMemoryAccess,             ///< Device supports coherently accessing pageable memory
+                                                      ///< without calling hipHostRegister on it
+  ppDeviceAttributePageableMemoryAccessUsesHostPageTables, ///< Device accesses pageable memory via the host's page tables
+  ppDeviceAttributePciBusId,                         ///< PCI Bus ID.
+  ppDeviceAttributePciDeviceId,                      ///< PCI Device ID.
+  ppDeviceAttributePciDomainID,                      ///< PCI Domain ID.
+  ppDeviceAttributePersistingL2CacheMaxSize,         ///< Cuda11 only. Maximum l2 persisting lines capacity in bytes
+  ppDeviceAttributeMaxRegistersPerBlock,             ///< 32-bit registers available to a thread block. This number is shared
+                                                      ///< by all thread blocks simultaneously resident on a multiprocessor.
+  ppDeviceAttributeMaxRegistersPerMultiprocessor,    ///< 32-bit registers available per block.
+  ppDeviceAttributeReservedSharedMemPerBlock,        ///< Cuda11 only. Shared memory reserved by CUDA driver per block.
+  ppDeviceAttributeMaxSharedMemoryPerBlock,          ///< Maximum shared memory available per block in bytes.
+  ppDeviceAttributeSharedMemPerBlockOptin,           ///< Cuda only. Maximum shared memory per block usable by special opt in.
+  ppDeviceAttributeSharedMemPerMultiprocessor,       ///< Cuda only. Shared memory available per multiprocessor.
+  ppDeviceAttributeSingleToDoublePrecisionPerfRatio, ///< Cuda only. Performance ratio of single precision to double precision.
+  ppDeviceAttributeStreamPrioritiesSupported,        ///< Cuda only. Whether to support stream priorities.
+  ppDeviceAttributeSurfaceAlignment,                 ///< Cuda only. Alignment requirement for surfaces
+  ppDeviceAttributeTccDriver,                        ///< Cuda only. Whether device is a Tesla device using TCC driver
+  ppDeviceAttributeTextureAlignment,                 ///< Alignment requirement for textures
+  ppDeviceAttributeTexturePitchAlignment,            ///< Pitch alignment requirement for 2D texture references bound to pitched memory;
+  ppDeviceAttributeTotalConstantMemory,              ///< Constant memory size in bytes.
+  ppDeviceAttributeTotalGlobalMem,                   ///< Global memory available on devicice.
+  ppDeviceAttributeUnifiedAddressing,                ///< Cuda only. An unified address space shared with the host.
+  ppDeviceAttributeUuid,                             ///< Cuda only. Unique ID in 16 byte.
+  ppDeviceAttributeWarpSize,                         ///< Warp size in threads.
+  ppDeviceAttributeCudaCompatibleEnd = 9999,
+  ppDeviceAttributeAmdSpecificBegin = 10000,
+  ppDeviceAttributeClockInstructionRate = ppDeviceAttributeAmdSpecificBegin,  ///< Frequency in khz of the timer used by the device-side "clock*"
+  ppDeviceAttributeArch,                                     ///< Device architecture
+  ppDeviceAttributeMaxSharedMemoryPerMultiprocessor,         ///< Maximum Shared Memory PerMultiprocessor.
+  ppDeviceAttributeGcnArch,                                  ///< Device gcn architecture
+  ppDeviceAttributeGcnArchName,                              ///< Device gcnArch name in 256 bytes
+  ppDeviceAttributeHdpMemFlushCntl,                          ///< Address of the HDP_MEM_COHERENCY_FLUSH_CNTL register
+  ppDeviceAttributeHdpRegFlushCntl,                          ///< Address of the HDP_REG_COHERENCY_FLUSH_CNTL register
+  ppDeviceAttributeCooperativeMultiDeviceUnmatchedFunc,      ///< Supports cooperative launch on multiple
+                                                              ///< devices with unmatched functions
+  ppDeviceAttributeCooperativeMultiDeviceUnmatchedGridDim,   ///< Supports cooperative launch on multiple
+                                                              ///< devices with unmatched grid dimensions
+  ppDeviceAttributeCooperativeMultiDeviceUnmatchedBlockDim,  ///< Supports cooperative launch on multiple
+                                                              ///< devices with unmatched block dimensions
+  ppDeviceAttributeCooperativeMultiDeviceUnmatchedSharedMem, ///< Supports cooperative launch on multiple
+                                                              ///< devices with unmatched shared memories
+  ppDeviceAttributeIsLargeBar,                               ///< Whether it is LargeBar
+  ppDeviceAttributeAsicRevision,                             ///< Revision of the GPU in this device
+  ppDeviceAttributeCanUseStreamWaitValue,                    ///< '1' if Device supports hipStreamWaitValue32() and
+                                                              ///< hipStreamWaitValue64() , '0' otherwise.
+  ppDeviceAttributeAmdSpecificEnd = 19999,
+  ppDeviceAttributeVendorSpecificBegin = 20000,
+  // Extended attributes for vendors
+} ppDeviceAttribute;
+
+typedef struct PPdevprop_st {
+    int maxThreadsPerBlock;
+    int maxThreadsDim[3];
+    int maxGridSize[3];
+    int sharedMemPerBlock;
+    int totalConstantMemory;
+    int SIMDWidth;
+    int memPitch;
+    int regsPerBlock;
+    int clockRate;
+    int textureAlign;
+} PPdevprop;
 
 typedef struct {
     // 32-bit Atomics
@@ -186,9 +300,258 @@ typedef struct ppDeviceProp {
     int pageableMemoryAccessUsesHostPageTables; ///< Device accesses pageable memory via the host's page tables
 } ppDeviceProp;
 
+typedef enum PPpointer_attribute_enum {
+    PP_POINTER_ATTRIBUTE_CONTEXT = 1,
+    PP_POINTER_ATTRIBUTE_MEMORY_TYPE = 2,
+    PP_POINTER_ATTRIBUTE_DEVICE_POINTER = 3,
+    PP_POINTER_ATTRIBUTE_HOST_POINTER = 4,
+    PP_POINTER_ATTRIBUTE_SYNC_MEMOPS = 6,
+    PP_POINTER_ATTRIBUTE_BUFFER_ID = 7,
+    PP_POINTER_ATTRIBUTE_IS_MANAGED = 8,
+    PP_POINTER_ATTRIBUTE_DEVICE_ORDINAL = 9,
+} PPpointer_attribute;
+
+typedef enum ppFunction_attribute {
+    PP_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK = 0,
+    PP_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES = 1,
+    PP_FUNC_ATTRIBUTE_CONST_SIZE_BYTES = 2,
+    PP_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES = 3,
+    PP_FUNC_ATTRIBUTE_NUM_REGS = 4,
+    PP_FUNC_ATTRIBUTE_PTX_VERSION = 5,
+    PP_FUNC_ATTRIBUTE_BINARY_VERSION = 6,
+    PP_FUNC_ATTRIBUTE_CACHE_MODE_CA = 7,
+    PP_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES = 8,
+    PP_FUNC_ATTRIBUTE_PREFERRED_SHARED_MEMORY_CARVEOUT = 9,
+    PP_FUNC_ATTRIBUTE_MAX,
+} ppFunction_attribute;
+
+typedef enum ppFuncCache_t {
+    ppFuncCachePreferNone = 0x00,
+    ppFuncCachePreferShared = 0x01,
+    ppFuncCachePreferL1 = 0x02,
+    ppFuncCachePreferEqual = 0x03,
+} ppFuncCache_t;
+
+typedef enum ppSharedMemConfig {
+    ppSharedMemBankSizeDefault = 0x00,
+    ppSharedMemBankSizeFourByte = 0x01,
+    ppSharedMemBankSizeEightByte = 0x02,
+} ppSharedMemConfig;
+
+typedef enum PPshared_carveout_enum {
+    PP_SHAREDMEM_CARVEOUT_DEFAULT,
+    PP_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
+    PP_SHAREDMEM_CARVEOUT_MAX_L1 = 0,
+} PPshared_carveout;
+
+
+
+typedef enum ppComputeMode {
+    ppComputeModeDefault = 0,
+    ppComputeModeProhibited = 2,
+    ppComputeModeExclusiveProcess = 3,
+} ppComputeMode;
+
+typedef enum PPmem_advise_enum {
+    PP_MEM_ADVISE_SET_READ_MOSTLY = 1,
+    PP_MEM_ADVISE_UNSET_READ_MOSTLY = 2,
+    PP_MEM_ADVISE_SET_PREFERRED_LOCATION = 3,
+    PP_MEM_ADVISE_UNSET_PREFERRED_LOCATION = 4,
+    PP_MEM_ADVISE_SET_ACCESSED_BY = 5,
+    PP_MEM_ADVISE_UNSET_ACCESSED_BY = 6,
+} PPmem_advise;
+
+typedef enum PPmem_range_attribute_enum {
+    PP_MEM_RANGE_ATTRIBUTE_READ_MOSTLY = 1,
+    PP_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION = 2,
+    PP_MEM_RANGE_ATTRIBUTE_ACCESSED_BY = 3,
+    PP_MEM_RANGE_ATTRIBUTE_LAST_PREFETCH_LOCATION = 4,
+} PPmem_range_attribute;
+
+typedef enum ppJitOption {
+    ppJitOptionMaxRegisters = 0,
+    ppJitOptionThreadsPerBlock,
+    ppJitOptionWallTime,
+    ppJitOptionInfoLogBuffer,
+    ppJitOptionInfoLogBufferSizeBytes,
+    ppJitOptionErrorLogBuffer,
+    ppJitOptionErrorLogBufferSizeBytes,
+    ppJitOptionOptimizationLevel,
+    ppJitOptionTargetFromContext,
+    ppJitOptionTarget,
+    ppJitOptionFallbackStrategy,
+    ppJitOptionGenerateDebugInfo,
+    ppJitOptionLogVerbose,
+    ppJitOptionGenerateLineInfo,
+    ppJitOptionCacheMode,
+    ppJitOptionSm3xOpt,
+    ppJitOptionFastCompile,
+    ppJitOptionNumOptions,
+} ppJitOption;
+/*
+typedef enum HIPjit_target_enum {
+    HIP_TARGET_COMPUTE_20 = 20,
+    HIP_TARGET_COMPUTE_21 = 21,
+    HIP_TARGET_COMPUTE_30 = 30,
+    HIP_TARGET_COMPUTE_32 = 32,
+    HIP_TARGET_COMPUTE_35 = 35,
+    HIP_TARGET_COMPUTE_37 = 37,
+    HIP_TARGET_COMPUTE_50 = 50,
+    HIP_TARGET_COMPUTE_52 = 52,
+    HIP_TARGET_COMPUTE_53 = 53,
+    HIP_TARGET_COMPUTE_60 = 60,
+    HIP_TARGET_COMPUTE_61 = 61,
+    HIP_TARGET_COMPUTE_62 = 62,
+    HIP_TARGET_COMPUTE_70 = 70,
+    HIP_TARGET_COMPUTE_73 = 73,
+    HIP_TARGET_COMPUTE_75 = 75,
+} HIPjit_target;
+
+typedef enum HIPjit_fallback_enum {
+    HIP_PREFER_PTX = 0,
+    HIP_PREFER_BINARY,
+} HIPjit_fallback;
+
+typedef enum HIPjit_cacheMode_enum {
+    HIP_JIT_CACHE_OPTION_NONE = 0,
+    HIP_JIT_CACHE_OPTION_CG,
+    HIP_JIT_CACHE_OPTION_CA,
+} HIPjit_cacheMode;
+
+typedef enum HIPjitInputType_enum {
+    HIP_JIT_INPUT_HIPBIN = 0,
+    HIP_JIT_INPUT_PTX,
+    HIP_JIT_INPUT_FATBINARY,
+    HIP_JIT_INPUT_OBJECT,
+    HIP_JIT_INPUT_LIBRARY,
+    HIP_JIT_NUM_INPUT_TYPES,
+} HIPjitInputType;
+
+typedef struct HIPlinkState_st* HIPlinkState;
+
+typedef enum hipGLDeviceList {
+    hipGLDeviceListAll = 1,           ///< All hip devices used by current OpenGL context.
+    hipGLDeviceListCurrentFrame = 2,  ///< Hip devices used by current OpenGL context in current
+                                      ///< frame
+                                      hipGLDeviceListNextFrame = 3      ///< Hip devices used by current OpenGL context in next
+                                                                        ///< frame.
+} hipGLDeviceList;
+
+typedef enum hipGraphicsRegisterFlags {
+    hipGraphicsRegisterFlagsNone = 0,
+    hipGraphicsRegisterFlagsReadOnly = 1,  ///< HIP will not write to this registered resource
+    hipGraphicsRegisterFlagsWriteDiscard =
+    2,  ///< HIP will only write and will not read from this registered resource
+    hipGraphicsRegisterFlagsSurfaceLoadStore = 4,  ///< HIP will bind this resource to a surface
+    hipGraphicsRegisterFlagsTextureGather =
+    8  ///< HIP will perform texture gather operations on this registered resource
+} hipGraphicsRegisterFlags;
+
+typedef enum HIPgraphicsRegisterFlags_enum {
+    HIP_GRAPHICS_REGISTER_FLAGS_NONE = 0x00,
+    HIP_GRAPHICS_REGISTER_FLAGS_READ_ONLY = 0x01,
+    HIP_GRAPHICS_REGISTER_FLAGS_WRITE_DISCARD = 0x02,
+    HIP_GRAPHICS_REGISTER_FLAGS_SURFACE_LDST = 0x04,
+    HIP_GRAPHICS_REGISTER_FLAGS_TEXTURE_GATHER = 0x08,
+} HIPgraphicsRegisterFlags;
+
+typedef enum HIPgraphicsMapResourceFlags_enum {
+    HIP_GRAPHICS_MAP_RESOURCE_FLAGS_NONE = 0x00,
+    HIP_GRAPHICS_MAP_RESOURCE_FLAGS_READ_ONLY = 0x01,
+    HIP_GRAPHICS_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
+} HIPgraphicsMapResourceFlags;
+
+typedef enum HIParray_cubemap_face_enum {
+    HIP_HIPBEMAP_FACE_POSITIVE_X = 0x00,
+    HIP_HIPBEMAP_FACE_NEGATIVE_X = 0x01,
+    HIP_HIPBEMAP_FACE_POSITIVE_Y = 0x02,
+    HIP_HIPBEMAP_FACE_NEGATIVE_Y = 0x03,
+    HIP_HIPBEMAP_FACE_POSITIVE_Z = 0x04,
+    HIP_HIPBEMAP_FACE_NEGATIVE_Z = 0x05,
+} HIParray_cubemap_face;
+
+typedef enum hipLimit_t {
+    HIP_LIMIT_STACK_SIZE = 0x00,
+    HIP_LIMIT_PRINTF_FIFO_SIZE = 0x01,
+    hipLimitMallocHeapSize = 0x02,
+    HIP_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
+    HIP_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
+    HIP_LIMIT_MAX,
+} hipLimit_t;
+
+typedef enum hipResourceType {
+    hipResourceTypeArray = 0x00,
+    hipResourceTypeMipmappedArray = 0x01,
+    hipResourceTypeLinear = 0x02,
+    hipResourceTypePitch2D = 0x03,
+} hipResourceType;
+
+typedef enum hipError_t {
+    hipSuccess = 0,
+    hipErrorInvalidValue = 1,
+    hipErrorOutOfMemory = 2,
+    hipErrorNotInitialized = 3,
+    hipErrorDeinitialized = 4,
+    hipErrorProfilerDisabled = 5,
+    hipErrorProfilerNotInitialized = 6,
+    hipErrorProfilerAlreadyStarted = 7,
+    hipErrorProfilerAlreadyStopped = 8,
+    hipErrorNoDevice = 100,
+    hipErrorInvalidDevice = 101,
+    hipErrorInvalidImage = 200,
+    hipErrorInvalidContext = 201,
+    hipErrorContextAlreadyCurrent = 202,
+    hipErrorMapFailed = 205,
+    hipErrorUnmapFailed = 206,
+    hipErrorArrayIsMapped = 207,
+    hipErrorAlreadyMapped = 208,
+    hipErrorNoBinaryForGpu = 209,
+    hipErrorAlreadyAcquired = 210,
+    hipErrorNotMapped = 211,
+    hipErrorNotMappedAsArray = 212,
+    hipErrorNotMappedAsPointer = 213,
+    hipErrorECCNotCorrectable = 214,
+    hipErrorUnsupportedLimit = 215,
+    hipErrorContextAlreadyInUse = 216,
+    hipErrorPeerAccessUnsupported = 217,
+    hipErrorInvalidKernelFile = 218,
+    hipErrorInvalidGraphicsContext = 219,
+    hipErrorInvalidSource = 300,
+    hipErrorFileNotFound = 301,
+    hipErrorSharedObjectSymbolNotFound = 302,
+    hipErrorSharedObjectInitFailed = 303,
+    hipErrorOperatingSystem = 304,
+    hipErrorInvalidHandle = 400,
+    hipErrorNotFound = 500,
+    hipErrorNotReady = 600,
+    hipErrorIllegalAddress = 700,
+    hipErrorLaunchOutOfResources = 701,
+    hipErrorLaunchTimeOut = 702,
+    hipErrorPeerAccessAlreadyEnabled = 704,
+    hipErrorPeerAccessNotEnabled = 705,
+    hipErrorSetOnActiveProcess = 708,
+    hipErrorAssert = 710,
+    hipErrorHostMemoryAlreadyRegistered = 712,
+    hipErrorHostMemoryNotRegistered = 713,
+    hipErrorLaunchFailure = 719,
+    hipErrorCooperativeLaunchTooLarge = 720,
+    hipErrorNotSupported = 801,
+    hipErrorUnknown = 999,
+} hipError_t;
+*/
+/**
+* Stream CallBack struct
+*/
+
+#define __PP_FUNC_DEC( funcName, args ) template<Api API=API_AUTOMATIC> ppError PPAPI funcName##args; \
+    template ppError PPAPI funcName##<API_AUTOMATIC>##args;\
+    template ppError PPAPI funcName##<API_CUDA>##args;\
+    template ppError PPAPI funcName##<API_HIP>##args;
+
+
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr);
 ppError PPAPI ppGetErrorString(ppError error, const char** pStr);
-ppError PPAPI ppInit(unsigned int Flags);
+__PP_FUNC_DEC( ppInit, (unsigned int Flags) );
 ppError PPAPI ppDriverGetVersion(int* driverVersion);
 ppError PPAPI ppGetDevice(int* device);
 ppError PPAPI ppGetDeviceCount(int* count);
@@ -228,22 +591,87 @@ ppError PPAPI ppMemGetInfo(size_t* free, size_t* total);
 ppError PPAPI ppMalloc(ppDeviceptr* dptr, size_t bytesize);
 ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes);
 ppError PPAPI ppFree(ppDeviceptr dptr);
-
-
-//----
+//ppError PPAPI ppMemGetAddressRange(ppDeviceptr* pbase, size_t* psize, ppDeviceptr dptr);
+//ppError PPAPI ppHostMalloc(void** pp, size_t bytesize, unsigned int flags);
+//ppError PPAPI ppHostFree(void* p);
+//ppError PPAPI ppMemHostAlloc(void** pp, size_t bytesize, unsigned int Flags);
+//ppError PPAPI ppHostGetDevicePointer(ppDeviceptr* pdptr, void* p, unsigned int Flags);
+//ppError PPAPI ppHostGetFlags(unsigned int* pFlags, void* p);
+//ppError PPAPI ppMallocManaged(ppDeviceptr* dptr, size_t bytesize, unsigned int flags);
+//ppError PPAPI ppDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
+//ppError PPAPI ppDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
+//ppError PPAPI ppMemHostUnregister(void* p);
+//ppError PPAPI ppMemcpy(ppDeviceptr dst, ppDeviceptr src, size_t ByteCount);
+//ppError PPAPI ppMemcpyPeer(ppDeviceptr dstDevice, hipCtx_t dstContext, ppDeviceptr srcDevice, hipCtx_t srcContext, size_t ByteCount);
 ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCount);
 ppError PPAPI ppMemcpyDtoH(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount);
 ppError PPAPI ppMemcpyDtoD(ppDeviceptr dstDevice, ppDeviceptr srcDevice, size_t ByteCount);
+//ppError PPAPI ppDrvMemcpy2DUnaligned(const hip_Memcpy2D* pCopy);
+//ppError PPAPI ppMemcpyParam2D(const hip_Memcpy2D* pCopy);
+//ppError PPAPI ppDrvMemcpy3D(const HIP_MEMCPY3D* pCopy);
+//ppError PPAPI ppMemcpyHtoDAsync(ppDeviceptr dstDevice, const void* srcHost, size_t ByteCount, hipStream_t hStream);
+//ppError PPAPI ppMemcpyDtoHAsync(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount, hipStream_t hStream);
+//ppError PPAPI ppMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t hStream);
+//ppError PPAPI ppDrvMemcpy3DAsync(const HIP_MEMCPY3D* pCopy, hipStream_t hStream);
 ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N);
 ppError PPAPI ppMemsetD8(ppDeviceptr dstDevice, unsigned char ui, size_t N);
 ppError PPAPI ppMemsetD16(ppDeviceptr dstDevice, unsigned short ui, size_t N);
 ppError PPAPI ppMemsetD32(ppDeviceptr dstDevice, unsigned int ui, size_t N);
-
-
-//----
+//ppError PPAPI ppMemsetD8Async(ppDeviceptr dstDevice, unsigned char uc, size_t N, ppStream hStream);
+//ppError PPAPI ppMemsetD16Async(ppDeviceptr dstDevice, unsigned short us, size_t N, ppStream hStream);
+//ppError PPAPI ppMemsetD32Async(ppDeviceptr dstDevice, unsigned int ui, size_t N, ppStream hStream);
+//ppError PPAPI ppMemsetD2D8Async(ppDeviceptr dstDevice, size_t dstPitch, unsigned char uc, size_t Width, size_t Height, ppStream hStream);
+//ppError PPAPI ppMemsetD2D16Async(ppDeviceptr dstDevice, size_t dstPitch, unsigned short us, size_t Width, size_t Height, ppStream hStream);
+//ppError PPAPI ppMemsetD2D32Async(ppDeviceptr dstDevice, size_t dstPitch, unsigned int ui, size_t Width, size_t Height, ppStream hStream);
+//ppError PPAPI ppArrayCreate(hArray ** pHandle, const HIP_ARRAY_DESCRIPTOR* pAllocateArray);
+//ppError PPAPI ppArrayDestroy(hArray hArray);
+//ppError PPAPI ppArray3DCreate(hArray * pHandle, const HIP_ARRAY3D_DESCRIPTOR* pAllocateArray);
+ppError PPAPI ppPointerGetAttributes(ppPointerAttribute* attr, ppDeviceptr dptr);
+ppError PPAPI ppStreamCreate(ppStream* stream);
+//ppError PPAPI ppStreamCreateWithFlags(ppStream* phStream, unsigned int Flags);
+//ppError PPAPI ppStreamCreateWithPriority(ppStream* phStream, unsigned int flags, int priority);
+//ppError PPAPI ppStreamGetPriority(ppStream hStream, int* priority);
+//ppError PPAPI ppStreamGetFlags(ppStream hStream, unsigned int* flags);
+//ppError PPAPI ppStreamWaitEvent(ppStream hStream, hipEvent_t hEvent, unsigned int Flags);
+//ppError PPAPI ppStreamAddCallback(ppStream hStream, hipStreamCallback_t callback, void* userData, unsigned int flags);
+//ppError PPAPI ppStreamQuery(ppStream hStream);
+//ppError PPAPI ppStreamSynchronize(ppStream hStream);
+//ppError PPAPI ppStreamDestroy(ppStream hStream);
+//ppError PPAPI ppEventCreateWithFlags(hipEvent_t* phEvent, unsigned int Flags);
+//ppError PPAPI ppEventRecord(hipEvent_t hEvent, ppStream hStream);
+//ppError PPAPI ppEventQuery(hipEvent_t hEvent);
+//ppError PPAPI ppEventSynchronize(hipEvent_t hEvent);
+//ppError PPAPI ppEventDestroy(hipEvent_t hEvent);
+//ppError PPAPI ppEventElapsedTime(float* pMilliseconds, hipEvent_t hStart, hipEvent_t hEnd);
+//ppError PPAPI ppFuncGetAttribute(int* pi, hipFunction_attribute attrib, hipFunction_t hfunc);
+//ppError PPAPI ppFuncSetCacheConfig(hipFunction_t hfunc, hipFuncCache_t config);
 ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, ppStream hStream, void** kernelParams, void** extra);
-
-//----
+//ppError PPAPI ppDrvOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize);
+//ppError PPAPI ppDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags);
+//ppError PPAPI ppModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, hipFunction_t func, size_t dynamicSMemSize, int blockSizeLimit);
+//ppError PPAPI ppTexRefSetArray(hipTexRef hTexRef, hArray * hArray, unsigned int Flags);
+//ppError PPAPI ppTexRefSetAddress(size_t* ByteOffset, hipTexRef hTexRef, hipDeviceptr_t dptr, size_t bytes);
+//ppError PPAPI ppTexRefSetAddress2D(hipTexRef hTexRef, const HIP_ARRAY_DESCRIPTOR* desc, hipDeviceptr_t dptr, size_t Pitch);
+//ppError PPAPI ppTexRefSetFormat(hipTexRef hTexRef, hipArray_Format fmt, int NumPackedComponents);
+//ppError PPAPI ppTexRefSetAddressMode(hipTexRef hTexRef, int dim, hipTextureAddressMode am);
+//ppError PPAPI ppTexRefSetFilterMode(hipTexRef hTexRef, hipTextureFilterMode fm);
+//ppError PPAPI ppTexRefSetFlags(hipTexRef hTexRef, unsigned int Flags);
+//ppError PPAPI ppTexRefGetAddress(hipDeviceptr_t* pdptr, hipTexRef hTexRef);
+//ppError PPAPI ppTexRefGetArray(hArray ** phArray, hipTexRef hTexRef);
+//ppError PPAPI ppTexRefGetAddressMode(hipTextureAddressMode* pam, hipTexRef hTexRef, int dim);
+//ppError PPAPI ppTexObjectCreate(hipTextureObject_t* pTexObject, const hipResourceDesc* pResDesc, const hipTextureDesc* pTexDesc, const HIP_RESOURCE_VIEW_DESC* pResViewDesc);
+//ppError PPAPI ppTexObjectDestroy(hipTextureObject_t texObject);
+//ppError PPAPI ppDeviceCanAccessPeer(int* canAccessPeer, hipDevice_t dev, hipDevice_t peerDev);
+//ppError PPAPI ppCtxEnablePeerAccess(hipCtx_t peerContext, unsigned int Flags);
+//ppError PPAPI ppCtxDisablePeerAccess(hipCtx_t peerContext);
+//ppError PPAPI ppDeviceGetP2PAttribute(int* value, hipDeviceP2PAttr attrib, hipDevice_t srcDevice, hipDevice_t dstDevice);
+//ppError PPAPI ppGraphicsUnregisterResource(hipGraphicsResource resource);
+//ppError PPAPI ppGraphicsResourceGetMappedMipmappedArray(hipMipmappedArray_t* pMipmappedArray, hipGraphicsResource resource);
+//ppError PPAPI ppGraphicsResourceGetMappedPointer(hipDeviceptr_t* pDevPtr, size_t* pSize, hipGraphicsResource resource);
+//ppError PPAPI ppGraphicsMapResources(unsigned int count, hipGraphicsResource* resources, ppStream hStream);
+//ppError PPAPI ppGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, ppStream hStream);
+//ppError PPAPI ppGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
+//ppError PPAPI ppGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
 pprtcResult PPAPI pprtcGetErrorString(pprtcResult result);
 pprtcResult PPAPI pprtcAddNameExpression(pprtcProgram prog, const char* name_expression);
 pprtcResult PPAPI pprtcCompileProgram(pprtcProgram prog, int numOptions, const char** options);
@@ -254,12 +682,6 @@ pprtcResult PPAPI pprtcGetProgramLog(pprtcProgram prog, char* log);
 pprtcResult PPAPI pprtcGetProgramLogSize(pprtcProgram prog, size_t* logSizeRet);
 pprtcResult PPAPI pprtcGetCode(pprtcProgram prog, char* code);
 pprtcResult PPAPI pprtcGetCodeSize(pprtcProgram prog, size_t* codeSizeRet);
-
-//----
-ppError PPAPI ppPointerGetAttributes(ppPointerAttribute* attr, ppDeviceptr dptr);
-
-//----
-ppError PPAPI ppStreamCreate(ppStream* stream);
 
 
 enum {
@@ -283,3 +705,4 @@ typedef struct dim3 {
     constexpr dim3(uint32_t _x = 1, uint32_t _y = 1, uint32_t _z = 1) : x(_x), y(_y), z(_z){};
 #endif
 } dim3;
+

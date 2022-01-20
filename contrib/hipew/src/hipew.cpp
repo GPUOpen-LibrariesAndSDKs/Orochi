@@ -66,7 +66,7 @@ static DynamicLibrary hip_lib;
 
 /* Function definitions. */
 thipGetErrorName *hipGetErrorName;
-thipGetErrorString *hipGetErrorName;
+thipGetErrorString *hipGetErrorString;
 thipInit *hipInit;
 thipDriverGetVersion *hipDriverGetVersion;
 thipGetDevice *hipGetDevice;
