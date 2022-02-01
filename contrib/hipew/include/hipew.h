@@ -55,6 +55,7 @@ extern "C" {
 #define hipMemGetInfo hipMemGetInfo
 #define hipMemAllocPitch hipMemAllocPitch
 #define hipMemGetAddressRange hipMemGetAddressRange
+#define hipMemcpy hipMemcpy
 #define hipMemcpyHtoD hipMemcpyHtoD
 #define hipMemcpyDtoH hipMemcpyDtoH
 #define hipMemcpyDtoD hipMemcpyDtoD
@@ -113,6 +114,14 @@ typedef unsigned long long hipTextureObject_t;
 typedef struct HIPuuid_st {
   char bytes[16];
 } HIPuuid;
+
+typedef enum hipMemcpyKind {
+    hipMemcpyHostToHost = 0,
+    hipMemcpyHostToDevice = 1,
+    hipMemcpyDeviceToHost = 2,
+    hipMemcpyDeviceToDevice = 3,
+    hipMemcpyDefault = 4
+} hipMemcpyKind;
 
 typedef enum hipChannelFormatKind {
     hipChannelFormatKindSigned = 0,
@@ -1072,6 +1081,7 @@ typedef enum hiprtcResult {
 /* Function types. */
 typedef hipError_t HIPAPI thipGetErrorName(hipError_t error, const char** pStr);
 typedef hipError_t HIPAPI thipGetErrorString(hipError_t error, const char** pStr);
+typedef hipError_t HIPAPI thipGetLastError(hipError_t error);
 typedef hipError_t HIPAPI thipInit(unsigned int Flags);
 typedef hipError_t HIPAPI thipDriverGetVersion(int* driverVersion);
 typedef hipError_t HIPAPI thipGetDevice(int* device);
@@ -1122,7 +1132,7 @@ typedef hipError_t HIPAPI thipMallocManaged(hipDeviceptr_t* dptr, size_t bytesiz
 typedef hipError_t HIPAPI thipDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
 typedef hipError_t HIPAPI thipDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
 typedef hipError_t HIPAPI thipMemHostUnregister(void* p);
-typedef hipError_t HIPAPI thipMemcpy(hipDeviceptr_t dst, hipDeviceptr_t src, size_t ByteCount);
+typedef hipError_t HIPAPI thipMemcpy(void* dst, const void* src, size_t ByteCount, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipMemcpyPeer(hipDeviceptr_t dstDevice, hipCtx_t dstContext, hipDeviceptr_t srcDevice, hipCtx_t srcContext, size_t ByteCount);
 typedef hipError_t HIPAPI thipMemcpyHtoD(hipDeviceptr_t dstDevice, void* srcHost, size_t ByteCount);
 typedef hipError_t HIPAPI thipMemcpyDtoH(void* dstHost, hipDeviceptr_t srcDevice, size_t ByteCount);
@@ -1134,6 +1144,7 @@ typedef hipError_t HIPAPI thipMemcpyHtoDAsync(hipDeviceptr_t dstDevice, const vo
 typedef hipError_t HIPAPI thipMemcpyDtoHAsync(void* dstHost, hipDeviceptr_t srcDevice, size_t ByteCount, hipStream_t hStream);
 typedef hipError_t HIPAPI thipMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t hStream);
 typedef hipError_t HIPAPI thipDrvMemcpy3DAsync(const HIP_MEMCPY3D* pCopy, hipStream_t hStream);
+typedef hipError_t HIPAPI thipMemset(void* dstDevice, int value, size_t sizeBytes);
 typedef hipError_t HIPAPI thipMemsetD8(hipDeviceptr_t dstDevice, unsigned char uc, size_t N);
 typedef hipError_t HIPAPI thipMemsetD16(hipDeviceptr_t dstDevice, unsigned short us, size_t N);
 typedef hipError_t HIPAPI thipMemsetD32(hipDeviceptr_t dstDevice, unsigned int ui, size_t N);
@@ -1207,6 +1218,7 @@ typedef hiprtcResult HIPAPI thiprtcGetCodeSize(hiprtcProgram prog, size_t* codeS
 /* Function declarations. */
 extern thipGetErrorName *hipGetErrorName;
 extern thipGetErrorString* hipGetErrorString;
+extern thipGetLastError* hipGetLastError;
 extern thipInit *hipInit;
 extern thipDriverGetVersion *hipDriverGetVersion;
 extern thipGetDevice *hipGetDevice;
@@ -1255,6 +1267,7 @@ extern thipHostGetFlags *hipHostGetFlags;
 extern thipMallocManaged *hipMallocManaged;
 extern thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
 extern thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
+extern thipMemcpy *hipMemcpy;
 extern thipMemcpyPeer *hipMemcpyPeer;
 extern thipMemcpyHtoD *hipMemcpyHtoD;
 extern thipMemcpyDtoH *hipMemcpyDtoH;
@@ -1266,6 +1279,7 @@ extern thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
 extern thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
 extern thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
 extern thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
+extern thipMemset *hipMemset;
 extern thipMemsetD8 *hipMemsetD8;
 extern thipMemsetD16 *hipMemsetD16;
 extern thipMemsetD32 *hipMemsetD32;

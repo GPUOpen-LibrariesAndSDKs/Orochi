@@ -62,11 +62,14 @@ typedef void* DynamicLibrary;
         _LIBRARY_FIND_CHECKED(cuda_lib, name)
 #define CUDA_LIBRARY_FIND(name) _LIBRARY_FIND(cuda_lib, name)
 
+#define CUDART_LIBRARY_FIND(name) _LIBRARY_FIND(cudart_lib, name)
+
 #define NVRTC_LIBRARY_FIND_CHECKED(name) \
         _LIBRARY_FIND_CHECKED(nvrtc_lib, name)
 #define NVRTC_LIBRARY_FIND(name) _LIBRARY_FIND(nvrtc_lib, name)
 
 static DynamicLibrary cuda_lib;
+static DynamicLibrary cudart_lib;
 static DynamicLibrary nvrtc_lib;
 
 /* Function definitions. */
@@ -296,6 +299,13 @@ tcuGLUnregisterBufferObject *cuGLUnregisterBufferObject;
 tcuGLSetBufferObjectMapFlags *cuGLSetBufferObjectMapFlags;
 tcuGLMapBufferObjectAsync_v2 *cuGLMapBufferObjectAsync_v2;
 tcuGLUnmapBufferObjectAsync *cuGLUnmapBufferObjectAsync;
+
+tcudaStreamCreate *cudaStreamCreate;
+tcudaMemcpy *cudaMemcpy;
+tcudaMalloc *cudaMalloc;
+tcudaFree *cudaFree;
+tcudaGetLastError *cudaGetLastError;
+tcudaGetDeviceProperties *cudaGetDeviceProperties;
 
 tnvrtcGetErrorString *nvrtcGetErrorString;
 tnvrtcVersion *nvrtcVersion;
@@ -607,6 +617,30 @@ static int cuewCudaInit(void) {
   CUDA_LIBRARY_FIND(cuGLMapBufferObjectAsync_v2);
   CUDA_LIBRARY_FIND(cuGLUnmapBufferObjectAsync);
 
+  // cudart libraries (needed for runtime API like cudaMalloc, cudaFree etc...)
+  const char* cudart_paths[] = { "cudart64_110.dll",
+                               "cudart64_101.dll",
+                               "cudart64_100.dll",
+                               "cudart64_91.dll",
+                               "cudart64_90.dll",
+                               "cudart64_80.dll",
+                               NULL };
+
+  /* Load library. */
+  cudart_lib = dynamic_library_open_find(cudart_paths);
+
+  if (cudart_lib == NULL) {
+      result = CUEW_ERROR_OPEN_FAILED;
+      return result;
+  }
+
+  CUDART_LIBRARY_FIND(cudaStreamCreate);
+  CUDART_LIBRARY_FIND(cudaMemcpy);
+  CUDART_LIBRARY_FIND(cudaMalloc);
+  CUDART_LIBRARY_FIND(cudaFree);
+  CUDART_LIBRARY_FIND(cudaGetLastError);
+  CUDART_LIBRARY_FIND(cudaGetDeviceProperties);
+
   result = CUEW_SUCCESS;
   return result;
 }
@@ -623,7 +657,8 @@ static int cuewNvrtcInit(void) {
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in c:/windows/system or similar, no path needed. */
-  const char *nvrtc_paths[] = {"nvrtc64_101_0.dll",
+  const char *nvrtc_paths[] = {"nvrtc64_112_0.dll",
+                               "nvrtc64_101_0.dll",
                                "nvrtc64_100_0.dll",
                                "nvrtc64_91.dll",
                                "nvrtc64_90.dll",

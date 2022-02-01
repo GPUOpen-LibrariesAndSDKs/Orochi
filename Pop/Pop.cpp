@@ -38,6 +38,10 @@ int ppInitialize( Api api, ppU32 flags )
 		return hipewInit( HIPEW_INIT_HIP );
 	return PP_ERROR_OPEN_FAILED;
 }
+Api ppGetCurAPI(ppU32 flags)
+{
+	return s_api;
+}
 
 
 //=================================
@@ -49,6 +53,11 @@ ppError hip2pp( hipError_t a )
 }
 inline
 ppError cu2pp( CUresult a )
+{
+	return (ppError)a;
+}
+inline
+ppError cuda2pp(cudaError_t a)
 {
 	return (ppError)a;
 }
@@ -74,11 +83,17 @@ pprtcResult nvrtc2pp( nvrtcResult a )
 }
 
 #define __PP_FUNC1( cuname, hipname ) if( s_api == API_CUDA ) return cu2pp( cu##cuname ); if( s_api == API_HIP ) return hip2pp( hip##hipname );
+#define __PP_FUNC2( cudaname, hipname ) if( s_api == API_CUDA ) return cuda2pp( cuda##cudaname ); if( s_api == API_HIP ) return hip2pp( hip##hipname );
 //#define __PP_FUNC1( cuname, hipname ) if( s_api == API_CUDA || API == API_CUDA ) return cu2pp( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2pp( hip##hipname );
 #define __PP_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cu##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
 #define __PP_CTXT_FUNC( name ) __PP_FUNC1(Ctx##name, name)
 //#define __PP_CTXT_FUNC( name ) if( s_api == API_CUDA ) return cu2pp( cuCtx##name ); if( s_api == API_HIP ) return hip2pp( hip##name );
 #define __PPRTC_FUNC1( cuname, hipname ) if( s_api == API_CUDA ) return nvrtc2pp( nvrtc##cuname ); if( s_api == API_HIP ) return hiprtc2pp( hiprtc##hipname );
+
+#define __PP_FUNC_INSTANCE( funcName, args ) \
+    template ppError PPAPI funcName <API_AUTOMATIC> args;\
+    template ppError PPAPI funcName <API_CUDA> args;\
+    template ppError PPAPI funcName <API_HIP> args;
 
 
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr)
@@ -106,6 +121,9 @@ ppError PPAPI ppInit(unsigned int Flags)
 	__PP_FUNC( Init(Flags) );
 	return ppErrorUnknown;
 }
+
+__PP_FUNC_INSTANCE( ppInit, (unsigned int Flags) );
+
 ppError PPAPI ppDriverGetVersion(int* driverVersion)
 {
 	__PP_FUNC( DriverGetVersion(driverVersion) );
@@ -125,12 +143,14 @@ ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId)
 {
 	if( s_api == API_CUDA )
 	{
-		CUdevprop p;
-		cuDeviceGetProperties( &p, deviceId );
+		cudaDeviceProp p;
+		cudaError_t e = cudaGetDeviceProperties( &p, deviceId );
+		if (e != CUDA_SUCCESS)
+			return ppErrorUnknown;
 		char name[128];
-		cuDeviceGetName( name, 128, deviceId );
-		strcpy( props->name, name );
+		strcpy( props->name, p.name );
 		strcpy( props->gcnArchName, "" );
+		props->totalGlobalMem = p.totalGlobalMem;
 		printf("todo. implement me\n");
 		return ppSuccess;
 	}
@@ -268,6 +288,11 @@ ppError PPAPI ppMalloc(ppDeviceptr* dptr, size_t bytesize)
 	__PP_FUNC1( MemAlloc(dptr, bytesize), Malloc( dptr, bytesize ) );
 	return ppErrorUnknown;
 }
+ppError PPAPI ppMalloc2(ppDeviceptr* dptr, size_t bytesize)
+{
+	__PP_FUNC2( Malloc((CUdeviceptr*)dptr, bytesize), Malloc(dptr, bytesize) );
+	return ppErrorUnknown;
+}
 ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes)
 {
 	return ppErrorUnknown;
@@ -277,8 +302,20 @@ ppError PPAPI ppFree(ppDeviceptr dptr)
 	__PP_FUNC1( MemFree( dptr ), Free( dptr ) );
 	return ppErrorUnknown;
 }
+ppError PPAPI ppFree2(ppDeviceptr dptr)
+{
+	__PP_FUNC2( Free((CUdeviceptr)dptr), Free(dptr) );
+	return ppErrorUnknown;
+}
 
 //-------------------
+ppError PPAPI ppMemcpy(void *dstDevice, void* srcHost, size_t ByteCount, ppMemcpyKind kind)
+{
+	__PP_FUNC2( Memcpy(dstDevice, srcHost, ByteCount, (cudaMemcpyKind)kind),
+		Memcpy(dstDevice, srcHost, ByteCount, (hipMemcpyKind)kind) );
+	return ppErrorUnknown;
+}
+
 ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCount)
 {
 	__PP_FUNC1( MemcpyHtoD( dstDevice, srcHost, ByteCount ),
@@ -299,7 +336,7 @@ ppError PPAPI ppMemcpyDtoD(ppDeviceptr dstDevice, ppDeviceptr srcDevice, size_t 
 
 ppError PPAPI ppMemset(ppDeviceptr dstDevice, unsigned int ui, size_t N)
 {
-	__PP_FUNC( MemsetD32( dstDevice, ui, N ) );
+	__PP_FUNC1( MemsetD8( (CUdeviceptr)dstDevice, ui, N ), Memset((void*)dstDevice, ui, N));
 	return ppErrorUnknown;
 }
 
@@ -324,6 +361,12 @@ ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned
 {
 	__PP_FUNC1( LaunchKernel( (CUfunction)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (CUstream)hStream, kernelParams, extra ),
 		ModuleLaunchKernel( (hipFunction_t)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (hipStream_t)hStream, kernelParams, extra ) );
+	return ppErrorUnknown;
+}
+ppError PPAPI ppGetLastError(ppError pp_error)
+{
+	__PP_FUNC2(GetLastError((cudaError_t)pp_error),
+		GetLastError((hipError_t)pp_error));
 	return ppErrorUnknown;
 }
 //-------------------
@@ -401,8 +444,9 @@ ppError PPAPI ppPointerGetAttributes(ppPointerAttribute* attr, ppDeviceptr dptr)
 //-----------------
 ppError PPAPI ppStreamCreate(ppStream* stream)
 {
-	__PP_FUNC1( StreamCreate((CUstream*)stream, CU_STREAM_DEFAULT),
-		StreamCreate((hipStream_t*)stream) );
+	__PP_FUNC2(StreamCreate((cudaStream_t*)stream),
+		StreamCreate((hipStream_t*)stream));
+
 	return ppErrorUnknown;
 }
 

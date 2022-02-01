@@ -21,6 +21,8 @@
 //
 #pragma once
 
+#include <cstddef>
+
 enum Api
 {
     API_AUTOMATIC,
@@ -32,6 +34,15 @@ enum ppError
 {
 	ppSuccess = 0,
 	ppErrorUnknown = 999,
+};
+
+enum ppMemcpyKind
+{
+    ppMemcpyHostToHost = 0,
+    ppMemcpyHostToDevice = 1,
+    ppMemcpyDeviceToHost = 2,
+    ppMemcpyDeviceToDevice = 3,
+    ppMemcpyDefault = 4
 };
 
 typedef unsigned int ppU32;
@@ -543,10 +554,7 @@ typedef enum hipError_t {
 * Stream CallBack struct
 */
 
-#define __PP_FUNC_DEC( funcName, args ) template<Api API=API_AUTOMATIC> ppError PPAPI funcName##args; \
-    template ppError PPAPI funcName##<API_AUTOMATIC>##args;\
-    template ppError PPAPI funcName##<API_CUDA>##args;\
-    template ppError PPAPI funcName##<API_HIP>##args;
+#define __PP_FUNC_DEC( funcName, args ) template<Api API=API_AUTOMATIC> ppError PPAPI funcName args
 
 
 ppError PPAPI ppGetErrorName(ppError error, const char** pStr);
@@ -589,8 +597,10 @@ ppError PPAPI ppModuleGetGlobal(ppDeviceptr* dptr, size_t* bytes, ppModule hmod,
 //ppError PPAPI ppModuleGetTexRef(textureReference** pTexRef, ppModule hmod, const char* name);
 ppError PPAPI ppMemGetInfo(size_t* free, size_t* total);
 ppError PPAPI ppMalloc(ppDeviceptr* dptr, size_t bytesize);
+ppError PPAPI ppMalloc2(ppDeviceptr* dptr, size_t bytesize);
 ppError PPAPI ppMemAllocPitch(ppDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes);
 ppError PPAPI ppFree(ppDeviceptr dptr);
+ppError PPAPI ppFree2(ppDeviceptr dptr);
 //ppError PPAPI ppMemGetAddressRange(ppDeviceptr* pbase, size_t* psize, ppDeviceptr dptr);
 //ppError PPAPI ppHostMalloc(void** pp, size_t bytesize, unsigned int flags);
 //ppError PPAPI ppHostFree(void* p);
@@ -601,7 +611,7 @@ ppError PPAPI ppFree(ppDeviceptr dptr);
 //ppError PPAPI ppDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
 //ppError PPAPI ppDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
 //ppError PPAPI ppMemHostUnregister(void* p);
-//ppError PPAPI ppMemcpy(ppDeviceptr dst, ppDeviceptr src, size_t ByteCount);
+ppError PPAPI ppMemcpy(void *dst, void *src, size_t ByteCount, ppMemcpyKind kind);
 //ppError PPAPI ppMemcpyPeer(ppDeviceptr dstDevice, hipCtx_t dstContext, ppDeviceptr srcDevice, hipCtx_t srcContext, size_t ByteCount);
 ppError PPAPI ppMemcpyHtoD(ppDeviceptr dstDevice, void* srcHost, size_t ByteCount);
 ppError PPAPI ppMemcpyDtoH(void* dstHost, ppDeviceptr srcDevice, size_t ByteCount);
@@ -672,6 +682,7 @@ ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned
 //ppError PPAPI ppGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, ppStream hStream);
 //ppError PPAPI ppGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
 //ppError PPAPI ppGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
+ppError PPAPI ppGetLastError(ppError pp_error);
 pprtcResult PPAPI pprtcGetErrorString(pprtcResult result);
 pprtcResult PPAPI pprtcAddNameExpression(pprtcProgram prog, const char* name_expression);
 pprtcResult PPAPI pprtcCompileProgram(pprtcProgram prog, int numOptions, const char** options);
@@ -693,16 +704,17 @@ enum {
 
 
 int ppInitialize( Api api, ppU32 flags );
+Api ppGetCurAPI( ppU32 flags );
 
 
 #include <stdint.h>
 
-typedef struct dim3 {
-    uint32_t x;  ///< x
-    uint32_t y;  ///< y
-    uint32_t z;  ///< z
-#ifdef __cplusplus
-    constexpr dim3(uint32_t _x = 1, uint32_t _y = 1, uint32_t _z = 1) : x(_x), y(_y), z(_z){};
-#endif
-} dim3;
+//typedef struct dim3 {
+//    uint32_t x;  ///< x
+//    uint32_t y;  ///< y
+//    uint32_t z;  ///< z
+//#ifdef __cplusplus
+//    constexpr dim3(uint32_t _x = 1, uint32_t _y = 1, uint32_t _z = 1) : x(_x), y(_y), z(_z){};
+//#endif
+//} dim3;
 

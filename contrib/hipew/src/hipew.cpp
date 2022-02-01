@@ -67,6 +67,7 @@ static DynamicLibrary hip_lib;
 /* Function definitions. */
 thipGetErrorName *hipGetErrorName;
 thipGetErrorString *hipGetErrorString;
+thipGetLastError *hipGetLastError;
 thipInit *hipInit;
 thipDriverGetVersion *hipDriverGetVersion;
 thipGetDevice *hipGetDevice;
@@ -115,6 +116,7 @@ thipHostGetFlags *hipHostGetFlags;
 thipMallocManaged *hipMallocManaged;
 thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
 thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
+thipMemcpy *hipMemcpy;
 thipMemcpyPeer *hipMemcpyPeer;
 thipMemcpyHtoD *hipMemcpyHtoD;
 thipMemcpyDtoH *hipMemcpyDtoH;
@@ -126,6 +128,7 @@ thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
 thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
 thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
 thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
+thipMemset *hipMemset;
 thipMemsetD8 *hipMemsetD8;
 thipMemsetD16 *hipMemsetD16;
 thipMemsetD32 *hipMemsetD32;
@@ -293,6 +296,7 @@ static int hipewHipInit(void) {
   /* Fetch all function pointers. */
   HIP_LIBRARY_FIND_CHECKED(hipGetErrorName);
   HIP_LIBRARY_FIND_CHECKED(hipGetErrorString);
+  HIP_LIBRARY_FIND_CHECKED(hipGetLastError);
   HIP_LIBRARY_FIND_CHECKED(hipInit);
   HIP_LIBRARY_FIND_CHECKED(hipDriverGetVersion);
   HIP_LIBRARY_FIND_CHECKED(hipGetDevice);
@@ -341,6 +345,7 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipMallocManaged);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetByPCIBusId);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetPCIBusId);
+  HIP_LIBRARY_FIND_CHECKED(hipMemcpy);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyPeer);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyHtoD);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoH);
@@ -352,6 +357,7 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy2DUnaligned);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyParam2DAsync);
   HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy3DAsync);
+  HIP_LIBRARY_FIND_CHECKED(hipMemset);
   HIP_LIBRARY_FIND_CHECKED(hipMemsetD8);
   HIP_LIBRARY_FIND_CHECKED(hipMemsetD16);
   HIP_LIBRARY_FIND_CHECKED(hipMemsetD32);
