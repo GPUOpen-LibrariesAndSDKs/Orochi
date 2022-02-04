@@ -151,7 +151,9 @@ ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId)
 		strcpy( props->name, p.name );
 		strcpy( props->gcnArchName, "" );
 		props->totalGlobalMem = p.totalGlobalMem;
-		printf("todo. implement me\n");
+		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
+		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
+		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
 		return ppSuccess;
 	}
 	return hip2pp( hipGetDeviceProperties( (hipDeviceProp_t*)props, deviceId ) );
