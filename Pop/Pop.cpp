@@ -151,6 +151,9 @@ ppError PPAPI ppGetDeviceProperties(ppDeviceProp* props, int deviceId)
 		strcpy( props->name, p.name );
 		strcpy( props->gcnArchName, "" );
 		props->totalGlobalMem = p.totalGlobalMem;
+		props->pciDomainID = p.pciDomainID;
+		props->pciBusID = p.pciBusID;
+		props->pciDeviceID = p.pciDeviceID;
 		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
 		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
@@ -363,6 +366,28 @@ ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned
 {
 	__PP_FUNC1( LaunchKernel( (CUfunction)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (CUstream)hStream, kernelParams, extra ),
 		ModuleLaunchKernel( (hipFunction_t)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (hipStream_t)hStream, kernelParams, extra ) );
+	return ppErrorUnknown;
+}
+
+//-------------------
+ppError PPAPI ppImportExternalMemory(ppExternalMemory_t* extMem_out, const ppExternalMemoryHandleDesc* memHandleDesc)
+{
+	__PP_FUNC2( ImportExternalMemory( (cudaExternalMemory_t*)extMem_out, (const cudaExternalMemoryHandleDesc*)memHandleDesc ),
+		ImportExternalMemory( (hipExternalMemory_t*)extMem_out, (const hipExternalMemoryHandleDesc*)memHandleDesc ) );
+	return ppErrorUnknown;
+}
+//-------------------
+ppError PPAPI ppExternalMemoryGetMappedBuffer(void **devPtr, ppExternalMemory_t extMem, const ppExternalMemoryBufferDesc* bufferDesc)
+{
+	__PP_FUNC2( ExternalMemoryGetMappedBuffer( devPtr, (cudaExternalMemory_t)extMem, (const cudaExternalMemoryBufferDesc*)bufferDesc ),
+		ExternalMemoryGetMappedBuffer( devPtr, (hipExternalMemory_t)extMem, (const hipExternalMemoryBufferDesc*)bufferDesc ) );
+	return ppErrorUnknown;
+}
+//-------------------
+ppError PPAPI ppDestroyExternalMemory(ppExternalMemory_t extMem)
+{
+	__PP_FUNC2( DestroyExternalMemory( (cudaExternalMemory_t)extMem ),
+		DestroyExternalMemory( (hipExternalMemory_t)extMem ) );
 	return ppErrorUnknown;
 }
 ppError PPAPI ppGetLastError(ppError pp_error)

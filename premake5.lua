@@ -23,3 +23,5 @@ workspace "Pop"
 
 --   include "./Pop"
    include "./Test"
+   group "Advanced"
+      include "./Test/VulkanComputeSimple"

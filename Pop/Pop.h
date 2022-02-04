@@ -66,6 +66,7 @@ typedef struct ippEvent_t* ppEvent;
 typedef struct ippStream_t* ppStream;
 typedef struct ippPointerAttribute_t* ppPointerAttribute;
 typedef unsigned long long ppTextureObject;
+typedef void* ppExternalMemory_t;
 
 
 typedef struct _pprtcProgram* pprtcProgram;
@@ -550,6 +551,34 @@ typedef enum hipError_t {
     hipErrorUnknown = 999,
 } hipError_t;
 */
+
+typedef enum ppExternalMemoryHandleType_enum {
+  ppExternalMemoryHandleTypeOpaqueFd = 1,
+  ppExternalMemoryHandleTypeOpaqueWin32 = 2,
+  ppExternalMemoryHandleTypeOpaqueWin32Kmt = 3,
+  ppExternalMemoryHandleTypeD3D12Heap = 4,
+  ppExternalMemoryHandleTypeD3D12Resource = 5,
+  ppExternalMemoryHandleTypeD3D11Resource = 6,
+  ppExternalMemoryHandleTypeD3D11ResourceKmt = 7,
+} ppExternalMemoryHandleType;
+typedef struct ppExternalMemoryHandleDesc_st {
+  ppExternalMemoryHandleType type;
+  union {
+    int fd;
+    struct {
+      void *handle;
+      const void *name;
+    } win32;
+  } handle;
+  unsigned long long size;
+  unsigned int flags;
+} ppExternalMemoryHandleDesc;
+typedef struct ppExternalMemoryBufferDesc_st {
+  unsigned long long offset;
+  unsigned long long size;
+  unsigned int flags;
+} ppExternalMemoryBufferDesc;
+
 /**
 * Stream CallBack struct
 */
@@ -682,6 +711,9 @@ ppError PPAPI ppModuleLaunchKernel(ppFunction f, unsigned int gridDimX, unsigned
 //ppError PPAPI ppGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, ppStream hStream);
 //ppError PPAPI ppGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
 //ppError PPAPI ppGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
+ppError PPAPI ppImportExternalMemory(ppExternalMemory_t* extMem_out, const ppExternalMemoryHandleDesc* memHandleDesc);
+ppError PPAPI ppExternalMemoryGetMappedBuffer(void **devPtr, ppExternalMemory_t extMem, const ppExternalMemoryBufferDesc* bufferDesc);
+ppError PPAPI ppDestroyExternalMemory(ppExternalMemory_t extMem);
 ppError PPAPI ppGetLastError(ppError pp_error);
 pprtcResult PPAPI pprtcGetErrorString(pprtcResult result);
 pprtcResult PPAPI pprtcAddNameExpression(pprtcProgram prog, const char* name_expression);

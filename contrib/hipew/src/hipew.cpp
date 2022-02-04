@@ -185,6 +185,9 @@ thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
 
 thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 thipGLGetDevices *hipGLGetDevices;
+thipImportExternalMemory *hipImportExternalMemory;
+thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
+thipDestroyExternalMemory *hipDestroyExternalMemory;
 
 thiprtcGetErrorString* hiprtcGetErrorString;
 thiprtcAddNameExpression* hiprtcAddNameExpression;
@@ -411,6 +414,9 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipGraphicsGLRegisterBuffer);
   HIP_LIBRARY_FIND_CHECKED(hipGLGetDevices);
 #endif
+  HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
+  HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
+  HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
   HIP_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
   HIP_LIBRARY_FIND_CHECKED(hiprtcAddNameExpression);
   HIP_LIBRARY_FIND_CHECKED(hiprtcCompileProgram);

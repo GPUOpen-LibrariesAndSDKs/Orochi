@@ -156,6 +156,7 @@ typedef struct CUstream_st* cudaStream_t;
 typedef struct CUgraphicsResource_st* CUgraphicsResource;
 typedef unsigned long long CUtexObject;
 typedef unsigned long long CUsurfObject;
+typedef struct CUexternalMemory_st* cudaExternalMemory_t;
 
 typedef struct CUuuid_st {
   char bytes[16];
@@ -1092,6 +1093,35 @@ typedef enum CUGLmap_flags_enum {
   CU_GL_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
 } CUGLmap_flags;
 
+typedef enum {
+    cudaExternalMemoryHandleTypeOpaqueFd         = 1,
+    cudaExternalMemoryHandleTypeOpaqueWin32      = 2,
+    cudaExternalMemoryHandleTypeOpaqueWin32Kmt   = 3,
+    cudaExternalMemoryHandleTypeD3D12Heap        = 4,
+    cudaExternalMemoryHandleTypeD3D12Resource    = 5,
+    cudaExternalMemoryHandleTypeD3D11Resource    = 6,
+    cudaExternalMemoryHandleTypeD3D11ResourceKmt = 7,
+    cudaExternalMemoryHandleTypeNvSciBuf         = 8
+} cudaExternalMemoryHandleType;
+typedef struct {
+    cudaExternalMemoryHandleType type;
+    union {
+        int fd;
+        struct {
+            void *handle;
+            const void *name;
+        } win32;
+        const void *nvSciBufObject;
+    } handle;
+    unsigned long long size;
+    unsigned int flags;
+} cudaExternalMemoryHandleDesc;
+typedef struct {
+    unsigned long long offset;
+    unsigned long long size;
+    unsigned int flags;
+} cudaExternalMemoryBufferDesc;
+
 typedef enum  {
   NVRTC_SUCCESS = 0,
   NVRTC_ERROR_OUT_OF_MEMORY = 1,
@@ -1344,6 +1374,9 @@ typedef cudaError_t CUDAAPI tcudaMalloc(CUdeviceptr* dptr, size_t bytesize);
 typedef cudaError_t CUDAAPI tcudaFree(CUdeviceptr dptr);
 typedef cudaError_t CUDAAPI tcudaGetLastError(cudaError_t error);
 typedef cudaError_t CUDAAPI tcudaGetDeviceProperties(cudaDeviceProp* prop, int device);
+typedef cudaError_t CUDAAPI tcudaImportExternalMemory(cudaExternalMemory_t* extMem_out, const cudaExternalMemoryHandleDesc* memHandleDesc);
+typedef cudaError_t CUDAAPI tcudaExternalMemoryGetMappedBuffer(void **devPtr, cudaExternalMemory_t extMem, const cudaExternalMemoryBufferDesc* bufferDesc);
+typedef cudaError_t CUDAAPI tcudaDestroyExternalMemory(cudaExternalMemory_t extMem);
 
 typedef const char* CUDAAPI tnvrtcGetErrorString(nvrtcResult result);
 typedef nvrtcResult CUDAAPI tnvrtcVersion(int* major, int* minor);
@@ -1592,6 +1625,9 @@ extern tcudaMalloc* cudaMalloc;
 extern tcudaFree* cudaFree;
 extern tcudaGetLastError *cudaGetLastError;
 extern tcudaGetDeviceProperties *cudaGetDeviceProperties;
+extern tcudaImportExternalMemory *cudaImportExternalMemory;
+extern tcudaExternalMemoryGetMappedBuffer *cudaExternalMemoryGetMappedBuffer;
+extern tcudaDestroyExternalMemory *cudaDestroyExternalMemory;
 
 extern tnvrtcGetErrorString *nvrtcGetErrorString;
 extern tnvrtcVersion *nvrtcVersion;

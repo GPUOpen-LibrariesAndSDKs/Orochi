@@ -110,6 +110,7 @@ typedef struct hipMipmappedArray_st* hipMipmappedArray_t;
 typedef struct ihipEvent_t* hipEvent_t;
 typedef struct ihipStream_t* hipStream_t;
 typedef unsigned long long hipTextureObject_t;
+typedef void* hipExternalMemory_t;
 
 typedef struct HIPuuid_st {
   char bytes[16];
@@ -1058,6 +1059,33 @@ typedef enum HIPGLmap_flags_enum {
   HIP_GL_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
 } HIPGLmap_flags;
 
+typedef enum hipExternalMemoryHandleType_enum {
+  hipExternalMemoryHandleTypeOpaqueFd = 1,
+  hipExternalMemoryHandleTypeOpaqueWin32 = 2,
+  hipExternalMemoryHandleTypeOpaqueWin32Kmt = 3,
+  hipExternalMemoryHandleTypeD3D12Heap = 4,
+  hipExternalMemoryHandleTypeD3D12Resource = 5,
+  hipExternalMemoryHandleTypeD3D11Resource = 6,
+  hipExternalMemoryHandleTypeD3D11ResourceKmt = 7,
+} hipExternalMemoryHandleType;
+typedef struct hipExternalMemoryHandleDesc_st {
+  hipExternalMemoryHandleType type;
+  union {
+    int fd;
+    struct {
+      void *handle;
+      const void *name;
+    } win32;
+  } handle;
+  unsigned long long size;
+  unsigned int flags;
+} hipExternalMemoryHandleDesc;
+typedef struct hipExternalMemoryBufferDesc_st {
+  unsigned long long offset;
+  unsigned long long size;
+  unsigned int flags;
+} hipExternalMemoryBufferDesc;
+
 /**
 * hipRTC related
 */
@@ -1203,6 +1231,9 @@ typedef hipError_t HIPAPI thipGraphicsMapResources(unsigned int count, hipGraphi
 typedef hipError_t HIPAPI thipGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, hipStream_t hStream);
 typedef hipError_t HIPAPI thipGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
 typedef hipError_t HIPAPI thipGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
+typedef hipError_t HIPAPI thipImportExternalMemory(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc);
+typedef hipError_t HIPAPI thipExternalMemoryGetMappedBuffer(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc);
+typedef hipError_t HIPAPI thipDestroyExternalMemory(hipExternalMemory_t extMem);
 typedef hiprtcResult HIPAPI thiprtcGetErrorString(hiprtcResult result);
 typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char* name_expression);
 typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char** options);
@@ -1336,6 +1367,9 @@ extern thipGraphicsUnmapResources *hipGraphicsUnmapResources;
 
 extern thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 extern thipGLGetDevices *hipGLGetDevices;
+extern thipImportExternalMemory *hipImportExternalMemory;
+extern thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
+extern thipDestroyExternalMemory *hipDestroyExternalMemory;
 
 extern thiprtcGetErrorString* hiprtcGetErrorString;
 extern thiprtcAddNameExpression* hiprtcAddNameExpression;

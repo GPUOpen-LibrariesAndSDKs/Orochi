@@ -306,6 +306,9 @@ tcudaMalloc *cudaMalloc;
 tcudaFree *cudaFree;
 tcudaGetLastError *cudaGetLastError;
 tcudaGetDeviceProperties *cudaGetDeviceProperties;
+tcudaImportExternalMemory *cudaImportExternalMemory;
+tcudaExternalMemoryGetMappedBuffer *cudaExternalMemoryGetMappedBuffer;
+tcudaDestroyExternalMemory *cudaDestroyExternalMemory;
 
 tnvrtcGetErrorString *nvrtcGetErrorString;
 tnvrtcVersion *nvrtcVersion;
@@ -640,6 +643,9 @@ static int cuewCudaInit(void) {
   CUDART_LIBRARY_FIND(cudaFree);
   CUDART_LIBRARY_FIND(cudaGetLastError);
   CUDART_LIBRARY_FIND(cudaGetDeviceProperties);
+  CUDART_LIBRARY_FIND(cudaImportExternalMemory);
+  CUDART_LIBRARY_FIND(cudaExternalMemoryGetMappedBuffer);
+  CUDART_LIBRARY_FIND(cudaDestroyExternalMemory);
 
   result = CUEW_SUCCESS;
   return result;
