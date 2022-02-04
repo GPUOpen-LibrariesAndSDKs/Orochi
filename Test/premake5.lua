@@ -10,6 +10,6 @@ project "Test"
       links{ "version" }
 
       includedirs { "../" }
-      files { "../Pop/**.h", "../Pop/**.cpp" }
+      files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }

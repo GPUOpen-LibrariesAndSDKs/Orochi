@@ -20,17 +20,82 @@
 // THE SOFTWARE.
 //
 
-#include <Pop/Pop.h>
+#include <Orochi/Orochi.h>
+#include <Test/Common.h>
 
-int main()
+#include <stdio.h>
+#include <vector>
+#include <string>
+#include <iostream>
+
+
+int main(int argc, char** argv )
 {
-	int a = ppInitialize( API_HIP, 0 );
-	ppError e;
-	e = ppInit( 0 );
-	ppDevice device;
-	e = ppDeviceGet( &device, 0 );
-	ppCtx ctx;
-	e = ppCtxCreate( &ctx, 0, device );
+	oroApi api = getApiType( argc, argv );
 
+	int a = oroInitialize( api, 0 );
+	if( a != 0 )
+	{
+		printf("initialization failed\n");
+		return 0;
+	}
+	printf( ">> executing on %s\n", ( api == ORO_API_HIP )? "hip":"cuda" );
+
+	printf(">> testing initialization\n");
+	oroError e;
+	e = oroInit( 0 );
+	oroDevice device;
+	e = oroDeviceGet( &device, 0 );
+	oroCtx ctx;
+	e = oroCtxCreate( &ctx, 0, device );
+
+	printf(">> testing device props\n");
+	{
+		oroDeviceProp props;
+		oroGetDeviceProperties( &props, 0 );
+		printf("executing on %s (%s)\n", props.name, props.gcnArchName );
+	}
+	printf(">> testing kernel execution\n");
+	{
+		oroFunction function;
+		{
+			const char* code = "extern \"C\" __global__ " \
+				"void testKernel()" \
+				"{ printf(\"thread %d running\\n\", threadIdx.x); }";
+			const char* funcName = "testKernel";
+			orortcProgram prog;
+			orortcResult e;
+			e = orortcCreateProgram( &prog, code, funcName, 0, 0, 0 );
+			std::vector<const char*> opts; 
+			opts.push_back( "-I ../" );
+
+			e = orortcCompileProgram( prog, opts.size(), opts.data() );
+			if( e != ORORTC_SUCCESS )
+			{
+				size_t logSize;
+				orortcGetProgramLogSize(prog, &logSize);
+				if (logSize) 
+				{
+					std::string log(logSize, '\0');
+					orortcGetProgramLog(prog, &log[0]);
+					std::cout << log << '\n';
+				};
+			}
+			size_t codeSize;
+			e = orortcGetCodeSize(prog, &codeSize);
+
+			std::vector<char> codec(codeSize);
+			e = orortcGetCode(prog, codec.data());
+			e = orortcDestroyProgram(&prog);
+			oroModule module;
+			oroError ee = oroModuleLoadData(&module, codec.data());
+			ee = oroModuleGetFunction(&function, module, funcName);		
+		}
+
+		void** args = {};
+		oroError e = oroModuleLaunchKernel( function, 1,1,1, 32,1,1, 0, 0, args, 0 );
+		oroDeviceSynchronize();
+	}
+	printf(">> done\n");
 	return 0;
 }

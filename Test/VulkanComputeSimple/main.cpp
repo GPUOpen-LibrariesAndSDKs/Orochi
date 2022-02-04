@@ -1,6 +1,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
-#include <Pop/Pop.h>
+#include <Orochi/Orochi.h>
+#include <Test/Common.h>
 
 #include <fstream>
 #include <iostream>
@@ -232,19 +233,19 @@ void *vkGetMemHandle(vk::raii::Device const &device, VkDevice m_device,
 #endif
 }
 
-void importPpExternalMemory(void **ppPtr, ppExternalMemory_t &ppMem,
+void importPpExternalMemory(void **ppPtr, oroExternalMemory_t &ppMem,
 	vk::raii::Device const &device, VkDevice m_device,
 	VkDeviceMemory vkMem, VkDeviceSize size,
 	VkExternalMemoryHandleTypeFlagBits handleType) {
-	ppExternalMemoryHandleDesc externalMemoryHandleDesc = {};
+	oroExternalMemoryHandleDesc externalMemoryHandleDesc = {};
 
 	if (handleType & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT) {
-		externalMemoryHandleDesc.type = ppExternalMemoryHandleTypeOpaqueWin32;
+		externalMemoryHandleDesc.type = oroExternalMemoryHandleTypeOpaqueWin32;
 	} else if (handleType &
 		VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT) {
-		externalMemoryHandleDesc.type = ppExternalMemoryHandleTypeOpaqueWin32Kmt;
+		externalMemoryHandleDesc.type = oroExternalMemoryHandleTypeOpaqueWin32Kmt;
 	} else if (handleType & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT) {
-		externalMemoryHandleDesc.type = ppExternalMemoryHandleTypeOpaqueFd;
+		externalMemoryHandleDesc.type = oroExternalMemoryHandleTypeOpaqueFd;
 	} else {
 		throw std::runtime_error("Unknown handle type requested!");
 	}
@@ -259,14 +260,14 @@ void importPpExternalMemory(void **ppPtr, ppExternalMemory_t &ppMem,
 		(int)(uintptr_t)vkGetMemHandle(device, m_device, vkMem, handleType);
 #endif
 
-	ppImportExternalMemory(&ppMem, &externalMemoryHandleDesc);
+	oroImportExternalMemory(&ppMem, &externalMemoryHandleDesc);
 
-	ppExternalMemoryBufferDesc externalMemBufferDesc = {};
+	oroExternalMemoryBufferDesc externalMemBufferDesc = {};
 	externalMemBufferDesc.offset = 0;
 	externalMemBufferDesc.size = size;
 	externalMemBufferDesc.flags = 0;
 
-	ppExternalMemoryGetMappedBuffer(ppPtr, ppMem, &externalMemBufferDesc);
+	oroExternalMemoryGetMappedBuffer(ppPtr, ppMem, &externalMemBufferDesc);
 }
 
 static std::string AppName = "App";
@@ -275,15 +276,16 @@ static std::string EngineName = "Engine";
 int main(int argc, char **argv) {
 	int32_t localSize = 8;
 	size_t memorySize = localSize * localSize * sizeof(float);
-	int a = ppInitialize(API_CUDA, 0);
-	ppError e;
-	e = ppInit(0);
-	ppDevice device;
-	e = ppDeviceGet(&device, 0);
-	ppCtx ctx;
-	e = ppCtxCreate(&ctx, 0, device);
-	ppDeviceProp props;
-	e = ppGetDeviceProperties(&props, 0);
+	oroApi api = getApiType( argc, argv );
+	int a = oroInitialize(api, 0);
+	oroError e;
+	e = oroInit(0);
+	oroDevice device;
+	e = oroDeviceGet(&device, 0);
+	oroCtx ctx;
+	e = oroCtxCreate(&ctx, 0, device);
+	oroDeviceProp props;
+	e = oroGetDeviceProperties(&props, 0);
 	try {
 		vk::raii::Context context;
 		vk::ApplicationInfo applicationInfo(AppName.c_str(), 1, EngineName.c_str(),
@@ -406,7 +408,7 @@ int main(int argc, char **argv) {
 		vk::SubmitInfo submitInfo({}, {}, *commandBuffer);
 		queue.submit(submitInfo);
 		device.waitIdle();
-		ppExternalMemory_t externalMemory;
+		oroExternalMemory_t externalMemory;
 		void *deviceMemoryPp;
 		importPpExternalMemory(&deviceMemoryPp, externalMemory, device, *device,
 			*deviceMemory, memorySize,
@@ -414,8 +416,8 @@ int main(int argc, char **argv) {
 				vkExternalMemoryHandleType()));
 		std::vector<float> hostMemory{};
 		hostMemory.resize(memorySize / sizeof(float));
-		ppMemcpy((void *)hostMemory.data(), deviceMemoryPp, memorySize,
-			ppMemcpyDeviceToHost);
+		oroMemcpy((void *)hostMemory.data(), deviceMemoryPp, memorySize,
+			oroMemcpyDeviceToHost);
 		bool pass = true;
 		for (uint32_t i = 0; i < localSize * localSize; ++i) 
 		{
@@ -423,7 +425,7 @@ int main(int argc, char **argv) {
 			if( i!=hostMemory[i] )
 				pass = false;
 		}
-		ppDestroyExternalMemory(externalMemory);
+		oroDestroyExternalMemory(externalMemory);
 		if( pass )
 			std::cout << "PASS\n";
 		else

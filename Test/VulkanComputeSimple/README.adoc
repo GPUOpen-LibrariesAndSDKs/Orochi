@@ -1,3 +1,3 @@
 ----
-clang-format -i main.cpp main.comp ; glslangValidator --target-env vulkan1.2 -V main.comp -o main.comp.spv ; spirv-opt -O main.comp.spv -o main.comp.spv ; clang main.cpp ../../Pop/Pop.cpp ../../contrib/cuew/src/cuew.cpp ../../contrib/hipew/src/hipew.cpp -I./ -I../../ -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lversion -std=c++17
+clang-format -i main.cpp main.comp ; glslangValidator --target-env vulkan1.2 -V main.comp -o main.comp.spv ; spirv-opt -O main.comp.spv -o main.comp.spv ; clang main.cpp ../../Orochi/Orochi.cpp ../../contrib/cuew/src/cuew.cpp ../../contrib/hipew/src/hipew.cpp -I./ -I../../ -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lversion -std=c++17
 ----

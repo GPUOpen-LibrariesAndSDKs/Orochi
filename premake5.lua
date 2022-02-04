@@ -1,4 +1,4 @@
-workspace "Pop"
+workspace "YamatanoOrochi"
    configurations { "Debug", "Release" }
    language "C++"
    platforms "x64"
@@ -20,8 +20,8 @@ workspace "Pop"
    buildoptions { "/wd4244", "/wd4305", "/wd4018" }
 
    defines{ "_WIN32" }
+   startproject "Test"
 
---   include "./Pop"
    include "./Test"
    group "Advanced"
       include "./Test/VulkanComputeSimple"
