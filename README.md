@@ -14,7 +14,27 @@ To run an application compiled with Orochi, you need to install a driver of your
 
 ----
 
-## To Build
+## API example 
+
+APIs have prefix `oro`. If you are familiar with CUDA or HIP driver APIs, you will get used to Orochi APIs easily.  
+
+Here is an example of the API for Orochi device and context creation. 
+
+
+```
+	oroInitialize( ORO_API_HIP, 0 );
+	oroInit( 0 );
+	oroDevice device;
+	oroDeviceGet( &device, 0 );
+	oroCtx ctx;
+	oroCtxCreate( &ctx, 0, device );
+```
+
+See more in the [sample application](./Test/main.cpp).
+
+----
+
+## Building Sample Application
 
 Run premake. 
 
@@ -24,12 +44,11 @@ Run premake.
 
 Test is a minimum application.
 
-----
-
-## Test Application
+### Test Application
 
 It runs on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
 
+The source code for the application can be found [here](./Test/main.cpp).
 
 ----
 
