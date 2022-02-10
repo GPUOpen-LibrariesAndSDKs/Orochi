@@ -54,9 +54,9 @@ int main(int argc, char** argv )
 	{
 		oroFunction function;
 		{
-			const char* code = "extern \"C\" __global__ " \
-				"void testKernel()" \
-				"{ printf(\"	thread %d running\\n\", threadIdx.x); }";
+			const char* code = "extern \"C\" __global__ "
+							   "void testKernel()"
+							   "{ int a = threadIdx.x; printf(\"	thread %d running\\n\", a); }";
 			const char* funcName = "testKernel";
 			orortcProgram prog;
 			orortcResult e;
