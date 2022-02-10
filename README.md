@@ -18,17 +18,34 @@ To run an application compiled with Orochi, you need to install a driver of your
 
 APIs have prefix `oro`. If you are familiar with CUDA or HIP driver APIs, you will get used to Orochi APIs easily.  
 
-Here is an example of the API for Orochi device and context creation. 
+For example, suppose we have the following HIP code for device and context creation:
+
+```
+#include <hip/hip_runtime.h>
+
+hipInit( 0 );
+hipDevice device;
+hipDeviceGet( &device, 0 );
+hipCtx ctx;
+hipCtxCreate( &ctx, 0, device );
+
+```
+
+
+The same code can be rewritten using Orochi as:
 
 
 ```
-	oroInitialize( ORO_API_HIP, 0 );
-	oroInit( 0 );
-	oroDevice device;
-	oroDeviceGet( &device, 0 );
-	oroCtx ctx;
-	oroCtxCreate( &ctx, 0, device );
+#include <Orochi/Orochi.h>
+
+oroInitialize( ORO_API_HIP, 0 );
+oroInit( 0 );
+oroDevice device;
+oroDeviceGet( &device, 0 );
+oroCtx ctx;
+oroCtxCreate( &ctx, 0, device );
 ```
+Which will run on both CUDA and HIP at runtime!
 
 See more in the [sample application](./Test/main.cpp).
 
