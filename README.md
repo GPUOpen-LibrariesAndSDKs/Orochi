@@ -2,7 +2,7 @@
 
 "Yamata No Orochi" [^1] 
 
-Orochi is a library that allows you to load HIP and CUDA APIs dynamically which allows the user to switch APIs at runtime so you don't need to compile two separate implementations for each API. This allows you to compile and maintain a single binary that can run on both AMD and NVIDIA GPU's. Unlike HIP which uses hipamd or CUDA at compile-time, Orochi will dynamically load the corresponding HIP/CUDA shared libraries depending on your platform. In other words, it combines the functionality offered by HIPEW and CUEW into a single library.
+Orochi is a library loading HIP and CUDA APIs dynamically which allows the user to switch APIs at runtime. Therefore you don't need to compile two separate implementations for each API. This allows you to compile and maintain a single binary that can run on both AMD and NVIDIA GPU's. Unlike HIP which uses hipamd or CUDA at compile-time, Orochi will dynamically load the corresponding HIP/CUDA shared libraries depending on your platform. In other words, it combines the functionality offered by HIPEW and CUEW into a single library.
 
 ---
 
