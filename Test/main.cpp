@@ -23,11 +23,6 @@
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
 
-#include <stdio.h>
-#include <vector>
-#include <string>
-#include <iostream>
-
 
 int main(int argc, char** argv )
 {
@@ -61,7 +56,7 @@ int main(int argc, char** argv )
 		{
 			const char* code = "extern \"C\" __global__ " \
 				"void testKernel()" \
-				"{ printf(\"thread %d running\\n\", threadIdx.x); }";
+				"{ printf(\"	thread %d running\\n\", threadIdx.x); }";
 			const char* funcName = "testKernel";
 			orortcProgram prog;
 			orortcResult e;

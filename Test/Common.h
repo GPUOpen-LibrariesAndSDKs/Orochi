@@ -1,6 +1,10 @@
 #pragma once
 #include <Orochi/Orochi.h>
 #include <string.h>
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <vector>
 
 inline
 oroApi getApiType( int argc, char** argv )
@@ -15,3 +19,11 @@ oroApi getApiType( int argc, char** argv )
 	}
 	return api;
 }
+
+inline void checkError( oroError e )
+{
+	if( e != oroSuccess ) 
+		printf( "ERROR===================\n" );
+}
+
+#define ERROR_CHECK( e ) checkError( e )

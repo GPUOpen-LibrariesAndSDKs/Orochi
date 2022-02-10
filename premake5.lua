@@ -23,5 +23,6 @@ workspace "YamatanoOrochi"
    startproject "Test"
 
    include "./Test"
+   include "./Test/DeviceEnum"
    group "Advanced"
       include "./Test/VulkanComputeSimple"
