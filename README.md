@@ -61,11 +61,11 @@ Run premake.
 
 Test is a minimum application.
 
-### Test Application
+### Test Applications
 
-It runs on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
+The test applications run on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
 
-The source code for the application can be found [here](./Test/main.cpp).
+The source code for the test applications can be found [here](./Test/).
 
 ----
 
