@@ -25,9 +25,9 @@
 
 enum oroApi
 {
-    ORO_API_AUTOMATIC,
-    ORO_API_HIP,
-    ORO_API_CUDA,
+    ORO_API_AUTOMATIC = 1<<0,
+    ORO_API_HIP = 1<<1,
+    ORO_API_CUDA = 1<<2,
 };
 
 enum oroError
@@ -583,7 +583,7 @@ typedef struct oroExternalMemoryBufferDesc_st {
 * Stream CallBack struct
 */
 
-#define __ORO_FUNC_DEC( funcName, args ) template<oroApi API=ORO_API_AUTOMATIC> oroError OROAPI funcName args
+#define __ORO_FUNC_DEC( funcName, args ) oroError OROAPI funcName args
 
 
 __ORO_FUNC_DEC( oroGetErrorName, (oroError error, const char** pStr) );
@@ -591,9 +591,9 @@ __ORO_FUNC_DEC( oroGetErrorString, (oroError error, const char** pStr) );
 __ORO_FUNC_DEC( oroInit, (unsigned int Flags) );
 __ORO_FUNC_DEC( oroDriverGetVersion, (int* driverVersion) );
 __ORO_FUNC_DEC( oroGetDevice, (int* device) );
-__ORO_FUNC_DEC( oroGetDeviceCount, (int* count) );
+__ORO_FUNC_DEC( oroGetDeviceCount, (int* count, oroApi api = ORO_API_AUTOMATIC ) );
 __ORO_FUNC_DEC( oroGetDeviceProperties, (oroDeviceProp* props, int deviceId) );
-__ORO_FUNC_DEC( oroDeviceGet, (oroDevice* device, int ordinal) );
+__ORO_FUNC_DEC( oroDeviceGet, (oroDevice* device, int ordinal ) );
 __ORO_FUNC_DEC( oroDeviceGetName, (char* name, int len, oroDevice dev) );
 __ORO_FUNC_DEC( oroDeviceGetAttribute, (int* pi, oroDeviceAttribute attrib, oroDevice dev) );
 __ORO_FUNC_DEC( oroDeviceComputeCapability, (int* major, int* minor, oroDevice dev) );
@@ -737,4 +737,6 @@ enum {
 
 int oroInitialize( oroApi api, oroU32 flags );
 oroApi oroGetCurAPI( oroU32 flags );
+void* getRawCtx( oroCtx ctx );
+oroDevice getRawDevice( oroDevice dev );
 

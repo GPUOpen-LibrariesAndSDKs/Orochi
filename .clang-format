@@ -1,0 +1,14 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
+BreakBeforeBraces: Allman
+ColumnLimit: 256
+AllowShortBlocksOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+NamespaceIndentation: None 
+SpacesInParentheses: true
+SpaceBeforeParens: Never
+SpaceAfterTemplateKeyword: false
+AlwaysBreakTemplateDeclarations: Yes
+PointerAlignment: Left

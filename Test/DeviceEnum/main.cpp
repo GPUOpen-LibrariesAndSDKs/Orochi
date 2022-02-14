@@ -24,34 +24,46 @@
 #include <Test/Common.h>
 
 
-int main(int argc, char** argv )
+int main( int argc, char** argv )
 {
-	oroApi api = getApiType( argc, argv );
+	int a = oroInitialize( ( oroApi )( ORO_API_CUDA | ORO_API_HIP ), 0 );
 
-	int a = oroInitialize( api, 0 );
-	if( a != 0 )
-	{
-		printf("initialization failed\n");
-		return 0;
-	}
-	printf( ">> executing on %s\n", ( api == ORO_API_HIP )? "hip":"cuda" );
-
-	printf(">> testing initialization\n");
 	oroError e;
 	e = oroInit( 0 );
-	oroDevice device;
-	e = oroDeviceGet( &device, 0 );
-	oroCtx ctx;
-	e = oroCtxCreate( &ctx, 0, device );
+	int nDevicesTotal;
+	e = oroGetDeviceCount( &nDevicesTotal );
+	ERROR_CHECK( e );
+	int nAMDDevices;
+	e = oroGetDeviceCount( &nAMDDevices, ORO_API_HIP );
+	ERROR_CHECK( e );
+	int nNVIDIADevices;
+	e = oroGetDeviceCount( &nNVIDIADevices, ORO_API_CUDA );
+	ERROR_CHECK( e );
 
-	printf(">> testing device props\n");
+	printf( "# of devices: %d\n", nDevicesTotal );
+	printf( "# of AMD devices: %d\n", nAMDDevices );
+	printf( "# of NV devices: %d\n\n", nNVIDIADevices );
+
+	for( int i = 0; i < nDevicesTotal; i++ )
 	{
+		oroDevice device;
+		e = oroDeviceGet( &device, i );
+		ERROR_CHECK( e );
+
+		char name[128];
+		e = oroDeviceGetName( name, 128, device );
+		ERROR_CHECK( e );
+
 		oroDeviceProp props;
-		oroGetDeviceProperties( &props, 0 );
-		printf("executing on %s (%s)\n", props.name, props.gcnArchName );
-	}
-	printf(">> testing kernel execution\n");
-	{
+		e = oroGetDeviceProperties( &props, i );
+		ERROR_CHECK( e );
+		printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
+
+		oroCtx ctx;
+		e = oroCtxCreate( &ctx, 0, device );
+		ERROR_CHECK( e );
+
+		//try kernel execution
 		oroFunction function;
 		{
 			const char* code = "extern \"C\" __global__ "
@@ -61,36 +73,39 @@ int main(int argc, char** argv )
 			orortcProgram prog;
 			orortcResult e;
 			e = orortcCreateProgram( &prog, code, funcName, 0, 0, 0 );
-			std::vector<const char*> opts; 
+			std::vector<const char*> opts;
 			opts.push_back( "-I ../" );
 
 			e = orortcCompileProgram( prog, opts.size(), opts.data() );
 			if( e != ORORTC_SUCCESS )
 			{
 				size_t logSize;
-				orortcGetProgramLogSize(prog, &logSize);
-				if (logSize) 
+				orortcGetProgramLogSize( prog, &logSize );
+				if( logSize )
 				{
-					std::string log(logSize, '\0');
-					orortcGetProgramLog(prog, &log[0]);
+					std::string log( logSize, '\0' );
+					orortcGetProgramLog( prog, &log[0] );
 					std::cout << log << '\n';
 				};
 			}
 			size_t codeSize;
-			e = orortcGetCodeSize(prog, &codeSize);
+			e = orortcGetCodeSize( prog, &codeSize );
 
-			std::vector<char> codec(codeSize);
-			e = orortcGetCode(prog, codec.data());
-			e = orortcDestroyProgram(&prog);
+			std::vector<char> codec( codeSize );
+			e = orortcGetCode( prog, codec.data() );
+			e = orortcDestroyProgram( &prog );
 			oroModule module;
-			oroError ee = oroModuleLoadData(&module, codec.data());
-			ee = oroModuleGetFunction(&function, module, funcName);		
+			oroError ee = oroModuleLoadData( &module, codec.data() );
+			ee = oroModuleGetFunction( &function, module, funcName );
 		}
 
 		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1,1,1, 32,1,1, 0, 0, args, 0 );
+		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 );
 		oroDeviceSynchronize();
+
+		oroApi api = oroGetCurAPI( 0 );
+		printf( "executed on %s\n", api == ORO_API_HIP ? "AMD" : "NVIDIA" );
+		e = oroCtxDestroy( ctx );
 	}
-	printf(">> done\n");
 	return 0;
 }

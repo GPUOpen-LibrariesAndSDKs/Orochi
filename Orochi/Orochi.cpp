@@ -27,20 +27,88 @@
 #include <string.h>
 
 
-static oroApi s_api = ORO_API_HIP;
+thread_local static oroApi s_api = ORO_API_HIP;
+static oroU32 s_loadedApis = 0;
+
+struct ioroCtx_t
+{
+public:
+	void* m_ptr;
+private:
+	oroU32 m_storage;
+
+public:
+	oroApi getApi() const { return (oroApi)m_storage; }
+	void setApi( oroApi api ) { m_storage = api; }
+};
+
+struct ioroDevice
+{
+private:
+	oroU32 m_api : 4;
+	oroU32 m_deviceIdx : 16;
+
+public:
+	ioroDevice( int src = 0)
+	{
+		((int*)this)[0] = src;
+	}
+
+	oroApi getApi() const { return (oroApi)m_api; }
+	void setApi(oroApi api) { m_api = api; }
+	int getDevice() const { return m_deviceIdx; }
+	void setDevice( int d ) { m_deviceIdx = d; }
+};
+
+inline 
+oroApi getRawDeviceIndex( int& deviceId ) 
+{
+	int n[2] = { 0, 0 };
+	oroGetDeviceCount( &n[0], ORO_API_HIP );
+	oroGetDeviceCount( &n[1], ORO_API_CUDA );
+
+	oroApi api = deviceId < n[0] ? ORO_API_HIP : ORO_API_CUDA;
+	if( api == ORO_API_CUDA )
+		deviceId -= n[0];
+	return api;
+}
 
 int oroInitialize( oroApi api, oroU32 flags )
 {
 	s_api = api;
-	if( api == ORO_API_CUDA )
-		return cuewInit( CUEW_INIT_CUDA | CUEW_INIT_NVRTC );
-	if( api == ORO_API_HIP )
-		return hipewInit( HIPEW_INIT_HIP );
-	return ORO_ERROR_OPEN_FAILED;
+	int e = 0;
+	s_loadedApis = 0;
+	if( api & ORO_API_CUDA )
+	{
+		e = cuewInit( CUEW_INIT_CUDA | CUEW_INIT_NVRTC );
+		if( e == 0 )
+			s_loadedApis |= ORO_API_CUDA;
+	}
+	if( api & ORO_API_HIP )
+	{
+		e = hipewInit( HIPEW_INIT_HIP );
+		if( e == 0 )
+			s_loadedApis |= ORO_API_HIP;
+	}
+	if( s_loadedApis == 0 )
+		return ORO_ERROR_OPEN_FAILED;
+	return ORO_SUCCESS;
 }
 oroApi oroGetCurAPI(oroU32 flags)
 {
 	return s_api;
+}
+
+void* getRawCtx( oroCtx ctx ) 
+{ 
+	ioroCtx_t* c = (ioroCtx_t*)ctx;
+	return c->m_ptr;
+}
+
+oroDevice getRawDevice( oroDevice dev )
+{
+	ioroDevice d( dev );
+	return d.getDevice();
 }
 
 
@@ -64,12 +132,14 @@ oroError cuda2oro(cudaError_t a)
 inline
 CUcontext* oroCtx2cu( oroCtx* a )
 {
-	return (CUcontext*)a;
+	ioroCtx_t* b = *a;
+	return (CUcontext*)&b->m_ptr;
 }
 inline
 hipCtx_t* oroCtx2hip( oroCtx* a )
 {
-	return (hipCtx_t*)a;
+	ioroCtx_t* b = *a;
+	return (hipCtx_t*)&b->m_ptr;
 }
 inline
 orortcResult hiprtc2oro( hiprtcResult a )
@@ -83,55 +153,86 @@ orortcResult nvrtc2oro( nvrtcResult a )
 }
 
 #define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+#define __ORO_FUNC1X( API, cuname, hipname ) if( API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
 //#define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA || API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cu##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
+#define __ORO_FUNCX( API, name ) if( API == ORO_API_CUDA ) return cu2oro( cu##name ); if( API == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORO_CTXT_FUNC( name ) __ORO_FUNC1(Ctx##name, name)
+#define __ORO_CTXT_FUNCX( API, name ) __ORO_FUNC1X(API, Ctx##name, name)
 //#define __ORO_CTXT_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cuCtx##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORORTC_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
 
-template<oroApi API>
+
 oroError OROAPI oroGetErrorName(oroError error, const char** pStr)
 {
 	__ORO_FUNC1(GetErrorName((CUresult)error, pStr),
 		GetErrorName((hipError_t)error, pStr));
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroGetErrorString(oroError error, const char** pStr)
 {
 	__ORO_FUNC1(GetErrorString((CUresult)error, pStr),
 		GetErrorString((hipError_t)error, pStr));
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroInit(unsigned int Flags)
 {
-	__ORO_FUNC( Init(Flags) );
-	return oroErrorUnknown;
+	oroU32 e = 0;
+	if( s_loadedApis & ORO_API_HIP )
+		e |= hip2oro(hipInit(Flags) );
+	if (s_loadedApis & ORO_API_CUDA)
+		e |= cu2oro(cuInit(Flags));
+	return (oroError)e;
 }
-template<oroApi API>
+
 oroError OROAPI oroDriverGetVersion(int* driverVersion)
 {
 	__ORO_FUNC( DriverGetVersion(driverVersion) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroGetDevice(int* device)
 {
 	__ORO_CTXT_FUNC( GetDevice(device) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
-oroError OROAPI oroGetDeviceCount(int* count)
+
+oroError OROAPI oroGetDeviceCount(int* count, oroApi iapi)
 {
-	__ORO_FUNC1( DeviceGetCount(count), GetDeviceCount(count) );
-	return oroErrorUnknown;
+	oroU32 api = 0;
+	if( iapi == ORO_API_AUTOMATIC )
+		api = (ORO_API_HIP| ORO_API_CUDA);
+	else
+		api = iapi;
+
+	*count = 0;
+	oroU32 e = 0;
+	if( (api & s_loadedApis) & ORO_API_HIP )
+	{
+		int c = 0;
+		e = hip2oro(hipGetDeviceCount(&c));
+		if( e == 0 )
+			*count += c;
+	}
+	if( (api & s_loadedApis) & ORO_API_CUDA )
+	{
+		int c = 0;
+		e = cu2oro(cuDeviceGetCount(&c));
+		if( e == 0 )
+			*count += c;
+	}
+	return oroSuccess;
 }
-template<oroApi API>
+
 oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId)
 {
-	if( s_api == ORO_API_CUDA )
+	oroApi api = getRawDeviceIndex( deviceId );
+	if( api == ORO_API_HIP )
+		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
+	if( api == ORO_API_CUDA )
 	{
 		cudaDeviceProp p;
 		cudaError_t e = cudaGetDeviceProperties( &p, deviceId );
@@ -148,80 +249,114 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId)
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
 		return oroSuccess;
 	}
-	return hip2oro( hipGetDeviceProperties( (hipDeviceProp_t*)props, deviceId ) );
-}
-template<oroApi API>
-oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal)
-{
-	__ORO_FUNC( DeviceGet(device, ordinal) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
+oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal )
+{
+	oroApi api = getRawDeviceIndex( ordinal );
+
+	ioroDevice d;
+	if (api == ORO_API_HIP)
+	{
+		int t;
+		auto e = hipDeviceGet(&t, ordinal);
+		d.setApi( api );
+		d.setDevice( t );
+		*(ioroDevice*)device = d;
+		return hip2oro(e);
+	}
+	if (api == ORO_API_CUDA)
+	{
+		int t;
+		auto e = cuDeviceGet(&t, ordinal);
+		d.setApi(api);
+		d.setDevice(t);
+		*(ioroDevice*)device = d;
+		return cu2oro(e);
+	}
+	return oroErrorUnknown;
+}
+
 oroError OROAPI oroDeviceGetName(char* name, int len, oroDevice dev)
 {
-	__ORO_FUNC( DeviceGetName(name, len, dev) );
+	ioroDevice d( dev );
+	__ORO_FUNCX( d.getApi(), DeviceGetName(name, len, d.getDevice() ) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDevice dev)
 {
-	__ORO_FUNC1(DeviceGetAttribute(pi, (CUdevice_attribute)attrib, dev),
-		DeviceGetAttribute(pi, (hipDeviceAttribute_t)attrib, dev));
+	ioroDevice d( dev );
+	__ORO_FUNC1X( d.getApi(), DeviceGetAttribute( pi, (CUdevice_attribute)attrib, d.getDevice() ), DeviceGetAttribute( pi, (hipDeviceAttribute_t)attrib, d.getDevice() ) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDeviceComputeCapability(int* major, int* minor, oroDevice dev)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDevicePrimaryCtxRetain(oroCtx* pctx, oroDevice dev)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDevicePrimaryCtxRelease(oroDevice dev)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDevicePrimaryCtxSetFlags(oroDevice dev, unsigned int flags)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDevicePrimaryCtxGetState(oroDevice dev, unsigned int* flags, int* active)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDevicePrimaryCtxReset(oroDevice dev)
 {
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroCtxCreate(oroCtx* pctx, unsigned int flags, oroDevice dev)
 {
-	__ORO_FUNC1( CtxCreate(oroCtx2cu(pctx),flags,dev), CtxCreate(oroCtx2hip(pctx),flags,dev) );
+	ioroDevice d( dev );
+	ioroCtx_t* ctxt = new ioroCtx_t;
+	ctxt->setApi( d.getApi() );
+	(*pctx) = ctxt;
+	s_api = ctxt->getApi();
+	__ORO_FUNC1X( d.getApi(), CtxCreate( oroCtx2cu( pctx ), flags, d.getDevice() ), CtxCreate( oroCtx2hip( pctx ), flags, d.getDevice() ) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroCtxDestroy(oroCtx ctx)
 {
-	__ORO_FUNC1( CtxDestroy( *oroCtx2cu(&ctx) ), CtxDestroy( *oroCtx2hip(&ctx) ) );
-	return oroErrorUnknown;
+	int e = 0;
+	if( s_api == ORO_API_CUDA ) e = cuCtxDestroy( *oroCtx2cu( &ctx ) );
+	if( s_api == ORO_API_HIP ) e = hipCtxDestroy( *oroCtx2hip( &ctx ) );
+
+	if( e )
+		return oroErrorUnknown;
+	ioroCtx_t* c = (ioroCtx_t*)ctx;
+	delete c;
+	return oroSuccess;
 }
 /*
 oroError OROAPI oroCtxPushCurrent(oroCtx ctx);
 oroError OROAPI oroCtxPopCurrent(oroCtx* pctx);
 */
-template<oroApi API>
+
 oroError OROAPI oroCtxSetCurrent(oroCtx ctx)
 {
+	s_api = ctx->getApi();
 	__ORO_FUNC1( CtxSetCurrent( *oroCtx2cu(&ctx) ), CtxSetCurrent( *oroCtx2hip(&ctx) ) );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 {
 	__ORO_FUNC1( CtxGetCurrent( oroCtx2cu(pctx) ), CtxGetCurrent( oroCtx2hip(pctx) ) );
@@ -231,13 +366,13 @@ oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 oroError OROAPI oroCtxGetDevice(oroDevice* device);
 oroError OROAPI oroCtxGetFlags(unsigned int* flags);
 */
-template<oroApi API>
+
 oroError OROAPI oroCtxSynchronize(void)
 {
 	__ORO_FUNC( CtxSynchronize() );
 	return oroErrorUnknown;
 }
-template<oroApi API>
+
 oroError OROAPI oroDeviceSynchronize(void)
 {
 	__ORO_FUNC1( CtxSynchronize(), DeviceSynchronize() );
@@ -454,40 +589,6 @@ orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t* codeSizeRet)
 		GetCodeSize( (hiprtcProgram)prog, codeSizeRet ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
-
-//-------------------
-#define __ORO_FUNC_INSTANCE( funcName, args ) \
-    template oroError OROAPI funcName <ORO_API_AUTOMATIC> args;\
-    template oroError OROAPI funcName <ORO_API_CUDA> args;\
-    template oroError OROAPI funcName <ORO_API_HIP> args;
-
-__ORO_FUNC_INSTANCE( oroGetErrorName, (oroError error, const char** pStr) );
-__ORO_FUNC_INSTANCE( oroGetErrorString, (oroError error, const char** pStr) );
-__ORO_FUNC_INSTANCE( oroInit, (unsigned int Flags) );
-__ORO_FUNC_INSTANCE( oroDriverGetVersion, (int* driverVersion) );
-__ORO_FUNC_INSTANCE( oroGetDevice, (int* device) );
-__ORO_FUNC_INSTANCE( oroGetDeviceCount, (int* count) );
-__ORO_FUNC_INSTANCE( oroGetDeviceProperties, (oroDeviceProp* props, int deviceId) );
-__ORO_FUNC_INSTANCE( oroDeviceGet, (oroDevice* device, int ordinal) );
-__ORO_FUNC_INSTANCE( oroDeviceGetName, (char* name, int len, oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroDeviceGetAttribute, (int* pi, oroDeviceAttribute attrib, oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroDeviceComputeCapability, (int* major, int* minor, oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroDevicePrimaryCtxRetain, (oroCtx* pctx, oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroDevicePrimaryCtxRelease, (oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroDevicePrimaryCtxSetFlags, (oroDevice dev, unsigned int flags) );
-__ORO_FUNC_INSTANCE( oroDevicePrimaryCtxGetState, (oroDevice dev, unsigned int* flags, int* active) );
-__ORO_FUNC_INSTANCE( oroDevicePrimaryCtxReset, (oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroCtxCreate, (oroCtx* pctx, unsigned int flags, oroDevice dev) );
-__ORO_FUNC_INSTANCE( oroCtxDestroy, (oroCtx ctx) );
-// __ORO_FUNC_INSTANCE( oroCtxPushCurrent, (oroCtx ctx) );
-// __ORO_FUNC_INSTANCE( oroCtxPopCurrent, (oroCtx* pctx) );
-__ORO_FUNC_INSTANCE( oroCtxSetCurrent, (oroCtx ctx) );
-__ORO_FUNC_INSTANCE( oroCtxGetCurrent, (oroCtx* pctx) );
-// __ORO_FUNC_INSTANCE( oroCtxGetDevice, (oroDevice* device) );
-// __ORO_FUNC_INSTANCE( oroCtxGetFlags, (unsigned int* flags) );
-__ORO_FUNC_INSTANCE( oroCtxSynchronize, (void) );
-__ORO_FUNC_INSTANCE( oroDeviceSynchronize, (void) );
-//-------------------
 
 // Implementation of oroPointerGetAttributes is hacky due to differences between CUDA and HIP
 oroError OROAPI oroPointerGetAttributes(oroPointerAttribute* attr, oroDeviceptr dptr)
