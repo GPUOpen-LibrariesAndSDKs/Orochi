@@ -229,7 +229,9 @@ oroError OROAPI oroGetDeviceCount(int* count, oroApi iapi)
 
 oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId)
 {
-	oroApi api = getRawDeviceIndex( deviceId );
+	ioroDevice d( deviceId );
+	deviceId = d.getDevice();
+	oroApi api = d.getApi();
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
 	if( api == ORO_API_CUDA )
