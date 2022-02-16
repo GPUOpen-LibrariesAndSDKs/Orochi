@@ -430,12 +430,12 @@ oroError OROAPI oroMemGetInfo(size_t* free, size_t* total)
 }
 oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize)
 {
-	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), (hipDeviceptr_t*)Malloc( dptr, bytesize ) );
+	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), Malloc( dptr, bytesize ) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize)
 {
-	__ORO_FUNC2( Malloc((CUdeviceptr*)dptr, bytesize), (hipDeviceptr_t*)Malloc(dptr, bytesize) );
+	__ORO_FUNC2( Malloc((CUdeviceptr*)dptr, bytesize), Malloc(dptr, bytesize) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMemAllocPitch(oroDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes)
