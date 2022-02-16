@@ -590,7 +590,7 @@ oroError OROAPI oroInit(unsigned int Flags) ;
 oroError OROAPI oroDriverGetVersion(int* driverVersion) ;
 oroError OROAPI oroGetDevice(int* device) ;
 oroError OROAPI oroGetDeviceCount(int* count, oroApi api = ORO_API_AUTOMATIC ) ;
-oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId) ;
+oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev) ;
 oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal ) ;
 oroError OROAPI oroDeviceGetName(char* name, int len, oroDevice dev) ;
 oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDevice dev) ;
