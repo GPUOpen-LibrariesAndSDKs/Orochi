@@ -583,35 +583,33 @@ typedef struct oroExternalMemoryBufferDesc_st {
 * Stream CallBack struct
 */
 
-#define __ORO_FUNC_DEC( funcName, args ) oroError OROAPI funcName args
 
-
-__ORO_FUNC_DEC( oroGetErrorName, (oroError error, const char** pStr) );
-__ORO_FUNC_DEC( oroGetErrorString, (oroError error, const char** pStr) );
-__ORO_FUNC_DEC( oroInit, (unsigned int Flags) );
-__ORO_FUNC_DEC( oroDriverGetVersion, (int* driverVersion) );
-__ORO_FUNC_DEC( oroGetDevice, (int* device) );
-__ORO_FUNC_DEC( oroGetDeviceCount, (int* count, oroApi api = ORO_API_AUTOMATIC ) );
-__ORO_FUNC_DEC( oroGetDeviceProperties, (oroDeviceProp* props, int deviceId) );
-__ORO_FUNC_DEC( oroDeviceGet, (oroDevice* device, int ordinal ) );
-__ORO_FUNC_DEC( oroDeviceGetName, (char* name, int len, oroDevice dev) );
-__ORO_FUNC_DEC( oroDeviceGetAttribute, (int* pi, oroDeviceAttribute attrib, oroDevice dev) );
-__ORO_FUNC_DEC( oroDeviceComputeCapability, (int* major, int* minor, oroDevice dev) );
-__ORO_FUNC_DEC( oroDevicePrimaryCtxRetain, (oroCtx* pctx, oroDevice dev) );
-__ORO_FUNC_DEC( oroDevicePrimaryCtxRelease, (oroDevice dev) );
-__ORO_FUNC_DEC( oroDevicePrimaryCtxSetFlags, (oroDevice dev, unsigned int flags) );
-__ORO_FUNC_DEC( oroDevicePrimaryCtxGetState, (oroDevice dev, unsigned int* flags, int* active) );
-__ORO_FUNC_DEC( oroDevicePrimaryCtxReset, (oroDevice dev) );
-__ORO_FUNC_DEC( oroCtxCreate, (oroCtx* pctx, unsigned int flags, oroDevice dev) );
-__ORO_FUNC_DEC( oroCtxDestroy, (oroCtx ctx) );
-__ORO_FUNC_DEC( oroCtxPushCurrent, (oroCtx ctx) );
-__ORO_FUNC_DEC( oroCtxPopCurrent, (oroCtx* pctx) );
-__ORO_FUNC_DEC( oroCtxSetCurrent, (oroCtx ctx) );
-__ORO_FUNC_DEC( oroCtxGetCurrent, (oroCtx* pctx) );
-__ORO_FUNC_DEC( oroCtxGetDevice, (oroDevice* device) );
-__ORO_FUNC_DEC( oroCtxGetFlags, (unsigned int* flags) );
-__ORO_FUNC_DEC( oroCtxSynchronize, (void) );
-__ORO_FUNC_DEC( oroDeviceSynchronize, (void) );
+oroError OROAPI oroGetErrorName(oroError error, const char** pStr) ;
+oroError OROAPI oroGetErrorString(oroError error, const char** pStr) ;
+oroError OROAPI oroInit(unsigned int Flags) ;
+oroError OROAPI oroDriverGetVersion(int* driverVersion) ;
+oroError OROAPI oroGetDevice(int* device) ;
+oroError OROAPI oroGetDeviceCount(int* count, oroApi api = ORO_API_AUTOMATIC ) ;
+oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId) ;
+oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal ) ;
+oroError OROAPI oroDeviceGetName(char* name, int len, oroDevice dev) ;
+oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDevice dev) ;
+oroError OROAPI oroDeviceComputeCapability(int* major, int* minor, oroDevice dev) ;
+oroError OROAPI oroDevicePrimaryCtxRetain(oroCtx* pctx, oroDevice dev) ;
+oroError OROAPI oroDevicePrimaryCtxRelease(oroDevice dev) ;
+oroError OROAPI oroDevicePrimaryCtxSetFlags(oroDevice dev, unsigned int flags) ;
+oroError OROAPI oroDevicePrimaryCtxGetState(oroDevice dev, unsigned int* flags, int* active) ;
+oroError OROAPI oroDevicePrimaryCtxReset(oroDevice dev) ;
+oroError OROAPI oroCtxCreate(oroCtx* pctx, unsigned int flags, oroDevice dev) ;
+oroError OROAPI oroCtxDestroy(oroCtx ctx) ;
+oroError OROAPI oroCtxPushCurrent(oroCtx ctx) ;
+oroError OROAPI oroCtxPopCurrent(oroCtx* pctx) ;
+oroError OROAPI oroCtxSetCurrent(oroCtx ctx) ;
+oroError OROAPI oroCtxGetCurrent(oroCtx* pctx) ;
+oroError OROAPI oroCtxGetDevice(oroDevice* device) ;
+oroError OROAPI oroCtxGetFlags(unsigned int* flags) ;
+oroError OROAPI oroCtxSynchronize(void) ;
+oroError OROAPI oroDeviceSynchronize(void) ;
 //oroError OROAPI oroCtxGetCacheConfig(hipFuncCache_t* pconfig);
 //oroError OROAPI oroCtxSetCacheConfig(hipFuncCache_t config);
 //oroError OROAPI oroCtxGetSharedMemConfig(hipSharedMemConfig* pConfig);
