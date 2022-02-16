@@ -17,9 +17,9 @@ workspace "YamatanoOrochi"
      defines { "NDEBUG" }
      optimize "On"
    filter {}
-   filter {"system:Windows"}
+   if os.istarget("windows") then
       buildoptions { "/wd4244", "/wd4305", "/wd4018" }
-   filter {}
+   end
 
    defines{ "_WIN32" }
    startproject "Test"
