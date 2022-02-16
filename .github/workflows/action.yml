@@ -12,4 +12,4 @@ jobs:
     - name: premake
       run: ./tools/premake5/linux64/premake5 gmake
     - name: make
-      run: make
+      run: make -j Test
