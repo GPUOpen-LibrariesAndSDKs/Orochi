@@ -17,7 +17,7 @@ workspace "YamatanoOrochi"
      defines { "NDEBUG" }
      optimize "On"
    filter {}
-   filter "system:Windows"
+   filter {"system:Windows"}
       buildoptions { "/wd4244", "/wd4305", "/wd4018" }
    filter {}
 
