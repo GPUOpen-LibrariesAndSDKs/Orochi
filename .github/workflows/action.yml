@@ -1,0 +1,15 @@
+name: Build
+on: [push]
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: configure
+      run: sudo apt-get install python
+    - name: chmod
+      run: chmod +x ./tools/premake5/linux64/premake5
+    - name: premake
+      run: ./tools/premake5/linux64/premake5 gmake
+    - name: make
+      run: make -j Test

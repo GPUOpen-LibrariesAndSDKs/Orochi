@@ -4,11 +4,9 @@ project "Test"
       targetdir "../dist/bin/%{cfg.buildcfg}"
       location "../build/"
 
-      buildoptions { "/wd4244" }
-
---      links{ "Pop" }
+   if os.istarget("windows") then
       links{ "version" }
-
+   end
       includedirs { "../" }
       files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp" }

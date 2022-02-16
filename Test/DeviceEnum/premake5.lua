@@ -4,9 +4,9 @@ project "DeviceEnum"
       targetdir "../../dist/bin/%{cfg.buildcfg}"
       location "../../build/"
 
-      buildoptions { "/wd4244" }
-
+   if os.istarget("windows") then
       links{ "version" }
+   end
 
       includedirs { "../../" }
       files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
