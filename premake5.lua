@@ -14,7 +14,7 @@ workspace "YamatanoOrochi"
       buildToolset = "clang"
    end
    if os.istarget("linux") then
-      buildoptions{ "-ldl" }
+      links { "dl" }
    end
 
   filter {"platforms:x64", "configurations:Debug"}
