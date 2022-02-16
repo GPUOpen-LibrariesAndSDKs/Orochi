@@ -592,7 +592,7 @@ __ORO_FUNC_DEC( oroInit, (unsigned int Flags) );
 __ORO_FUNC_DEC( oroDriverGetVersion, (int* driverVersion) );
 __ORO_FUNC_DEC( oroGetDevice, (int* device) );
 __ORO_FUNC_DEC( oroGetDeviceCount, (int* count, oroApi api = ORO_API_AUTOMATIC ) );
-__ORO_FUNC_DEC( oroGetDeviceProperties, (oroDeviceProp* props, int deviceId) );
+__ORO_FUNC_DEC( oroGetDeviceProperties, (oroDeviceProp* props, oroDevice dev) );
 __ORO_FUNC_DEC( oroDeviceGet, (oroDevice* device, int ordinal ) );
 __ORO_FUNC_DEC( oroDeviceGetName, (char* name, int len, oroDevice dev) );
 __ORO_FUNC_DEC( oroDeviceGetAttribute, (int* pi, oroDeviceAttribute attrib, oroDevice dev) );

@@ -227,10 +227,10 @@ oroError OROAPI oroGetDeviceCount(int* count, oroApi iapi)
 	return oroSuccess;
 }
 
-oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, int deviceId)
+oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 {
-	ioroDevice d( deviceId );
-	deviceId = d.getDevice();
+	ioroDevice d( dev );
+	int deviceId = d.getDevice();
 	oroApi api = d.getApi();
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
@@ -419,8 +419,8 @@ oroError OROAPI oroModuleGetFunction(oroFunction* hfunc, oroModule hmod, const c
 }
 oroError OROAPI oroModuleGetGlobal(oroDeviceptr* dptr, size_t* bytes, oroModule hmod, const char* name)
 {
-	__ORO_FUNC1( ModuleGetGlobal( dptr, bytes, (CUmodule)hmod, name ), 
-		ModuleGetGlobal( dptr, bytes, (hipModule_t)hmod, name ) );
+	__ORO_FUNC1( ModuleGetGlobal( (CUdeviceptr*)dptr, bytes, (CUmodule)hmod, name ), 
+		ModuleGetGlobal( (hipDeviceptr_t*)dptr, bytes, (hipModule_t)hmod, name ) );
 	return oroErrorUnknown;
 }
 //oroError OROAPI oroModuleGetTexRef(textureReference** pTexRef, oroModule hmod, const char* name);
@@ -430,7 +430,7 @@ oroError OROAPI oroMemGetInfo(size_t* free, size_t* total)
 }
 oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize)
 {
-	__ORO_FUNC1( MemAlloc(dptr, bytesize), Malloc( dptr, bytesize ) );
+	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), Malloc( dptr, bytesize ) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize)

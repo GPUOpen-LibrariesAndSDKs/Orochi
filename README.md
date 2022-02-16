@@ -2,13 +2,13 @@
 
 "Yamata No Orochi" [^1] 
 
-Orochi is a library loading HIP and CUDA APIs dynamically which allows the user to switch APIs at runtime. Therefore you don't need to compile two separate implementations for each API. This allows you to compile and maintain a single binary that can run on both AMD and NVIDIA GPU's. Unlike HIP which uses hipamd or CUDA at compile-time, Orochi will dynamically load the corresponding HIP/CUDA shared libraries depending on your platform. In other words, it combines the functionality offered by HIPEW and CUEW into a single library.
+Orochi is a library loading HIP and CUDA APIs dynamically, allowing the user to switch APIs at runtime. Therefore you don't need to compile two separate implementations for each API. This allows you to compile and maintain a single binary that can run on both AMD and NVIDIA GPUs. Unlike HIP, which uses hipamd or CUDA at compile-time, Orochi will dynamically load the corresponding HIP/CUDA shared libraries depending on your platform. In other words, it combines the functionality offered by HIPEW and CUEW into a single library.
 
 ---
 
 ## Requirement
 
-This library doesn't require you to link to CUDA (for the driver API's) nor HIP (for both driver and runtime API's) at build-time. This provides the benefit that you don't need to install HIP SDK on your machine, or CUDA SDK in case you're not using the runtime API's. 
+This library doesn't require you to link to CUDA (for the driver APIs) nor HIP (for both driver and runtime APIs) at build-time. This provides the benefit that you don't need to install HIP SDK on your machine or CUDA SDK in case you're not using the runtime APIs. 
 To run an application compiled with Orochi, you need to install a driver of your choice with the corresponding .dll/.so files based on the GPU(s) available. Orochi will automatically link with the corresponding shared library at runtime.
 
 
