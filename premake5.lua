@@ -13,6 +13,9 @@ workspace "YamatanoOrochi"
    if os.istarget("macosx") then
       buildToolset = "clang"
    end
+   if os.istarget("linux") then
+      buildoptions{ "-ldl" }
+   end
 
   filter {"platforms:x64", "configurations:Debug"}
      targetsuffix "64D"
