@@ -3,9 +3,16 @@ workspace "YamatanoOrochi"
    language "C++"
    platforms "x64"
    architecture "x86_64"
+   cppdialect "C++17"
 
-   defines{ "__WINDOWS__" }
-   characterset ("MBCS")
+   if os.istarget("windows") then
+     defines{ "__WINDOWS__" }
+     characterset ("MBCS")
+     defines{ "_WIN32" }
+   end
+   if os.istarget("macosx") then
+      buildToolset = "clang"
+   end
 
   filter {"platforms:x64", "configurations:Debug"}
      targetsuffix "64D"
@@ -20,8 +27,7 @@ workspace "YamatanoOrochi"
    if os.istarget("windows") then
       buildoptions { "/wd4244", "/wd4305", "/wd4018", "/wd4244" }
    end
-
-   defines{ "_WIN32" }
+   buildoptions{ "-Wno-ignored-attributes" }
    startproject "Test"
 
    include "./Test"
