@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
 	oroCtx ctx;
 	e = oroCtxCreate(&ctx, 0, device);
 	oroDeviceProp props;
-	e = oroGetDeviceProperties(&props, 0);
+	e = oroGetDeviceProperties(&props, device);
 	try {
 		vk::raii::Context context;
 		vk::ApplicationInfo applicationInfo(AppName.c_str(), 1, EngineName.c_str(),
