@@ -55,7 +55,7 @@ int main( int argc, char** argv )
 		ERROR_CHECK( e );
 
 		oroDeviceProp props;
-		e = oroGetDeviceProperties( &props, i );
+		e = oroGetDeviceProperties( &props, device );
 		ERROR_CHECK( e );
 		printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
 

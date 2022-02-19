@@ -30,7 +30,7 @@ workspace "YamatanoOrochi"
    if os.istarget("windows") then
       buildoptions { "/wd4244", "/wd4305", "/wd4018", "/wd4244" }
    end
-   buildoptions{ "-Wno-ignored-attributes" }
+   -- buildoptions{ "-Wno-ignored-attributes" }
    startproject "Test"
 
    include "./Test"

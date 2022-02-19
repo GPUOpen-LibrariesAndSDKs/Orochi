@@ -47,7 +47,7 @@ int main(int argc, char** argv )
 	printf(">> testing device props\n");
 	{
 		oroDeviceProp props;
-		oroGetDeviceProperties( &props, 0 );
+		oroGetDeviceProperties( &props, device );
 		printf("executing on %s (%s)\n", props.name, props.gcnArchName );
 	}
 	printf(">> testing kernel execution\n");
