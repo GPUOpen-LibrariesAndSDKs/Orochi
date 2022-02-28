@@ -231,7 +231,8 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 {
 	ioroDevice d( dev );
 	int deviceId = d.getDevice();
-	oroApi api = d.getApi();
+	// get API from raw device index, dev
+	oroApi api = getRawDeviceIndex(dev);
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
 	if( api == ORO_API_CUDA )
