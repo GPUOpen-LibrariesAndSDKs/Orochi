@@ -646,17 +646,18 @@ oroError OROAPI oroMemcpyDtoD(oroDeviceptr dstDevice, oroDeviceptr srcDevice, si
 //oroError OROAPI oroDrvMemcpy2DUnaligned(const hip_Memcpy2D* pCopy);
 //oroError OROAPI oroMemcpyParam2D(const hip_Memcpy2D* pCopy);
 //oroError OROAPI oroDrvMemcpy3D(const ORO_MEMCPY3D* pCopy);
-//oroError OROAPI oroMemcpyHtoDAsync(oroDeviceptr dstDevice, const void* srcHost, size_t ByteCount, hipStream_t hStream);
-//oroError OROAPI oroMemcpyDtoHAsync(void* dstHost, oroDeviceptr srcDevice, size_t ByteCount, hipStream_t hStream);
+oroError OROAPI oroMemcpyHtoDAsync( oroDeviceptr dstDevice, const void* srcHost, size_t ByteCount, oroStream hStream );
+oroError OROAPI oroMemcpyDtoHAsync( void* dstHost, oroDeviceptr srcDevice, size_t ByteCount, oroStream hStream );
 //oroError OROAPI oroMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t hStream);
 //oroError OROAPI oroDrvMemcpy3DAsync(const ORO_MEMCPY3D* pCopy, hipStream_t hStream);
+
 oroError OROAPI oroMemset(oroDeviceptr dstDevice, unsigned int ui, size_t N);
 oroError OROAPI oroMemsetD8(oroDeviceptr dstDevice, unsigned char ui, size_t N);
 oroError OROAPI oroMemsetD16(oroDeviceptr dstDevice, unsigned short ui, size_t N);
 oroError OROAPI oroMemsetD32(oroDeviceptr dstDevice, unsigned int ui, size_t N);
-//oroError OROAPI oroMemsetD8Async(oroDeviceptr dstDevice, unsigned char uc, size_t N, oroStream hStream);
-//oroError OROAPI oroMemsetD16Async(oroDeviceptr dstDevice, unsigned short us, size_t N, oroStream hStream);
-//oroError OROAPI oroMemsetD32Async(oroDeviceptr dstDevice, unsigned int ui, size_t N, oroStream hStream);
+oroError OROAPI oroMemsetD8Async(oroDeviceptr dstDevice, unsigned char uc, size_t N, oroStream hStream);
+oroError OROAPI oroMemsetD16Async(oroDeviceptr dstDevice, unsigned short us, size_t N, oroStream hStream);
+oroError OROAPI oroMemsetD32Async(oroDeviceptr dstDevice, unsigned int ui, size_t N, oroStream hStream);
 //oroError OROAPI oroMemsetD2D8Async(oroDeviceptr dstDevice, size_t dstPitch, unsigned char uc, size_t Width, size_t Height, oroStream hStream);
 //oroError OROAPI oroMemsetD2D16Async(oroDeviceptr dstDevice, size_t dstPitch, unsigned short us, size_t Width, size_t Height, oroStream hStream);
 //oroError OROAPI oroMemsetD2D32Async(oroDeviceptr dstDevice, size_t dstPitch, unsigned int ui, size_t Width, size_t Height, oroStream hStream);
