@@ -481,13 +481,19 @@ oroError OROAPI oroMemcpyDtoD(oroDeviceptr dstDevice, oroDeviceptr srcDevice, si
 oroError OROAPI oroMemcpyHtoDAsync(oroDeviceptr dstDevice, const void* srcHost, size_t ByteCount, oroStream hStream)
 {
 	__ORO_FUNC1( MemcpyHtoDAsync( (CUdeviceptr)dstDevice, srcHost, ByteCount, (CUstream)hStream ), 
-		MemcpyHtoDAsync( (CUdeviceptr)dstDevice, srcHost, ByteCount, (hipStream_t)hStream ) );
+		MemcpyHtoDAsync( dstDevice, srcHost, ByteCount, (hipStream_t)hStream ) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMemcpyDtoHAsync(void* dstHost, oroDeviceptr srcDevice, size_t ByteCount, oroStream hStream) 
 {
 	__ORO_FUNC1( MemcpyDtoHAsync( dstHost, (CUdeviceptr)srcDevice, ByteCount, (CUstream)hStream ), 
 		MemcpyDtoHAsync( dstHost, (CUdeviceptr)srcDevice, ByteCount, (hipStream_t)hStream ) );
+	return oroErrorUnknown;
+}
+oroError OROAPI oroMemcpyDtoDAsync( oroDeviceptr dstDevice, oroDeviceptr srcDevice, size_t ByteCount, oroStream hStream )
+{
+	__ORO_FUNC1( MemcpyDtoDAsync( dstDevice, (CUdeviceptr)srcDevice, ByteCount, (CUstream)hStream ), 
+		MemcpyDtoDAsync( dstDevice, srcDevice, ByteCount, (hipStream_t)hStream ) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMemset(oroDeviceptr dstDevice, unsigned int ui, size_t N)

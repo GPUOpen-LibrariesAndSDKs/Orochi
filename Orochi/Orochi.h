@@ -648,6 +648,7 @@ oroError OROAPI oroMemcpyDtoD(oroDeviceptr dstDevice, oroDeviceptr srcDevice, si
 //oroError OROAPI oroDrvMemcpy3D(const ORO_MEMCPY3D* pCopy);
 oroError OROAPI oroMemcpyHtoDAsync( oroDeviceptr dstDevice, const void* srcHost, size_t ByteCount, oroStream hStream );
 oroError OROAPI oroMemcpyDtoHAsync( void* dstHost, oroDeviceptr srcDevice, size_t ByteCount, oroStream hStream );
+oroError OROAPI oroMemcpyDtoDAsync( oroDeviceptr dstDevice, oroDeviceptr srcDevice, size_t ByteCount, oroStream hStream );
 //oroError OROAPI oroMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t hStream);
 //oroError OROAPI oroDrvMemcpy3DAsync(const ORO_MEMCPY3D* pCopy, hipStream_t hStream);
 
