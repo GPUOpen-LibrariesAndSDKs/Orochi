@@ -126,6 +126,7 @@ thipMemcpyParam2D *hipMemcpyParam2D;
 thipDrvMemcpy3D *hipDrvMemcpy3D;
 thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
 thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
+thipMemcpyDtoDAsync *hipMemcpyDtoDAsync;
 thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
 thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
 thipMemset *hipMemset;
@@ -357,6 +358,7 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy3D);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyHtoDAsync);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoHAsync);
+  HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoDAsync);
   HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy2DUnaligned);
   HIP_LIBRARY_FIND_CHECKED(hipMemcpyParam2DAsync);
   HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy3DAsync);
