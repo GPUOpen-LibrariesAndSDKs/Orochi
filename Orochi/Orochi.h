@@ -675,7 +675,7 @@ oroError OROAPI oroStreamCreate(oroStream* stream);
 //oroError OROAPI oroStreamAddCallback(oroStream hStream, hipStreamCallback_t callback, void* userData, unsigned int flags);
 //oroError OROAPI oroStreamQuery(oroStream hStream);
 //oroError OROAPI oroStreamSynchronize(oroStream hStream);
-//oroError OROAPI oroStreamDestroy(oroStream hStream);
+oroError OROAPI oroStreamDestroy(oroStream hStream);
 //oroError OROAPI oroEventCreateWithFlags(hipEvent_t* phEvent, unsigned int Flags);
 //oroError OROAPI oroEventRecord(hipEvent_t hEvent, oroStream hStream);
 //oroError OROAPI oroEventQuery(hipEvent_t hEvent);

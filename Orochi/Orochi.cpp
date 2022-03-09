@@ -647,4 +647,10 @@ oroError OROAPI oroStreamCreate(oroStream* stream)
 	return oroErrorUnknown;
 }
 
+oroError OROAPI oroStreamDestroy( oroStream stream )
+{
+	__ORO_FUNC2(StreamDestroy((cudaStream_t)stream), 
+		StreamDestroy((hipStream_t)stream ));
 
+	return oroErrorUnknown;
+}
