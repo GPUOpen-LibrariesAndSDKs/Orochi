@@ -1369,6 +1369,7 @@ typedef CUresult CUDAAPI tcuGLMapBufferObjectAsync_v2(CUdeviceptr* dptr, size_t*
 typedef CUresult CUDAAPI tcuGLUnmapBufferObjectAsync(GLuint buffer, CUstream hStream);
 
 typedef cudaError_t CUDAAPI tcudaStreamCreate(cudaStream_t* pStream);
+typedef cudaError_t CUDAAPI tcudaStreamDestroy(cudaStream_t pStream);
 typedef cudaError_t CUDAAPI tcudaMemcpy(void* dst, const void* src, size_t count, cudaMemcpyKind kind);
 typedef cudaError_t CUDAAPI tcudaMalloc(CUdeviceptr* dptr, size_t bytesize);
 typedef cudaError_t CUDAAPI tcudaFree(CUdeviceptr dptr);
@@ -1620,6 +1621,7 @@ extern tcuGLMapBufferObjectAsync_v2 *cuGLMapBufferObjectAsync_v2;
 extern tcuGLUnmapBufferObjectAsync *cuGLUnmapBufferObjectAsync;
 
 extern tcudaStreamCreate* cudaStreamCreate;
+extern tcudaStreamDestroy* cudaStreamDestroy;
 extern tcudaMemcpy* cudaMemcpy;
 extern tcudaMalloc* cudaMalloc;
 extern tcudaFree* cudaFree;

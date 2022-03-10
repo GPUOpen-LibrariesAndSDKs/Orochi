@@ -301,6 +301,7 @@ tcuGLMapBufferObjectAsync_v2 *cuGLMapBufferObjectAsync_v2;
 tcuGLUnmapBufferObjectAsync *cuGLUnmapBufferObjectAsync;
 
 tcudaStreamCreate *cudaStreamCreate;
+tcudaStreamDestroy *cudaStreamDestroy;
 tcudaMemcpy *cudaMemcpy;
 tcudaMalloc *cudaMalloc;
 tcudaFree *cudaFree;
@@ -638,6 +639,7 @@ static int cuewCudaInit(void) {
   }
 
   CUDART_LIBRARY_FIND(cudaStreamCreate);
+  CUDART_LIBRARY_FIND(cudaStreamDestroy);
   CUDART_LIBRARY_FIND(cudaMemcpy);
   CUDART_LIBRARY_FIND(cudaMalloc);
   CUDART_LIBRARY_FIND(cudaFree);
