@@ -636,7 +636,7 @@ oroError OROAPI oroFree2(oroDeviceptr dptr);
 //oroError OROAPI oroHostFree(void* p);
 //oroError OROAPI oroMemHostAlloc(void** oro, size_t bytesize, unsigned int Flags);
 oroError OROAPI oroMemHostRegister(void* p, size_t bytesize, unsigned int Flags);
-oroError OROAPI oroHostGetDevicePointer(oroDeviceptr** pdptr, void* p, unsigned int Flags);
+oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned int Flags);
 //oroError OROAPI oroHostGetFlags(unsigned int* pFlags, void* p);
 //oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, unsigned int flags);
 //oroError OROAPI oroDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
