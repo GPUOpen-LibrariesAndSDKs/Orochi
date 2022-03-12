@@ -1154,6 +1154,7 @@ typedef hipError_t HIPAPI thipMemGetAddressRange(hipDeviceptr_t* pbase, size_t* 
 typedef hipError_t HIPAPI thipHostMalloc(void** pp, size_t bytesize, unsigned int flags);
 typedef hipError_t HIPAPI thipHostFree(void* p);
 typedef hipError_t HIPAPI thipMemHostAlloc(void** pp, size_t bytesize, unsigned int Flags);
+typedef hipError_t HIPAPI thipMemHostRegister(void* p, size_t bytesize, unsigned int Flags);
 typedef hipError_t HIPAPI thipHostGetDevicePointer(hipDeviceptr_t* pdptr, void* p, unsigned int Flags);
 typedef hipError_t HIPAPI thipHostGetFlags(unsigned int* pFlags, void* p);
 typedef hipError_t HIPAPI thipMallocManaged(hipDeviceptr_t* dptr, size_t bytesize, unsigned int flags);
@@ -1294,8 +1295,10 @@ extern thipFree *hipFree;
 extern thipMemGetAddressRange *hipMemGetAddressRange;
 extern thipHostMalloc *hipHostMalloc;
 extern thipHostFree *hipHostFree;
+extern thipMemHostRegister *hipMemHostRegister;
 extern thipHostGetDevicePointer *hipHostGetDevicePointer;
 extern thipHostGetFlags *hipHostGetFlags;
+extern thipMemHostUnregister *hipMemHostUnregister;
 extern thipMallocManaged *hipMallocManaged;
 extern thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
 extern thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
