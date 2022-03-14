@@ -105,12 +105,26 @@ void* getRawCtx( oroCtx ctx )
 	return c->m_ptr;
 }
 
+oroCtx setRawCtx( oroApi api, int ctx )
+{ 
+	ioroCtx_t* c = new ioroCtx_t;
+	c->m_ptr = (void*)ctx;
+	c->setApi( api );
+	return c;
+}
+
 oroDevice getRawDevice( oroDevice dev )
 {
 	ioroDevice d( dev );
 	return d.getDevice();
 }
 
+oroDevice setRawDevice( oroApi api, oroDevice dev ) 
+{
+	ioroDevice d( dev );
+	d.setApi( api );
+	return *(oroDevice*)&d;
+}
 
 //=================================
 
