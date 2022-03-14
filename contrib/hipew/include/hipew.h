@@ -1235,7 +1235,7 @@ typedef hipError_t HIPAPI thipGLGetDevices(unsigned int* pHipDeviceCount, int* p
 typedef hipError_t HIPAPI thipImportExternalMemory(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc);
 typedef hipError_t HIPAPI thipExternalMemoryGetMappedBuffer(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc);
 typedef hipError_t HIPAPI thipDestroyExternalMemory(hipExternalMemory_t extMem);
-typedef hiprtcResult HIPAPI thiprtcGetErrorString(hiprtcResult result);
+typedef const char* HIPAPI thiprtcGetErrorString(hiprtcResult result);
 typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char* name_expression);
 typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char** options);
 typedef hiprtcResult HIPAPI thiprtcCreateProgram(hiprtcProgram* prog, const char* src, const char* name, int numHeaders, const char** headers, const char** includeNames);

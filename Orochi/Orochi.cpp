@@ -420,7 +420,7 @@ oroError OROAPI oroModuleGetFunction(oroFunction* hfunc, oroModule hmod, const c
 oroError OROAPI oroModuleGetGlobal(oroDeviceptr* dptr, size_t* bytes, oroModule hmod, const char* name)
 {
 	__ORO_FUNC1( ModuleGetGlobal( (CUdeviceptr*)dptr, bytes, (CUmodule)hmod, name ), 
-		ModuleGetGlobal( (hipDeviceptr_t*)dptr, bytes, (hipModule_t)hmod, name ) );
+		ModuleGetGlobal( (oroDeviceptr*)dptr, bytes, (hipModule_t)hmod, name ) );
 	return oroErrorUnknown;
 }
 //oroError OROAPI oroModuleGetTexRef(textureReference** pTexRef, oroModule hmod, const char* name);
@@ -534,10 +534,28 @@ oroError OROAPI oroMemsetD32Async(oroDeviceptr dstDevice, unsigned int ui, size_
 }
 
 //-------------------
+oroError OROAPI oroFuncGetAttribute( int* pi, oroFunction_attribute attrib, oroFunction hfunc ) 
+{
+	__ORO_FUNC1( FuncGetAttribute( pi, (CUfunction_attribute)attrib, (CUfunction)hfunc ), FuncGetAttribute( pi, (hipFunction_attribute)attrib, (hipFunction_t)hfunc ) );
+	return oroErrorUnknown;
+}
+
 oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream hStream, void** kernelParams, void** extra)
 {
 	__ORO_FUNC1( LaunchKernel( (CUfunction)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (CUstream)hStream, kernelParams, extra ),
 		ModuleLaunchKernel( (hipFunction_t)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (hipStream_t)hStream, kernelParams, extra ) );
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize( int* minGridSize, int* blockSize, oroFunction func, size_t dynamicSMemSize, int blockSizeLimit ) 
+{ 
+	if( s_api == ORO_API_CUDA )
+	{
+//		CUoccupancyB2DSize blockSizeToDynamicSMemSize;
+		return cu2oro( cuOccupancyMaxPotentialBlockSize( minGridSize, blockSize, (CUfunction)func, 0, dynamicSMemSize, blockSizeLimit ) );
+	}
+	else
+		return hip2oro( hipModuleOccupancyMaxPotentialBlockSize( minGridSize, blockSize, (hipFunction_t)func, dynamicSMemSize, blockSizeLimit ) );
 	return oroErrorUnknown;
 }
 
@@ -569,12 +587,15 @@ oroError OROAPI oroGetLastError(oroError oro_error)
 	return oroErrorUnknown;
 }
 //-------------------
-orortcResult OROAPI orortcGetErrorString(orortcResult result)
+const char* OROAPI orortcGetErrorString(orortcResult result)
 {
-	return ORORTC_ERROR_INTERNAL_ERROR;
+	if( s_api == ORO_API_CUDA ) return nvrtcGetErrorString( (nvrtcResult)result );
+	else return hiprtcGetErrorString( (hiprtcResult)result );
+	return 0;
 }
-orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression)
+orortcResult OROAPI orortcAddNameExpression( orortcProgram prog, const char* name_expression )
 {
+	__ORORTC_FUNC1( AddNameExpression( (nvrtcProgram)prog, name_expression ), AddNameExpression( (hiprtcProgram)prog, name_expression ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char** options)
@@ -597,6 +618,7 @@ orortcResult OROAPI orortcDestroyProgram(orortcProgram* prog)
 }
 orortcResult OROAPI orortcGetLoweredName(orortcProgram prog, const char* name_expression, const char** lowered_name)
 {
+	__ORORTC_FUNC1( GetLoweredName( (nvrtcProgram)prog, name_expression, lowered_name ), GetLoweredName( (hiprtcProgram)prog, name_expression, lowered_name ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcGetProgramLog(orortcProgram prog, char* log)
@@ -646,7 +668,11 @@ oroError OROAPI oroStreamCreate(oroStream* stream)
 
 	return oroErrorUnknown;
 }
-
+oroError OROAPI oroStreamSynchronize( oroStream hStream ) 
+{ 
+	__ORO_FUNC1( StreamSynchronize( (cudaStream_t)hStream ), StreamSynchronize( (hipStream_t)hStream ) );
+	return oroErrorUnknown; 
+}
 oroError OROAPI oroStreamDestroy( oroStream stream )
 {
 	__ORO_FUNC2(StreamDestroy((cudaStream_t)stream), 
