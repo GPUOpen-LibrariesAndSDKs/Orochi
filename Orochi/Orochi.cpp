@@ -105,10 +105,10 @@ void* getRawCtx( oroCtx ctx )
 	return c->m_ptr;
 }
 
-oroCtx setRawCtx( oroApi api, int ctx )
+oroCtx setRawCtx( oroApi api, void* ctx )
 { 
 	ioroCtx_t* c = new ioroCtx_t;
-	c->m_ptr = (void*)ctx;
+	c->m_ptr = ctx;
 	c->setApi( api );
 	return c;
 }
