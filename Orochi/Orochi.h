@@ -68,8 +68,11 @@ typedef struct ioroPointerAttribute_t* oroPointerAttribute;
 typedef unsigned long long oroTextureObject;
 typedef void* oroExternalMemory_t;
 
-
 typedef struct _orortcProgram* orortcProgram;
+
+#define oroHostRegisterPortable 0x01
+#define oroHostRegisterMapped 0x02
+#define oroHostRegisterIoMemory 0x04
 
 enum orortcResult
 {
@@ -632,12 +635,13 @@ oroError OROAPI oroFree2(oroDeviceptr dptr);
 //oroError OROAPI oroHostMalloc(void** oro, size_t bytesize, unsigned int flags);
 //oroError OROAPI oroHostFree(void* p);
 //oroError OROAPI oroMemHostAlloc(void** oro, size_t bytesize, unsigned int Flags);
-//oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned int Flags);
+oroError OROAPI oroHostRegister(void* p, size_t bytesize, unsigned int Flags);
+oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned int Flags);
 //oroError OROAPI oroHostGetFlags(unsigned int* pFlags, void* p);
 //oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, unsigned int flags);
 //oroError OROAPI oroDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
 //oroError OROAPI oroDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
-//oroError OROAPI oroMemHostUnregister(void* p);
+oroError OROAPI oroHostUnregister(void* p);
 oroError OROAPI oroMemcpy(void *dst, void *src, size_t ByteCount, oroMemcpyKind kind);
 //oroError OROAPI oroMemcpyPeer(oroDeviceptr dstDevice, hipCtx_t dstContext, oroDeviceptr srcDevice, hipCtx_t srcContext, size_t ByteCount);
 oroError OROAPI oroMemcpyHtoD(oroDeviceptr dstDevice, void* srcHost, size_t ByteCount);

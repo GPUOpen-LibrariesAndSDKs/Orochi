@@ -452,6 +452,21 @@ oroError OROAPI oroFree2(oroDeviceptr dptr)
 	__ORO_FUNC2( Free((CUdeviceptr)dptr), Free(dptr) );
 	return oroErrorUnknown;
 }
+oroError OROAPI oroHostRegister(void* p, size_t bytesize, unsigned int Flags)
+{
+	__ORO_FUNC1( MemHostRegister(p, bytesize, Flags), HostRegister(p, bytesize, Flags) );
+	return oroErrorUnknown;
+}
+oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned int Flags)
+{
+	__ORO_FUNC1( MemHostGetDevicePointer((CUdeviceptr*)pdptr, p, Flags), HostGetDevicePointer(pdptr, p, Flags) );
+	return oroErrorUnknown;
+}
+oroError OROAPI oroHostUnregister(void* p)
+{
+	__ORO_FUNC1( MemHostUnregister(p), HostUnregister(p) );
+	return oroErrorUnknown;
+}
 
 //-------------------
 oroError OROAPI oroMemcpy(void *dstDevice, void* srcHost, size_t ByteCount, oroMemcpyKind kind)
