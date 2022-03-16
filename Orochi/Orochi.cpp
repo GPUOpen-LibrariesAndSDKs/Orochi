@@ -99,27 +99,29 @@ oroApi oroGetCurAPI(oroU32 flags)
 	return s_api;
 }
 
-void* getRawCtx( oroCtx ctx ) 
+void* oroGetRawCtx( oroCtx ctx ) 
 { 
 	ioroCtx_t* c = (ioroCtx_t*)ctx;
 	return c->m_ptr;
 }
 
-oroCtx setRawCtx( oroApi api, void* ctx )
+//oroCtx setRawCtx( oroApi api, void* ctx )
+oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn )
 { 
 	ioroCtx_t* c = new ioroCtx_t;
-	c->m_ptr = ctx;
+	c->m_ptr = ctxIn;
 	c->setApi( api );
-	return c;
+	*ctxOut = c;
+	return oroSuccess;
 }
 
-oroDevice getRawDevice( oroDevice dev )
+oroDevice oroGetRawDevice( oroDevice dev )
 {
 	ioroDevice d( dev );
 	return d.getDevice();
 }
 
-oroDevice setRawDevice( oroApi api, oroDevice dev ) 
+oroDevice oroSetRawDevice( oroApi api, oroDevice dev ) 
 {
 	ioroDevice d( dev );
 	d.setApi( api );

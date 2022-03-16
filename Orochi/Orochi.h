@@ -744,7 +744,7 @@ enum {
 
 int oroInitialize( oroApi api, oroU32 flags );
 oroApi oroGetCurAPI( oroU32 flags );
-void* getRawCtx( oroCtx ctx );
-oroCtx setRawCtx( oroApi api, void* ctx );
-oroDevice getRawDevice( oroDevice dev );
-oroDevice setRawDevice( oroApi api, oroDevice dev );
+void* oroGetRawCtx( oroCtx ctx );
+oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn );
+oroDevice oroGetRawDevice( oroDevice dev );
+oroDevice oroSetRawDevice( oroApi api, oroDevice dev );
