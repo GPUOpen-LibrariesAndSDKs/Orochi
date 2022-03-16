@@ -678,7 +678,7 @@ oroError OROAPI oroStreamCreate(oroStream* stream);
 //oroError OROAPI oroStreamWaitEvent(oroStream hStream, hipEvent_t hEvent, unsigned int Flags);
 //oroError OROAPI oroStreamAddCallback(oroStream hStream, hipStreamCallback_t callback, void* userData, unsigned int flags);
 //oroError OROAPI oroStreamQuery(oroStream hStream);
-//oroError OROAPI oroStreamSynchronize(oroStream hStream);
+oroError OROAPI oroStreamSynchronize(oroStream hStream);
 oroError OROAPI oroStreamDestroy(oroStream hStream);
 //oroError OROAPI oroEventCreateWithFlags(hipEvent_t* phEvent, unsigned int Flags);
 //oroError OROAPI oroEventRecord(hipEvent_t hEvent, oroStream hStream);
@@ -686,20 +686,23 @@ oroError OROAPI oroStreamDestroy(oroStream hStream);
 //oroError OROAPI oroEventSynchronize(hipEvent_t hEvent);
 //oroError OROAPI oroEventDestroy(hipEvent_t hEvent);
 //oroError OROAPI oroEventElapsedTime(float* pMilliseconds, hipEvent_t hStart, hipEvent_t hEnd);
-//oroError OROAPI oroFuncGetAttribute(int* pi, hipFunction_attribute attrib, hipFunction_t hfunc);
+oroError OROAPI oroFuncGetAttribute(int* pi, oroFunction_attribute attrib, oroFunction hfunc);
 //oroError OROAPI oroFuncSetCacheConfig(hipFunction_t hfunc, hipFuncCache_t config);
 oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream hStream, void** kernelParams, void** extra);
 //oroError OROAPI oroDrvOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize);
 //oroError OROAPI oroDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags);
-//oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, hipFunction_t func, size_t dynamicSMemSize, int blockSizeLimit);
+oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, oroFunction 
+    
+    
+    func, size_t dynamicSMemSize, int blockSizeLimit);
 //oroError OROAPI oroTexRefSetArray(hipTexRef hTexRef, hArray * hArray, unsigned int Flags);
-//oroError OROAPI oroTexRefSetAddress(size_t* ByteOffset, hipTexRef hTexRef, hipDeviceptr_t dptr, size_t bytes);
-//oroError OROAPI oroTexRefSetAddress2D(hipTexRef hTexRef, const ORO_ARRAY_DESCRIPTOR* desc, hipDeviceptr_t dptr, size_t Pitch);
+//oroError OROAPI oroTexRefSetAddress(size_t* ByteOffset, hipTexRef hTexRef, oroDeviceptr dptr, size_t bytes);
+//oroError OROAPI oroTexRefSetAddress2D(hipTexRef hTexRef, const ORO_ARRAY_DESCRIPTOR* desc, oroDeviceptr dptr, size_t Pitch);
 //oroError OROAPI oroTexRefSetFormat(hipTexRef hTexRef, hipArray_Format fmt, int NumPackedComponents);
 //oroError OROAPI oroTexRefSetAddressMode(hipTexRef hTexRef, int dim, hipTextureAddressMode am);
 //oroError OROAPI oroTexRefSetFilterMode(hipTexRef hTexRef, hipTextureFilterMode fm);
 //oroError OROAPI oroTexRefSetFlags(hipTexRef hTexRef, unsigned int Flags);
-//oroError OROAPI oroTexRefGetAddress(hipDeviceptr_t* pdptr, hipTexRef hTexRef);
+//oroError OROAPI oroTexRefGetAddress(oroDeviceptr* pdptr, hipTexRef hTexRef);
 //oroError OROAPI oroTexRefGetArray(hArray ** phArray, hipTexRef hTexRef);
 //oroError OROAPI oroTexRefGetAddressMode(hipTextureAddressMode* pam, hipTexRef hTexRef, int dim);
 //oroError OROAPI oroTexObjectCreate(hipTextureObject_t* pTexObject, const hipResourceDesc* pResDesc, const hipTextureDesc* pTexDesc, const ORO_RESOURCE_VIEW_DESC* pResViewDesc);
@@ -710,7 +713,7 @@ oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsi
 //oroError OROAPI oroDeviceGetP2PAttribute(int* value, hipDeviceP2PAttr attrib, hipDevice_t srcDevice, hipDevice_t dstDevice);
 //oroError OROAPI oroGraphicsUnregisterResource(hipGraphicsResource resource);
 //oroError OROAPI oroGraphicsResourceGetMaoroedMipmaoroedArray(hipMipmaoroedArray_t* pMipmaoroedArray, hipGraphicsResource resource);
-//oroError OROAPI oroGraphicsResourceGetMaoroedPointer(hipDeviceptr_t* pDevPtr, size_t* pSize, hipGraphicsResource resource);
+//oroError OROAPI oroGraphicsResourceGetMaoroedPointer(oroDeviceptr* pDevPtr, size_t* pSize, hipGraphicsResource resource);
 //oroError OROAPI oroGraphicsMapResources(unsigned int count, hipGraphicsResource* resources, oroStream hStream);
 //oroError OROAPI oroGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, oroStream hStream);
 //oroError OROAPI oroGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
@@ -719,7 +722,7 @@ oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const o
 oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc);
 oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem);
 oroError OROAPI oroGetLastError(oroError oro_error);
-orortcResult OROAPI orortcGetErrorString(orortcResult result);
+const char* OROAPI orortcGetErrorString(orortcResult result);
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression);
 orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char** options);
 orortcResult OROAPI orortcCreateProgram(orortcProgram* prog, const char* src, const char* name, int numHeaders, const char** headers, const char** includeNames);
@@ -742,5 +745,6 @@ enum {
 int oroInitialize( oroApi api, oroU32 flags );
 oroApi oroGetCurAPI( oroU32 flags );
 void* getRawCtx( oroCtx ctx );
+oroCtx setRawCtx( oroApi api, void* ctx );
 oroDevice getRawDevice( oroDevice dev );
-
+oroDevice setRawDevice( oroApi api, oroDevice dev );
