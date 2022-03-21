@@ -196,12 +196,17 @@ oroError OROAPI oroGetErrorString(oroError error, const char** pStr)
 
 oroError OROAPI oroInit(unsigned int Flags)
 {
-	oroU32 e = 0;
+	oroU32 e0 = 0;
+	oroU32 e1 = 0;
 	if( s_loadedApis & ORO_API_HIP )
-		e |= hip2oro(hipInit(Flags) );
+	{
+		e0 = hip2oro( hipInit( Flags ) );
+	}
 	if (s_loadedApis & ORO_API_CUDA)
-		e |= cu2oro(cuInit(Flags));
-	return (oroError)e;
+	{
+		e1 = cu2oro( cuInit( Flags ) );
+	}
+	return ( e0 == 0 || e1 == 0 ) ? oroSuccess : oroErrorUnknown;
 }
 
 oroError OROAPI oroDriverGetVersion(int* driverVersion)
