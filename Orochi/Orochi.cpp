@@ -277,6 +277,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
 		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
+		props->multiProcessorCount = p.multiProcessorCount;
 		return oroSuccess;
 	}
 	return oroErrorUnknown;
