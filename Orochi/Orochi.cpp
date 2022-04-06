@@ -115,6 +115,13 @@ oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn )
 	return oroSuccess;
 }
 
+oroError oroCtxCreateFromRawDestroy( oroCtx ctx ) 
+{
+	ioroCtx_t* c = (ioroCtx_t*)ctx;
+	delete c;
+	return oroSuccess;
+}
+
 oroDevice oroGetRawDevice( oroDevice dev )
 {
 	ioroDevice d( dev );
@@ -270,6 +277,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
 		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
+		props->multiProcessorCount = p.multiProcessorCount;
 		return oroSuccess;
 	}
 	return oroErrorUnknown;

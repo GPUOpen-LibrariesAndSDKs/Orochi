@@ -746,5 +746,6 @@ int oroInitialize( oroApi api, oroU32 flags );
 oroApi oroGetCurAPI( oroU32 flags );
 void* oroGetRawCtx( oroCtx ctx );
 oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn );
+oroError oroCtxCreateFromRawDestroy( oroCtx ctx );
 oroDevice oroGetRawDevice( oroDevice dev );
 oroDevice oroSetRawDevice( oroApi api, oroDevice dev );
