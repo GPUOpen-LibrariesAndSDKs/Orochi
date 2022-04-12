@@ -1,0 +1,5 @@
+*.vs
+*.vscode
+build/
+dist/
+*.sln
