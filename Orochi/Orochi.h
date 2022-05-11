@@ -577,11 +577,13 @@ typedef struct oroExternalMemoryHandleDesc_st {
   } handle;
   unsigned long long size;
   unsigned int flags;
+  unsigned int reserved[16];
 } oroExternalMemoryHandleDesc;
 typedef struct oroExternalMemoryBufferDesc_st {
   unsigned long long offset;
   unsigned long long size;
   unsigned int flags;
+  unsigned int reserved[16];
 } oroExternalMemoryBufferDesc;
 
 /**
