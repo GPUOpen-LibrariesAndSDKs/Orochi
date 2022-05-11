@@ -28,6 +28,8 @@ enum oroApi
     ORO_API_AUTOMATIC = 1<<0,
     ORO_API_HIP = 1<<1,
     ORO_API_CUDA = 1<<2,
+    ORO_API_CUDADRIVER = 1<<3,
+    ORO_API_CUDARTC = 1<<4,
 };
 
 enum oroError
@@ -721,7 +723,7 @@ oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* b
 oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
 oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc);
 oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem);
-oroError OROAPI oroGetLastError(oroError oro_error);
+// oroError OROAPI oroGetLastError(oroError oro_error);
 const char* OROAPI orortcGetErrorString(orortcResult result);
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression);
 orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char** options);
