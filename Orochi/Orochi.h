@@ -27,9 +27,9 @@ enum oroApi
 {
     ORO_API_AUTOMATIC = 1<<0,
     ORO_API_HIP = 1<<1,
-    ORO_API_CUDA = 1<<2,
-    ORO_API_CUDADRIVER = 1<<3,
-    ORO_API_CUDARTC = 1<<4,
+    ORO_API_CUDADRIVER = 1<<2,
+    ORO_API_CUDARTC = 1<<3,
+    ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
 };
 
 enum oroError

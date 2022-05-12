@@ -78,7 +78,7 @@ int oroInitialize( oroApi api, oroU32 flags )
 	s_api = api;
 	int e = 0;
 	s_loadedApis = 0;
-	if( api & ORO_API_CUDA )
+	if( (api & ORO_API_CUDA) == ORO_API_CUDA )
 	{
 		e = cuewInit( CUEW_INIT_CUDA | CUEW_INIT_NVRTC );
 		if( e == 0 )
