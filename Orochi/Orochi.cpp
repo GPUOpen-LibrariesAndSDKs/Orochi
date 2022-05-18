@@ -408,11 +408,9 @@ oroError OROAPI oroCtxSetCurrent(oroCtx ctx)
 	return oroErrorUnknown;
 }
 
-oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
+oroError OROAPI oroCtxGetCurrent(void* pctx )
 {
-    ioroCtx_t ctxt;
-    ( *pctx ) = &ctxt;
-	__ORO_FUNC1( CtxGetCurrent( oroCtx2cu(pctx) ), CtxGetCurrent( oroCtx2hip(pctx) ) );
+	__ORO_FUNC1( CtxGetCurrent( (CUcontext*)pctx ), CtxGetCurrent( (hipCtx_t*)pctx ) );
 	return oroErrorUnknown;
 }
 /*

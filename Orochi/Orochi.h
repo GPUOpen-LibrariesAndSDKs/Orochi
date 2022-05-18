@@ -612,7 +612,7 @@ oroError OROAPI oroCtxDestroy(oroCtx ctx) ;
 oroError OROAPI oroCtxPushCurrent(oroCtx ctx) ;
 oroError OROAPI oroCtxPopCurrent(oroCtx* pctx) ;
 oroError OROAPI oroCtxSetCurrent(oroCtx ctx) ;
-oroError OROAPI oroCtxGetCurrent(oroCtx* pctx) ;
+oroError OROAPI oroCtxGetCurrent(void* pctx) ;
 oroError OROAPI oroCtxGetDevice(oroDevice* device) ;
 oroError OROAPI oroCtxGetFlags(unsigned int* flags) ;
 oroError OROAPI oroCtxSynchronize(void) ;
