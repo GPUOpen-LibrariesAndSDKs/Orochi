@@ -410,6 +410,8 @@ oroError OROAPI oroCtxSetCurrent(oroCtx ctx)
 
 oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 {
+    ioroCtx_t ctxt;
+    ( *pctx ) = &ctxt;
 	__ORO_FUNC1( CtxGetCurrent( oroCtx2cu(pctx) ), CtxGetCurrent( oroCtx2hip(pctx) ) );
 	return oroErrorUnknown;
 }
