@@ -264,12 +264,27 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		strcpy( props->name, p.name );
 		strcpy( props->gcnArchName, "" );
 		props->totalGlobalMem = p.totalGlobalMem;
+		props->sharedMemPerBlock = p.sharedMemPerBlock;
+		props->regsPerBlock = p.regsPerBlock;
+		props->warpSize = p.warpSize;
+		props->memPitch = p.memPitch;
+		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
+		memcpy( props->maxThreadsDim, p.maxThreadsDim, 3 * sizeof( int ) );
+		memcpy( props->maxGridSize, p.maxGridSize, 3 * sizeof( int ) );
+		props->totalConstMem = p.totalConstMem;
+		props->clockRate = p.clockRate;
+		props->textureAlignment = p.textureAlignment;
+		props->multiProcessorCount = p.multiProcessorCount;
+		props->kernelExecTimeoutEnabled = p.kernelExecTimeoutEnabled;
+		props->integrated = p.integrated;
+		props->canMapHostMemory = p.canMapHostMemory;
+		props->computeMode = p.computeMode;
+		props->concurrentKernels = p.concurrentKernels;
+		props->ECCEnabled = p.ECCEnabled;
 		props->pciDomainID = p.pciDomainID;
 		props->pciBusID = p.pciBusID;
 		props->pciDeviceID = p.pciDeviceID;
-		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
-		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
-		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
+
 		return oroSuccess;
 	}
 	return oroErrorUnknown;
