@@ -9,6 +9,6 @@ project "DeviceEnum"
    end
 
       includedirs { "../../" }
-      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
+      files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
       files { "../../contrib/**.h", "../../contrib/**.cpp" }
       files { "*.cpp" }

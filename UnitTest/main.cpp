@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <Orochi/Orochi.h>
+#include <Orochi/OrochiUtils.h>
 
 #define OROASSERT( x ) ASSERT_TRUE( x )
 #define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
@@ -45,6 +46,13 @@ TEST_F( OroTestBase, deviceprops )
 		printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
 		printf( "%d multiProcessors\n", props.multiProcessorCount );
 	}
+}
+
+TEST_F( OroTestBase, kernelExec ) 
+{ 
+	oroFunction kernel = OrochiUtils::getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
+	OrochiUtils::launch1D( kernel, 64, 0, 64 );
+	OrochiUtils::waitForCompletion();
 }
 
 

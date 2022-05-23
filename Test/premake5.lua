@@ -8,6 +8,6 @@ project "Test"
       links{ "version" }
    end
       includedirs { "../" }
-      files { "../Orochi/**.h", "../Orochi/**.cpp" }
+      files { "../Orochi/Orochi.h", "../Orochi/Orochi.cpp" }
       files { "*.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
