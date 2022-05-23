@@ -7,6 +7,9 @@ project "Unittest"
    if os.istarget("windows") then
       links{ "version" }
    end
+   if os.istarget("linux") then
+      links { "pthread" }
+   end
       includedirs { "../" }
       files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp", "*.h" }

@@ -1,5 +1,6 @@
 #include <Orochi/OrochiUtils.h>
 #include <string>
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <codecvt>
@@ -10,6 +11,7 @@
 #else
 #include <errno.h>
 #include <sys/stat.h>
+#include <locale>
 #endif
 
 inline std::wstring utf8_to_wstring( const std::string& str )
