@@ -26,7 +26,7 @@
 
 int main( int argc, char** argv )
 {
-	int a = oroInitialize( ( oroApi )( ORO_API_CUDADRIVER | ORO_API_HIP ), 0 );
+	int a = oroInitialize( ( oroApi )( ORO_API_CUDA | ORO_API_HIP ), 0 );
 
 	oroError e;
 	e = oroInit( 0 );
@@ -37,7 +37,7 @@ int main( int argc, char** argv )
 	e = oroGetDeviceCount( &nAMDDevices, ORO_API_HIP );
 	ERROR_CHECK( e );
 	int nNVIDIADevices;
-	e = oroGetDeviceCount( &nNVIDIADevices, ORO_API_CUDADRIVER );
+	e = oroGetDeviceCount( &nNVIDIADevices, ORO_API_CUDA );
 	ERROR_CHECK( e );
 
 	printf( "# of devices: %d\n", nDevicesTotal );
@@ -64,7 +64,7 @@ int main( int argc, char** argv )
 		ERROR_CHECK( e );
 
 		//try kernel execution
-		/* oroFunction function;
+		 oroFunction function;
 		{
 			const char* code = "extern \"C\" __global__ "
 							   "void testKernel()"
@@ -100,7 +100,7 @@ int main( int argc, char** argv )
 		}
 
 		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 ); */
+		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 ); 
 		oroDeviceSynchronize();
 
 		oroApi api = oroGetCurAPI( 0 );
