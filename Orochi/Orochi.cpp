@@ -276,20 +276,19 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		CUresult e = cuDeviceGetProperties(&p, deviceId);
 		e = cuDeviceGetName(props->name, 256, deviceId);
 		strcpy( props->gcnArchName, "" );
-		e = cuDeviceGetAttribute(&props->pciDomainID, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId);
-		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
-		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
+		memcpy( props->maxThreadsDim, p.maxThreadsDim, 3 * sizeof( int ) );
+		memcpy( props->maxGridSize, p.maxGridSize, 3 * sizeof( int ) );
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
-		e = cuDeviceGetAttribute(&props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId);
-
 		props->sharedMemPerBlock = p.sharedMemPerBlock;
+		props->totalConstMem = p.totalConstantMemory;
 		props->regsPerBlock = p.regsPerBlock;
 		props->memPitch = p.memPitch;
 		props->clockRate = p.clockRate;
-		props->totalConstMem = p.totalConstantMemory;
 
+		e = cuDeviceGetAttribute( &props->pciDomainID, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, deviceId );
+		e = cuDeviceGetAttribute(&props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId);
+		e = cuDeviceGetAttribute(&props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId);
+		e = cuDeviceGetAttribute(&props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId);
 		//		props->totalGlobalMem = p.totalGlobalMem;? todo. DeviceTotalMem instead?
 		e = cuDeviceGetAttribute( &props->warpSize, CU_DEVICE_ATTRIBUTE_WARP_SIZE, deviceId );
 		e = cuDeviceGetAttribute( (int*)&props->textureAlignment, CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT, deviceId );
