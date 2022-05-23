@@ -416,8 +416,7 @@ int main(int argc, char **argv) {
 				vkExternalMemoryHandleType()));
 		std::vector<float> hostMemory{};
 		hostMemory.resize(memorySize / sizeof(float));
-		oroMemcpy((void *)hostMemory.data(), deviceMemoryPp, memorySize,
-			oroMemcpyDeviceToHost);
+		oroMemcpyDtoH((void *)hostMemory.data(), (oroDeviceptr)deviceMemoryPp, memorySize);
 		bool pass = true;
 		for (uint32_t i = 0; i < localSize * localSize; ++i) 
 		{

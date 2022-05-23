@@ -65,10 +65,10 @@ oroApi getRawDeviceIndex( int& deviceId )
 {
 	int n[2] = { 0, 0 };
 	oroGetDeviceCount( &n[0], ORO_API_HIP );
-	oroGetDeviceCount( &n[1], ORO_API_CUDA );
+	oroGetDeviceCount( &n[1], ORO_API_CUDADRIVER );
 
-	oroApi api = deviceId < n[0] ? ORO_API_HIP : ORO_API_CUDA;
-	if( api == ORO_API_CUDA )
+	oroApi api = (deviceId < n[0]) ? (ORO_API_HIP) : (ORO_API_CUDADRIVER);
+	if( api & ORO_API_CUDADRIVER )
 		deviceId -= n[0];
 	return api;
 }
@@ -78,11 +78,24 @@ int oroInitialize( oroApi api, oroU32 flags )
 	s_api = api;
 	int e = 0;
 	s_loadedApis = 0;
-	if( api & ORO_API_CUDA )
+	if( (api & ORO_API_CUDA) == ORO_API_CUDA )
 	{
 		e = cuewInit( CUEW_INIT_CUDA | CUEW_INIT_NVRTC );
 		if( e == 0 )
-			s_loadedApis |= ORO_API_CUDA;
+			s_loadedApis |= ORO_API_CUDA | ORO_API_CUDADRIVER | ORO_API_CUDARTC;
+	}
+	if ((s_loadedApis & ORO_API_CUDA) == 0) {
+		if (api & ORO_API_CUDADRIVER)
+		{
+			cuuint32_t cuewInitFlags = CUEW_INIT_CUDA;
+			if ( api & ORO_API_CUDARTC ) cuewInitFlags |= CUEW_INIT_NVRTC;
+			e = cuewInit( cuewInitFlags );
+			if( e == 0 )
+			{
+				s_loadedApis |= ORO_API_CUDADRIVER;
+				if ( api & ORO_API_CUDARTC ) s_loadedApis |= ORO_API_CUDARTC;
+			}
+		}
 	}
 	if( api & ORO_API_HIP )
 	{
@@ -148,11 +161,6 @@ oroError cu2oro( CUresult a )
 	return (oroError)a;
 }
 inline
-oroError cuda2oro(cudaError_t a)
-{
-	return (oroError)a;
-}
-inline
 CUcontext* oroCtx2cu( oroCtx* a )
 {
 	ioroCtx_t* b = *a;
@@ -175,16 +183,16 @@ orortcResult nvrtc2oro( nvrtcResult a )
 	return (orortcResult)a;
 }
 
-#define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
-#define __ORO_FUNC1X( API, cuname, hipname ) if( API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
-#define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+#define __ORO_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+#define __ORO_FUNC1X( API, cuname, hipname ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
+//#define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
 //#define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA || API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2oro( hip##hipname );
-#define __ORO_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cu##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
-#define __ORO_FUNCX( API, name ) if( API == ORO_API_CUDA ) return cu2oro( cu##name ); if( API == ORO_API_HIP ) return hip2oro( hip##name );
+#define __ORO_FUNC( name ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
+#define __ORO_FUNCX( API, name ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( API == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORO_CTXT_FUNC( name ) __ORO_FUNC1(Ctx##name, name)
 #define __ORO_CTXT_FUNCX( API, name ) __ORO_FUNC1X(API, Ctx##name, name)
 //#define __ORO_CTXT_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cuCtx##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
-#define __ORORTC_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
+#define __ORORTC_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
 
 
 oroError OROAPI oroGetErrorName(oroError error, const char** pStr)
@@ -209,7 +217,7 @@ oroError OROAPI oroInit(unsigned int Flags)
 	{
 		e0 = hip2oro( hipInit( Flags ) );
 	}
-	if (s_loadedApis & ORO_API_CUDA)
+	if (s_loadedApis & ORO_API_CUDADRIVER)
 	{
 		e1 = cu2oro( cuInit( Flags ) );
 	}
@@ -232,7 +240,7 @@ oroError OROAPI oroGetDeviceCount(int* count, oroApi iapi)
 {
 	oroU32 api = 0;
 	if( iapi == ORO_API_AUTOMATIC )
-		api = (ORO_API_HIP| ORO_API_CUDA);
+		api = (ORO_API_HIP|ORO_API_CUDADRIVER);
 	else
 		api = iapi;
 
@@ -245,7 +253,7 @@ oroError OROAPI oroGetDeviceCount(int* count, oroApi iapi)
 		if( e == 0 )
 			*count += c;
 	}
-	if( (api & s_loadedApis) & ORO_API_CUDA )
+	if( (api & s_loadedApis) & (ORO_API_CUDADRIVER) )
 	{
 		int c = 0;
 		e = cu2oro(cuDeviceGetCount(&c));
@@ -262,22 +270,19 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 	oroApi api = d.getApi();
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
-	if( api == ORO_API_CUDA )
+	if( api == ORO_API_CUDADRIVER )
 	{
-		cudaDeviceProp p;
-		cudaError_t e = cudaGetDeviceProperties( &p, deviceId );
-		if (e != CUDA_SUCCESS)
-			return oroErrorUnknown;
-		strcpy( props->name, p.name );
+		CUdevprop p;
+		CUresult e = cuDeviceGetProperties(&p, deviceId);
+		e = cuDeviceGetName(props->name, 256, deviceId);
 		strcpy( props->gcnArchName, "" );
-		props->totalGlobalMem = p.totalGlobalMem;
-		props->pciDomainID = p.pciDomainID;
-		props->pciBusID = p.pciBusID;
-		props->pciDeviceID = p.pciDeviceID;
+		e = cuDeviceGetAttribute(&props->pciDomainID, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, deviceId);
+		e = cuDeviceGetAttribute(&props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId);
+		e = cuDeviceGetAttribute(&props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId);
 		memcpy(props->maxThreadsDim, p.maxThreadsDim, 3*sizeof(int));
 		memcpy(props->maxGridSize, p.maxGridSize, 3*sizeof(int));
 		props->maxThreadsPerBlock = p.maxThreadsPerBlock;
-		props->multiProcessorCount = p.multiProcessorCount;
+		e = cuDeviceGetAttribute(&props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId);
 		return oroSuccess;
 	}
 	return oroErrorUnknown;
@@ -297,7 +302,7 @@ oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal )
 		*(ioroDevice*)device = d;
 		return hip2oro(e);
 	}
-	if (api == ORO_API_CUDA)
+	if (api & ORO_API_CUDADRIVER)
 	{
 		int t;
 		auto e = cuDeviceGet(&t, ordinal);
@@ -367,7 +372,7 @@ oroError OROAPI oroCtxCreate(oroCtx* pctx, unsigned int flags, oroDevice dev)
 oroError OROAPI oroCtxDestroy(oroCtx ctx)
 {
 	int e = 0;
-	if( s_api == ORO_API_CUDA ) e = cuCtxDestroy( *oroCtx2cu( &ctx ) );
+	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxDestroy( *oroCtx2cu( &ctx ) );
 	if( s_api == ORO_API_HIP ) e = hipCtxDestroy( *oroCtx2hip( &ctx ) );
 
 	if( e )
@@ -464,7 +469,7 @@ oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize)
 }
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize)
 {
-	__ORO_FUNC2( Malloc((CUdeviceptr*)dptr, bytesize), Malloc(dptr, bytesize) );
+	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), Malloc(dptr, bytesize) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroMemAllocPitch(oroDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes)
@@ -478,7 +483,7 @@ oroError OROAPI oroFree(oroDeviceptr dptr)
 }
 oroError OROAPI oroFree2(oroDeviceptr dptr)
 {
-	__ORO_FUNC2( Free((CUdeviceptr)dptr), Free(dptr) );
+	__ORO_FUNC1( MemFree((CUdeviceptr)dptr), Free(dptr) );
 	return oroErrorUnknown;
 }
 oroError OROAPI oroHostRegister(void* p, size_t bytesize, unsigned int Flags)
@@ -498,12 +503,12 @@ oroError OROAPI oroHostUnregister(void* p)
 }
 
 //-------------------
-oroError OROAPI oroMemcpy(void *dstDevice, void* srcHost, size_t ByteCount, oroMemcpyKind kind)
+/* oroError OROAPI oroMemcpy(void *dstDevice, void* srcHost, size_t ByteCount, oroMemcpyKind kind)
 {
 	__ORO_FUNC2( Memcpy(dstDevice, srcHost, ByteCount, (cudaMemcpyKind)kind),
 		Memcpy(dstDevice, srcHost, ByteCount, (hipMemcpyKind)kind) );
 	return oroErrorUnknown;
-}
+} */
 
 oroError OROAPI oroMemcpyHtoD(oroDeviceptr dstDevice, void* srcHost, size_t ByteCount)
 {
@@ -593,7 +598,7 @@ oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsi
 
 oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize( int* minGridSize, int* blockSize, oroFunction func, size_t dynamicSMemSize, int blockSizeLimit ) 
 { 
-	if( s_api == ORO_API_CUDA )
+	if( s_api & ORO_API_CUDADRIVER )
 	{
 //		CUoccupancyB2DSize blockSizeToDynamicSMemSize;
 		return cu2oro( cuOccupancyMaxPotentialBlockSize( minGridSize, blockSize, (CUfunction)func, 0, dynamicSMemSize, blockSizeLimit ) );
@@ -606,34 +611,34 @@ oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize( int* minGridSize, int* 
 //-------------------
 oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc)
 {
-	__ORO_FUNC2( ImportExternalMemory( (cudaExternalMemory_t*)extMem_out, (const cudaExternalMemoryHandleDesc*)memHandleDesc ),
+	__ORO_FUNC1( ImportExternalMemory( (CUexternalMemory*)extMem_out, (const CUDA_EXTERNAL_MEMORY_HANDLE_DESC*)memHandleDesc ),
 		ImportExternalMemory( (hipExternalMemory_t*)extMem_out, (const hipExternalMemoryHandleDesc*)memHandleDesc ) );
 	return oroErrorUnknown;
 }
 //-------------------
 oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc)
 {
-	__ORO_FUNC2( ExternalMemoryGetMappedBuffer( devPtr, (cudaExternalMemory_t)extMem, (const cudaExternalMemoryBufferDesc*)bufferDesc ),
+	__ORO_FUNC1( ExternalMemoryGetMappedBuffer( (CUdeviceptr*)devPtr, (CUexternalMemory)extMem, (const CUDA_EXTERNAL_MEMORY_BUFFER_DESC*)bufferDesc ),
 		ExternalMemoryGetMappedBuffer( devPtr, (hipExternalMemory_t)extMem, (const hipExternalMemoryBufferDesc*)bufferDesc ) );
 	return oroErrorUnknown;
 }
 //-------------------
 oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem)
 {
-	__ORO_FUNC2( DestroyExternalMemory( (cudaExternalMemory_t)extMem ),
+	__ORO_FUNC1( DestroyExternalMemory( (CUexternalMemory)extMem ),
 		DestroyExternalMemory( (hipExternalMemory_t)extMem ) );
 	return oroErrorUnknown;
 }
-oroError OROAPI oroGetLastError(oroError oro_error)
+/* oroError OROAPI oroGetLastError(oroError oro_error)
 {
 	__ORO_FUNC2(GetLastError((cudaError_t)oro_error),
 		GetLastError((hipError_t)oro_error));
 	return oroErrorUnknown;
-}
+} */
 //-------------------
 const char* OROAPI orortcGetErrorString(orortcResult result)
 {
-	if( s_api == ORO_API_CUDA ) return nvrtcGetErrorString( (nvrtcResult)result );
+	if( s_api & ORO_API_CUDADRIVER ) return nvrtcGetErrorString( (nvrtcResult)result );
 	else return hiprtcGetErrorString( (hiprtcResult)result );
 	return 0;
 }
@@ -693,7 +698,7 @@ orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t* codeSizeRet)
 // Implementation of oroPointerGetAttributes is hacky due to differences between CUDA and HIP
 oroError OROAPI oroPointerGetAttributes(oroPointerAttribute* attr, oroDeviceptr dptr)
 {
-	if (s_api == ORO_API_CUDA)
+	if (s_api & ORO_API_CUDADRIVER)
 	{
 		unsigned int data;
 		return cu2oro(cuPointerGetAttribute(&data, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dptr));
@@ -707,19 +712,19 @@ oroError OROAPI oroPointerGetAttributes(oroPointerAttribute* attr, oroDeviceptr 
 //-----------------
 oroError OROAPI oroStreamCreate(oroStream* stream)
 {
-	__ORO_FUNC2(StreamCreate((cudaStream_t*)stream),
+	__ORO_FUNC1(StreamCreate((CUstream*)stream, 0),
 		StreamCreate((hipStream_t*)stream));
 
 	return oroErrorUnknown;
 }
 oroError OROAPI oroStreamSynchronize( oroStream hStream ) 
 { 
-	__ORO_FUNC1( StreamSynchronize( (cudaStream_t)hStream ), StreamSynchronize( (hipStream_t)hStream ) );
+	__ORO_FUNC1( StreamSynchronize( (CUstream)hStream ), StreamSynchronize( (hipStream_t)hStream ) );
 	return oroErrorUnknown; 
 }
 oroError OROAPI oroStreamDestroy( oroStream stream )
 {
-	__ORO_FUNC2(StreamDestroy((cudaStream_t)stream), 
+	__ORO_FUNC1(StreamDestroy((CUstream)stream), 
 		StreamDestroy((hipStream_t)stream ));
 
 	return oroErrorUnknown;
