@@ -56,41 +56,6 @@ oroFunction OrochiUtils::getFunctionFromFile( const char* path, const char* func
 	OrochiUtilsImpl::readSourceCode( path, source, 0 );
 
 	return getFunction( source.c_str(), path, funcName, optsIn );
-/*
-	const char* code = source.c_str();
-	oroFunction function;
-
-	orortcProgram prog;
-	orortcResult e;
-	e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
-	std::vector<const char*> opts;
-	opts.push_back( "-I ../" );
-	opts.push_back( "-G" );
-
-	e = orortcCompileProgram( prog, opts.size(), opts.data() );
-	if( e != ORORTC_SUCCESS )
-	{
-		size_t logSize;
-		orortcGetProgramLogSize( prog, &logSize );
-		if( logSize )
-		{
-			std::string log( logSize, '\0' );
-			orortcGetProgramLog( prog, &log[0] );
-			std::cout << log << '\n';
-		};
-	}
-	size_t codeSize;
-	e = orortcGetCodeSize( prog, &codeSize );
-
-	std::vector<char> codec( codeSize );
-	e = orortcGetCode( prog, codec.data() );
-	e = orortcDestroyProgram( &prog );
-	oroModule module;
-	oroError ee = oroModuleLoadData( &module, codec.data() );
-	ee = oroModuleGetFunction( &function, module, funcName );
-
-	return function;
-*/
 }
 
 oroFunction OrochiUtils::getFunction( const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn )
