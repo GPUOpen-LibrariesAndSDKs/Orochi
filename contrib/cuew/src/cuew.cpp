@@ -23,8 +23,8 @@
 #  define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <contrib/cuew/include/cuew.h>
 #include <assert.h>
+#include <contrib/cuew/include/cuew.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -38,38 +38,32 @@
 
 typedef HMODULE DynamicLibrary;
 
-#  define dynamic_library_open(path)         LoadLibraryA(path)
-#  define dynamic_library_close(lib)         FreeLibrary(lib)
-#  define dynamic_library_find(lib, symbol)  GetProcAddress(lib, symbol)
+#  define dynamic_library_open(path) LoadLibraryA(path)
+#  define dynamic_library_close(lib) FreeLibrary(lib)
+#  define dynamic_library_find(lib, symbol) GetProcAddress(lib, symbol)
 #else
 #  include <dlfcn.h>
 
-typedef void* DynamicLibrary;
+typedef void *DynamicLibrary;
 
-#  define dynamic_library_open(path)         dlopen(path, RTLD_NOW)
-#  define dynamic_library_close(lib)         dlclose(lib)
-#  define dynamic_library_find(lib, symbol)  dlsym(lib, symbol)
+#  define dynamic_library_open(path) dlopen(path, RTLD_NOW)
+#  define dynamic_library_close(lib) dlclose(lib)
+#  define dynamic_library_find(lib, symbol) dlsym(lib, symbol)
 #endif
 
 #define _LIBRARY_FIND_CHECKED(lib, name) \
-        name = (t##name *)dynamic_library_find(lib, #name); \
-        assert(name);
+  name = (t##name *)dynamic_library_find(lib, #name); \
+  assert(name);
 
-#define _LIBRARY_FIND(lib, name) \
-        name = (t##name *)dynamic_library_find(lib, #name);
+#define _LIBRARY_FIND(lib, name) name = (t##name *)dynamic_library_find(lib, #name);
 
-#define CUDA_LIBRARY_FIND_CHECKED(name) \
-        _LIBRARY_FIND_CHECKED(cuda_lib, name)
+#define CUDA_LIBRARY_FIND_CHECKED(name) _LIBRARY_FIND_CHECKED(cuda_lib, name)
 #define CUDA_LIBRARY_FIND(name) _LIBRARY_FIND(cuda_lib, name)
 
-#define CUDART_LIBRARY_FIND(name) _LIBRARY_FIND(cudart_lib, name)
-
-#define NVRTC_LIBRARY_FIND_CHECKED(name) \
-        _LIBRARY_FIND_CHECKED(nvrtc_lib, name)
+#define NVRTC_LIBRARY_FIND_CHECKED(name) _LIBRARY_FIND_CHECKED(nvrtc_lib, name)
 #define NVRTC_LIBRARY_FIND(name) _LIBRARY_FIND(nvrtc_lib, name)
 
 static DynamicLibrary cuda_lib;
-static DynamicLibrary cudart_lib;
 static DynamicLibrary nvrtc_lib;
 
 /* Function definitions. */
@@ -211,6 +205,9 @@ tcuEventQuery *cuEventQuery;
 tcuEventSynchronize *cuEventSynchronize;
 tcuEventDestroy_v2 *cuEventDestroy_v2;
 tcuEventElapsedTime *cuEventElapsedTime;
+tcuImportExternalMemory *cuImportExternalMemory;
+tcuExternalMemoryGetMappedBuffer *cuExternalMemoryGetMappedBuffer;
+tcuDestroyExternalMemory *cuDestroyExternalMemory;
 tcuStreamWaitValue32 *cuStreamWaitValue32;
 tcuStreamWaitValue64 *cuStreamWaitValue64;
 tcuStreamWriteValue32 *cuStreamWriteValue32;
@@ -234,7 +231,8 @@ tcuLaunchGrid *cuLaunchGrid;
 tcuLaunchGridAsync *cuLaunchGridAsync;
 tcuParamSetTexRef *cuParamSetTexRef;
 tcuOccupancyMaxActiveBlocksPerMultiprocessor *cuOccupancyMaxActiveBlocksPerMultiprocessor;
-tcuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+tcuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
+    *cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
 tcuOccupancyMaxPotentialBlockSize *cuOccupancyMaxPotentialBlockSize;
 tcuOccupancyMaxPotentialBlockSizeWithFlags *cuOccupancyMaxPotentialBlockSizeWithFlags;
 tcuTexRefSetArray *cuTexRefSetArray;
@@ -300,17 +298,6 @@ tcuGLSetBufferObjectMapFlags *cuGLSetBufferObjectMapFlags;
 tcuGLMapBufferObjectAsync_v2 *cuGLMapBufferObjectAsync_v2;
 tcuGLUnmapBufferObjectAsync *cuGLUnmapBufferObjectAsync;
 
-tcudaStreamCreate *cudaStreamCreate;
-tcudaStreamDestroy *cudaStreamDestroy;
-tcudaMemcpy *cudaMemcpy;
-tcudaMalloc *cudaMalloc;
-tcudaFree *cudaFree;
-tcudaGetLastError *cudaGetLastError;
-tcudaGetDeviceProperties *cudaGetDeviceProperties;
-tcudaImportExternalMemory *cudaImportExternalMemory;
-tcudaExternalMemoryGetMappedBuffer *cudaExternalMemoryGetMappedBuffer;
-tcudaDestroyExternalMemory *cudaDestroyExternalMemory;
-
 tnvrtcGetErrorString *nvrtcGetErrorString;
 tnvrtcVersion *nvrtcVersion;
 tnvrtcCreateProgram *nvrtcCreateProgram;
@@ -323,21 +310,22 @@ tnvrtcGetProgramLog *nvrtcGetProgramLog;
 tnvrtcAddNameExpression *nvrtcAddNameExpression;
 tnvrtcGetLoweredName *nvrtcGetLoweredName;
 
-
-static DynamicLibrary dynamic_library_open_find(const char **paths) {
+static DynamicLibrary dynamic_library_open_find(const char **paths)
+{
   int i = 0;
   while (paths[i] != NULL) {
-      DynamicLibrary lib = dynamic_library_open(paths[i]);
-      if (lib != NULL) {
-        return lib;
-      }
-      ++i;
+    DynamicLibrary lib = dynamic_library_open(paths[i]);
+    if (lib != NULL) {
+      return lib;
+    }
+    ++i;
   }
   return NULL;
 }
 
 /* Implementation function. */
-static void cuewCudaExit(void) {
+static void cuewCudaExit(void)
+{
   if (cuda_lib != NULL) {
     /*  Ignore errors. */
     dynamic_library_close(cuda_lib);
@@ -345,7 +333,8 @@ static void cuewCudaExit(void) {
   }
 }
 
-static int cuewCudaInit(void) {
+static int cuewCudaInit(void)
+{
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in c:/windows/system or similar, no path needed. */
@@ -531,7 +520,9 @@ static int cuewCudaInit(void) {
   CUDA_LIBRARY_FIND(cuEventQuery);
   CUDA_LIBRARY_FIND(cuEventSynchronize);
   CUDA_LIBRARY_FIND(cuEventDestroy_v2);
-  CUDA_LIBRARY_FIND(cuEventElapsedTime);
+  CUDA_LIBRARY_FIND(cuImportExternalMemory);
+  CUDA_LIBRARY_FIND(cuExternalMemoryGetMappedBuffer);
+  CUDA_LIBRARY_FIND(cuDestroyExternalMemory);
   CUDA_LIBRARY_FIND(cuStreamWaitValue32);
   CUDA_LIBRARY_FIND(cuStreamWaitValue64);
   CUDA_LIBRARY_FIND(cuStreamWriteValue32);
@@ -621,39 +612,12 @@ static int cuewCudaInit(void) {
   CUDA_LIBRARY_FIND(cuGLMapBufferObjectAsync_v2);
   CUDA_LIBRARY_FIND(cuGLUnmapBufferObjectAsync);
 
-  // cudart libraries (needed for runtime API like cudaMalloc, cudaFree etc...)
-  const char* cudart_paths[] = { "cudart64_110.dll",
-                               "cudart64_101.dll",
-                               "cudart64_100.dll",
-                               "cudart64_91.dll",
-                               "cudart64_90.dll",
-                               "cudart64_80.dll",
-                               NULL };
-
-  /* Load library. */
-  cudart_lib = dynamic_library_open_find(cudart_paths);
-
-  if (cudart_lib == NULL) {
-      result = CUEW_ERROR_OPEN_FAILED;
-      return result;
-  }
-
-  CUDART_LIBRARY_FIND(cudaStreamCreate);
-  CUDART_LIBRARY_FIND(cudaStreamDestroy);
-  CUDART_LIBRARY_FIND(cudaMemcpy);
-  CUDART_LIBRARY_FIND(cudaMalloc);
-  CUDART_LIBRARY_FIND(cudaFree);
-  CUDART_LIBRARY_FIND(cudaGetLastError);
-  CUDART_LIBRARY_FIND(cudaGetDeviceProperties);
-  CUDART_LIBRARY_FIND(cudaImportExternalMemory);
-  CUDART_LIBRARY_FIND(cudaExternalMemoryGetMappedBuffer);
-  CUDART_LIBRARY_FIND(cudaDestroyExternalMemory);
-
   result = CUEW_SUCCESS;
   return result;
 }
 
-static void cuewExitNvrtc(void) {
+static void cuewExitNvrtc(void)
+{
   if (nvrtc_lib != NULL) {
     /*  Ignore errors. */
     dynamic_library_close(nvrtc_lib);
@@ -661,7 +625,8 @@ static void cuewExitNvrtc(void) {
   }
 }
 
-static int cuewNvrtcInit(void) {
+static int cuewNvrtcInit(void)
+{
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in c:/windows/system or similar, no path needed. */
@@ -676,13 +641,15 @@ static int cuewNvrtcInit(void) {
   /* Default installation path. */
   const char *nvrtc_paths[] = {"/usr/local/cuda/lib/libnvrtc.dylib", NULL};
 #else
-  const char *nvrtc_paths[] = {"libnvrtc.so",
+  const char *nvrtc_paths[] = {
+    "libnvrtc.so",
 #  if defined(__x86_64__) || defined(_M_X64)
-                               "/usr/local/cuda/lib64/libnvrtc.so",
-#else
-                               "/usr/local/cuda/lib/libnvrtc.so",
-#endif
-                               NULL};
+    "/usr/local/cuda/lib64/libnvrtc.so",
+#  else
+    "/usr/local/cuda/lib/libnvrtc.so",
+#  endif
+    NULL
+  };
 #endif
   static int initialized = 0;
   static int result = 0;
@@ -724,8 +691,8 @@ static int cuewNvrtcInit(void) {
   return result;
 }
 
-
-int cuewInit(cuuint32_t flags) {
+int cuewInit(cuuint32_t flags)
+{
   int result = CUEW_SUCCESS;
 
   if (flags & CUEW_INIT_CUDA) {
@@ -745,79 +712,140 @@ int cuewInit(cuuint32_t flags) {
   return result;
 }
 
-
-const char *cuewErrorString(CUresult result) {
+const char *cuewErrorString(CUresult result)
+{
   switch (result) {
-    case CUDA_SUCCESS: return "No errors";
-    case CUDA_ERROR_INVALID_VALUE: return "Invalid value";
-    case CUDA_ERROR_OUT_OF_MEMORY: return "Out of memory";
-    case CUDA_ERROR_NOT_INITIALIZED: return "Driver not initialized";
-    case CUDA_ERROR_DEINITIALIZED: return "Driver deinitialized";
-    case CUDA_ERROR_PROFILER_DISABLED: return "Profiler disabled";
-    case CUDA_ERROR_PROFILER_NOT_INITIALIZED: return "Profiler not initialized";
-    case CUDA_ERROR_PROFILER_ALREADY_STARTED: return "Profiler already started";
-    case CUDA_ERROR_PROFILER_ALREADY_STOPPED: return "Profiler already stopped";
-    case CUDA_ERROR_NO_DEVICE: return "No CUDA-capable device available";
-    case CUDA_ERROR_INVALID_DEVICE: return "Invalid device";
-    case CUDA_ERROR_INVALID_IMAGE: return "Invalid kernel image";
-    case CUDA_ERROR_INVALID_CONTEXT: return "Invalid context";
-    case CUDA_ERROR_CONTEXT_ALREADY_CURRENT: return "Context already current";
-    case CUDA_ERROR_MAP_FAILED: return "Map failed";
-    case CUDA_ERROR_UNMAP_FAILED: return "Unmap failed";
-    case CUDA_ERROR_ARRAY_IS_MAPPED: return "Array is mapped";
-    case CUDA_ERROR_ALREADY_MAPPED: return "Already mapped";
-    case CUDA_ERROR_NO_BINARY_FOR_GPU: return "No binary for GPU";
-    case CUDA_ERROR_ALREADY_ACQUIRED: return "Already acquired";
-    case CUDA_ERROR_NOT_MAPPED: return "Not mapped";
-    case CUDA_ERROR_NOT_MAPPED_AS_ARRAY: return "Mapped resource not available for access as an array";
-    case CUDA_ERROR_NOT_MAPPED_AS_POINTER: return "Mapped resource not available for access as a pointer";
-    case CUDA_ERROR_ECC_UNCORRECTABLE: return "Uncorrectable ECC error detected";
-    case CUDA_ERROR_UNSUPPORTED_LIMIT: return "CUlimit not supported by device";
-    case CUDA_ERROR_CONTEXT_ALREADY_IN_USE: return "Context already in use";
-    case CUDA_ERROR_PEER_ACCESS_UNSUPPORTED: return "Peer access unsupported";
-    case CUDA_ERROR_INVALID_PTX: return "Invalid ptx";
-    case CUDA_ERROR_INVALID_GRAPHICS_CONTEXT: return "Invalid graphics context";
-    case CUDA_ERROR_NVLINK_UNCORRECTABLE: return "Nvlink uncorrectable";
-    case CUDA_ERROR_JIT_COMPILER_NOT_FOUND: return "Jit compiler not found";
-    case CUDA_ERROR_UNSUPPORTED_PTX_VERSION: return "Unsupported PTX version";
-    case CUDA_ERROR_INVALID_SOURCE: return "Invalid source";
-    case CUDA_ERROR_FILE_NOT_FOUND: return "File not found";
-    case CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND: return "Link to a shared object failed to resolve";
-    case CUDA_ERROR_SHARED_OBJECT_INIT_FAILED: return "Shared object initialization failed";
-    case CUDA_ERROR_OPERATING_SYSTEM: return "Operating system";
-    case CUDA_ERROR_INVALID_HANDLE: return "Invalid handle";
-    case CUDA_ERROR_NOT_FOUND: return "Not found";
-    case CUDA_ERROR_NOT_READY: return "CUDA not ready";
-    case CUDA_ERROR_ILLEGAL_ADDRESS: return "Illegal address";
-    case CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES: return "Launch exceeded resources";
-    case CUDA_ERROR_LAUNCH_TIMEOUT: return "Launch exceeded timeout";
-    case CUDA_ERROR_LAUNCH_INCOMPATIBLE_TEXTURING: return "Launch with incompatible texturing";
-    case CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED: return "Peer access already enabled";
-    case CUDA_ERROR_PEER_ACCESS_NOT_ENABLED: return "Peer access not enabled";
-    case CUDA_ERROR_PRIMARY_CONTEXT_ACTIVE: return "Primary context active";
-    case CUDA_ERROR_CONTEXT_IS_DESTROYED: return "Context is destroyed";
-    case CUDA_ERROR_ASSERT: return "Assert";
-    case CUDA_ERROR_TOO_MANY_PEERS: return "Too many peers";
-    case CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED: return "Host memory already registered";
-    case CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED: return "Host memory not registered";
-    case CUDA_ERROR_HARDWARE_STACK_ERROR: return "Hardware stack error";
-    case CUDA_ERROR_ILLEGAL_INSTRUCTION: return "Illegal instruction";
-    case CUDA_ERROR_MISALIGNED_ADDRESS: return "Misaligned address";
-    case CUDA_ERROR_INVALID_ADDRESS_SPACE: return "Invalid address space";
-    case CUDA_ERROR_INVALID_PC: return "Invalid pc";
-    case CUDA_ERROR_LAUNCH_FAILED: return "Launch failed";
-    case CUDA_ERROR_COOPERATIVE_LAUNCH_TOO_LARGE: return "Cooperative launch too large";
-    case CUDA_ERROR_NOT_PERMITTED: return "Not permitted";
-    case CUDA_ERROR_NOT_SUPPORTED: return "Not supported";
-    case CUDA_ERROR_UNKNOWN: return "Unknown error";
-    default: return "Unknown CUDA error value";
+    case CUDA_SUCCESS:
+      return "No errors";
+    case CUDA_ERROR_INVALID_VALUE:
+      return "Invalid value";
+    case CUDA_ERROR_OUT_OF_MEMORY:
+      return "Out of memory";
+    case CUDA_ERROR_NOT_INITIALIZED:
+      return "Driver not initialized";
+    case CUDA_ERROR_DEINITIALIZED:
+      return "Driver deinitialized";
+    case CUDA_ERROR_PROFILER_DISABLED:
+      return "Profiler disabled";
+    case CUDA_ERROR_PROFILER_NOT_INITIALIZED:
+      return "Profiler not initialized";
+    case CUDA_ERROR_PROFILER_ALREADY_STARTED:
+      return "Profiler already started";
+    case CUDA_ERROR_PROFILER_ALREADY_STOPPED:
+      return "Profiler already stopped";
+    case CUDA_ERROR_NO_DEVICE:
+      return "No CUDA-capable device available";
+    case CUDA_ERROR_INVALID_DEVICE:
+      return "Invalid device";
+    case CUDA_ERROR_INVALID_IMAGE:
+      return "Invalid kernel image";
+    case CUDA_ERROR_INVALID_CONTEXT:
+      return "Invalid context";
+    case CUDA_ERROR_CONTEXT_ALREADY_CURRENT:
+      return "Context already current";
+    case CUDA_ERROR_MAP_FAILED:
+      return "Map failed";
+    case CUDA_ERROR_UNMAP_FAILED:
+      return "Unmap failed";
+    case CUDA_ERROR_ARRAY_IS_MAPPED:
+      return "Array is mapped";
+    case CUDA_ERROR_ALREADY_MAPPED:
+      return "Already mapped";
+    case CUDA_ERROR_NO_BINARY_FOR_GPU:
+      return "No binary for GPU";
+    case CUDA_ERROR_ALREADY_ACQUIRED:
+      return "Already acquired";
+    case CUDA_ERROR_NOT_MAPPED:
+      return "Not mapped";
+    case CUDA_ERROR_NOT_MAPPED_AS_ARRAY:
+      return "Mapped resource not available for access as an array";
+    case CUDA_ERROR_NOT_MAPPED_AS_POINTER:
+      return "Mapped resource not available for access as a pointer";
+    case CUDA_ERROR_ECC_UNCORRECTABLE:
+      return "Uncorrectable ECC error detected";
+    case CUDA_ERROR_UNSUPPORTED_LIMIT:
+      return "CUlimit not supported by device";
+    case CUDA_ERROR_CONTEXT_ALREADY_IN_USE:
+      return "Context already in use";
+    case CUDA_ERROR_PEER_ACCESS_UNSUPPORTED:
+      return "Peer access unsupported";
+    case CUDA_ERROR_INVALID_PTX:
+      return "Invalid ptx";
+    case CUDA_ERROR_INVALID_GRAPHICS_CONTEXT:
+      return "Invalid graphics context";
+    case CUDA_ERROR_NVLINK_UNCORRECTABLE:
+      return "Nvlink uncorrectable";
+    case CUDA_ERROR_JIT_COMPILER_NOT_FOUND:
+      return "Jit compiler not found";
+    case CUDA_ERROR_UNSUPPORTED_PTX_VERSION:
+      return "Unsupported PTX version";
+    case CUDA_ERROR_INVALID_SOURCE:
+      return "Invalid source";
+    case CUDA_ERROR_FILE_NOT_FOUND:
+      return "File not found";
+    case CUDA_ERROR_SHARED_OBJECT_SYMBOL_NOT_FOUND:
+      return "Link to a shared object failed to resolve";
+    case CUDA_ERROR_SHARED_OBJECT_INIT_FAILED:
+      return "Shared object initialization failed";
+    case CUDA_ERROR_OPERATING_SYSTEM:
+      return "Operating system";
+    case CUDA_ERROR_INVALID_HANDLE:
+      return "Invalid handle";
+    case CUDA_ERROR_NOT_FOUND:
+      return "Not found";
+    case CUDA_ERROR_NOT_READY:
+      return "CUDA not ready";
+    case CUDA_ERROR_ILLEGAL_ADDRESS:
+      return "Illegal address";
+    case CUDA_ERROR_LAUNCH_OUT_OF_RESOURCES:
+      return "Launch exceeded resources";
+    case CUDA_ERROR_LAUNCH_TIMEOUT:
+      return "Launch exceeded timeout";
+    case CUDA_ERROR_LAUNCH_INCOMPATIBLE_TEXTURING:
+      return "Launch with incompatible texturing";
+    case CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED:
+      return "Peer access already enabled";
+    case CUDA_ERROR_PEER_ACCESS_NOT_ENABLED:
+      return "Peer access not enabled";
+    case CUDA_ERROR_PRIMARY_CONTEXT_ACTIVE:
+      return "Primary context active";
+    case CUDA_ERROR_CONTEXT_IS_DESTROYED:
+      return "Context is destroyed";
+    case CUDA_ERROR_ASSERT:
+      return "Assert";
+    case CUDA_ERROR_TOO_MANY_PEERS:
+      return "Too many peers";
+    case CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED:
+      return "Host memory already registered";
+    case CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED:
+      return "Host memory not registered";
+    case CUDA_ERROR_HARDWARE_STACK_ERROR:
+      return "Hardware stack error";
+    case CUDA_ERROR_ILLEGAL_INSTRUCTION:
+      return "Illegal instruction";
+    case CUDA_ERROR_MISALIGNED_ADDRESS:
+      return "Misaligned address";
+    case CUDA_ERROR_INVALID_ADDRESS_SPACE:
+      return "Invalid address space";
+    case CUDA_ERROR_INVALID_PC:
+      return "Invalid pc";
+    case CUDA_ERROR_LAUNCH_FAILED:
+      return "Launch failed";
+    case CUDA_ERROR_COOPERATIVE_LAUNCH_TOO_LARGE:
+      return "Cooperative launch too large";
+    case CUDA_ERROR_NOT_PERMITTED:
+      return "Not permitted";
+    case CUDA_ERROR_NOT_SUPPORTED:
+      return "Not supported";
+    case CUDA_ERROR_UNKNOWN:
+      return "Unknown error";
+    default:
+      return "Unknown CUDA error value";
   }
 }
 
-static void path_join(const char *path1,
-                      const char *path2,
-                      int maxlen,
-                      char *result) {
+static void path_join(const char *path1, const char *path2, int maxlen, char *result)
+{
 #if defined(WIN32) || defined(_WIN32)
   const char separator = '\\';
 #else
@@ -832,7 +860,8 @@ static void path_join(const char *path1,
   }
 }
 
-static int path_exists(const char *path) {
+static int path_exists(const char *path)
+{
   struct stat st;
   if (stat(path, &st)) {
     return 0;
@@ -840,23 +869,21 @@ static int path_exists(const char *path) {
   return 1;
 }
 
-const char *cuewCompilerPath(void) {
+const char *cuewCompilerPath(void)
+{
 #ifdef _WIN32
   const char *defaultpaths[] = {
-    "C:/CUDA/bin",
-    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/bin",
-    NULL};
+      "C:/CUDA/bin", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/bin", NULL};
   const char *executable = "nvcc.exe";
 #else
-  const char *defaultpaths[] = {
-    "/Developer/NVIDIA/CUDA-5.0/bin",
-    "/usr/local/cuda-5.0/bin",
-    "/usr/local/cuda/bin",
-    "/Developer/NVIDIA/CUDA-6.0/bin",
-    "/usr/local/cuda-6.0/bin",
-    "/Developer/NVIDIA/CUDA-5.5/bin",
-    "/usr/local/cuda-5.5/bin",
-    NULL};
+  const char *defaultpaths[] = {"/Developer/NVIDIA/CUDA-5.0/bin",
+                                "/usr/local/cuda-5.0/bin",
+                                "/usr/local/cuda/bin",
+                                "/Developer/NVIDIA/CUDA-6.0/bin",
+                                "/usr/local/cuda-6.0/bin",
+                                "/Developer/NVIDIA/CUDA-5.5/bin",
+                                "/usr/local/cuda-5.5/bin",
+                                NULL};
   const char *executable = "nvcc";
 #endif
   int i;
@@ -899,7 +926,8 @@ const char *cuewCompilerPath(void) {
   return NULL;
 }
 
-int cuewNvrtcVersion(void) {
+int cuewNvrtcVersion(void)
+{
   int major, minor;
   if (nvrtcVersion) {
     nvrtcVersion(&major, &minor);
@@ -908,7 +936,8 @@ int cuewNvrtcVersion(void) {
   return 0;
 }
 
-int cuewCompilerVersion(void) {
+int cuewCompilerVersion(void)
+{
   const char *path = cuewCompilerPath();
   const char *marker = "Cuda compilation tools, release ";
   FILE *pipe;
