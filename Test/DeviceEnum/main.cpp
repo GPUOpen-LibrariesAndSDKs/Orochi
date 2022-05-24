@@ -64,7 +64,7 @@ int main( int argc, char** argv )
 		ERROR_CHECK( e );
 
 		//try kernel execution
-		oroFunction function;
+		 oroFunction function;
 		{
 			const char* code = "extern \"C\" __global__ "
 							   "void testKernel()"
@@ -100,7 +100,7 @@ int main( int argc, char** argv )
 		}
 
 		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 );
+		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 ); 
 		oroDeviceSynchronize();
 
 		oroApi api = oroGetCurAPI( 0 );

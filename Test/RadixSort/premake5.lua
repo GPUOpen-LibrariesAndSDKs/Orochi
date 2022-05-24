@@ -1,4 +1,4 @@
-project "DeviceEnum"
+project "RadixSort"
       kind "ConsoleApp"
 
       targetdir "../../dist/bin/%{cfg.buildcfg}"
@@ -9,6 +9,7 @@ project "DeviceEnum"
    end
 
       includedirs { "../../" }
-      files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
+      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
       files { "../../contrib/**.h", "../../contrib/**.cpp" }
       files { "*.cpp" }
+      files { "../../ParallelPrimitives/**.h", "../../ParallelPrimitives/**.cpp" }

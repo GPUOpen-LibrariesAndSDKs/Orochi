@@ -31,9 +31,13 @@ workspace "YamatanoOrochi"
       buildoptions { "/wd4244", "/wd4305", "/wd4018", "/wd4244" }
    end
    -- buildoptions{ "-Wno-ignored-attributes" }
-   startproject "Test"
+   defines { "_CRT_SECURE_NO_WARNINGS" }
+   startproject "Unittest"
 
-   include "./Test"
-   include "./Test/DeviceEnum"
+   include "./UnitTest"
+   group "Samples"
+   	include "./Test"
+   	include "./Test/DeviceEnum"
    group "Advanced"
       include "./Test/VulkanComputeSimple"
+      include "./Test/RadixSort"

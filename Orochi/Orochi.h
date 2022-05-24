@@ -27,7 +27,9 @@ enum oroApi
 {
     ORO_API_AUTOMATIC = 1<<0,
     ORO_API_HIP = 1<<1,
-    ORO_API_CUDA = 1<<2,
+    ORO_API_CUDADRIVER = 1<<2,
+    ORO_API_CUDARTC = 1<<3,
+    ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
 };
 
 enum oroError
@@ -575,11 +577,13 @@ typedef struct oroExternalMemoryHandleDesc_st {
   } handle;
   unsigned long long size;
   unsigned int flags;
+  unsigned int reserved[16];
 } oroExternalMemoryHandleDesc;
 typedef struct oroExternalMemoryBufferDesc_st {
   unsigned long long offset;
   unsigned long long size;
   unsigned int flags;
+  unsigned int reserved[16];
 } oroExternalMemoryBufferDesc;
 
 /**
@@ -642,7 +646,7 @@ oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned i
 //oroError OROAPI oroDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
 //oroError OROAPI oroDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
 oroError OROAPI oroHostUnregister(void* p);
-oroError OROAPI oroMemcpy(void *dst, void *src, size_t ByteCount, oroMemcpyKind kind);
+//oroError OROAPI oroMemcpy(void *dst, void *src, size_t ByteCount, oroMemcpyKind kind);
 //oroError OROAPI oroMemcpyPeer(oroDeviceptr dstDevice, hipCtx_t dstContext, oroDeviceptr srcDevice, hipCtx_t srcContext, size_t ByteCount);
 oroError OROAPI oroMemcpyHtoD(oroDeviceptr dstDevice, void* srcHost, size_t ByteCount);
 oroError OROAPI oroMemcpyDtoH(void* dstHost, oroDeviceptr srcDevice, size_t ByteCount);
@@ -721,7 +725,7 @@ oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* b
 oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
 oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc);
 oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem);
-oroError OROAPI oroGetLastError(oroError oro_error);
+// oroError OROAPI oroGetLastError(oroError oro_error);
 const char* OROAPI orortcGetErrorString(orortcResult result);
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression);
 orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char** options);
@@ -746,5 +750,6 @@ int oroInitialize( oroApi api, oroU32 flags );
 oroApi oroGetCurAPI( oroU32 flags );
 void* oroGetRawCtx( oroCtx ctx );
 oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn );
+oroError oroCtxCreateFromRawDestroy( oroCtx ctx );
 oroDevice oroGetRawDevice( oroDevice dev );
 oroDevice oroSetRawDevice( oroApi api, oroDevice dev );
