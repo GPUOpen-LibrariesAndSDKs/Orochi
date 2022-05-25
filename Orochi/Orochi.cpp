@@ -195,8 +195,8 @@ orortcResult nvrtc2oro( nvrtcResult a )
 #define __ORO_CTXT_FUNC( name ) __ORO_FUNC1(Ctx##name, name)
 #define __ORO_CTXT_FUNCX( API, name ) __ORO_FUNC1X(API, Ctx##name, name)
 //#define __ORO_CTXT_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cuCtx##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
-#define __ORORTC_FUNC1( cuname, hipname ) if( API & ORO_API_CUDADRIVER ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
-#define __ORO_RET_ERR( e ) if( API & ORO_API_CUDADRIVER ) return cu2oro((CUresult)e ); if( s_api == ORO_API_HIP ) return hip2oro( (hipError_t)e );
+#define __ORORTC_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
+#define __ORO_RET_ERR( e ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro((CUresult)e ); if( s_api == ORO_API_HIP ) return hip2oro( (hipError_t)e );
 
 
 oroError OROAPI oroGetErrorName(oroError error, const char** pStr)
@@ -385,7 +385,7 @@ oroError OROAPI oroCtxCreate(oroCtx* pctx, unsigned int flags, oroDevice dev)
 	(*pctx) = ctxt;
 	s_api = ctxt->getApi();
 	int e = oroErrorUnknown;
-	if( API & ORO_API_CUDADRIVER ) e = cuCtxCreate( oroCtx2cu( pctx ), flags, d.getDevice() );
+	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxCreate( oroCtx2cu( pctx ), flags, d.getDevice() );
 	if( s_api == ORO_API_HIP ) e = hipCtxCreate( oroCtx2hip( pctx ), flags, d.getDevice() );
 	if( e )
 	{
@@ -427,7 +427,7 @@ oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 {
 	ioroCtx_t* ctxt = new ioroCtx_t;
 	int e = oroErrorUnknown;
-	if( API & ORO_API_CUDADRIVER ) e = cuCtxGetCurrent( oroCtx2cu( &ctxt ) );
+	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxGetCurrent( oroCtx2cu( &ctxt ) );
 	if( s_api == ORO_API_HIP ) e = hipCtxGetCurrent( oroCtx2hip( &ctxt ) );
 	if( e )
 	{
