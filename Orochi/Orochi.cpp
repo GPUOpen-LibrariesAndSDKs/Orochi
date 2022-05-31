@@ -770,3 +770,35 @@ oroError OROAPI oroStreamDestroy( oroStream stream )
 
 	return oroErrorUnknown;
 }
+
+//-----------------
+oroError OROAPI oroEventCreateWithFlags(oroEvent* phEvent, unsigned int Flags) 
+{
+	__ORO_FUNC1(EventCreate((CUevent*)phEvent, Flags), 
+		EventCreateWithFlags((hipEvent_t*)phEvent, Flags));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventRecord(oroEvent hEvent, oroStream hStream ) 
+{
+	__ORO_FUNC1(EventRecord((CUevent)hEvent, (CUstream)hStream ), 
+		EventRecord((hipEvent_t)hEvent, (hipStream_t)hStream));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventSynchronize(oroEvent hEvent)
+{
+	__ORO_FUNC1(EventSynchronize((CUevent)hEvent), 
+		EventSynchronize((hipEvent_t)hEvent));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventElapsedTime(float* pMilliseconds, oroEvent hStart, oroEvent hEnd)
+{
+	__ORO_FUNC1(EventElapsedTime(pMilliseconds, (CUevent)hStart, (CUevent)hEnd), 
+		EventElapsedTime(pMilliseconds, (hipEvent_t)hStart, (hipEvent_t)hEnd));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventDestroy(oroEvent hEvent) 
+{
+	__ORO_FUNC1(EventDestroy((CUevent)hEvent), 
+		EventDestroy((hipEvent_t)hEvent));
+	return oroErrorUnknown;
+}

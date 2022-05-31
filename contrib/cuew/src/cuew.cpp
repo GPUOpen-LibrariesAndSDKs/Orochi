@@ -520,6 +520,7 @@ static int cuewCudaInit(void)
   CUDA_LIBRARY_FIND(cuEventQuery);
   CUDA_LIBRARY_FIND(cuEventSynchronize);
   CUDA_LIBRARY_FIND(cuEventDestroy_v2);
+  CUDA_LIBRARY_FIND(cuEventElapsedTime);
   CUDA_LIBRARY_FIND(cuImportExternalMemory);
   CUDA_LIBRARY_FIND(cuExternalMemoryGetMappedBuffer);
   CUDA_LIBRARY_FIND(cuDestroyExternalMemory);
