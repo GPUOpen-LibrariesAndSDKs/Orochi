@@ -25,8 +25,11 @@
 #include <contrib/hipew/include/hipew.h>
 #include <stdio.h>
 #include <string.h>
+#include <unordered_map>
+#include <mutex>
 
-
+std::unordered_map<void*, oroCtx> s_oroCtxs;
+static std::mutex mtx;
 thread_local static oroApi s_api = ORO_API_HIP;
 static oroU32 s_loadedApis = 0;
 
@@ -193,6 +196,7 @@ orortcResult nvrtc2oro( nvrtcResult a )
 #define __ORO_CTXT_FUNCX( API, name ) __ORO_FUNC1X(API, Ctx##name, name)
 //#define __ORO_CTXT_FUNC( name ) if( s_api == ORO_API_CUDA ) return cu2oro( cuCtx##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORORTC_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return nvrtc2oro( nvrtc##cuname ); if( s_api == ORO_API_HIP ) return hiprtc2oro( hiprtc##hipname );
+#define __ORO_RET_ERR( e ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro((CUresult)e ); if( s_api == ORO_API_HIP ) return hip2oro( (hipError_t)e );
 
 
 oroError OROAPI oroGetErrorName(oroError error, const char** pStr)
@@ -380,12 +384,23 @@ oroError OROAPI oroCtxCreate(oroCtx* pctx, unsigned int flags, oroDevice dev)
 	ctxt->setApi( d.getApi() );
 	(*pctx) = ctxt;
 	s_api = ctxt->getApi();
-	__ORO_FUNC1X( d.getApi(), CtxCreate( oroCtx2cu( pctx ), flags, d.getDevice() ), CtxCreate( oroCtx2hip( pctx ), flags, d.getDevice() ) );
-	return oroErrorUnknown;
+	int e = oroErrorUnknown;
+	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxCreate( oroCtx2cu( pctx ), flags, d.getDevice() );
+	if( s_api == ORO_API_HIP ) e = hipCtxCreate( oroCtx2hip( pctx ), flags, d.getDevice() );
+	if( e )
+	{
+		__ORO_RET_ERR( e )
+	}
+	std::lock_guard<std::mutex> lock( mtx );
+	s_oroCtxs[ctxt->m_ptr] = ctxt;
+	return oroSuccess;
 }
 
 oroError OROAPI oroCtxDestroy(oroCtx ctx)
 {
+	std::lock_guard<std::mutex> lock( mtx );
+	s_oroCtxs.erase( ctx->m_ptr );
+
 	int e = 0;
 	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxDestroy( *oroCtx2cu( &ctx ) );
 	if( s_api == ORO_API_HIP ) e = hipCtxDestroy( *oroCtx2hip( &ctx ) );
@@ -410,8 +425,19 @@ oroError OROAPI oroCtxSetCurrent(oroCtx ctx)
 
 oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 {
-	__ORO_FUNC1( CtxGetCurrent( oroCtx2cu(pctx) ), CtxGetCurrent( oroCtx2hip(pctx) ) );
-	return oroErrorUnknown;
+	ioroCtx_t* ctxt = new ioroCtx_t;
+	int e = oroErrorUnknown;
+	if( s_api & ORO_API_CUDADRIVER ) e = cuCtxGetCurrent( oroCtx2cu( &ctxt ) );
+	if( s_api == ORO_API_HIP ) e = hipCtxGetCurrent( oroCtx2hip( &ctxt ) );
+	if( e )
+	{
+		__ORO_RET_ERR( e )
+	}
+
+	( *pctx ) = s_oroCtxs[ctxt->m_ptr];
+
+	delete ctxt;
+	return oroSuccess;
 }
 /*
 oroError OROAPI oroCtxGetDevice(oroDevice* device);
@@ -742,5 +768,37 @@ oroError OROAPI oroStreamDestroy( oroStream stream )
 	__ORO_FUNC1(StreamDestroy((CUstream)stream), 
 		StreamDestroy((hipStream_t)stream ));
 
+	return oroErrorUnknown;
+}
+
+//-----------------
+oroError OROAPI oroEventCreateWithFlags(oroEvent* phEvent, unsigned int Flags) 
+{
+	__ORO_FUNC1(EventCreate((CUevent*)phEvent, Flags), 
+		EventCreateWithFlags((hipEvent_t*)phEvent, Flags));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventRecord(oroEvent hEvent, oroStream hStream ) 
+{
+	__ORO_FUNC1(EventRecord((CUevent)hEvent, (CUstream)hStream ), 
+		EventRecord((hipEvent_t)hEvent, (hipStream_t)hStream));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventSynchronize(oroEvent hEvent)
+{
+	__ORO_FUNC1(EventSynchronize((CUevent)hEvent), 
+		EventSynchronize((hipEvent_t)hEvent));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventElapsedTime(float* pMilliseconds, oroEvent hStart, oroEvent hEnd)
+{
+	__ORO_FUNC1(EventElapsedTime(pMilliseconds, (CUevent)hStart, (CUevent)hEnd), 
+		EventElapsedTime(pMilliseconds, (hipEvent_t)hStart, (hipEvent_t)hEnd));
+	return oroErrorUnknown;
+}
+oroError OROAPI oroEventDestroy(oroEvent hEvent) 
+{
+	__ORO_FUNC1(EventDestroy((CUevent)hEvent), 
+		EventDestroy((hipEvent_t)hEvent));
 	return oroErrorUnknown;
 }

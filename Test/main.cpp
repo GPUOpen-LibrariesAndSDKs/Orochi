@@ -87,9 +87,28 @@ int main(int argc, char** argv )
 			ee = oroModuleGetFunction(&function, module, funcName);		
 		}
 
+		oroStream stream;
+		oroStreamCreate( &stream );
+		
+		oroEvent start, stop;
+		oroEventCreateWithFlags( &start, 0 );
+		oroEventCreateWithFlags( &stop, 0 );
+		oroEventRecord( start, stream );
+
 		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1,1,1, 32,1,1, 0, 0, args, 0 );
+		oroError e = oroModuleLaunchKernel( function, 1,1,1, 32,1,1, 0, stream, args, 0 );
+
+		oroEventRecord( stop, stream );
+
 		oroDeviceSynchronize();
+
+		oroStreamDestroy( stream );
+
+		float milliseconds = 0.0f;
+		oroEventElapsedTime( &milliseconds, start, stop );
+		printf( ">> kernel - %.5f ms\n", milliseconds );
+		oroEventDestroy( start );
+		oroEventDestroy( stop );
 	}
 	printf(">> done\n");
 	return 0;
