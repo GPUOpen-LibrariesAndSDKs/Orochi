@@ -24,23 +24,29 @@ class RadixSort
 		u32* value;
 	};
 
-	enum Flag
+	enum class Flag
 	{
-		FLAG_LOG = 1 << 0,
+		NO_LOG,
+		LOG,
 	};
 
 	RadixSort();
 
 	// Allow move but disallow copy.
-	RadixSort( RadixSort&& ) = default;
-	RadixSort& operator=( RadixSort&& ) = default;
+	RadixSort( RadixSort&& ) noexcept = default;
+	RadixSort& operator=( RadixSort&& ) noexcept = default;
 	RadixSort( const RadixSort& ) = delete;
 	RadixSort& operator=( const RadixSort& ) = delete;
 	~RadixSort();
 
-	void configure( oroDevice device, u32& tempBufferSizeOut );
+	/// @brief Configure the settings, compile the kernels and allocate the memory.
+	/// @param device The device.
+	/// @param kernelPath The kernel path.
+	/// @param includeDir The include directory.
+	/// @return The size of the temp buffer.
+	u32 configure( oroDevice device, const std::string& kernelPath = "", const std::string& includeDir = "" ) noexcept;
 
-	void setFlag( Flag flag );
+	void setFlag( Flag flag ) noexcept;
 
 	void sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int startBit, int endBit, u32* tempBuffer ) noexcept;
 
@@ -50,13 +56,17 @@ class RadixSort
 	template<class T>
 	void sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps ) noexcept;
 
-	void compileKernels( oroDevice device );
+	/// @brief Compile the kernels for radix sort.
+	/// @param device The device.
+	/// @param kernelPath The kernel path.
+	/// @param includeDir The include directory.
+	void compileKernels( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept;
 
 	int calculateWGsToExecute( oroDevice device ) noexcept;
 
   private:
 	int m_nWGsToExecute{ 4 };
-	Flag m_flags;
+	Flag m_flags{ Flag::NO_LOG };
 
 	enum class Kernel
 	{

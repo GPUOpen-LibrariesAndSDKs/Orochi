@@ -54,9 +54,7 @@ class SortTest
   public:
 	SortTest( oroDevice dev, oroCtx ctx ) : m_device( dev ), m_ctx( ctx )
 	{
-		u32 s;
-		m_sort.configure( m_device, s );
-		//		m_sort->setFlag( Oro::RadixSort::FLAG_LOG );
+		const auto s = m_sort.configure(m_device);
 		OrochiUtils::malloc( m_tempBuffer, s );
 	}
 

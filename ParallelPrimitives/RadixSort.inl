@@ -42,7 +42,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 
 	int nItemPerWG = nItemsPerWI * WG_SIZE;
 
-	if( m_flags & FLAG_LOG )
+	if( m_flags == Flag::LOG )
 	{
 		printf( "nWGs: %d\n", m_nWGsToExecute );
 		printf( "nNItemsPerWI: %d\n", nItemsPerWI );
