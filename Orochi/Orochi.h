@@ -69,7 +69,7 @@ typedef struct ioroStream_t* oroStream;
 typedef struct ioroPointerAttribute_t* oroPointerAttribute;
 typedef unsigned long long oroTextureObject;
 typedef void* oroExternalMemory_t;
-
+typedef struct iorortcLinkState* orortcLinkState;
 typedef struct _orortcProgram* orortcProgram;
 
 #define oroHostRegisterPortable 0x01
@@ -405,157 +405,52 @@ typedef enum oroJitOption {
     oroJitOptionFastCompile,
     oroJitOptionNumOptions,
 } oroJitOption;
-/*
-typedef enum HIPjit_target_enum {
-    ORO_TARGET_COMPUTE_20 = 20,
-    ORO_TARGET_COMPUTE_21 = 21,
-    ORO_TARGET_COMPUTE_30 = 30,
-    ORO_TARGET_COMPUTE_32 = 32,
-    ORO_TARGET_COMPUTE_35 = 35,
-    ORO_TARGET_COMPUTE_37 = 37,
-    ORO_TARGET_COMPUTE_50 = 50,
-    ORO_TARGET_COMPUTE_52 = 52,
-    ORO_TARGET_COMPUTE_53 = 53,
-    ORO_TARGET_COMPUTE_60 = 60,
-    ORO_TARGET_COMPUTE_61 = 61,
-    ORO_TARGET_COMPUTE_62 = 62,
-    ORO_TARGET_COMPUTE_70 = 70,
-    ORO_TARGET_COMPUTE_73 = 73,
-    ORO_TARGET_COMPUTE_75 = 75,
-} HIPjit_target;
 
-typedef enum HIPjit_fallback_enum {
-    ORO_PREFER_PTX = 0,
-    ORO_PREFER_BINARY,
-} HIPjit_fallback;
+typedef enum orortcJIT_option
+{
+	ORORTC_JIT_MAX_REGISTERS = 0,
+	ORORTC_JIT_THREADS_PER_BLOCK,
+	ORORTC_JIT_WALL_TIME,
+	ORORTC_JIT_INFO_LOG_BUFFER,
+	ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES,
+	ORORTC_JIT_ERROR_LOG_BUFFER,
+	ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES,
+	ORORTC_JIT_OPTIMIZATION_LEVEL,
+	ORORTC_JIT_TARGET_FROM_HIPCONTEXT,
+	ORORTC_JIT_TARGET,
+	ORORTC_JIT_FALLBACK_STRATEGY,
+	ORORTC_JIT_GENERATE_DEBUG_INFO,
+	ORORTC_JIT_LOG_VERBOSE,
+	ORORTC_JIT_GENERATE_LINE_INFO,
+	ORORTC_JIT_CACHE_MODE,
+	ORORTC_JIT_NEW_SM3X_OPT,
+	ORORTC_JIT_FAST_COMPILE,
+	ORORTC_JIT_GLOBAL_SYMBOL_NAMES,
+	ORORTC_JIT_GLOBAL_SYMBOL_ADDRESS,
+	ORORTC_JIT_GLOBAL_SYMBOL_COUNT,
+	ORORTC_JIT_LTO,
+	ORORTC_JIT_FTZ,
+	ORORTC_JIT_PREC_DIV,
+	ORORTC_JIT_PREC_SQRT,
+	ORORTC_JIT_FMA,
+	ORORTC_JIT_NUM_OPTIONS,
+} orortcJIT_option;
 
-typedef enum HIPjit_cacheMode_enum {
-    ORO_JIT_CACHE_OPTION_NONE = 0,
-    ORO_JIT_CACHE_OPTION_CG,
-    ORO_JIT_CACHE_OPTION_CA,
-} HIPjit_cacheMode;
+typedef enum orortcJITInputType
+{
+	ORORTC_JIT_INPUT_CUBIN = 0,
+	ORORTC_JIT_INPUT_PTX,
+	ORORTC_JIT_INPUT_FATBINARY,
+	ORORTC_JIT_INPUT_OBJECT,
+	ORORTC_JIT_INPUT_LIBRARY,
+	ORORTC_JIT_INPUT_NVVM,
+	ORORTC_JIT_NUM_LEGACY_INPUT_TYPES,
+	ORORTC_JIT_INPUT_LLVM_BITCODE = 100,
+	ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE = 101,
+	ORORTC_JIT_INPUT_LLVM_ARCHIVES_OF_BUNDLED_BITCODE = 102,
+	ORORTC_JIT_NUM_INPUT_TYPES = ( ORORTC_JIT_NUM_LEGACY_INPUT_TYPES + 3 )
+} orortcJITInputType;
 
-typedef enum HIPjitInputType_enum {
-    ORO_JIT_INPUT_HIPBIN = 0,
-    ORO_JIT_INPUT_PTX,
-    ORO_JIT_INPUT_FATBINARY,
-    ORO_JIT_INPUT_OBJECT,
-    ORO_JIT_INPUT_LIBRARY,
-    ORO_JIT_NUM_INPUT_TYPES,
-} HIPjitInputType;
-
-typedef struct HIPlinkState_st* HIPlinkState;
-
-typedef enum hipGLDeviceList {
-    hipGLDeviceListAll = 1,           ///< All hip devices used by current OpenGL context.
-    hipGLDeviceListCurrentFrame = 2,  ///< Hip devices used by current OpenGL context in current
-                                      ///< frame
-                                      hipGLDeviceListNextFrame = 3      ///< Hip devices used by current OpenGL context in next
-                                                                        ///< frame.
-} hipGLDeviceList;
-
-typedef enum hipGraphicsRegisterFlags {
-    hipGraphicsRegisterFlagsNone = 0,
-    hipGraphicsRegisterFlagsReadOnly = 1,  ///< HIP will not write to this registered resource
-    hipGraphicsRegisterFlagsWriteDiscard =
-    2,  ///< HIP will only write and will not read from this registered resource
-    hipGraphicsRegisterFlagsSurfaceLoadStore = 4,  ///< HIP will bind this resource to a surface
-    hipGraphicsRegisterFlagsTextureGather =
-    8  ///< HIP will perform texture gather operations on this registered resource
-} hipGraphicsRegisterFlags;
-
-typedef enum HIPgraphicsRegisterFlags_enum {
-    ORO_GRAPHICS_REGISTER_FLAGS_NONE = 0x00,
-    ORO_GRAPHICS_REGISTER_FLAGS_READ_ONLY = 0x01,
-    ORO_GRAPHICS_REGISTER_FLAGS_WRITE_DISCARD = 0x02,
-    ORO_GRAPHICS_REGISTER_FLAGS_SURFACE_LDST = 0x04,
-    ORO_GRAPHICS_REGISTER_FLAGS_TEXTURE_GATHER = 0x08,
-} HIPgraphicsRegisterFlags;
-
-typedef enum HIPgraphicsMapResourceFlags_enum {
-    ORO_GRAPHICS_MAP_RESOURCE_FLAGS_NONE = 0x00,
-    ORO_GRAPHICS_MAP_RESOURCE_FLAGS_READ_ONLY = 0x01,
-    ORO_GRAPHICS_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
-} HIPgraphicsMapResourceFlags;
-
-typedef enum HIParray_cubemap_face_enum {
-    ORO_HIPBEMAP_FACE_POSITIVE_X = 0x00,
-    ORO_HIPBEMAP_FACE_NEGATIVE_X = 0x01,
-    ORO_HIPBEMAP_FACE_POSITIVE_Y = 0x02,
-    ORO_HIPBEMAP_FACE_NEGATIVE_Y = 0x03,
-    ORO_HIPBEMAP_FACE_POSITIVE_Z = 0x04,
-    ORO_HIPBEMAP_FACE_NEGATIVE_Z = 0x05,
-} HIParray_cubemap_face;
-
-typedef enum hipLimit_t {
-    ORO_LIMIT_STACK_SIZE = 0x00,
-    ORO_LIMIT_PRINTF_FIFO_SIZE = 0x01,
-    hipLimitMallocHeapSize = 0x02,
-    ORO_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
-    ORO_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
-    ORO_LIMIT_MAX,
-} hipLimit_t;
-
-typedef enum hipResourceType {
-    hipResourceTypeArray = 0x00,
-    hipResourceTypeMipmaoroedArray = 0x01,
-    hipResourceTypeLinear = 0x02,
-    hipResourceTypePitch2D = 0x03,
-} hipResourceType;
-
-typedef enum hipError_t {
-    hipSuccess = 0,
-    hipErrorInvalidValue = 1,
-    hipErrorOutOfMemory = 2,
-    hipErrorNotInitialized = 3,
-    hipErrorDeinitialized = 4,
-    hipErrorProfilerDisabled = 5,
-    hipErrorProfilerNotInitialized = 6,
-    hipErrorProfilerAlreadyStarted = 7,
-    hipErrorProfilerAlreadyStooroed = 8,
-    hipErrorNoDevice = 100,
-    hipErrorInvalidDevice = 101,
-    hipErrorInvalidImage = 200,
-    hipErrorInvalidContext = 201,
-    hipErrorContextAlreadyCurrent = 202,
-    hipErrorMapFailed = 205,
-    hipErrorUnmapFailed = 206,
-    hipErrorArrayIsMaoroed = 207,
-    hipErrorAlreadyMaoroed = 208,
-    hipErrorNoBinaryForGpu = 209,
-    hipErrorAlreadyAcquired = 210,
-    hipErrorNotMaoroed = 211,
-    hipErrorNotMaoroedAsArray = 212,
-    hipErrorNotMaoroedAsPointer = 213,
-    hipErrorECCNotCorrectable = 214,
-    hipErrorUnsuoroortedLimit = 215,
-    hipErrorContextAlreadyInUse = 216,
-    hipErrorPeerAccessUnsuoroorted = 217,
-    hipErrorInvalidKernelFile = 218,
-    hipErrorInvalidGraphicsContext = 219,
-    hipErrorInvalidSource = 300,
-    hipErrorFileNotFound = 301,
-    hipErrorSharedObjectSymbolNotFound = 302,
-    hipErrorSharedObjectInitFailed = 303,
-    hipErrorOperatingSystem = 304,
-    hipErrorInvalidHandle = 400,
-    hipErrorNotFound = 500,
-    hipErrorNotReady = 600,
-    hipErrorIllegalAddress = 700,
-    hipErrorLaunchOutOfResources = 701,
-    hipErrorLaunchTimeOut = 702,
-    hipErrorPeerAccessAlreadyEnabled = 704,
-    hipErrorPeerAccessNotEnabled = 705,
-    hipErrorSetOnActiveProcess = 708,
-    hipErrorAssert = 710,
-    hipErrorHostMemoryAlreadyRegistered = 712,
-    hipErrorHostMemoryNotRegistered = 713,
-    hipErrorLaunchFailure = 719,
-    hipErrorCooperativeLaunchTooLarge = 720,
-    hipErrorNotSuoroorted = 801,
-    hipErrorUnknown = 999,
-} hipError_t;
-*/
 
 typedef enum oroExternalMemoryHandleType_enum {
   oroExternalMemoryHandleTypeOpaqueFd = 1,
@@ -736,6 +631,13 @@ orortcResult OROAPI orortcGetProgramLog(orortcProgram prog, char* log);
 orortcResult OROAPI orortcGetProgramLogSize(orortcProgram prog, size_t* logSizeRet);
 orortcResult OROAPI orortcGetCode(orortcProgram prog, char* code);
 orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t* codeSizeRet);
+
+orortcResult OROAPI orortcLinkCreate( unsigned int num_options, orortcJIT_option* option_ptr, void** option_vals_pptr, orortcLinkState* link_state_ptr );
+orortcResult OROAPI orortcLinkAddFile( orortcLinkState link_state_ptr, orortcJITInputType input_type, const char* file_path, unsigned int num_options, orortcJIT_option* options_ptr, void** option_values );
+orortcResult OROAPI orortcLinkAddData( orortcLinkState link_state_ptr, orortcJITInputType input_type, void* image, size_t image_size, const char* name, unsigned int num_options, orortcJIT_option* options_ptr, void** option_values );
+orortcResult OROAPI orortcLinkComplete( orortcLinkState link_state_ptr, void** bin_out, size_t* size_out );
+orortcResult OROAPI orortcLinkDestroy( orortcLinkState link_state_ptr );
+
 
 
 enum {

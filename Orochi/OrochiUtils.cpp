@@ -384,6 +384,11 @@ struct OrochiUtilsImpl
 char* OrochiUtils::s_cacheDirectory = "./cache/";
 std::map<std::string, oroFunction> OrochiUtils::s_kernelMap;
 
+bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) 
+{
+	return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes );
+}
+
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 { 
 	std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
@@ -463,6 +468,73 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	ee = oroModuleGetFunction( &function, module, funcName );
 
 	return function;
+}
+
+void OrochiUtils::getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, std::vector<char>& dst )
+{
+	std::vector<const char*> opts;
+	opts.push_back( "-std=c++17" );
+
+	std::string tmp = "--gpu-architecture=";
+
+	if( oroGetCurAPI(0) == ORO_API_HIP )
+	{
+		oroDeviceProp props;
+		oroGetDeviceProperties( &props, device );
+		tmp += props.gcnArchName;
+		opts.push_back( tmp.c_str() );
+	}
+
+	if( optsIn )
+	{
+		for( int i = 0; i < optsIn->size(); i++ )
+			opts.push_back( ( *optsIn )[i] );
+	}
+	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
+	//		opts.push_back( "-G" );
+
+	oroFunction function;
+	std::vector<char>& codec = dst;
+/*
+	std::string cacheFile;
+	{
+		std::string o;
+		for( int i = 0; i < opts.size(); i++ )
+			o.append( opts[i] );
+		OrochiUtilsImpl::getCacheFileName( device, path, funcName, o.c_str(), cacheFile );
+	}
+	if( OrochiUtilsImpl::isFileUpToDate( cacheFile.c_str(), path ) )
+	{
+		// load cache
+		OrochiUtilsImpl::loadCacheFileToBinary( cacheFile, codec );
+	}
+	else
+*/
+	{
+		orortcProgram prog;
+		orortcResult e;
+		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
+
+		e = orortcCompileProgram( prog, opts.size(), opts.data() );
+		if( e != ORORTC_SUCCESS )
+		{
+			size_t logSize;
+			orortcGetProgramLogSize( prog, &logSize );
+			if( logSize )
+			{
+				std::string log( logSize, '\0' );
+				orortcGetProgramLog( prog, &log[0] );
+				std::cout << log << '\n';
+			};
+		}
+		size_t codeSize;
+		e = orortcGetCodeSize( prog, &codeSize );
+
+		codec.resize( codeSize );
+		e = orortcGetCode( prog, codec.data() );
+		e = orortcDestroyProgram( &prog );
+	}
+	return;
 }
 
 void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes ) 

@@ -49,6 +49,9 @@ int main(int argc, char** argv )
 		oroDeviceProp props;
 		oroGetDeviceProperties( &props, device );
 		printf("executing on %s (%s)\n", props.name, props.gcnArchName );
+		int v;
+		oroDriverGetVersion( &v );
+		printf("running on driver: %d\n", v);
 	}
 	printf(">> testing kernel execution\n");
 	{

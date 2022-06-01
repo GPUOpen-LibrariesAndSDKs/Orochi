@@ -186,6 +186,9 @@ orortcResult nvrtc2oro( nvrtcResult a )
 	return (orortcResult)a;
 }
 
+inline orortcResult cu2orortc( CUresult a ) { return (orortcResult)a; }
+
+
 #define __ORO_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC1X( API, cuname, hipname ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
 //#define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
@@ -734,6 +737,49 @@ orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t* codeSizeRet)
 	__ORORTC_FUNC1( GetPTXSize( (nvrtcProgram)prog, codeSizeRet ), 
 		GetCodeSize( (hiprtcProgram)prog, codeSizeRet ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
+}
+
+orortcResult OROAPI orortcLinkCreate( unsigned int num_options, orortcJIT_option* option_ptr, void** option_vals_pptr, orortcLinkState* link_state_ptr ) 
+{ 
+	if( s_api & ORO_API_CUDADRIVER ) 
+		return cu2orortc( cuLinkCreate( num_options, (CUjit_option*)option_ptr, option_vals_pptr, (CUlinkState*)link_state_ptr ) );
+	else
+		hiprtc2oro( hiprtcLinkCreate( num_options, (hiprtcJIT_option*)option_ptr, option_vals_pptr, (hiprtcLinkState*)link_state_ptr ) );
+
+	return ORORTC_ERROR_INTERNAL_ERROR;
+}
+orortcResult OROAPI orortcLinkAddFile( orortcLinkState link_state_ptr, orortcJITInputType input_type, const char* file_path, unsigned int num_options, orortcJIT_option* options_ptr, void** option_values ) 
+{
+	if( s_api & ORO_API_CUDADRIVER )
+		return cu2orortc( cuLinkAddFile( (CUlinkState)link_state_ptr, (CUjitInputType)input_type, file_path, num_options, (CUjit_option*)options_ptr, option_values ) );
+	else
+		hiprtc2oro( hiprtcLinkAddFile( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, file_path, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
+	return ORORTC_ERROR_INTERNAL_ERROR; 
+}
+orortcResult OROAPI orortcLinkAddData( orortcLinkState link_state_ptr, orortcJITInputType input_type, void* image, size_t image_size, const char* name, unsigned int num_options, orortcJIT_option* options_ptr, void** option_values ) 
+{
+	if( s_api & ORO_API_CUDADRIVER )
+		return cu2orortc( cuLinkAddData( (CUlinkState)link_state_ptr, (CUjitInputType)input_type, image, image_size, name, num_options, (CUjit_option*)options_ptr ,option_values ) );
+	else
+		hiprtc2oro( hiprtcLinkAddData( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, image, image_size, name, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
+	return ORORTC_ERROR_INTERNAL_ERROR;
+}
+orortcResult OROAPI orortcLinkComplete( orortcLinkState link_state_ptr, void** bin_out, size_t* size_out ) 
+{
+	if( s_api & ORO_API_CUDADRIVER )
+		return cu2orortc( cuLinkComplete( (CUlinkState)link_state_ptr, bin_out, size_out ) );
+	else
+		hiprtc2oro( hiprtcLinkComplete( (hiprtcLinkState)link_state_ptr, bin_out, size_out ) );
+	return ORORTC_ERROR_INTERNAL_ERROR;
+}
+orortcResult OROAPI orortcLinkDestroy( orortcLinkState link_state_ptr ) 
+{ 
+	if( s_api & ORO_API_CUDADRIVER )
+		return cu2orortc( cuLinkDestroy( (CUlinkState)link_state_ptr ) );
+	else
+		hiprtc2oro( hiprtcLinkDestroy( (hiprtcLinkState)link_state_ptr ) );
+
+	return ORORTC_ERROR_INTERNAL_ERROR; 
 }
 
 // Implementation of oroPointerGetAttributes is hacky due to differences between CUDA and HIP
