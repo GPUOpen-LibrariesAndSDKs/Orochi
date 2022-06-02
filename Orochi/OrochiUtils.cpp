@@ -401,7 +401,21 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 	return f;
 }
 
-oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn )
+oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
+	int numHeaders, const char** headers, const char** includeNames ) 
+{
+	std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	if( s_kernelMap.find( cacheName.c_str() ) != s_kernelMap.end() )
+	{
+		return s_kernelMap[cacheName];
+	}
+	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames );
+	s_kernelMap[cacheName] = f;
+	return f;
+}
+	
+oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
+	int numHeaders, const char** headers, const char** includeNames )
 {
 	std::vector<const char*> opts;
 	opts.push_back( "-std=c++17" );
@@ -433,7 +447,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	{
 		orortcProgram prog;
 		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
+		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
 
 		e = orortcCompileProgram( prog, opts.size(), opts.data() );
 		if( e != ORORTC_SUCCESS )

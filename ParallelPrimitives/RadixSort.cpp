@@ -6,6 +6,11 @@
 #include <iostream>
 #include <numeric>
 
+#if defined( ORO_PP_LOAD_FROM_STRING )
+#include <ParallelPrimitives/cache/Kernels.h>
+#include <ParallelPrimitives/cache/KernelArgs.h>
+#endif
+
 namespace
 {
 /// @brief Exclusive scan algorithm on CPU for testing.
@@ -93,7 +98,12 @@ void RadixSort::compileKernels( oroDevice device, const std::string& kernelPath,
 
 	for( const auto& record : records )
 	{
+#if defined( ORO_PP_LOAD_FROM_STRING )
+		oroFunctions[record.kernelType] = OrochiUtils::getFunctionFromString( device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts,
+			1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
+#else
 		oroFunctions[record.kernelType] = OrochiUtils::getFunctionFromFile( device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
+#endif
 		if( m_flags == Flag::LOG )
 		{
 			printKernelInfo( oroFunctions[record.kernelType] );

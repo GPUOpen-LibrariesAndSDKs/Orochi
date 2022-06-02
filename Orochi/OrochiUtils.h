@@ -19,7 +19,10 @@ class OrochiUtils
 	};
 
 	static oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );
-	static oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts );
+	static oroFunction getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* opts, 
+		int numHeaders, const char** headers, const char** includeNames );
+	static oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, 
+		int numHeaders = 0, const char** headers = 0, const char** includeNames = 0 );
 
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0 );
 

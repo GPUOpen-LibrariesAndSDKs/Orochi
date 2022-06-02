@@ -1,3 +1,9 @@
+newoption {
+    trigger = "bakeKernel",
+    description = "bakeKernel"
+}
+
+
 workspace "YamatanoOrochi"
    configurations { "Debug", "Release" }
    language "C++"
@@ -33,6 +39,11 @@ workspace "YamatanoOrochi"
    -- buildoptions{ "-Wno-ignored-attributes" }
    defines { "_CRT_SECURE_NO_WARNINGS" }
    startproject "Unittest"
+
+	if _OPTIONS["bakeKernel"] then
+		defines { "ORO_PP_LOAD_FROM_STRING" }
+		os.execute(".\\tools\\bakeKernel.bat")
+	end
 
    include "./UnitTest"
    group "Samples"
