@@ -56,7 +56,13 @@ void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWG
 	OrochiUtils::waitForCompletion();
 
 	std::vector<int> offsets( Oro::BIN_SIZE * nWGsToExecute );
-	std::exclusive_scan( std::cbegin( counts ), std::cend( counts ), std::begin( offsets ), 0 );
+
+	int sum = 0;
+	for( int i = 0; i < counts.size(); ++i )
+	{
+		offsets[i] = sum;
+		sum += counts[i];
+	}
 
 	OrochiUtils::copyHtoD( offsetsGpu, offsets.data(), Oro::BIN_SIZE * nWGsToExecute );
 	OrochiUtils::waitForCompletion();
@@ -117,23 +123,8 @@ int RadixSort::calculateWGsToExecute( oroDevice device ) noexcept
 	const int warpPerWGP = props.maxThreadsPerMultiProcessor / warpSize;
 	const int occupancyFromWarp = ( warpPerWGP > 0 ) ? ( warpPerWGP / warpPerWG ) : 1;
 
-	constexpr std::array<Kernel, 3UL> selectedKernels{ Kernel::COUNT, Kernel::SCAN_PARALLEL, Kernel::SORT };
-
-	std::vector<int> sharedMemBytes( std::size( selectedKernels ) );
-	std::transform( std::cbegin( selectedKernels ), std::cend( selectedKernels ), std::begin( sharedMemBytes ),
-					[&]( const auto& kernel ) noexcept
-					{
-						int sharedMemory{ 0 };
-						const auto func = oroFunctions[kernel];
-						oroFuncGetAttribute( &sharedMemory, ORO_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, func );
-
-						return sharedMemory;
-					} );
-
-	const auto maxSharedMemory = std::max_element( std::cbegin( sharedMemBytes ), std::cend( sharedMemBytes ) );
-	const int occupancyFromLDS = ( maxSharedMemory != std::cend( sharedMemBytes ) && *maxSharedMemory > 0 ) ? props.sharedMemPerBlock / *maxSharedMemory : 1;
-
-	const int occupancy = std::min( occupancyFromLDS, occupancyFromWarp );
+	// From the runtime measurements this yields better result.
+	const int occupancy = std::max( 1, occupancyFromWarp / 2 );
 
 	if( m_flags == Flag::LOG ) std::cout << "Occupancy: " << occupancy << '\n';
 
