@@ -744,7 +744,7 @@ orortcResult OROAPI orortcLinkCreate( unsigned int num_options, orortcJIT_option
 	if( s_api & ORO_API_CUDADRIVER ) 
 		return cu2orortc( cuLinkCreate( num_options, (CUjit_option*)option_ptr, option_vals_pptr, (CUlinkState*)link_state_ptr ) );
 	else
-		hiprtc2oro( hiprtcLinkCreate( num_options, (hiprtcJIT_option*)option_ptr, option_vals_pptr, (hiprtcLinkState*)link_state_ptr ) );
+		return hiprtc2oro( hiprtcLinkCreate( num_options, (hiprtcJIT_option*)option_ptr, option_vals_pptr, (hiprtcLinkState*)link_state_ptr ) );
 
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
@@ -753,7 +753,7 @@ orortcResult OROAPI orortcLinkAddFile( orortcLinkState link_state_ptr, orortcJIT
 	if( s_api & ORO_API_CUDADRIVER )
 		return cu2orortc( cuLinkAddFile( (CUlinkState)link_state_ptr, (CUjitInputType)input_type, file_path, num_options, (CUjit_option*)options_ptr, option_values ) );
 	else
-		hiprtc2oro( hiprtcLinkAddFile( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, file_path, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
+		return hiprtc2oro( hiprtcLinkAddFile( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, file_path, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
 	return ORORTC_ERROR_INTERNAL_ERROR; 
 }
 orortcResult OROAPI orortcLinkAddData( orortcLinkState link_state_ptr, orortcJITInputType input_type, void* image, size_t image_size, const char* name, unsigned int num_options, orortcJIT_option* options_ptr, void** option_values ) 
@@ -761,7 +761,7 @@ orortcResult OROAPI orortcLinkAddData( orortcLinkState link_state_ptr, orortcJIT
 	if( s_api & ORO_API_CUDADRIVER )
 		return cu2orortc( cuLinkAddData( (CUlinkState)link_state_ptr, (CUjitInputType)input_type, image, image_size, name, num_options, (CUjit_option*)options_ptr ,option_values ) );
 	else
-		hiprtc2oro( hiprtcLinkAddData( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, image, image_size, name, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
+		return hiprtc2oro( hiprtcLinkAddData( (hiprtcLinkState)link_state_ptr, (hiprtcJITInputType)input_type, image, image_size, name, num_options, (hiprtcJIT_option*)options_ptr, option_values ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcLinkComplete( orortcLinkState link_state_ptr, void** bin_out, size_t* size_out ) 
@@ -769,7 +769,7 @@ orortcResult OROAPI orortcLinkComplete( orortcLinkState link_state_ptr, void** b
 	if( s_api & ORO_API_CUDADRIVER )
 		return cu2orortc( cuLinkComplete( (CUlinkState)link_state_ptr, bin_out, size_out ) );
 	else
-		hiprtc2oro( hiprtcLinkComplete( (hiprtcLinkState)link_state_ptr, bin_out, size_out ) );
+		return hiprtc2oro( hiprtcLinkComplete( (hiprtcLinkState)link_state_ptr, bin_out, size_out ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcLinkDestroy( orortcLinkState link_state_ptr ) 
@@ -777,7 +777,7 @@ orortcResult OROAPI orortcLinkDestroy( orortcLinkState link_state_ptr )
 	if( s_api & ORO_API_CUDADRIVER )
 		return cu2orortc( cuLinkDestroy( (CUlinkState)link_state_ptr ) );
 	else
-		hiprtc2oro( hiprtcLinkDestroy( (hiprtcLinkState)link_state_ptr ) );
+		return hiprtc2oro( hiprtcLinkDestroy( (hiprtcLinkState)link_state_ptr ) );
 
 	return ORORTC_ERROR_INTERNAL_ERROR; 
 }

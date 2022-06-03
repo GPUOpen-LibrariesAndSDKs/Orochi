@@ -57,13 +57,95 @@ TEST_F( OroTestBase, kernelExec )
 }
 
 #if 0
+
+void loadFile( const char* path, std::vector<char>& dst ) 
+{
+	std::fstream f( path );
+	if( f.is_open() )
+	{
+		size_t sizeFile;
+		f.seekg( 0, std::fstream::end );
+		size_t size = sizeFile = (size_t)f.tellg();
+		dst.resize( size );
+		f.seekg( 0, std::fstream::beg );
+		f.read( dst.data(), size );
+		f.close();
+	}
+}
+
+TEST_F( OroTestBase, linkBc )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	int v;
+	oroDriverGetVersion( &v );
+	std::vector<char> data0;
+	std::vector<char> data1;
+	{
+		loadFile( "../UnitTest/moduleTestFunc-hip-amdgcn-amd-amdhsa-gfx1032.bc", data1 );
+	}
+	{
+		loadFile( "../UnitTest/moduleTestKernel-hip-amdgcn-amd-amdhsa-gfx1032.bc", data0 );
+	}
+
+	{
+		orortcLinkState rtc_link_state;
+		orortcJIT_option options[6];
+		void* option_vals[6];
+		float wall_time;
+
+		unsigned int log_size = 8192;
+		char error_log[8192];
+		char info_log[8192];
+		size_t out_size;
+		void* cuOut;
+		int my_err = 0;
+
+		options[0] = ORORTC_JIT_WALL_TIME;
+		option_vals[0] = (void*)( &wall_time );
+
+		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+		option_vals[1] = (void*)info_log;
+
+		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[3] = (void*)error_log;
+
+		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[4] = (void*)( &log_size );//todo. behavior difference
+
+		options[5] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[5] = (void*)1;
+
+		void* binary;
+		size_t binarySize = 0;
+		orortcJITInputType type =  ORORTC_JIT_INPUT_LLVM_BITCODE;
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );//todo. should be ok to take 0,0,0
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );//todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
+		auto e = orortcLinkComplete( rtc_link_state, &binary, &binarySize );
+		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, binary );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+
+		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::waitForCompletion();
+	}
+}
 TEST_F( OroTestBase, link ) 
 {
 	oroDeviceProp props;
 	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
 	std::vector<char> data0;
 	std::vector<char> data1;
-	std::vector<const char*> opts = { "--device-c" };
+//	std::vector<const char*> opts = {"-fgpu-rdc"}; //{ "--device-c" };
+	std::vector<const char*> opts = { "-fgpu-rdc", "-c", "--cuda-device-only" }; //{ "--device-c" };
 	{
 		std::string code;
 		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel.h", code );

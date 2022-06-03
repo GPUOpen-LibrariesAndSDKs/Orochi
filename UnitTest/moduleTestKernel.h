@@ -1,4 +1,4 @@
-extern __device__ void printInfo(); 
+__device__ void printInfo(); 
 
 extern "C" __global__ void testKernel()
 { 
