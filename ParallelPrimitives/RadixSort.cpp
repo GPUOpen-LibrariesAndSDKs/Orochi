@@ -1,6 +1,4 @@
-#include <Orochi/OrochiUtils.h>
 #include <ParallelPrimitives/RadixSort.h>
-#include <Test/Stopwatch.h>
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -13,23 +11,7 @@
 
 namespace
 {
-/// @brief Exclusive scan algorithm on CPU for testing.
-/// It copies the count result from the Device to Host before computation, and then copies the offsets back from Host to Device afterward.
-/// @param countsGpu The count result in GPU memory. Otuput: The offset.
-/// @param offsetsGpu The offsets.
-/// @param nWGsToExecute Number of WGs to execute
-void exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute ) noexcept
-{
-	std::vector<int> counts( Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::copyDtoH( counts.data(), countsGpu, Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::waitForCompletion();
 
-	std::vector<int> offsets( Oro::BIN_SIZE * nWGsToExecute );
-	std::exclusive_scan( std::cbegin( counts ), std::cend( counts ), std::begin( offsets ), 0 );
-
-	OrochiUtils::copyHtoD( offsetsGpu, offsets.data(), Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::waitForCompletion();
-}
 
 void printKernelInfo( oroFunction func )
 {
@@ -65,6 +47,19 @@ RadixSort::~RadixSort()
 		OrochiUtils::free( m_partialSum );
 		OrochiUtils::free( m_isReady );
 	}
+}
+
+void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute ) noexcept
+{
+	std::vector<int> counts( Oro::BIN_SIZE * nWGsToExecute );
+	OrochiUtils::copyDtoH( counts.data(), countsGpu, Oro::BIN_SIZE * nWGsToExecute );
+	OrochiUtils::waitForCompletion();
+
+	std::vector<int> offsets( Oro::BIN_SIZE * nWGsToExecute );
+	std::exclusive_scan( std::cbegin( counts ), std::cend( counts ), std::begin( offsets ), 0 );
+
+	OrochiUtils::copyHtoD( offsetsGpu, offsets.data(), Oro::BIN_SIZE * nWGsToExecute );
+	OrochiUtils::waitForCompletion();
 }
 
 void RadixSort::compileKernels( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept

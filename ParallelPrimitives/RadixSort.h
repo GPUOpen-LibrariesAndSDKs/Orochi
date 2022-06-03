@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-
+#include <cmath>
 #include <ParallelPrimitives/RadixSortConfigs.h>
+#include <Test/Stopwatch.h>
+#include <Orochi/OrochiUtils.h>
 
 //#define PROFILE 1
 
@@ -63,6 +65,13 @@ class RadixSort
 	void compileKernels( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept;
 
 	int calculateWGsToExecute( oroDevice device ) noexcept;
+
+	/// @brief Exclusive scan algorithm on CPU for testing.
+	/// It copies the count result from the Device to Host before computation, and then copies the offsets back from Host to Device afterward.
+	/// @param countsGpu The count result in GPU memory. Otuput: The offset.
+	/// @param offsetsGpu The offsets.
+	/// @param nWGsToExecute Number of WGs to execute
+	void exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute ) noexcept;
 
   private:
 	int m_nWGsToExecute{ 4 };
