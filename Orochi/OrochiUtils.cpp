@@ -382,38 +382,23 @@ struct OrochiUtilsImpl
 };
 
 char* OrochiUtils::s_cacheDirectory = "./cache/";
-std::map<std::string, oroFunction> OrochiUtils::s_kernelMap;
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
-{ 
-	std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
-	if( s_kernelMap.find( cacheName.c_str() ) != s_kernelMap.end() )
-	{
-		return s_kernelMap[ cacheName ];
-	}
+{
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 
 	std::string source;
-	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) )
-		return 0;
+	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) return 0;
 
-	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn );
-	s_kernelMap[cacheName] = f;
-	return f;
+	return getFunction( device, source.c_str(), path, funcName, optsIn );
 }
 
-oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
-	int numHeaders, const char** headers, const char** includeNames ) 
+oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames )
 {
-	std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
-	if( s_kernelMap.find( cacheName.c_str() ) != s_kernelMap.end() )
-	{
-		return s_kernelMap[cacheName];
-	}
-	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames );
-	s_kernelMap[cacheName] = f;
-	return f;
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	return getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames );
 }
-	
+
 oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
 	int numHeaders, const char** headers, const char** includeNames )
 {
