@@ -2,6 +2,9 @@
 #include <Orochi/Orochi.h>
 #include <Orochi/OrochiUtils.h>
 
+#if defined( OROASSERT )
+	#undef OROASSERT
+#endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
 #define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
 
@@ -49,8 +52,9 @@ TEST_F( OroTestBase, deviceprops )
 }
 
 TEST_F( OroTestBase, kernelExec ) 
-{ 
-	oroFunction kernel = OrochiUtils::getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
+{
+	OrochiUtils o;
+	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
 	OrochiUtils::launch1D( kernel, 64, 0, 64 );
 	OrochiUtils::waitForCompletion();
 }

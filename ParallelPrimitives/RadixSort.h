@@ -46,7 +46,7 @@ class RadixSort
 	/// @param kernelPath The kernel path.
 	/// @param includeDir The include directory.
 	/// @return The size of the temp buffer.
-	u32 configure( oroDevice device, const std::string& kernelPath = "", const std::string& includeDir = "" ) noexcept;
+	u32 configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath = "", const std::string& includeDir = "" ) noexcept;
 
 	void setFlag( Flag flag ) noexcept;
 
@@ -62,7 +62,7 @@ class RadixSort
 	/// @param device The device.
 	/// @param kernelPath The kernel path.
 	/// @param includeDir The include directory.
-	void compileKernels( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept;
+	void compileKernels( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) noexcept;
 
 	int calculateWGsToExecute( oroDevice device ) noexcept;
 

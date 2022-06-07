@@ -68,7 +68,7 @@ void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWG
 	OrochiUtils::waitForCompletion();
 }
 
-void RadixSort::compileKernels( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept
+void RadixSort::compileKernels( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) noexcept
 {
 	constexpr auto defaultKernelPath{ "../ParallelPrimitives/RadixSortKernels.h" };
 	constexpr auto defaultIncludeDir{ "../" };
@@ -103,7 +103,7 @@ void RadixSort::compileKernels( oroDevice device, const std::string& kernelPath,
 		oroFunctions[record.kernelType] = OrochiUtils::getFunctionFromString( device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts,
 			1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
 #else
-		oroFunctions[record.kernelType] = OrochiUtils::getFunctionFromFile( device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
+		oroFunctions[record.kernelType] = oroutils.getFunctionFromFile( device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
 #endif
 		if( m_flags == Flag::LOG )
 		{
@@ -131,9 +131,9 @@ int RadixSort::calculateWGsToExecute( oroDevice device ) noexcept
 	return props.multiProcessorCount * occupancy;
 }
 
-RadixSort::u32 RadixSort::configure( oroDevice device, const std::string& kernelPath, const std::string& includeDir ) noexcept
+RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) noexcept
 {
-	compileKernels( device, kernelPath, includeDir );
+	compileKernels( device, oroutils, kernelPath, includeDir );
 	const auto newWGsToExecute{ calculateWGsToExecute( device ) };
 
 	if( newWGsToExecute != m_nWGsToExecute && selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
