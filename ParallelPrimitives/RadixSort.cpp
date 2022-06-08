@@ -100,7 +100,7 @@ void RadixSort::compileKernels( oroDevice device, OrochiUtils& oroutils, const s
 	for( const auto& record : records )
 	{
 #if defined( ORO_PP_LOAD_FROM_STRING )
-		oroFunctions[record.kernelType] = OrochiUtils::getFunctionFromString( device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts,
+		oroFunctions[record.kernelType] = oroutils.getFunctionFromString( device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts,
 			1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
 #else
 		oroFunctions[record.kernelType] = oroutils.getFunctionFromFile( device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
