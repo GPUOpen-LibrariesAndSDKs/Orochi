@@ -59,7 +59,6 @@ TEST_F( OroTestBase, kernelExec )
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
-	std::cout << a_host << "\n";
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 }
