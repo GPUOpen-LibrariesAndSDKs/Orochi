@@ -1,5 +1,5 @@
-extern "C" __global__ void testKernel()
+extern "C" __global__ void testKernel( int* __restrict__ a )
 {
-	int a = threadIdx.x;
-	printf( "	thread %d running\n", a );
+	int tid = threadIdx.x;
+	atomicAdd(a, tid);
 }
