@@ -528,10 +528,10 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 			};
 		}
 		size_t codeSize;
-		e = orortcGetCodeSize( prog, &codeSize );
+		e = orortcGetBitcodeSize( prog, &codeSize );
 
 		codec.resize( codeSize );
-		e = orortcGetCode( prog, codec.data() );
+		e = orortcGetBitcode( prog, codec.data() );
 		e = orortcDestroyProgram( &prog );
 	}
 	return;

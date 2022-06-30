@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <Orochi/Orochi.h>
 #include <Orochi/OrochiUtils.h>
+#include <fstream>
 
 #define OROASSERT( x ) ASSERT_TRUE( x )
 #define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }

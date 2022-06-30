@@ -1564,8 +1564,10 @@ typedef nvrtcResult CUDAAPI tnvrtcDestroyProgram(nvrtcProgram *prog);
 typedef nvrtcResult CUDAAPI tnvrtcCompileProgram(nvrtcProgram prog,
                                                  int numOptions,
                                                  const char **options);
-typedef nvrtcResult CUDAAPI tnvrtcGetPTXSize(nvrtcProgram prog, size_t *ptxSizeRet);
-typedef nvrtcResult CUDAAPI tnvrtcGetPTX(nvrtcProgram prog, char *ptx);
+typedef nvrtcResult CUDAAPI tnvrtcGetCUBINSize( nvrtcProgram prog, size_t* ptxSizeRet );
+typedef nvrtcResult CUDAAPI tnvrtcGetCUBIN( nvrtcProgram prog, char* ptx );
+typedef nvrtcResult CUDAAPI tnvrtcGetPTXSize(nvrtcProgram prog, size_t *cubinSizeRet);
+typedef nvrtcResult CUDAAPI tnvrtcGetPTX(nvrtcProgram prog, char *cubin);
 typedef nvrtcResult CUDAAPI tnvrtcGetProgramLogSize(nvrtcProgram prog, size_t *logSizeRet);
 typedef nvrtcResult CUDAAPI tnvrtcGetProgramLog(nvrtcProgram prog, char *log);
 typedef nvrtcResult CUDAAPI tnvrtcAddNameExpression(nvrtcProgram prog,
@@ -1811,6 +1813,8 @@ extern tnvrtcVersion *nvrtcVersion;
 extern tnvrtcCreateProgram *nvrtcCreateProgram;
 extern tnvrtcDestroyProgram *nvrtcDestroyProgram;
 extern tnvrtcCompileProgram *nvrtcCompileProgram;
+extern tnvrtcGetCUBINSize *nvrtcGetCUBINSize;
+extern tnvrtcGetCUBIN *nvrtcGetCUBIN;
 extern tnvrtcGetPTXSize *nvrtcGetPTXSize;
 extern tnvrtcGetPTX *nvrtcGetPTX;
 extern tnvrtcGetProgramLogSize *nvrtcGetProgramLogSize;

@@ -726,6 +726,18 @@ orortcResult OROAPI orortcGetProgramLogSize(orortcProgram prog, size_t* logSizeR
 		GetProgramLogSize( (hiprtcProgram)prog, logSizeRet ) );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
+orortcResult OROAPI orortcGetBitcode(orortcProgram prog, char* bitcode)
+{
+	__ORORTC_FUNC1( GetCUBIN( (nvrtcProgram)prog, bitcode ), 
+		GetBitcode( (hiprtcProgram)prog, bitcode ) );
+	return ORORTC_ERROR_INTERNAL_ERROR;
+}
+orortcResult OROAPI orortcGetBitcodeSize(orortcProgram prog, size_t* bitcodeSizeRet)
+{
+	__ORORTC_FUNC1( GetCUBINSize( (nvrtcProgram)prog, bitcodeSizeRet ), 
+		GetBitcodeSize( (hiprtcProgram)prog, bitcodeSizeRet ) );
+	return ORORTC_ERROR_INTERNAL_ERROR;
+}
 orortcResult OROAPI orortcGetCode(orortcProgram prog, char* code)
 {
 	__ORORTC_FUNC1( GetPTX( (nvrtcProgram)prog, code ), 

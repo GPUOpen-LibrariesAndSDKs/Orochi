@@ -629,6 +629,8 @@ orortcResult OROAPI orortcDestroyProgram(orortcProgram* prog);
 orortcResult OROAPI orortcGetLoweredName(orortcProgram prog, const char* name_expression, const char** lowered_name);
 orortcResult OROAPI orortcGetProgramLog(orortcProgram prog, char* log);
 orortcResult OROAPI orortcGetProgramLogSize(orortcProgram prog, size_t* logSizeRet);
+orortcResult OROAPI orortcGetBitcode( orortcProgram prog, char* bitcode );
+orortcResult OROAPI orortcGetBitcodeSize( orortcProgram prog, size_t* bitcodeSizeRet );
 orortcResult OROAPI orortcGetCode(orortcProgram prog, char* code);
 orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t* codeSizeRet);
 

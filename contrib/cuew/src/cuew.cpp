@@ -303,6 +303,8 @@ tnvrtcVersion *nvrtcVersion;
 tnvrtcCreateProgram *nvrtcCreateProgram;
 tnvrtcDestroyProgram *nvrtcDestroyProgram;
 tnvrtcCompileProgram *nvrtcCompileProgram;
+tnvrtcGetCUBINSize *nvrtcGetCUBINSize;
+tnvrtcGetCUBIN *nvrtcGetCUBIN;
 tnvrtcGetPTXSize *nvrtcGetPTXSize;
 tnvrtcGetPTX *nvrtcGetPTX;
 tnvrtcGetProgramLogSize *nvrtcGetProgramLogSize;
