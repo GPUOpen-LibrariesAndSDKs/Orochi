@@ -277,7 +277,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 	oroApi api = d.getApi();
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
-	if( api == ORO_API_CUDADRIVER )
+	if( api & ORO_API_CUDADRIVER )
 	{
 		CUdevprop p;
 		CUresult e = cuDeviceGetProperties(&p, deviceId);

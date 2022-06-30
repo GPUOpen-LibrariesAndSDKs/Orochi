@@ -51,10 +51,18 @@ TEST_F( OroTestBase, deviceprops )
 }
 
 TEST_F( OroTestBase, kernelExec ) 
-{ 
+{
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = OrochiUtils::getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
-	OrochiUtils::launch1D( kernel, 64, 0, 64 );
+	const void* args[] = { &a_device };
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 2016 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 }
 
 #if 0
