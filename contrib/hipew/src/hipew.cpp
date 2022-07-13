@@ -268,6 +268,7 @@ static int hipewHipInit(void) {
 #elif defined(__APPLE__)
   /* Default installation path. */
   const char *hip_paths[] = {"", NULL};
+  const char* hiprtc_paths[] = { NULL };
 #else
   const char *hip_paths[] = {"/opt/rocm/hip/lib/libamdhip64.so", NULL};
   const char* hiprtc_paths[] = { NULL };
