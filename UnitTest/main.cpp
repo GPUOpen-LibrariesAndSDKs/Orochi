@@ -153,7 +153,10 @@ TEST_F( OroTestBase, link )
 	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
 	std::vector<char> data0;
 	std::vector<char> data1;
-//	std::vector<const char*> opts = {"-fgpu-rdc"}; //{ "--device-c" };
+
+	//for CUDA
+	//std::vector<const char*> opts = { "--device-c", "-arch=sm_80" };
+	//for HIP
 	std::vector<const char*> opts = { "-fgpu-rdc", "-c", "--cuda-device-only" }; //{ "--device-c" };
 	{
 		std::string code;
@@ -201,7 +204,11 @@ TEST_F( OroTestBase, link )
 		size_t binarySize;
 		// calling orortcLinkComplete with ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE seems to work fine. But it then fails inside oroModuleLaunchKernel. 
 		// Probably because the bitcode we used wasn't bundled anyway
-		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; //ORORTC_JIT_INPUT_PTX; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
+
+		//for HIP
+		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
+		//for CUDA
+		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
 		ORORTCCHECK( orortcLinkCreate( 4, options, option_vals, &rtc_link_state ) );
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
@@ -210,7 +217,7 @@ TEST_F( OroTestBase, link )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		
-		// the two calls below work fine
+		// the two calls below work fine on both HIP and CUDA
 		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
 		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );

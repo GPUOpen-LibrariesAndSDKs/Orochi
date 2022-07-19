@@ -683,6 +683,8 @@ static int cuewNvrtcInit(void)
   NVRTC_LIBRARY_FIND(nvrtcCreateProgram);
   NVRTC_LIBRARY_FIND(nvrtcDestroyProgram);
   NVRTC_LIBRARY_FIND(nvrtcCompileProgram);
+  NVRTC_LIBRARY_FIND(nvrtcGetCUBINSize);
+  NVRTC_LIBRARY_FIND(nvrtcGetCUBIN);
   NVRTC_LIBRARY_FIND(nvrtcGetPTXSize);
   NVRTC_LIBRARY_FIND(nvrtcGetPTX);
   NVRTC_LIBRARY_FIND(nvrtcGetProgramLogSize);
