@@ -65,7 +65,7 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 }
 
-#if 0
+#if 1
 
 void loadFile( const char* path, std::vector<char>& dst ) 
 {
@@ -109,6 +109,7 @@ TEST_F( OroTestBase, linkBc )
 		size_t out_size;
 		void* cuOut;
 		int my_err = 0;
+		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
@@ -126,7 +127,7 @@ TEST_F( OroTestBase, linkBc )
 		option_vals[4] = (void*)( &log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)&verbose;
 
 		void* binary;
 		size_t binarySize = 0;
@@ -134,7 +135,6 @@ TEST_F( OroTestBase, linkBc )
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );//todo. should be ok to take 0,0,0
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );//todo. name not required
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
-		auto e = orortcLinkComplete( rtc_link_state, &binary, &binarySize );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
@@ -168,7 +168,7 @@ TEST_F( OroTestBase, link )
 
 	{
 		orortcLinkState rtc_link_state;
-		orortcJIT_option options[6];
+		orortcJIT_option options[4];
 		void* option_vals[6];
 		float wall_time;
 		unsigned int log_size = 8192;
@@ -177,33 +177,42 @@ TEST_F( OroTestBase, link )
 		size_t out_size;
 		void* cuOut;
 		int my_err = 0;
+		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
 
-		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+		options[1] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[1] = (void*)info_log;
 
-		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( &log_size );
 
-		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[3] = (void*)error_log;
+		//options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		//option_vals[3] = (void*)error_log;
+		//
+		//options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		//option_vals[4] = (void*)( &log_size );
 
-		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size );
-
-		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		options[3] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[3] = (void*)&verbose;
 
 		void* binary;
 		size_t binarySize;
-		orortcJITInputType type = ORORTC_JIT_INPUT_PTX;//ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
-		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		// calling orortcLinkComplete with ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE seems to work fine. But it then fails inside oroModuleLaunchKernel. 
+		// Probably because the bitcode we used wasn't bundled anyway
+		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; //ORORTC_JIT_INPUT_PTX; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
+		ORORTCCHECK( orortcLinkCreate( 4, options, option_vals, &rtc_link_state ) );
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
+		
+		// the two calls below work on CUDA but not on HIP (not passing "name" parameter)
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
+		
+		// the two calls below work fine
+		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
+		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
