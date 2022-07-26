@@ -69,7 +69,7 @@ TEST_F( OroTestBase, kernelExec )
 
 void loadFile( const char* path, std::vector<char>& dst ) 
 {
-	std::fstream f( path );
+	std::fstream f( path, std::ios::binary | std::ios::in );
 	if( f.is_open() )
 	{
 		size_t sizeFile;
@@ -91,10 +91,10 @@ TEST_F( OroTestBase, linkBc )
 	std::vector<char> data0;
 	std::vector<char> data1;
 	{
-		loadFile( "../UnitTest/moduleTestFunc-hip-amdgcn-amd-amdhsa-gfx1032.bc", data1 );
+		loadFile( "../UnitTest/moduleTestFunc-hip-amdgcn-amd-amdhsa-gfx1030.bc", data1 );
 	}
 	{
-		loadFile( "../UnitTest/moduleTestKernel-hip-amdgcn-amd-amdhsa-gfx1032.bc", data0 );
+		loadFile( "../UnitTest/moduleTestKernel-hip-amdgcn-amd-amdhsa-gfx1030.bc", data0 );
 	}
 
 	{
@@ -142,9 +142,17 @@ TEST_F( OroTestBase, linkBc )
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
 
-		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::launch1D( function, 64, args, 64 );
 		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
 	}
 }
 TEST_F( OroTestBase, link ) 
@@ -214,12 +222,12 @@ TEST_F( OroTestBase, link )
 		printf( "%s\n", data1.data() );
 		
 		// the two calls below work on CUDA but not on HIP (not passing "name" parameter)
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
+		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
+		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		
 		// the two calls below work fine on both HIP and CUDA
-		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
-		//ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 

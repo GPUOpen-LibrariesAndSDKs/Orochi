@@ -1,5 +1,5 @@
- __device__ void printInfo()
+__device__ void setInfo( int* x )
 {
-	int a = threadIdx.x;
-	printf( "	thread %d running\n", a );
+	int tid = threadIdx.x;
+	atomicAdd( x, tid );
 }
