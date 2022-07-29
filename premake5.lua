@@ -67,8 +67,8 @@ workspace "YamatanoOrochi"
    defines { "_CRT_SECURE_NO_WARNINGS" }
    startproject "Unittest"
 
-    copydir("./contrib/bin", "./dist/bin/Debug/")
-    copydir("./contrib/bin", "./dist/bin/Release/")
+    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
+    copydir("./contrib/bin/win64", "./dist/bin/Release/")
 
    include "./UnitTest"
    group "Samples"
