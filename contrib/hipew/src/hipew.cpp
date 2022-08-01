@@ -430,32 +430,30 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
   HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
   HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
-  if(hiprtc_lib)
-  {
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcAddNameExpression);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcCompileProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcCreateProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcDestroyProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetLoweredName);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLog);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCode);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
+
+  {//hiprtc_lib
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetErrorString );
+      if( !hiprtcGetErrorString && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetErrorString );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcAddNameExpression );
+      if( !hiprtcAddNameExpression && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcAddNameExpression );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcCompileProgram );
+      if( !hiprtcCompileProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcCompileProgram );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcCreateProgram );
+      if( !hiprtcCreateProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcCreateProgram );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcDestroyProgram );
+      if( !hiprtcDestroyProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcDestroyProgram );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetLoweredName );
+      if( !hiprtcGetLoweredName && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetLoweredName );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetProgramLog );
+      if( !hiprtcGetProgramLog && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetProgramLog );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetProgramLogSize );
+      if( !hiprtcGetProgramLogSize && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetProgramLogSize );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetCode );
+      if( !hiprtcGetCode && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetCode );
+      HIP_LIBRARY_FIND_CHECKED( hiprtcGetCodeSize );
+      if( !hiprtcGetCodeSize && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetCodeSize );
   }
-  else
-  {
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcAddNameExpression);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcCompileProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcCreateProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcDestroyProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetLoweredName);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetProgramLog);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetCode);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
-  }
+
   result = HIPEW_SUCCESS;
   return result;
 }
