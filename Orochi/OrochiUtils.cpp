@@ -384,24 +384,83 @@ struct OrochiUtilsImpl
 char* OrochiUtils::s_cacheDirectory = "./cache/";
 std::map<std::string, oroFunction> OrochiUtils::s_kernelMap;
 
-oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
+oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
+	std::vector<const char*>* additionalSourcePaths, const char* includeDir )
 { 
+	auto found = [](std::vector<std::string>& a, std::string& b ){
+		for(int i=0; i<a.size(); i++)
+			if( a[i] == b )
+				return true;
+		return false;
+	};
+
 	std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( s_kernelMap.find( cacheName.c_str() ) != s_kernelMap.end() )
 	{
 		return s_kernelMap[ cacheName ];
 	}
 
+	std::vector<std::string> includes;
+	std::vector<std::string> includeBodies;
 	std::string source;
-	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) )
+	if( !OrochiUtilsImpl::readSourceCode( path, source, &includes ) )
 		return 0;
 
-	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn );
+	includeBodies.resize( includes.size() );
+	for(int i=0; i<includes.size(); i++)
+	{
+		std::string body;
+		if( !OrochiUtilsImpl::readSourceCode( includeDir + includes[i], body, 0 ) )
+			return 0;
+		includeBodies[i] = body;
+	}
+
+	std::vector<const char*> i0;
+	std::vector<const char*> i1;
+
+	std::vector<std::string> sourcePaths;
+	std::vector<std::string> sourceBodies;
+	if( additionalSourcePaths )
+	{
+		for( int i = 0; i < additionalSourcePaths->size(); i++ )
+		{
+			std::string src;
+			std::vector<std::string> inc;
+			if( !OrochiUtilsImpl::readSourceCode( additionalSourcePaths->operator[]( i ), src, &inc ) ) return 0;
+			std::string tmp = additionalSourcePaths->operator[]( i );
+//			tmp.replace( tmp.size()-3, 3, "cuh" );
+			sourcePaths.push_back( tmp );
+			sourceBodies.push_back( src );
+			
+			for(int j=0; j<inc.size(); j++)
+			{
+				if( !found( includes, inc[j] ) )
+				{
+					includes.push_back( inc[j] );
+				}
+			}
+		}
+	}
+	for( int i = 0; i < includes.size(); i++ )
+	{
+		i0.push_back( includes[i].c_str() );
+		i1.push_back( includeBodies[i].c_str() );
+	}
+	for( int i = 0; i < sourcePaths.size(); i++ )
+	{
+		i0.push_back( sourcePaths[i].c_str() );
+		i1.push_back( sourceBodies[i].c_str() );
+	}
+
+	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn,
+		includes.size() == 0 ? 0 : &i0, 
+		includeBodies.size() == 0 ? 0 : &i1 );
 	s_kernelMap[cacheName] = f;
 	return f;
 }
 
-oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn )
+oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
+	std::vector<const char*>* includeNames, std::vector<const char*>* includeBodies )
 {
 	std::vector<const char*> opts;
 	opts.push_back( "-std=c++17" );
@@ -433,8 +492,12 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	{
 		orortcProgram prog;
 		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
 
+		if( includeNames && includeBodies )
+			e = orortcCreateProgram( &prog, code, path, includeNames->size(), includeBodies->data(), includeNames->data() );
+		else
+			e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 		e = orortcCompileProgram( prog, opts.size(), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
@@ -446,13 +509,16 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 				orortcGetProgramLog( prog, &log[0] );
 				std::cout << log << '\n';
 			};
+			return 0;
 		}
 		size_t codeSize;
 		e = orortcGetCodeSize( prog, &codeSize );
-
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 		codec.resize( codeSize );
 		e = orortcGetCode( prog, codec.data() );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 		e = orortcDestroyProgram( &prog );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 		//store cache
 		OrochiUtilsImpl::createDirectory( s_cacheDirectory );
@@ -460,8 +526,9 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	}
 	oroModule module;
 	oroError ee = oroModuleLoadData( &module, codec.data() );
+	OROASSERT( ee == oroSuccess, 0 );
 	ee = oroModuleGetFunction( &function, module, funcName );
-
+	OROASSERT( ee == oroSuccess, 0 );
 	return function;
 }
 

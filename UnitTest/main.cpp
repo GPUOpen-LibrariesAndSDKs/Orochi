@@ -63,6 +63,22 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 }
 
+TEST_F( OroTestBase, kernelCompileMultiple )
+{
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
+	std::vector<const char*> additionalSourcePaths = { "../UnitTest/testFunc.cpp" };
+	oroFunction kernel = OrochiUtils::getFunctionFromFile( m_device, "../UnitTest/testKernel1.h", "testKernel", 0, &additionalSourcePaths, "../" );
+	const void* args[] = { &a_device };
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
+	OrochiUtils::waitForCompletion();
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 2016 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+}
+
 TEST_F( OroTestBase, getErrorString )
 {
 	oroError error = (oroError)1;
