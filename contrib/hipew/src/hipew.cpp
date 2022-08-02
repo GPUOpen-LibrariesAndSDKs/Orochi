@@ -432,25 +432,25 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
 
   {//hiprtc_lib
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetErrorString );
+      HIP_LIBRARY_FIND( hiprtcGetErrorString );
       if( !hiprtcGetErrorString && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetErrorString );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcAddNameExpression );
+      HIP_LIBRARY_FIND( hiprtcAddNameExpression );
       if( !hiprtcAddNameExpression && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcAddNameExpression );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcCompileProgram );
+      HIP_LIBRARY_FIND( hiprtcCompileProgram );
       if( !hiprtcCompileProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcCompileProgram );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcCreateProgram );
+      HIP_LIBRARY_FIND( hiprtcCreateProgram );
       if( !hiprtcCreateProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcCreateProgram );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcDestroyProgram );
+      HIP_LIBRARY_FIND( hiprtcDestroyProgram );
       if( !hiprtcDestroyProgram && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcDestroyProgram );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetLoweredName );
+      HIP_LIBRARY_FIND( hiprtcGetLoweredName );
       if( !hiprtcGetLoweredName && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetLoweredName );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetProgramLog );
+      HIP_LIBRARY_FIND( hiprtcGetProgramLog );
       if( !hiprtcGetProgramLog && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetProgramLog );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetProgramLogSize );
+      HIP_LIBRARY_FIND( hiprtcGetProgramLogSize );
       if( !hiprtcGetProgramLogSize && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetProgramLogSize );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetCode );
+      HIP_LIBRARY_FIND( hiprtcGetCode );
       if( !hiprtcGetCode && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetCode );
-      HIP_LIBRARY_FIND_CHECKED( hiprtcGetCodeSize );
+      HIP_LIBRARY_FIND( hiprtcGetCodeSize );
       if( !hiprtcGetCodeSize && hiprtc_lib ) HIPRTC_LIBRARY_FIND_CHECKED( hiprtcGetCodeSize );
   }
 
