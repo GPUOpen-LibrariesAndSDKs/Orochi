@@ -90,11 +90,15 @@ TEST_F( OroTestBase, linkBc )
 	oroDriverGetVersion( &v );
 	std::vector<char> data0;
 	std::vector<char> data1;
+	std::string archName(props.gcnArchName);
+	archName = archName.substr( 0, archName.find( ':' ));
 	{
-		loadFile( "../UnitTest/moduleTestFunc-hip-amdgcn-amd-amdhsa-gfx1030.bc", data1 );
+		std::string bcFile = "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa-" + archName + ".bc";
+		loadFile( bcFile.c_str(), data1 );
 	}
 	{
-		loadFile( "../UnitTest/moduleTestKernel-hip-amdgcn-amd-amdhsa-gfx1030.bc", data0 );
+		std::string bcFile = "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa-" + archName + ".bc";
+		loadFile( bcFile.c_str(), data0 );
 	}
 
 	{
@@ -253,7 +257,7 @@ TEST_F( OroTestBase, link )
 	}
 }
 #endif
-#if 0
+#if 1
 TEST_F( OroTestBase, link_null_name ) 
 {
 	oroDeviceProp props;
