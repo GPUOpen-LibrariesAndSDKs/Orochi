@@ -265,34 +265,6 @@ TEST_F( OroTestBase, link_null_name )
 
 	{
 		orortcLinkState rtc_link_state;
-		orortcJIT_option options[6];
-		void* option_vals[6];
-		float wall_time;
-		unsigned int log_size = 8192;
-		char error_log[8192];
-		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
-		int my_err = 0;
-		int verbose = 1;
-
-		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
-
-		options[1] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[1] = (void*)info_log;
-
-		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( &log_size );
-
-		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[3] = (void*)error_log;
-		
-		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( &log_size );
-
-		options[3] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[3] = (void*)&verbose;
 
 		void* binary;
 		size_t binarySize;
@@ -303,7 +275,7 @@ TEST_F( OroTestBase, link_null_name )
 		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
 		//for CUDA
 		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
-		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		ORORTCCHECK( orortcLinkCreate( 0, 0, 0, &rtc_link_state ) );
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
 		
