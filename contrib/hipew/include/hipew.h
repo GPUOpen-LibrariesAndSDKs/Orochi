@@ -1155,7 +1155,7 @@ typedef struct ihiprtcLinkState* hiprtcLinkState;
 
 /* Function types. */
 typedef hipError_t HIPAPI thipGetErrorName(hipError_t error, const char** pStr);
-typedef hipError_t HIPAPI thipGetErrorString(hipError_t error, const char** pStr);
+typedef const char* HIPAPI thipGetErrorString(hipError_t error);
 typedef hipError_t HIPAPI thipGetLastError(hipError_t error);
 typedef hipError_t HIPAPI thipInit(unsigned int Flags);
 typedef hipError_t HIPAPI thipDriverGetVersion(int* driverVersion);

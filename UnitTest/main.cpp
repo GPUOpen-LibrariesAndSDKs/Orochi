@@ -416,6 +416,18 @@ TEST_F( OroTestBase, link_bundledBc )
 }
 #endif
 
+TEST_F( OroTestBase, getErrorString )
+{
+	oroError error = (oroError)1;
+	const char *str = nullptr;
+	OROCHECK( oroGetErrorString( error, &str ) );
+	oroApi api = oroGetCurAPI( 0 );
+	if(api == ORO_API_CUDADRIVER)
+		OROASSERT( str != nullptr );
+	else if( api == ORO_API_HIP )
+		OROASSERT( !strcmp(str, "hipErrorInvalidValue") );
+}
+
 
 int main( int argc, char* argv[] ) 
 {

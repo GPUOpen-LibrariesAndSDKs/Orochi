@@ -209,10 +209,14 @@ oroError OROAPI oroGetErrorName(oroError error, const char** pStr)
 	return oroErrorUnknown;
 }
 
-oroError OROAPI oroGetErrorString(oroError error, const char** pStr)
+oroError OROAPI oroGetErrorString( oroError error, const char** pStr )
 {
-	__ORO_FUNC1(GetErrorString((CUresult)error, pStr),
-		GetErrorString((hipError_t)error, pStr));
+	if( s_api & ORO_API_CUDADRIVER ) return cu2oro(cuGetErrorString( (CUresult)error, pStr ));
+	else
+	{
+		*pStr = hipGetErrorString( (hipError_t)error );
+		if (*pStr) return oroSuccess;
+	}
 	return oroErrorUnknown;
 }
 
