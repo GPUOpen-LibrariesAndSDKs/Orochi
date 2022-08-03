@@ -81,7 +81,7 @@ void loadFile( const char* path, std::vector<char>& dst )
 		f.close();
 	}
 }
-
+#if 1
 TEST_F( OroTestBase, linkBc )
 {
 	oroDeviceProp props;
@@ -136,7 +136,6 @@ TEST_F( OroTestBase, linkBc )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );//todo. name not required
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
-		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
 		oroFunction function;
 		oroModule module;
@@ -153,8 +152,11 @@ TEST_F( OroTestBase, linkBc )
 		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
 		OROASSERT( x_host == 2016 );
 		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
+#endif
 TEST_F( OroTestBase, link ) 
 {
 	oroDeviceProp props;
@@ -179,7 +181,7 @@ TEST_F( OroTestBase, link )
 
 	{
 		orortcLinkState rtc_link_state;
-		orortcJIT_option options[4];
+		orortcJIT_option options[6];
 		void* option_vals[6];
 		float wall_time;
 		unsigned int log_size = 8192;
@@ -199,14 +201,14 @@ TEST_F( OroTestBase, link )
 		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
 		option_vals[2] = (void*)( &log_size );
 
-		//options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		//option_vals[3] = (void*)error_log;
-		//
-		//options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		//option_vals[4] = (void*)( &log_size );
+		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[3] = (void*)error_log;
+		
+		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[4] = (void*)( &log_size );
 
-		options[3] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[3] = (void*)&verbose;
+		options[5] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[5] = (void*)&verbose;
 
 		void* binary;
 		size_t binarySize;
@@ -217,7 +219,7 @@ TEST_F( OroTestBase, link )
 		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
 		//for CUDA
 		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
-		ORORTCCHECK( orortcLinkCreate( 4, options, option_vals, &rtc_link_state ) );
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
 		
@@ -229,18 +231,29 @@ TEST_F( OroTestBase, link )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
-		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
 		oroFunction function;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
-
-		OrochiUtils::launch1D( function, 64, 0, 64 );
 		OrochiUtils::waitForCompletion();
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
+
+		OrochiUtils::launch1D( function, 64, args, 64 );
+		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
 #endif
+#if 0
 TEST_F( OroTestBase, link_null_name ) 
 {
 	oroDeviceProp props;
@@ -283,18 +296,26 @@ TEST_F( OroTestBase, link_null_name )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
-		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
 		oroFunction function;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
 
-		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::launch1D( function, 64, args, 64 );
 		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
-#if 0
 TEST_F( OroTestBase, link_bundledBc ) 
 {
 	oroDeviceProp props;
@@ -369,15 +390,24 @@ TEST_F( OroTestBase, link_bundledBc )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
-		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 
 		oroFunction function;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
 
-		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::launch1D( function, 64, args, 64 );
 		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
 #endif
