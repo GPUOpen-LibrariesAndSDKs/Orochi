@@ -241,6 +241,174 @@ TEST_F( OroTestBase, link )
 	}
 }
 #endif
+TEST_F( OroTestBase, link_null_name ) 
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	std::vector<char> data0;
+	std::vector<char> data1;
+
+	//for CUDA
+	//std::vector<const char*> opts = { "--device-c", "-arch=sm_80" };
+	//for HIP
+	std::vector<const char*> opts = { "-fgpu-rdc", "-c", "--cuda-device-only" }; //{ "--device-c" };
+	{
+		std::string code;
+		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel.h", code );
+		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestKernel.h", &opts, data1 );
+	}
+	{
+		std::string code;
+		OrochiUtils::readSourceCode( "../UnitTest/moduleTestFunc.h", code );
+		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestFunc.h", &opts, data0 );
+	}
+
+	{
+		orortcLinkState rtc_link_state;
+		orortcJIT_option options[6];
+		void* option_vals[6];
+		float wall_time;
+		unsigned int log_size = 8192;
+		char error_log[8192];
+		char info_log[8192];
+		size_t out_size;
+		void* cuOut;
+		int my_err = 0;
+		int verbose = 1;
+
+		options[0] = ORORTC_JIT_WALL_TIME;
+		option_vals[0] = (void*)( &wall_time );
+
+		options[1] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[1] = (void*)info_log;
+
+		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[3] = (void*)error_log;
+		
+		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[4] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[3] = (void*)&verbose;
+
+		void* binary;
+		size_t binarySize;
+		// calling orortcLinkComplete with ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE seems to work fine. But it then fails inside oroModuleLaunchKernel. 
+		// Probably because the bitcode we used wasn't bundled anyway
+
+		//for HIP
+		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
+		//for CUDA
+		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		printf( "%s\n", data0.data() );
+		printf( "%s\n", data1.data() );
+		
+		// the two calls below work on CUDA but not on HIP (not passing "name" parameter)
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, binary );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+
+		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::waitForCompletion();
+	}
+}
+#if 0
+TEST_F( OroTestBase, link_bundledBc ) 
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	std::vector<char> data0;
+	std::vector<char> data1;
+
+	//for CUDA
+	//std::vector<const char*> opts = { "--device-c", "-arch=sm_80" };
+	//for HIP
+	std::vector<const char*> opts = { "-fgpu-rdc", "-c", "--cuda-device-only" }; //{ "--device-c" };
+	{
+		std::string code;
+		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel.h", code );
+		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestKernel.h", &opts, data1 );
+	}
+	{
+		std::string code;
+		OrochiUtils::readSourceCode( "../UnitTest/moduleTestFunc.h", code );
+		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestFunc.h", &opts, data0 );
+	}
+
+	{
+		orortcLinkState rtc_link_state;
+		orortcJIT_option options[6];
+		void* option_vals[6];
+		float wall_time;
+		unsigned int log_size = 8192;
+		char error_log[8192];
+		char info_log[8192];
+		size_t out_size;
+		void* cuOut;
+		int my_err = 0;
+		int verbose = 1;
+
+		options[0] = ORORTC_JIT_WALL_TIME;
+		option_vals[0] = (void*)( &wall_time );
+
+		options[1] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[1] = (void*)info_log;
+
+		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[3] = (void*)error_log;
+		
+		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[4] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[3] = (void*)&verbose;
+
+		void* binary;
+		size_t binarySize;
+		// calling orortcLinkComplete with ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE seems to work fine. But it then fails inside oroModuleLaunchKernel. 
+		// Probably because the bitcode we used wasn't bundled anyway
+
+		//for HIP
+		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
+		//for CUDA
+		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		printf( "%s\n", data0.data() );
+		printf( "%s\n", data1.data() );
+		
+		// the two calls below work on CUDA but not on HIP (not passing "name" parameter)
+		// ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
+		// ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
+		
+		// the two calls below work fine on both HIP and CUDA
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, binary );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+
+		OrochiUtils::launch1D( function, 64, 0, 64 );
+		OrochiUtils::waitForCompletion();
+	}
+}
+#endif
 
 
 int main( int argc, char* argv[] ) 
