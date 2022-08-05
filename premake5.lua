@@ -3,6 +3,38 @@ newoption {
     description = "bakeKernel"
 }
 
+function copydir(src_dir, dst_dir, filter, single_dst_dir)
+	if not os.isdir(src_dir) then
+		printError("'%s' is not an existing directory!", src_dir)
+	end
+	filter = filter or "**"
+	src_dir = src_dir .. "/"
+--	print("copy '%s' to '%s'.", src_dir .. filter, dst_dir)
+	dst_dir = dst_dir .. "/"
+	local dir = path.rebase(".",path.getabsolute("."), src_dir) -- root dir, relative from src_dir
+
+	os.chdir( src_dir ) -- change current directory to src_dir
+		local matches = os.matchfiles(filter)
+	os.chdir( dir ) -- change current directory back to root
+
+	local counter = 0
+	for k, v in ipairs(matches) do
+		local target = iif(single_dst_dir, path.getname(v), v)
+		--make sure, that directory exists or os.copyfile() fails
+		os.mkdir( path.getdirectory(dst_dir .. target))
+		if os.copyfile( src_dir .. v, dst_dir .. target) then
+			counter = counter + 1
+		end
+	end
+
+	if counter == #matches then
+--		print("    %d files copied.", counter)
+		return true
+	else
+--		print("    %d/%d files copied.", counter, #matches)
+		return nil
+	end
+end
 
 workspace "YamatanoOrochi"
    configurations { "Debug", "Release" }
@@ -40,10 +72,17 @@ workspace "YamatanoOrochi"
    defines { "_CRT_SECURE_NO_WARNINGS" }
    startproject "Unittest"
 
+
 	if _OPTIONS["bakeKernel"] then
 		defines { "ORO_PP_LOAD_FROM_STRING" }
 		os.execute(".\\tools\\bakeKernel.bat")
 	end
+
+	if os.istarget("windows") then
+		copydir("./contrib/bin/win64", "./dist/bin/Debug/")
+		copydir("./contrib/bin/win64", "./dist/bin/Release/")
+	end
+
 
    include "./UnitTest"
    group "Samples"
