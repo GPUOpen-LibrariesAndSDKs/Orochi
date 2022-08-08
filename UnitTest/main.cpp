@@ -308,7 +308,7 @@ TEST_F( OroTestBase, link_null_name )
 		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
-TEST_F( OroTestBase, link_bundledBc ) 
+TEST_F( OroTestBase, link_bundled )
 {
 	oroDeviceProp props;
 	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
@@ -316,6 +316,7 @@ TEST_F( OroTestBase, link_bundledBc )
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 
+	// TODO: Correct options for CUDA?
 	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
 											:  std::vector<const char *>({ "--device-c", "-arch=sm_80" });
 	{
@@ -372,6 +373,86 @@ TEST_F( OroTestBase, link_bundledBc )
 		
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, binary );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
+
+		OrochiUtils::launch1D( function, 64, args, 64 );
+		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
+	}
+}
+
+TEST_F( OroTestBase, link_bundledBc )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	int v;
+	oroDriverGetVersion( &v );
+	std::vector<char> data0;
+	std::vector<char> data1;
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+
+	// todo - generate cubin for NVIDIA GPUs (skip on CUDA for now)
+	{
+		std::string bcFile = "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa.bc";
+		loadFile( bcFile.c_str(), data1 );
+	}
+	{
+		std::string bcFile = "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa.bc";
+		loadFile( bcFile.c_str(), data0 );
+	}
+
+	{
+		orortcLinkState rtc_link_state;
+		orortcJIT_option options[6];
+		void* option_vals[6];
+		float wall_time;
+
+		unsigned int log_size = 8192;
+		char error_log[8192];
+		char info_log[8192];
+		size_t out_size;
+		void* cuOut;
+		int my_err = 0;
+		int verbose = 1;
+
+		options[0] = ORORTC_JIT_WALL_TIME;
+		option_vals[0] = (void*)( &wall_time );
+
+		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+		option_vals[1] = (void*)info_log;
+
+		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( &log_size );
+
+		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+		option_vals[3] = (void*)error_log;
+
+		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+		option_vals[4] = (void*)( &log_size ); // todo. behavior difference
+
+		options[5] = ORORTC_JIT_LOG_VERBOSE;
+		option_vals[5] = (void*)&verbose;
+
+		void* binary;
+		size_t binarySize = 0;
+		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );						// todo. should be ok to take 0,0,0
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) ); // todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
 		oroFunction function;
