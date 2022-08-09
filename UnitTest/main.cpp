@@ -279,7 +279,6 @@ TEST_F( OroTestBase, link_null_name )
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
 		
-		// the two calls below work on CUDA but not on HIP (not passing "name" parameter)
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
@@ -312,7 +311,7 @@ TEST_F( OroTestBase, link_bundled )
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 
 	// TODO: Correct options for CUDA?
-	std::vector<const char*> opts = isAmd ? std::vector<const char*>( { "-fgpu-rdc", "-c", "--cuda-device-only", "-c", "--gpu-bundle-output", "-c", "emit-llvm" } )
+	std::vector<const char*> opts = isAmd ? std::vector<const char*>( { "-fgpu-rdc", "-c", "--cuda-device-only", "-c", "--gpu-bundle-output", "-c", "-emit-llvm" } )
 											:  std::vector<const char *>({ "--device-c", "-arch=sm_80" });
 	{
 		std::string code;
