@@ -454,6 +454,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 		orortcProgram prog;
 		orortcResult e;
 		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 		e = orortcCompileProgram( prog, opts.size(), opts.data() );
 		if( e != ORORTC_SUCCESS )
@@ -469,10 +470,13 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 		}
 		size_t codeSize;
 		e = orortcGetCodeSize( prog, &codeSize );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 		codec.resize( codeSize );
 		e = orortcGetCode( prog, codec.data() );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 		e = orortcDestroyProgram( &prog );
+		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 		//store cache
 		OrochiUtilsImpl::createDirectory( m_cacheDirectory.c_str() );
@@ -480,7 +484,9 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	}
 	oroModule module;
 	oroError ee = oroModuleLoadData( &module, codec.data() );
+	OROASSERT( ee == oroSuccess, 0 );
 	ee = oroModuleGetFunction( &function, module, funcName );
+	OROASSERT( ee == oroSuccess, 0 );
 
 	return function;
 }
