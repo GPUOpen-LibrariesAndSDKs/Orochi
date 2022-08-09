@@ -273,13 +273,8 @@ TEST_F( OroTestBase, link_null_name )
 
 		void* binary;
 		size_t binarySize;
-		// calling orortcLinkComplete with ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE seems to work fine. But it then fails inside oroModuleLaunchKernel. 
-		// Probably because the bitcode we used wasn't bundled anyway
+		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 
-		//for HIP
-		orortcJITInputType type = ORORTC_JIT_INPUT_LLVM_BITCODE; // ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE;
-		//for CUDA
-		//orortcJITInputType type = ORORTC_JIT_INPUT_CUBIN; //ORORTC_JIT_INPUT_PTX
 		ORORTCCHECK( orortcLinkCreate( 0, 0, 0, &rtc_link_state ) );
 		printf( "%s\n", data0.data() );
 		printf( "%s\n", data1.data() );
@@ -317,7 +312,7 @@ TEST_F( OroTestBase, link_bundled )
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 
 	// TODO: Correct options for CUDA?
-	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
+	std::vector<const char*> opts = isAmd ? std::vector<const char*>( { "-fgpu-rdc", "-c", "--cuda-device-only", "-c", "--gpu-bundle-output", "-c", "emit-llvm" } )
 											:  std::vector<const char *>({ "--device-c", "-arch=sm_80" });
 	{
 		std::string code;
