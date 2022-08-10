@@ -93,11 +93,11 @@ TEST_F( OroTestBase, linkBc )
 	archName = archName.substr( 0, archName.find( ':' ));
 	// todo - generate cubin for NVIDIA GPUs (skip on CUDA for now)
 	{
-		std::string bcFile = "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa-" + archName + ".bc";
+		std::string bcFile = isAmd ? ( "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa-" + archName + ".bc" ) : "../UnitTest/bitcodes/moduleTestFunc.cubin";
 		loadFile( bcFile.c_str(), data1 );
 	}
 	{
-		std::string bcFile = "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa-" + archName + ".bc";
+		std::string bcFile = isAmd ? ( "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa-" + archName + ".bc" ) : "../UnitTest/bitcodes/moduleTestKernel.cubin";
 		loadFile( bcFile.c_str(), data0 );
 	}
 
@@ -112,33 +112,31 @@ TEST_F( OroTestBase, linkBc )
 		char info_log[8192];
 		size_t out_size;
 		void* cuOut;
-		int my_err = 0;
-		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
-		option_vals[1] = (void*)info_log;
+		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( &log_size );
+		option_vals[2] = (void*)( log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[3] = (void*)error_log;
+		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( &log_size );//todo. behavior difference
+		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)&verbose;
+		option_vals[5] = (void*)1;
 
 		void* binary;
 		size_t binarySize = 0;
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
-		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );//todo. should be ok to take 0,0,0
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) );//todo. name not required
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );//todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
 		oroFunction function;
@@ -192,26 +190,24 @@ TEST_F( OroTestBase, link )
 		char info_log[8192];
 		size_t out_size;
 		void* cuOut;
-		int my_err = 0;
-		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
 
-		options[1] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[1] = (void*)info_log;
+		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+		option_vals[1] = info_log;
 
-		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( &log_size );
+		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
+		option_vals[2] = (void*)( log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[3] = (void*)error_log;
-		
+		option_vals[3] = error_log;
+
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( &log_size );
+		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)&verbose;
+		option_vals[5] = (void*)1;
 
 		void* binary;
 		size_t binarySize;
@@ -219,8 +215,6 @@ TEST_F( OroTestBase, link )
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
-		printf( "%s\n", data0.data() );
-		printf( "%s\n", data1.data() );
 		
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
@@ -276,8 +270,6 @@ TEST_F( OroTestBase, link_null_name )
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 
 		ORORTCCHECK( orortcLinkCreate( 0, 0, 0, &rtc_link_state ) );
-		printf( "%s\n", data0.data() );
-		printf( "%s\n", data1.data() );
 		
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
@@ -302,6 +294,7 @@ TEST_F( OroTestBase, link_null_name )
 		ORORTCCHECK( oroModuleUnload( module ) );
 	}
 }
+/*
 TEST_F( OroTestBase, link_bundled )
 {
 	oroDeviceProp props;
@@ -334,8 +327,6 @@ TEST_F( OroTestBase, link_bundled )
 		char info_log[8192];
 		size_t out_size;
 		void* cuOut;
-		int my_err = 0;
-		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
@@ -344,13 +335,13 @@ TEST_F( OroTestBase, link_bundled )
 		option_vals[1] = (void*)info_log;
 
 		options[2] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( &log_size );
+		option_vals[2] = (void*)( log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = (void*)error_log;
 		
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( &log_size );
+		option_vals[4] = (void*)( log_size );
 
 		options[3] = ORORTC_JIT_LOG_VERBOSE;
 		option_vals[3] = (void*)&verbose;
@@ -387,7 +378,7 @@ TEST_F( OroTestBase, link_bundled )
 		ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
 		ORORTCCHECK( oroModuleUnload( module ) );
 	}
-}
+}*/
 
 TEST_F( OroTestBase, link_bundledBc )
 {
@@ -399,20 +390,19 @@ TEST_F( OroTestBase, link_bundledBc )
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 
-	// todo - generate cubin for NVIDIA GPUs (skip on CUDA for now)
 	{
-		std::string bcFile = "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa.bc";
+		std::string bcFile = isAmd ? "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa.bc" : "../UnitTest/bitcodes/moduleTestFunc.fatbin";
 		loadFile( bcFile.c_str(), data1 );
 	}
 	{
-		std::string bcFile = "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa.bc";
+		std::string bcFile = isAmd ? "../UnitTest/bitcodes/moduleTestKernel-hip-amdgcn-amd-amdhsa.bc" : "../UnitTest/bitcodes/moduleTestKernel.fatbin";
 		loadFile( bcFile.c_str(), data0 );
 	}
 
 	{
 		orortcLinkState rtc_link_state;
-		orortcJIT_option options[6];
-		void* option_vals[6];
+		orortcJIT_option options[7];
+		void* option_vals[7];
 		float wall_time;
 
 		unsigned int log_size = 8192;
@@ -420,33 +410,31 @@ TEST_F( OroTestBase, link_bundledBc )
 		char info_log[8192];
 		size_t out_size;
 		void* cuOut;
-		int my_err = 0;
-		int verbose = 1;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
 		option_vals[0] = (void*)( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
-		option_vals[1] = (void*)info_log;
+		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( &log_size );
+		option_vals[2] = (void*)( log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
-		option_vals[3] = (void*)error_log;
+		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( &log_size ); // todo. behavior difference
+		option_vals[4] = (void*)( log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)&verbose;
+		option_vals[5] = (void*)1;
 
 		void* binary;
 		size_t binarySize = 0;
-		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
-		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );						// todo. should be ok to take 0,0,0
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), "a", 0, 0, 0 ) ); // todo. name not required
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), "b", 0, 0, 0 ) );
+		const orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
+		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+		ORORTCCHECK( orortcLinkAddFile( rtc_link_state, ORORTC_JIT_INPUT_FATBINARY, "../UnitTest/bitcodes/moduleTestFunc.fatbin", 0, 0, 0 ) ); // todo. name not required
+		ORORTCCHECK( orortcLinkAddFile( rtc_link_state, ORORTC_JIT_INPUT_FATBINARY, "../UnitTest/bitcodes/moduleTestKernel.fatbin", 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
 		oroFunction function;
