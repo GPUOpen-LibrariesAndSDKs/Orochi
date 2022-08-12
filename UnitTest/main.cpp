@@ -348,14 +348,14 @@ TEST_F( OroTestBase, link_bundledBc )
 		size_t binarySize = 0;
 		const orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
-		ORORTCCHECK( orortcLinkAddFile( rtc_link_state, ORORTC_JIT_INPUT_FATBINARY, "../UnitTest/bitcodes/moduleTestFunc.fatbin", 0, 0, 0 ) ); // todo. name not required
-		ORORTCCHECK( orortcLinkAddFile( rtc_link_state, ORORTC_JIT_INPUT_FATBINARY, "../UnitTest/bitcodes/moduleTestKernel.fatbin", 0, 0, 0 ) );
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) ); // todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
 		oroFunction function;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
