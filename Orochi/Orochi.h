@@ -153,6 +153,10 @@ typedef struct _orortcProgram* orortcProgram;
 #define oroHostRegisterMapped 0x02
 #define oroHostRegisterIoMemory 0x04
 
+#define ORO_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
+#define ORO_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
+#define ORO_LAUNCH_PARAM_END ((void*)0x03)
+
 enum orortcResult
 {
 	ORORTC_SUCCESS = 0,

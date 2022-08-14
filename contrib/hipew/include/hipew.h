@@ -43,9 +43,9 @@ extern "C" {
 #define HIP_TRSA_OVERRIDE_FORMAT 0x01
 #define HIP_TRSF_READ_AS_INTEGER 0x01
 #define HIP_TRSF_NORMALIZED_COORDINATES 0x02
-#define HIP_LAUNCH_PARAM_END ((void*)0x00)
 #define HIP_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
 #define HIP_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
+#define HIP_LAUNCH_PARAM_END ((void*)0x03)
 
 /* Functions which changed 3.1 -> 3.2 for 64 bit stuff,
  * the cuda library has both the old ones for compatibility and new
