@@ -155,7 +155,8 @@ typedef struct _orortcProgram* orortcProgram;
 
 #define ORO_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
 #define ORO_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
-#define ORO_LAUNCH_PARAM_END ((void*)0x03)
+#define ORO_HIP_LAUNCH_PARAM_END ((void*)0x03)
+#define ORO_CUDA_LAUNCH_PARAM_END ((void*)0x00)
 
 enum orortcResult
 {
