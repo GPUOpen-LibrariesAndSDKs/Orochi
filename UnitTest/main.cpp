@@ -135,7 +135,7 @@ TEST_F( OroTestBase, linkBc )
 		size_t binarySize = 0;
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );//todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
@@ -423,7 +423,7 @@ TEST_F( OroTestBase, link_bundledBc )
 		size_t binarySize = 0;
 		const orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) ); // todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
@@ -504,7 +504,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		const orortcJITInputType type0 = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 		const orortcJITInputType type1 = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
-		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type1, data1.data(), data1.size(), 0, 0, 0, 0 ) ); // todo. name not required
+		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type1, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type0, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
 
