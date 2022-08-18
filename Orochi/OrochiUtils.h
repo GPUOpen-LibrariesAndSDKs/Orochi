@@ -1,7 +1,7 @@
 #pragma once
 #include <Orochi/Orochi.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <string>
 
 #if defined(_WIN32)
@@ -18,8 +18,14 @@ class OrochiUtils
 		int x, y, z, w;
 	};
 
-	static oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );
-	static oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts );
+	OrochiUtils();
+	~OrochiUtils();
+
+	oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );
+	oroFunction getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* opts, 
+		int numHeaders, const char** headers, const char** includeNames );
+	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, 
+		int numHeaders = 0, const char** headers = 0, const char** includeNames = 0 );
 
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0 );
 
@@ -64,6 +70,6 @@ class OrochiUtils
 	}
 
 public:
-	static char* s_cacheDirectory;
-	static std::map<std::string, oroFunction> s_kernelMap;
+	std::string m_cacheDirectory;
+	std::unordered_map<std::string, oroFunction> m_kernelMap;
 };
