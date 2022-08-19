@@ -13,6 +13,7 @@ project "Unittest"
       includedirs { "../" }
       files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp", "*.h" }
+      removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
 
       files { "../contrib/gtest-1.6.0/gtest-all.cc" }

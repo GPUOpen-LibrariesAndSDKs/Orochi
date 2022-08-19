@@ -43,9 +43,9 @@ extern "C" {
 #define HIP_TRSA_OVERRIDE_FORMAT 0x01
 #define HIP_TRSF_READ_AS_INTEGER 0x01
 #define HIP_TRSF_NORMALIZED_COORDINATES 0x02
-#define HIP_LAUNCH_PARAM_END ((void*)0x00)
 #define HIP_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
 #define HIP_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
+#define HIP_LAUNCH_PARAM_END ((void*)0x03)
 
 /* Functions which changed 3.1 -> 3.2 for 64 bit stuff,
  * the cuda library has both the old ones for compatibility and new
@@ -1106,6 +1106,53 @@ typedef enum hiprtcResult {
     HIPRTC_ERROR_INTERNAL_ERROR = 11
 } hiprtcResult;
 
+typedef enum hiprtcJIT_option
+{
+	HIPRTC_JIT_MAX_REGISTERS = 0,
+	HIPRTC_JIT_THREADS_PER_BLOCK,
+	HIPRTC_JIT_WALL_TIME,
+	HIPRTC_JIT_INFO_LOG_BUFFER,
+	HIPRTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES,
+	HIPRTC_JIT_ERROR_LOG_BUFFER,
+	HIPRTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES,
+	HIPRTC_JIT_OPTIMIZATION_LEVEL,
+	HIPRTC_JIT_TARGET_FROM_HIPCONTEXT,
+	HIPRTC_JIT_TARGET,
+	HIPRTC_JIT_FALLBACK_STRATEGY,
+	HIPRTC_JIT_GENERATE_DEBUG_INFO,
+	HIPRTC_JIT_LOG_VERBOSE,
+	HIPRTC_JIT_GENERATE_LINE_INFO,
+	HIPRTC_JIT_CACHE_MODE,
+	HIPRTC_JIT_NEW_SM3X_OPT,
+	HIPRTC_JIT_FAST_COMPILE,
+	HIPRTC_JIT_GLOBAL_SYMBOL_NAMES,
+	HIPRTC_JIT_GLOBAL_SYMBOL_ADDRESS,
+	HIPRTC_JIT_GLOBAL_SYMBOL_COUNT,
+	HIPRTC_JIT_LTO,
+	HIPRTC_JIT_FTZ,
+	HIPRTC_JIT_PREC_DIV,
+	HIPRTC_JIT_PREC_SQRT,
+	HIPRTC_JIT_FMA,
+	HIPRTC_JIT_NUM_OPTIONS,
+} hiprtcJIT_option;
+
+typedef enum hiprtcJITInputType
+{
+	HIPRTC_JIT_INPUT_CUBIN = 0,
+	HIPRTC_JIT_INPUT_PTX,
+	HIPRTC_JIT_INPUT_FATBINARY,
+	HIPRTC_JIT_INPUT_OBJECT,
+	HIPRTC_JIT_INPUT_LIBRARY,
+	HIPRTC_JIT_INPUT_NVVM,
+	HIPRTC_JIT_NUM_LEGACY_INPUT_TYPES,
+	HIPRTC_JIT_INPUT_LLVM_BITCODE = 100,
+	HIPRTC_JIT_INPUT_LLVM_BUNDLED_BITCODE = 101,
+	HIPRTC_JIT_INPUT_LLVM_ARCHIVES_OF_BUNDLED_BITCODE = 102,
+	HIPRTC_JIT_NUM_INPUT_TYPES = ( HIPRTC_JIT_NUM_LEGACY_INPUT_TYPES + 3 )
+} hiprtcJITInputType;
+
+typedef struct ihiprtcLinkState* hiprtcLinkState;
+
 /* Function types. */
 typedef hipError_t HIPAPI thipGetErrorName(hipError_t error, const char** pStr);
 typedef const char* HIPAPI thipGetErrorString(hipError_t error);
@@ -1244,9 +1291,15 @@ typedef hiprtcResult HIPAPI thiprtcDestroyProgram(hiprtcProgram* prog);
 typedef hiprtcResult HIPAPI thiprtcGetLoweredName(hiprtcProgram prog, const char* name_expression, const char** lowered_name);
 typedef hiprtcResult HIPAPI thiprtcGetProgramLog(hiprtcProgram prog, char* log);
 typedef hiprtcResult HIPAPI thiprtcGetProgramLogSize(hiprtcProgram prog, size_t* logSizeRet);
+typedef hiprtcResult HIPAPI thiprtcGetBitcode( hiprtcProgram prog, char* bitcode );
+typedef hiprtcResult HIPAPI thiprtcGetBitcodeSize( hiprtcProgram prog, size_t* bitcodeSizeRet );
 typedef hiprtcResult HIPAPI thiprtcGetCode(hiprtcProgram prog, char* code);
 typedef hiprtcResult HIPAPI thiprtcGetCodeSize(hiprtcProgram prog, size_t* codeSizeRet);
-
+typedef hiprtcResult HIPAPI thiprtcLinkCreate( unsigned int num_options, hiprtcJIT_option* option_ptr, void** option_vals_pptr, hiprtcLinkState* hip_link_state_ptr );
+typedef hiprtcResult HIPAPI thiprtcLinkAddFile( hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, const char* file_path, unsigned int num_options, hiprtcJIT_option* options_ptr, void** option_values );
+typedef hiprtcResult HIPAPI thiprtcLinkAddData( hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, void* image, size_t image_size, const char* name, unsigned int num_options, hiprtcJIT_option* options_ptr, void** option_values );
+typedef hiprtcResult HIPAPI thiprtcLinkComplete( hiprtcLinkState hip_link_state, void** bin_out, size_t* size_out );
+typedef hiprtcResult HIPAPI thiprtcLinkDestroy( hiprtcLinkState hip_link_state );
 
 /* Function declarations. */
 extern thipGetErrorName *hipGetErrorName;
@@ -1384,9 +1437,15 @@ extern thiprtcDestroyProgram* hiprtcDestroyProgram;
 extern thiprtcGetLoweredName* hiprtcGetLoweredName;
 extern thiprtcGetProgramLog* hiprtcGetProgramLog;
 extern thiprtcGetProgramLogSize* hiprtcGetProgramLogSize;
+extern thiprtcGetBitcode* hiprtcGetBitcode;
+extern thiprtcGetBitcodeSize* hiprtcGetBitcodeSize;
 extern thiprtcGetCode* hiprtcGetCode;
 extern thiprtcGetCodeSize* hiprtcGetCodeSize;
-
+extern thiprtcLinkCreate* hiprtcLinkCreate;
+extern thiprtcLinkAddFile* hiprtcLinkAddFile;
+extern thiprtcLinkAddData* hiprtcLinkAddData;
+extern thiprtcLinkComplete* hiprtcLinkComplete;
+extern thiprtcLinkDestroy* hiprtcLinkDestroy;
 
 enum {
   HIPEW_SUCCESS = 0,
