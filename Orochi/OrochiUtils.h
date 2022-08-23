@@ -9,6 +9,10 @@
 #else
 	#define OROASSERT(x, y) if(!(x)) {;}
 #endif
+#define ORORTCCHECK( x )                                                                                                                                                                                                                                       \
+	{                                                                                                                                                                                                                                                          \
+		OROASSERT( x == ORORTC_SUCCESS );                                                                                                                                                                                                                      \
+	}
 
 class OrochiUtils
 {
@@ -26,6 +30,10 @@ class OrochiUtils
 		int numHeaders, const char** headers, const char** includeNames );
 	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, 
 		int numHeaders = 0, const char** headers = 0, const char** includeNames = 0 );
+	oroFunction getFunctionFromBc( oroDevice device, const char* bitcode, int bitcodeSize, const char* funcName );
+	void loadModule( oroDevice device, const char* bitcode, int bitcodeSize, oroModule& module, bool isBundle = false );
+	void unloadModule( oroModule module );
+	oroFunction getFunction( oroModule module, const char* funcName );
 
 	static bool readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes = 0 );
 	static void getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* opts, std::vector<char>& dst );

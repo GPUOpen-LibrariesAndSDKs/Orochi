@@ -496,6 +496,120 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	return function;
 }
 
+oroFunction OrochiUtils::getFunctionFromBc( oroDevice device, const char* bitcode, int bitcodeSize, const char* funcName ) 
+{
+	//todo. implement kernel cache
+
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+
+	orortcLinkState rtc_link_state;
+	orortcJIT_option options[6];
+	void* option_vals[6];
+	float wall_time;
+
+	unsigned int log_size = 8192;
+	char error_log[8192];
+	char info_log[8192];
+	size_t out_size;
+	void* cuOut;
+
+	options[0] = ORORTC_JIT_WALL_TIME;
+	option_vals[0] = (void*)( &wall_time );
+
+	options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+	option_vals[1] = info_log;
+
+	options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
+	option_vals[2] = (void*)( log_size );
+
+	options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+	option_vals[3] = error_log;
+
+	options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+	option_vals[4] = (void*)( log_size ); // todo. behavior difference
+
+	options[5] = ORORTC_JIT_LOG_VERBOSE;
+	option_vals[5] = (void*)1;
+
+	void* binary;
+	size_t binarySize = 0;
+	orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
+	ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+	ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, (void*)bitcode, bitcodeSize, 0, 0, 0, 0 ) );
+	ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+	ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+
+	oroFunction function;
+	oroModule module;
+	oroError ee = oroModuleLoadData( &module, binary );
+	ee = oroModuleGetFunction( &function, module, funcName );
+//	ORORTCCHECK( oroModuleUnload( module ) );
+	return function;
+}
+void OrochiUtils::loadModule( oroDevice device, const char* bitcode, int bitcodeSize, oroModule& module, bool isBundle )
+{
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+
+	orortcLinkState rtc_link_state;
+	orortcJIT_option options[6];
+	void* option_vals[6];
+	float wall_time;
+
+	unsigned int log_size = 8192;
+	char error_log[8192];
+	char info_log[8192];
+	size_t out_size;
+	void* cuOut;
+
+	options[0] = ORORTC_JIT_WALL_TIME;
+	option_vals[0] = (void*)( &wall_time );
+
+	options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
+	option_vals[1] = info_log;
+
+	options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
+	option_vals[2] = (void*)( log_size );
+
+	options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
+	option_vals[3] = error_log;
+
+	options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
+	option_vals[4] = (void*)( log_size ); // todo. behavior difference
+
+	options[5] = ORORTC_JIT_LOG_VERBOSE;
+	option_vals[5] = (void*)1;
+
+	void* binary;
+	size_t binarySize = 0;
+	orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
+	if( isBundle )
+		type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
+	ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
+	ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, (void*)bitcode, bitcodeSize, 0, 0, 0, 0 ) );
+	ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+	ORORTCCHECK( orortcLinkDestroy( rtc_link_state ) );
+
+	oroFunction function;
+	oroError ee = oroModuleLoadData( &module, binary );
+}
+void OrochiUtils::unloadModule(oroModule module) 
+{ 
+	ORORTCCHECK( oroModuleUnload( module ) );
+}
+oroFunction OrochiUtils::getFunction(oroModule module, const char* funcName) 
+{
+	std::string cacheName = funcName + std::to_string( (unsigned int)&module );
+	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
+	{
+		return m_kernelMap[cacheName];
+	}
+
+	oroFunction function;
+	oroError ee = oroModuleGetFunction( &function, module, funcName );
+	m_kernelMap[cacheName] = function;
+	return function;
+}
+
 void OrochiUtils::getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, std::vector<char>& dst )
 {
 	std::vector<const char*> opts;

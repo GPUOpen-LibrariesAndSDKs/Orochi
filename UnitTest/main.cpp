@@ -8,7 +8,6 @@
 #endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
 #define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
-#define ORORTCCHECK( x ) { OROASSERT( x == ORORTC_SUCCESS ); }
 
 
 class OroTestBase : public ::testing::Test
