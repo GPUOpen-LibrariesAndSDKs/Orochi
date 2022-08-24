@@ -21,7 +21,12 @@ class OrochiUtils
 	{
 		int x, y, z, w;
 	};
-
+	enum InputType
+	{
+		INPUT_FB,
+		INPUT_BITCODE,
+		INPUT_BITCODE_BUNDLE,
+	};
 	OrochiUtils();
 	~OrochiUtils();
 
@@ -30,8 +35,7 @@ class OrochiUtils
 		int numHeaders, const char** headers, const char** includeNames );
 	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, 
 		int numHeaders = 0, const char** headers = 0, const char** includeNames = 0 );
-	oroFunction getFunctionFromBc( oroDevice device, const char* bitcode, int bitcodeSize, const char* funcName );
-	void loadModule( oroDevice device, const char* bitcode, int bitcodeSize, oroModule& module, bool isBundle = false );
+	void loadModule( oroDevice device, const char* binary, int binarySize, oroModule& module, InputType type = INPUT_FB );
 	void unloadModule( oroModule module );
 	oroFunction getFunction( oroModule module, const char* funcName );
 
