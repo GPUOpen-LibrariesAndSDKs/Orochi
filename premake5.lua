@@ -1,3 +1,8 @@
+newoption {
+    trigger = "bakeKernel",
+    description = "bakeKernel"
+}
+
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
 	if not os.isdir(src_dir) then
 		printError("'%s' is not an existing directory!", src_dir)
@@ -69,6 +74,10 @@ workspace "YamatanoOrochi"
 
     copydir("./contrib/bin/win64", "./dist/bin/Debug/")
     copydir("./contrib/bin/win64", "./dist/bin/Release/")
+	if _OPTIONS["bakeKernel"] then
+		defines { "ORO_PP_LOAD_FROM_STRING" }
+		os.execute(".\\tools\\bakeKernel.bat")
+	end
 
    include "./UnitTest"
    group "Samples"
@@ -78,4 +87,5 @@ workspace "YamatanoOrochi"
      if os.istarget("windows") then
         group "Advanced"
         include "./Test/VulkanComputeSimple"
+        include "./Test/RadixSort"
      end
