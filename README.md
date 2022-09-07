@@ -69,6 +69,16 @@ Run premake.
 
 Test is a minimum application.
 
+### Build within Linux
+
+Unfortunately, the Linux version of hip runtime has some missing API now.
+To build the test application correctly, run following command
+to bypass consistency check:
+
+```sh
+sed -e '/HIP_LIBRARY_FIND_CHECKED( hiprtcLink/d' -i contrib/hipew/src/hipew.cpp
+```
+
 ### Test Applications
 
 The test applications run on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
