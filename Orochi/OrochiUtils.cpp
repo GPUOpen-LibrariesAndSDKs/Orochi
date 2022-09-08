@@ -548,6 +548,50 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	return;
 }
 
+void OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram *prog )
+{
+	std::vector<const char*> opts;
+	opts.push_back( "-std=c++17" );
+
+	std::string tmp = "--gpu-architecture=";
+
+	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
+	{
+		oroDeviceProp props;
+		oroGetDeviceProperties( &props, device );
+		tmp += props.gcnArchName;
+		opts.push_back( tmp.c_str() );
+	}
+
+	if( optsIn )
+	{
+		for( int i = 0; i < optsIn->size(); i++ )
+			opts.push_back( ( *optsIn )[i] );
+	}
+	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
+	//		opts.push_back( "-G" );
+
+	{
+		orortcResult e;
+		e = orortcCreateProgram( prog, code, path, 0, 0, 0 );
+		e = orortcAddNameExpression( *prog, funcName );
+
+		e = orortcCompileProgram( *prog, opts.size(), opts.data() );
+		if( e != ORORTC_SUCCESS )
+		{
+			size_t logSize;
+			orortcGetProgramLogSize( *prog, &logSize );
+			if( logSize )
+			{
+				std::string log( logSize, '\0' );
+				orortcGetProgramLog( *prog, &log[0] );
+				std::cout << log << '\n';
+			};
+		}
+	}
+	return;
+}
+
 void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes ) 
 {
 	int4 tpb = { wgSize, 1, 0 };
