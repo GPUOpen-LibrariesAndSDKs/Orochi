@@ -542,6 +542,8 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 	const char* funcName = "testKernel<0>";
+	std::string loweredNameStr;
+	orortcProgram prog;
 
 	{
 		std::string bcFile = isAmd ? "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa.bc" : "../UnitTest/bitcodes/moduleTestFunc.fatbin";
@@ -550,16 +552,17 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 	{
 		std::vector<const char*> opts = isAmd ? std::vector<const char*>( { "-fgpu-rdc", "-c", "--cuda-device-only" } ) : std::vector<const char*>( { "--device-c", "-arch=sm_80" } );
 		std::string code;
-		orortcProgram prog;
+
 		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel_loweredName.h", code );
 		OrochiUtils::getProgram( m_device, code.c_str(), "../UnitTest/moduleTestKernel_loweredName.h", &opts, funcName, &prog );
+		const char* loweredName = 0;
+		ORORTCCHECK( orortcGetLoweredName( prog, funcName, &loweredName ) );
+		loweredNameStr = std::string( loweredName );
 		size_t codeSize;
 		ORORTCCHECK( orortcGetBitcodeSize( prog, &codeSize ) );
 
 		data0.resize( codeSize );
 		ORORTCCHECK( orortcGetBitcode( prog, data0.data() ) );
-		const char* loweredName = 0;
-		ORORTCCHECK( orortcGetLoweredName( prog, funcName, &loweredName ) );
 		ORORTCCHECK( orortcDestroyProgram( &prog ) );
 	}
 
@@ -605,7 +608,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		oroFunction function;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
-		ORORTCCHECK( oroModuleGetFunction( &function, module, funcName ) );
+		oroError e =  oroModuleGetFunction( &function, module, loweredNameStr.c_str() );
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
