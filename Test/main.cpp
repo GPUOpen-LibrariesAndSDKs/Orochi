@@ -57,9 +57,11 @@ int main(int argc, char** argv )
 	{
 		oroFunction function;
 		{
-			const char* code = "extern \"C\" __global__ "
-							   "void testKernel()"
-							   "{ int a = threadIdx.x; printf(\"	thread %d running\\n\", a); }";
+			const char* code = "extern \"C\" __global__ void testKernel( int* __restrict__ a )"
+			"{"
+				"int tid = threadIdx.x;"
+				"atomicAdd( a, tid );"
+			"}";
 			const char* funcName = "testKernel";
 			orortcProgram prog;
 			orortcResult e;
@@ -98,14 +100,21 @@ int main(int argc, char** argv )
 		oroEventCreateWithFlags( &stop, 0 );
 		oroEventRecord( start, stream );
 
-		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1,1,1, 32,1,1, 0, stream, args, 0 );
+		int a_host = -1;
+		int* a_device = nullptr;
+		oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) );
+		oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) );
+		const void* args[] = { &a_device };
+		oroError e = oroModuleLaunchKernel( function, 1,1,1, 64,1,1, 0, stream, (void**)args, 0 );
 
 		oroEventRecord( stop, stream );
 
 		oroDeviceSynchronize();
 
 		oroStreamDestroy( stream );
+		oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) );
+		printf("a_host (expected 2016): %d\n", a_host);
+		oroFree( (oroDeviceptr)a_device );
 
 		float milliseconds = 0.0f;
 		oroEventElapsedTime( &milliseconds, start, stop );
