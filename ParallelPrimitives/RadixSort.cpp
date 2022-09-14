@@ -81,7 +81,7 @@ void RadixSort::compileKernels( oroDevice device, OrochiUtils& oroutils, const s
 		std::cout << "compiling kernels at path : " << currentKernelPath << " in : " << currentIncludeDir << '\n';
 	}
 
-	const auto includeArg{ "-I " + currentIncludeDir };
+	const auto includeArg{ "-I" + currentIncludeDir };
 
 	std::vector<const char*> opts;
 	opts.push_back( includeArg.c_str() );
