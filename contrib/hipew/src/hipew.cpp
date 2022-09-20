@@ -203,10 +203,15 @@ thiprtcDestroyProgram* hiprtcDestroyProgram;
 thiprtcGetLoweredName* hiprtcGetLoweredName;
 thiprtcGetProgramLog* hiprtcGetProgramLog;
 thiprtcGetProgramLogSize* hiprtcGetProgramLogSize;
+thiprtcGetBitcode* hiprtcGetBitcode;
+thiprtcGetBitcodeSize* hiprtcGetBitcodeSize;
 thiprtcGetCode* hiprtcGetCode;
 thiprtcGetCodeSize* hiprtcGetCodeSize;
-
-
+thiprtcLinkCreate* hiprtcLinkCreate;
+thiprtcLinkAddFile* hiprtcLinkAddFile;
+thiprtcLinkAddData* hiprtcLinkAddData;
+thiprtcLinkComplete* hiprtcLinkComplete;
+thiprtcLinkDestroy* hiprtcLinkDestroy;
 
 static DynamicLibrary dynamic_library_open_find(const char **paths) {
   int i = 0;
@@ -264,14 +269,14 @@ static int hipewHipInit(void) {
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char *hiprtc_paths[] = {"hiprtc.dll", NULL};
+  const char *hiprtc_paths[] = {"hiprtc0503.dll", NULL};
 #elif defined(__APPLE__)
   /* Default installation path. */
   const char *hip_paths[] = {"", NULL};
   const char* hiprtc_paths[] = { NULL };
 #else
   const char *hip_paths[] = {"/opt/rocm/hip/lib/libamdhip64.so", NULL};
-  const char* hiprtc_paths[] = { NULL };
+  const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so", NULL };
 #endif
   static int initialized = 0;
   static int result = 0;
@@ -440,8 +445,15 @@ static int hipewHipInit(void) {
       HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetLoweredName);
       HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLog);
       HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCode);
+	  HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCode);
+	  HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetBitcodeSize);
+      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetBitcode);
       HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
+	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkCreate );
+	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkAddFile );
+	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkAddData );
+	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkComplete );
+	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkDestroy );
   }
   else
   {
@@ -455,7 +467,13 @@ static int hipewHipInit(void) {
       HIP_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
       HIP_LIBRARY_FIND_CHECKED(hiprtcGetCode);
       HIP_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
+	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkCreate );
+	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkAddFile );
+	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkAddData );
+	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkComplete );
+	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkDestroy );
   }
+
   result = HIPEW_SUCCESS;
   return result;
 }
