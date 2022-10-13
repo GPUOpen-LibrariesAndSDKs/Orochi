@@ -49,11 +49,11 @@ RadixSort::~RadixSort()
 	}
 }
 
-void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute ) noexcept
+void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute, oroStream stream ) noexcept
 {
 	std::vector<int> counts( Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::copyDtoH( counts.data(), countsGpu, Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::waitForCompletion();
+	OrochiUtils::copyDtoHAsync( counts.data(), countsGpu, Oro::BIN_SIZE * nWGsToExecute, stream );
+	OrochiUtils::waitForCompletion( stream );
 
 	std::vector<int> offsets( Oro::BIN_SIZE * nWGsToExecute );
 
@@ -64,8 +64,8 @@ void RadixSort::exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWG
 		sum += counts[i];
 	}
 
-	OrochiUtils::copyHtoD( offsetsGpu, offsets.data(), Oro::BIN_SIZE * nWGsToExecute );
-	OrochiUtils::waitForCompletion();
+	OrochiUtils::copyHtoDAsync( offsetsGpu, offsets.data(), Oro::BIN_SIZE * nWGsToExecute, stream );
+	OrochiUtils::waitForCompletion( stream );
 }
 
 void RadixSort::compileKernels( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) noexcept
@@ -131,7 +131,7 @@ int RadixSort::calculateWGsToExecute( oroDevice device ) noexcept
 	return props.multiProcessorCount * occupancy;
 }
 
-RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) noexcept
+RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
 {
 	compileKernels( device, oroutils, kernelPath, includeDir );
 	const auto newWGsToExecute{ calculateWGsToExecute( device ) };
@@ -142,7 +142,7 @@ RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, co
 		OrochiUtils::free( m_isReady );
 		OrochiUtils::malloc( m_partialSum, newWGsToExecute );
 		OrochiUtils::malloc( m_isReady, newWGsToExecute );
-		OrochiUtils::memset( m_isReady, false, newWGsToExecute * sizeof( bool ) );
+		OrochiUtils::memsetAsync( m_isReady, false, newWGsToExecute * sizeof( bool ), stream );
 	}
 
 	m_nWGsToExecute = newWGsToExecute;
@@ -150,7 +150,7 @@ RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, co
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }
 
-void RadixSort::sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int startBit, int endBit, u32* tempBuffer ) noexcept
+void RadixSort::sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int startBit, int endBit, u32* tempBuffer, oroStream stream ) noexcept
 {
 	// todo. better to compute SINGLE_SORT_N_ITEMS_PER_WI which we use in the kernel dynamically rather than hard coding it to distribute the work evenly
 	// right now, setting this as large as possible is faster than multi pass sorting
@@ -158,7 +158,7 @@ void RadixSort::sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int s
 	{
 		const auto func = oroFunctions[Kernel::SORT_SINGLE_PASS_KV];
 		const void* args[] = { &src.key, &src.value, &dst.key, &dst.value, &n, &startBit, &endBit };
-		OrochiUtils::launch1D( func, SINGLE_SORT_WG_SIZE, args, SINGLE_SORT_WG_SIZE );
+		OrochiUtils::launch1D( func, SINGLE_SORT_WG_SIZE, args, SINGLE_SORT_WG_SIZE, 0, stream );
 		return;
 	}
 
@@ -167,19 +167,19 @@ void RadixSort::sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int s
 
 	for( int i = startBit; i < endBit; i += N_RADIX )
 	{
-		sort1pass( *s, *d, n, i, i + std::min( N_RADIX, endBit - i ), (int*)tempBuffer );
+		sort1pass( *s, *d, n, i, i + std::min( N_RADIX, endBit - i ), (int*)tempBuffer, stream );
 
 		std::swap( s, d );
 	}
 
 	if( s == &src )
 	{
-		OrochiUtils::copyDtoD( dst.key, src.key, n );
-		OrochiUtils::copyDtoD( dst.value, src.value, n );
+		OrochiUtils::copyDtoDAsync( dst.key, src.key, n, stream );
+		OrochiUtils::copyDtoDAsync( dst.value, src.value, n, stream );
 	}
 }
 
-void RadixSort::sort( const u32* src, const u32* dst, int n, int startBit, int endBit, u32* tempBuffer ) noexcept
+void RadixSort::sort( const u32* src, const u32* dst, int n, int startBit, int endBit, u32* tempBuffer, oroStream stream ) noexcept
 {
 	// todo. better to compute SINGLE_SORT_N_ITEMS_PER_WI which we use in the kernel dynamically rather than hard coding it to distribute the work evenly
 	// right now, setting this as large as possible is faster than multi pass sorting
@@ -187,7 +187,7 @@ void RadixSort::sort( const u32* src, const u32* dst, int n, int startBit, int e
 	{
 		const auto func = oroFunctions[Kernel::SORT_SINGLE_PASS];
 		const void* args[] = { &src, &dst, &n, &startBit, &endBit };
-		OrochiUtils::launch1D( func, SINGLE_SORT_WG_SIZE, args, SINGLE_SORT_WG_SIZE );
+		OrochiUtils::launch1D( func, SINGLE_SORT_WG_SIZE, args, SINGLE_SORT_WG_SIZE, 0, stream );
 		return;
 	}
 
@@ -196,14 +196,14 @@ void RadixSort::sort( const u32* src, const u32* dst, int n, int startBit, int e
 
 	for( int i = startBit; i < endBit; i += N_RADIX )
 	{
-		sort1pass( *s, *d, n, i, i + std::min( N_RADIX, endBit - i ), (int*)tempBuffer );
+		sort1pass( *s, *d, n, i, i + std::min( N_RADIX, endBit - i ), (int*)tempBuffer, stream );
 
 		std::swap( s, d );
 	}
 
 	if( s == &src )
 	{
-		OrochiUtils::copyDtoD( dst, src, n );
+		OrochiUtils::copyDtoDAsync( dst, src, n, stream );
 	}
 }
 

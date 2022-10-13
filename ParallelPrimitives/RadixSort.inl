@@ -1,7 +1,7 @@
 
 
 template<class T>
-void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps ) noexcept
+void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps, oroStream stream ) noexcept
 {
 	constexpr bool reference = false;
 
@@ -55,9 +55,9 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		sw.start();
 		const auto func{ reference ? oroFunctions[Kernel::COUNT_REF] : oroFunctions[Kernel::COUNT] };
 		const void* args[] = { &srcKey, &temps, &n, &nItemPerWG, &startBit, &m_nWGsToExecute };
-		OrochiUtils::launch1D( func, COUNT_WG_SIZE * m_nWGsToExecute, args, COUNT_WG_SIZE );
+		OrochiUtils::launch1D( func, COUNT_WG_SIZE * m_nWGsToExecute, args, COUNT_WG_SIZE, 0, stream );
 #if defined( PROFILE )
-		OrochiUtils::waitForCompletion();
+		OrochiUtils::waitForCompletion( stream );
 		sw.stop();
 		t[0] = sw.getMs();
 #endif
@@ -70,30 +70,30 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		{
 		case ScanAlgo::SCAN_CPU:
 		{
-			exclusiveScanCpu( temps, temps, m_nWGsToExecute );
+			exclusiveScanCpu( temps, temps, m_nWGsToExecute, stream );
 		}
 		break;
 
 		case ScanAlgo::SCAN_GPU_SINGLE_WG:
 		{
 			const void* args[] = { &temps, &temps, &m_nWGsToExecute };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_SINGLE_WG], WG_SIZE * m_nWGsToExecute, args, WG_SIZE );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_SINGLE_WG], WG_SIZE * m_nWGsToExecute, args, WG_SIZE, 0, stream );
 		}
 		break;
 
 		case ScanAlgo::SCAN_GPU_PARALLEL:
 		{
 			const void* args[] = { &temps, &temps, &m_partialSum, &m_isReady };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], SCAN_WG_SIZE * m_nWGsToExecute, args, SCAN_WG_SIZE );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], SCAN_WG_SIZE * m_nWGsToExecute, args, SCAN_WG_SIZE, 0, stream );
 		}
 		break;
 
 		default:
-			exclusiveScanCpu( temps, temps, m_nWGsToExecute );
+			exclusiveScanCpu( temps, temps, m_nWGsToExecute, stream );
 			break;
 		}
 #if defined( PROFILE )
-		OrochiUtils::waitForCompletion();
+		OrochiUtils::waitForCompletion( stream );
 		sw.stop();
 		t[1] = sw.getMs();
 #endif
@@ -106,16 +106,16 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		if constexpr( keyValuePairedEnabled )
 		{
 			const void* args[] = { &srcKey, &srcVal, &dstKey, &dstVal, &temps, &n, &nItemsPerWI, &startBit, &m_nWGsToExecute };
-			OrochiUtils::launch1D(oroFunctions[Kernel::SORT_KV], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT_KV], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE, 0, stream );
 		}
 		else
 		{
 			const void* args[] = { &srcKey, &dstKey, &temps, &n, &nItemsPerWI, &startBit, &m_nWGsToExecute };
-			OrochiUtils::launch1D(oroFunctions[Kernel::SORT], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE, 0, stream );
 		}
 
 #if defined( PROFILE )
-		OrochiUtils::waitForCompletion();
+		OrochiUtils::waitForCompletion( stream );
 		sw.stop();
 		t[2] = sw.getMs();
 #endif

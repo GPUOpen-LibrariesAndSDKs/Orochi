@@ -46,17 +46,17 @@ class RadixSort
 	/// @param kernelPath The kernel path.
 	/// @param includeDir The include directory.
 	/// @return The size of the temp buffer.
-	u32 configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath = "", const std::string& includeDir = "" ) noexcept;
+	u32 configure( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath = "", const std::string& includeDir = "", oroStream stream = 0 ) noexcept;
 
 	void setFlag( Flag flag ) noexcept;
 
-	void sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int startBit, int endBit, u32* tempBuffer ) noexcept;
+	void sort( const KeyValueSoA src, const KeyValueSoA dst, int n, int startBit, int endBit, u32* tempBuffer, oroStream stream = 0 ) noexcept;
 
-	void sort( const u32* src, const u32* dst, int n, int startBit, int endBit, u32* tempBuffer ) noexcept;
+	void sort( const u32* src, const u32* dst, int n, int startBit, int endBit, u32* tempBuffer, oroStream stream = 0 ) noexcept;
 
   private:
 	template<class T>
-	void sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps ) noexcept;
+	void sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps, oroStream stream ) noexcept;
 
 	/// @brief Compile the kernels for radix sort.
 	/// @param device The device.
@@ -71,7 +71,7 @@ class RadixSort
 	/// @param countsGpu The count result in GPU memory. Otuput: The offset.
 	/// @param offsetsGpu The offsets.
 	/// @param nWGsToExecute Number of WGs to execute
-	void exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute ) noexcept;
+	void exclusiveScanCpu( int* countsGpu, int* offsetsGpu, const int nWGsToExecute, oroStream stream ) noexcept;
 
   private:
 	int m_nWGsToExecute{ 4 };

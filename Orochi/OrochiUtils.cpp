@@ -397,6 +397,8 @@ bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCo
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 { 
+	std::lock_guard<std::mutex> lock( m_mutex );
+
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
@@ -592,10 +594,10 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 	return;
 }
 
-void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes ) 
+void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes, oroStream stream ) 
 {
 	int4 tpb = { wgSize, 1, 0 };
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, 1, 0 };
-	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, 0, (void**)args, 0 );
+	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
