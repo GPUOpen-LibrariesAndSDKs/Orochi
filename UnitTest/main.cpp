@@ -24,16 +24,19 @@ class OroTestBase : public ::testing::Test
 		OROCHECK( oroInit( 0 ) );
 		OROCHECK( oroDeviceGet( &m_device, deviceIndex ) );
 		OROCHECK( oroCtxCreate( &m_ctx, 0, m_device ) );
+		OROCHECK( oroStreamCreate( &m_stream ) );
 	}
 
 	void TearDown() 
 	{ 
+		OROCHECK( oroStreamDestroy( m_stream ) );
 		OROCHECK( oroCtxDestroy( m_ctx ) );
 	}
 
   protected:
 	oroDevice m_device;
 	oroCtx m_ctx;
+	oroStream m_stream;
 
 };
 
@@ -67,6 +70,31 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+}
+
+TEST_F( OroTestBase, Event )
+{
+	OrochiUtils o;
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
+
+	OroStopwatch sw( m_stream );
+
+	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	const void* args[] = { &a_device };
+	sw.start();
+	OrochiUtils::launch1D( kernel, 64, args, 64, 0, m_stream );
+	sw.stop();
+
+	OrochiUtils::waitForCompletion( m_stream );
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 2016 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+
+	float ms = sw.getMs();
+	printf( "kernelExec: %3.2fms\n", ms );
 }
 
 void loadFile( const char* path, std::vector<char>& dst ) 
