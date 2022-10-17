@@ -382,8 +382,8 @@ struct OrochiUtilsImpl
 };
 
 OrochiUtils::OrochiUtils() 
-{
-	m_cacheDirectory = "./cache/";
+{ 
+	m_cacheDirectory = "./cache/"; 
 }
 
 OrochiUtils::~OrochiUtils() 
@@ -397,7 +397,7 @@ bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCo
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 { 
-	std::lock_guard<std::mutex> lock( m_mutex );
+	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
@@ -417,6 +417,8 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
 	int numHeaders, const char** headers, const char** includeNames ) 
 {
+	std::lock_guard<std::recursive_mutex> lock( m_mutex );
+
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
@@ -430,6 +432,8 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, 
 	int numHeaders, const char** headers, const char** includeNames )
 {
+	std::lock_guard<std::recursive_mutex> lock( m_mutex );
+
 	std::vector<const char*> opts;
 	opts.push_back( "-std=c++17" );
 
