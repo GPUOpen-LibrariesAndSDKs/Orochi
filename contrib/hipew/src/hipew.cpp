@@ -239,14 +239,14 @@ static void hipewHipExit(void) {
 #ifdef _WIN32
 static int hipewHasOldDriver(const char *hip_path) {
   DWORD verHandle = 0;
-  DWORD verSize = GetFileVersionInfoSize(hip_path, &verHandle);
+  DWORD verSize = GetFileVersionInfoSizeA(hip_path, &verHandle);
   int old_driver = 0;
   if (verSize != 0) {
     LPSTR verData = (LPSTR)malloc(verSize);
-    if (GetFileVersionInfo(hip_path, verHandle, verSize, verData)) {
+    if (GetFileVersionInfoA(hip_path, verHandle, verSize, verData)) {
       LPBYTE lpBuffer = NULL;
       UINT size = 0;
-      if (VerQueryValue(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
+      if (VerQueryValueA(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
         if (size) {
           VS_FIXEDFILEINFO *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
           /* Magic value from
