@@ -64,8 +64,9 @@ See more in the [sample application](./Test/main.cpp).
 Run premake. 
 
 ```
-./tools/premake5/win/premake5.exe vs2019
+./tools/premake5/win/premake5.exe vs2022
 ```
+Note: add the option `--precompiled` to enable precompiled bitcode
 
 Test is a minimum application.
 
