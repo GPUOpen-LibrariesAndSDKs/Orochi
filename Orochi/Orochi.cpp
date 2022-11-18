@@ -355,6 +355,18 @@ oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDev
 	return oroErrorUnknown;
 }
 
+oroError OROAPI oroDeviceGetLimit( size_t* pValue, oroLimit limit )
+{
+	__ORO_FUNC1( CtxGetLimit( pValue, (CUlimit)limit ), DeviceGetLimit( pValue, (hipLimit_t)limit ) );
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroDeviceSetLimit( oroLimit limit, size_t value )
+{
+	__ORO_FUNC1( CtxSetLimit( (CUlimit)limit, value ), DeviceSetLimit( (hipLimit_t)limit, value ) );
+	return oroErrorUnknown;
+}
+
 oroError OROAPI oroDeviceComputeCapability(int* major, int* minor, oroDevice dev)
 {
 	return oroErrorUnknown;
@@ -468,6 +480,7 @@ oroError OROAPI oroDeviceSynchronize(void)
 //oroError OROAPI oroCtxSetCacheConfig(hipFuncCache_t config);
 //oroError OROAPI oroCtxGetSharedMemConfig(hipSharedMemConfig* pConfig);
 //oroError OROAPI oroCtxSetSharedMemConfig(hipSharedMemConfig config);
+
 oroError OROAPI oroCtxGetApiVersion(oroCtx ctx, unsigned int* version)
 {
 	__ORO_FUNC1( CtxGetApiVersion(*oroCtx2cu(&ctx), version ), CtxGetApiVersion(*oroCtx2hip(&ctx), version ) );
