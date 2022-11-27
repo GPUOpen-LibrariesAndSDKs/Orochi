@@ -79,6 +79,8 @@ thipGetDeviceProperties *hipGetDeviceProperties;
 thipDeviceGet* hipDeviceGet;
 thipDeviceGetName *hipDeviceGetName;
 thipDeviceGetAttribute *hipDeviceGetAttribute;
+thipDeviceGetLimit *hipDeviceGetLimit;
+thipDeviceSetLimit *hipDeviceSetLimit;
 thipDeviceComputeCapability *hipDeviceComputeCapability;
 thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
 thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
@@ -237,14 +239,14 @@ static void hipewHipExit(void) {
 #ifdef _WIN32
 static int hipewHasOldDriver(const char *hip_path) {
   DWORD verHandle = 0;
-  DWORD verSize = GetFileVersionInfoSize(hip_path, &verHandle);
+  DWORD verSize = GetFileVersionInfoSizeA(hip_path, &verHandle);
   int old_driver = 0;
   if (verSize != 0) {
     LPSTR verData = (LPSTR)malloc(verSize);
-    if (GetFileVersionInfo(hip_path, verHandle, verSize, verData)) {
+    if (GetFileVersionInfoA(hip_path, verHandle, verSize, verData)) {
       LPBYTE lpBuffer = NULL;
       UINT size = 0;
-      if (VerQueryValue(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
+      if (VerQueryValueA(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
         if (size) {
           VS_FIXEDFILEINFO *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
           /* Magic value from
@@ -325,6 +327,8 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGet);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetName);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetAttribute);
+  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetLimit);
+  HIP_LIBRARY_FIND_CHECKED(hipDeviceSetLimit);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceComputeCapability);
   HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRetain);
   HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRelease);

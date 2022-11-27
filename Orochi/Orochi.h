@@ -437,6 +437,15 @@ typedef enum oroSharedMemConfig {
     oroSharedMemBankSizeEightByte = 0x02,
 } oroSharedMemConfig;
 
+typedef enum {
+	ORO_LIMIT_STACK_SIZE = 0x00,
+	ORO_LIMIT_PRINTF_FIFO_SIZE = 0x01,
+	ORO_LIMIT_MALLOC_HEAP_SIZE = 0x02,
+	ORO_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
+	ORO_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
+	ORO_LIMIT_MAX,
+} oroLimit;
+
 typedef enum PPshared_carveout_enum {
     ORO_SHAREDMEM_CARVEOUT_DEFAULT,
     ORO_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
@@ -578,6 +587,8 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev) ;
 oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal ) ;
 oroError OROAPI oroDeviceGetName(char* name, int len, oroDevice dev) ;
 oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDevice dev) ;
+oroError OROAPI oroDeviceGetLimit(size_t* pValue, oroLimit limit) ;
+oroError OROAPI oroDeviceSetLimit(oroLimit limit, size_t value) ;
 oroError OROAPI oroDeviceComputeCapability(int* major, int* minor, oroDevice dev) ;
 oroError OROAPI oroDevicePrimaryCtxRetain(oroCtx* pctx, oroDevice dev) ;
 oroError OROAPI oroDevicePrimaryCtxRelease(oroDevice dev) ;
