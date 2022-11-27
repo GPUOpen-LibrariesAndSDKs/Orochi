@@ -192,8 +192,12 @@ thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
 thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 thipGLGetDevices *hipGLGetDevices;
 thipImportExternalMemory *hipImportExternalMemory;
+thipImportExternalSemaphore* hipImportExternalSemaphore;
+thipDestroyExternalSemaphore* hipDestroyExternalSemaphore;
 thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
 thipDestroyExternalMemory *hipDestroyExternalMemory;
+thipSignalExternalSemaphoresAsync *hipSignalExternalSemaphoresAsync;
+thipWaitExternalSemaphoresAsync *hipWaitExternalSemaphoresAsync;
 
 thiprtcGetErrorString* hiprtcGetErrorString;
 thiprtcAddNameExpression* hiprtcAddNameExpression;
@@ -269,7 +273,7 @@ static int hipewHipInit(void) {
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char *hiprtc_paths[] = {"hiprtc0504.dll",
+  const char* hiprtc_paths[] = {"hiprtc0504.dll",
                                 "hiprtc0503.dll",
                                 NULL};
 #elif defined(__APPLE__)
@@ -437,6 +441,10 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
   HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
   HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
+  HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
+  HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
+  HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
+  HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
   if(hiprtc_lib)
   {
       HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
