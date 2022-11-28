@@ -1,3 +1,4 @@
+rd /s /q cache
 cd ..\UnitTest\bitcodes
 call generate_bitcodes_gfx1100.bat
 cd ..\..\scripts
