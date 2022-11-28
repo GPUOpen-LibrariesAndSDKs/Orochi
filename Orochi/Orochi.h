@@ -580,6 +580,7 @@ typedef struct oroExternalSemaphoreHandleDesc_st {
     } win32;
   } handle;
   unsigned int flags;
+  unsigned int reserved[16];
 } oroExternalSemaphoreHandleDesc;
 
 typedef struct oroExternalSemaphoreSignalParams_st {
