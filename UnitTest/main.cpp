@@ -637,6 +637,39 @@ TEST_F( OroTestBase, getErrorString )
 		OROASSERT( !strcmp(str, "invalid argument") );
 }
 
+TEST_F( OroTestBase, funcPointer )
+{
+	OrochiUtils o;
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
+	oroFunction kernel;
+	char* deviceBuffer;
+	{
+		oroModule module;
+		std::string code;
+		const char* path = "../UnitTest/testKernel.h";
+		OrochiUtils::readSourceCode( path, code );
+		o.getModule( m_device, code.c_str(), path, 0, "testFuncPointerKernel", &module );
+		oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" );
+		{
+			oroDeviceptr dFuncPtr;
+			size_t numBytes = 0;
+			oroError ee = oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" );
+			o.malloc( deviceBuffer, numBytes );
+			o.copyDtoD( deviceBuffer, (char*)dFuncPtr, numBytes );
+		}
+	}
+	const void* args[] = { &a_device, &deviceBuffer };
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
+	OrochiUtils::waitForCompletion();
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 7 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+	o.free( deviceBuffer );
+}
+
 
 int main( int argc, char* argv[] ) 
 {

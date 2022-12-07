@@ -605,10 +605,39 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 	return;
 }
 
-void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes, oroStream stream )
+void OrochiUtils::getModule( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, oroModule* moduleOut ) 
+{ 
+	orortcProgram prog;
+	getProgram( device, code, path, optsIn, funcName, &prog );
+	size_t codeSize;
+	orortcResult e;
+	std::vector<char> codec;
+	e = orortcGetCodeSize( prog, &codeSize );
+	OROASSERT( e == ORORTC_SUCCESS, 0 );
+
+	codec.resize( codeSize );
+	e = orortcGetCode( prog, codec.data() );
+	OROASSERT( e == ORORTC_SUCCESS, 0 );
+	e = orortcDestroyProgram( &prog );
+	OROASSERT( e == ORORTC_SUCCESS, 0 );
+
+	oroError ee = oroModuleLoadData( moduleOut, codec.data() );
+	OROASSERT( ee == oroSuccess, 0 );
+	return;
+}
+
+void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes, oroStream stream ) 
 {
 	int4 tpb = { wgSize, 1, 0 };
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, 1, 0 };
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
+	OROASSERT( e == oroSuccess, 0 );
+}
+
+void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX, int wgSizeY, unsigned int sharedMemBytes, oroStream stream )
+{
+	int4 tpb = { wgSizeX, wgSizeY, 0 };
+	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
+	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, 0, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
