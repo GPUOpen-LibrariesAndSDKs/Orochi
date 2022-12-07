@@ -1,1 +1,1 @@
-nvcc -O3 -std=c++17 -ccbin="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.29.30133\bin\Hostx86\x64" -fatbin -arch=all -I../ -x cu oro_compiled_kernels.cpp -o oro_compiled_kernels.fatbin
+nvcc -O3 -std=c++17 -ccbin="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC\Tools\MSVC\14.29.30133\bin\Hostx86\x64" --use_fast_math -fatbin -arch=all -I../ -x cu oro_compiled_kernels.cpp -o oro_compiled_kernels.fatbin
