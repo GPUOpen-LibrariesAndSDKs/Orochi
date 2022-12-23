@@ -34,6 +34,7 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 		a_frag[ele] = a[16 * lane + ele];
 	}
 
+	// call the WMMA compiler intrinsic
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32( a_frag, b_frag, c_frag, false );
 
 	for( int ele = 0; ele < 8; ++ele )
