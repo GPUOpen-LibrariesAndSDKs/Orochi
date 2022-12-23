@@ -1,8 +1,6 @@
 // Wave Matrix Multiply Accumulate (WMMA) using HIP compiler intrinsic
 // Does a matrix multiplication of two 16x16, fp16 matrices, and stores them into a 16x16 fp16 result matrix
 
-#include <hip/hip_runtime.h>
-
 using namespace std;
 
 // Use half16 as an alias of the internal clang vector type of 16 fp16 values
