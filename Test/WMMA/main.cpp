@@ -76,7 +76,7 @@ int main( int argc, char** argv )
 	ERROR_CHECK( e );
 
 	//try kernel execution
-	 oroFunction function;
+	oroFunction function;
 
 	std::vector<char> code;
 	const char* funcName = "wmma_matmul";
