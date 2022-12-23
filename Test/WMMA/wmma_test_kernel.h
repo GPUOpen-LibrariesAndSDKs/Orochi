@@ -34,7 +34,7 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 
 	// call the WMMA compiler intrinsic 
 	// more details available in the RDNA3 ISA guide - https://developer.amd.com/wp-content/resources/RDNA3_Shader_ISA_December2022.pdf
-	// the last parameter is called "OPSEL" which decides which decides which half of the VGPRs of c_frag the results are stored into
+	// the last parameter is called "OPSEL" which decides which half of the VGPRs of c_frag the results are stored into
 	// this will only compile on RDNA3
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32( a_frag, b_frag, c_frag, false );
 
