@@ -88,7 +88,7 @@ int main( int argc, char** argv )
 	opts.push_back( "-I ../" );
 
 	// Compile the WMMA kernel
-	printf( "Compiling WMMA kernel..." );
+	printf( "Compiling WMMA kernel...\n" );
 	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
 	if( rtc_e != ORORTC_SUCCESS )
 	{
@@ -144,6 +144,7 @@ int main( int argc, char** argv )
 	oroFree((oroDeviceptr)b_gpu);
 	oroFree((oroDeviceptr)c_gpu);
 
+	printf( "Output matrix:\n" );
 	for (int i = 0; i < 16; ++i)
 	{
 		for (int j = 0; j < 16; ++j)
