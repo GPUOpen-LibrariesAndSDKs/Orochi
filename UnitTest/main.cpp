@@ -163,6 +163,44 @@ TEST_F( OroTestBase, linkBc )
 	}
 }
 
+TEST_F( OroTestBase, loadLinkedFatbin )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	int v;
+	oroDriverGetVersion( &v );
+	std::vector<char> data0;
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+	if( !isAmd ) 
+		return;
+
+	std::string archName( props.gcnArchName );
+	archName = archName.substr( 0, archName.find( ':' ) );
+	// todo - generate cubin for NVIDIA GPUs (skip on CUDA for now)
+	{
+		std::string bcFile = isAmd ? ( "../UnitTest/bitcodes/test-" + archName + ".fatbin" ) : "../UnitTest/bitcodes/moduleTestFunc.cubin";
+		loadFile( bcFile.c_str(), data0 );
+	}
+	{
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, data0.data() );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x_host = -1;
+		int* x_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)x_device, 0, sizeof( int ) ) );
+		const void* args[] = { &x_device };
+
+		OrochiUtils::launch1D( function, 64, args, 64 );
+		OrochiUtils::waitForCompletion();
+		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+		OROASSERT( x_host == 2016 );
+		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
+	}
+}
+
 TEST_F( OroTestBase, link ) 
 {
 	oroDeviceProp props;
