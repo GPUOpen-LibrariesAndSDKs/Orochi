@@ -83,7 +83,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 
 		case ScanAlgo::SCAN_GPU_PARALLEL:
 		{
-			const void* args[] = { &temps, &temps, &m_partialSum, &m_isReady };
+			const void* args[] = { &temps, &temps, arg_cast( m_partialSum.address() ), &m_isReady };
 			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], SCAN_WG_SIZE * m_nWGsToExecute, args, SCAN_WG_SIZE, 0, stream );
 		}
 		break;

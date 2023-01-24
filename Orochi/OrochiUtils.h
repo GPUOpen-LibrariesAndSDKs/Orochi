@@ -75,7 +75,7 @@ class OrochiUtils
 	}
 
 	template<typename T>
-	static void copyHtoD( T* dst, T* src, size_t n )
+	static void copyHtoD( T* dst, const T* src, size_t n )
 	{
 		oroError e = oroMemcpyHtoD( (oroDeviceptr)dst, (void*)src, sizeof( T ) * n );
 		OROASSERT( e == oroSuccess, 0 );

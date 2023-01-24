@@ -42,7 +42,7 @@ RadixSort::RadixSort()
 {
 	if( selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
 	{
-		OrochiUtils::malloc( m_partialSum, m_nWGsToExecute );
+		m_partialSum.resize( m_nWGsToExecute );
 		OrochiUtils::malloc( m_isReady, m_nWGsToExecute );
 		OrochiUtils::memset( m_isReady, false, m_nWGsToExecute * sizeof( bool ) );
 	}
@@ -52,7 +52,6 @@ RadixSort::~RadixSort()
 {
 	if( selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
 	{
-		OrochiUtils::free( m_partialSum );
 		OrochiUtils::free( m_isReady );
 	}
 }
@@ -168,9 +167,8 @@ RadixSort::u32 RadixSort::configure( oroDevice device, OrochiUtils& oroutils, co
 
 	if( newWGsToExecute != m_nWGsToExecute && selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
 	{
-		OrochiUtils::free( m_partialSum );
+		m_partialSum.resize( newWGsToExecute );
 		OrochiUtils::free( m_isReady );
-		OrochiUtils::malloc( m_partialSum, newWGsToExecute );
 		OrochiUtils::malloc( m_isReady, newWGsToExecute );
 		OrochiUtils::memsetAsync( m_isReady, false, newWGsToExecute * sizeof( bool ), stream );
 	}
