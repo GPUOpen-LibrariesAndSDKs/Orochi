@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <Orochi/Orochi.h>
 #include <Orochi/OrochiUtils.h>
+#include <Orochi/GpuMemory.h>
 #include <fstream>
 
 #if defined( OROASSERT )
@@ -70,6 +71,43 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+}
+
+TEST_F( OroTestBase, GpuMemoryTest )
+{
+	OrochiUtils o;
+
+	Oro::GpuMemory<int> device_memory;
+	device_memory.resize( 1 );
+	OROASSERT( device_memory.size() == 1ULL );
+
+	device_memory.reset();
+
+	auto kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	const void* args[] = { Oro::arg_cast( device_memory.address() ) };
+
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
+	OrochiUtils::waitForCompletion();
+
+	const auto val = device_memory.getSingle();
+	OROASSERT( val == 2016 );
+
+	const auto values = device_memory.getData();
+	OROASSERT( std::size( values ) == 1ULL );
+	OROASSERT( values[0] == 2016 );
+
+	const auto test_value = 123;
+	const std::vector<int> test_data = { test_value, test_value, test_value };
+	device_memory.copyFromHost( std::data( test_data ), std::size( test_data ) );
+
+	OROASSERT( device_memory.size() == std::size( test_data ) );
+
+	const auto output_data = device_memory.getData();
+
+	for( auto&& out : output_data )
+	{
+		OROASSERT( out == test_value );
+	}
 }
 
 TEST_F( OroTestBase, Event )

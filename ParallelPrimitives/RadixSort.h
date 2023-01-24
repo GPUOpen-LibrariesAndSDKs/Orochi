@@ -1,15 +1,16 @@
 #pragma once
 
+#include <Orochi/GpuMemory.h>
 #include <Orochi/Orochi.h>
+#include <Orochi/OrochiUtils.h>
+#include <ParallelPrimitives/RadixSortConfigs.h>
+#include <Test/Stopwatch.h>
+#include <cmath>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include <cmath>
-#include <ParallelPrimitives/RadixSortConfigs.h>
-#include <Test/Stopwatch.h>
-#include <Orochi/OrochiUtils.h>
 
-//#define PROFILE 1
+// #define PROFILE 1
 
 namespace Oro
 {
@@ -101,7 +102,7 @@ class RadixSort
 
 	constexpr static auto selectedScanAlgo{ ScanAlgo::SCAN_GPU_PARALLEL };
 
-	int* m_partialSum{ nullptr };
+	GpuMemory<int> m_partialSum;
 	bool* m_isReady{ nullptr };
 };
 
