@@ -693,14 +693,24 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 
 TEST_F( OroTestBase, getErrorString )
 {
-	oroError error = (oroError)1;
-	const char *str = nullptr;
+	oroError error = oroError::oroErrorInvalidValue;
+	const char* str = nullptr;
 	OROCHECK( oroGetErrorString( error, &str ) );
-	oroApi api = oroGetCurAPI( 0 );
-	if(api == ORO_API_CUDADRIVER)
+	const oroApi api = oroGetCurAPI( 0 );
+	if( api == ORO_API_CUDADRIVER )
+	{
 		OROASSERT( str != nullptr );
+	}
 	else if( api == ORO_API_HIP )
-		OROASSERT( !strcmp(str, "invalid argument") );
+	{
+		constexpr auto hipErrorMessage{ "hipErrorInvalidValue" };
+		OROASSERT( std::string( str ) == hipErrorMessage );
+	}
+	else
+	{
+		// Unsupported api. This should not happen.
+		OROASSERT( false );
+	}
 }
 
 TEST_F( OroTestBase, funcPointer )
@@ -735,7 +745,6 @@ TEST_F( OroTestBase, funcPointer )
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
 }
-
 
 int main( int argc, char* argv[] ) 
 {
