@@ -95,10 +95,8 @@ class GpuMemory final
 	void reset() noexcept { OrochiUtils::memset( m_data, 0, m_size * sizeof( T ) ); }
 
 	/// @brief Copy the data from device memory to host.
-	/// @tparam T The type of the element stored in the device memory.
 	/// @param host_ptr The host pointer.
 	/// @param host_data_size The size of the host memory which represents the number of elements.
-	template<typename T>
 	void copyFromHost( const T* host_ptr, const size_t host_data_size ) noexcept
 	{
 		resize( host_data_size );
