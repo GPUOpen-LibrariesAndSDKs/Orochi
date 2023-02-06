@@ -13,9 +13,6 @@ typedef unsigned long long u64;
 
 extern "C" __global__ void CountKernelReference( int* gSrc, int* gDst, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
 {
-
-	const int gIdx = blockIdx.x * blockDim.x + threadIdx.x;
-
 	const int offset = blockIdx.x * blockDim.x * gNItemsPerWI;
 
 	int table[BIN_SIZE] = { 0 };
@@ -552,7 +549,6 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 		for( int i = 0; i < upperBound; ++i )
 		{
-			const int idx = offset + threadIdx.x * SORT_N_ITEMS_PER_WI + i;
 			const int tableIdx = ( keys[i] >> START_BIT ) & RADIX_MASK;
 			const int dstIdx = localOffsets[tableIdx] + ( threadIdx.x * SORT_N_ITEMS_PER_WI + i ) - lds.histogram[0][tableIdx];
 			gDstKey[dstIdx] = keys[i];
