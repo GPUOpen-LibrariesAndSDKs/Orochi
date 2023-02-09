@@ -108,9 +108,27 @@ int oroInitialize( oroApi api, oroU32 flags )
 	}
 	if( api & ORO_API_HIP )
 	{
-		e = hipewInit( HIPEW_INIT_HIP );
-		if( e == 0 )
-			s_loadedApis |= ORO_API_HIP;
+		hipuint32_t flag = 0;
+		if( api & ORO_API_CUDADRIVER )
+		{
+			flag |= HIPEW_INIT_HIPDRIVER;
+		}
+		if( api & ORO_API_CUDARTC )
+		{
+			flag |= HIPEW_INIT_HIPRTC;
+		}
+
+		int resultDriver, resultRtc;
+		hipewInit( &resultDriver, &resultRtc, flag );
+
+		if( resultDriver == HIPEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_HIPDRIVER;
+		}
+		if( resultRtc == HIPEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_HIPRTC;
+		}
 	}
 	if( s_loadedApis == 0 )
 		return ORO_ERROR_OPEN_FAILED;
