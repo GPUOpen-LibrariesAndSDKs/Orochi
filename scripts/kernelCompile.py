@@ -1,7 +1,10 @@
 import json
 import os
 import subprocess
+import re
+from enumArch import enumArch
 
+#for powershell, $ENV:Path+=";..\..\hipsdk\bin"
 
 def getGpuList():
   f = open("amdGpuList.json")
@@ -13,10 +16,10 @@ ps = []
 def compile( index ):
 	if index == 0 :
 		command = [
-			"..\\..\\hipsdk\\bin\\hipcc",
+			"hipcc",
 			"-x", "hip", "..\ParallelPrimitives\RadixSortKernels.h", "-O3", "-std=c++17", "-ffast-math", "--cuda-device-only", "--genco", "-I../", "-include", "hip/hip_runtime.h", "-parallel-jobs=15"]
 		#command.append( "--offload-arch=gfx1100" )
-		for i in getGpuList()['amd']:
+		for i in enumArch( "gfx900" ):
 			command.append( "--offload-arch=" + i )
 		command.append( "-o" )
 		command.append( "../bitcodes/oro_compiled_kernels.hipfb" )
