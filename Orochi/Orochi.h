@@ -26,9 +26,11 @@
 enum oroApi
 {
     ORO_API_AUTOMATIC = 1<<0,
-    ORO_API_HIP = 1<<1,
-    ORO_API_CUDADRIVER = 1<<2,
-    ORO_API_CUDARTC = 1<<3,
+	ORO_API_HIPDRIVER = 1 << 1,
+	ORO_API_HIPRTC = 1 << 2,
+	ORO_API_HIP = ORO_API_HIPDRIVER | ORO_API_HIPRTC,
+	ORO_API_CUDADRIVER = 1 << 3,
+	ORO_API_CUDARTC = 1 << 4,
     ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
 };
 
@@ -762,6 +764,7 @@ enum {
 
 
 int oroInitialize( oroApi api, oroU32 flags );
+oroApi oroLoadedAPI();
 oroApi oroGetCurAPI( oroU32 flags );
 void* oroGetRawCtx( oroCtx ctx );
 oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn );

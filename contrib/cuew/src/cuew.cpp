@@ -696,25 +696,17 @@ static int cuewNvrtcInit(void)
   return result;
 }
 
-int cuewInit(cuuint32_t flags)
+void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
 {
-  int result = CUEW_SUCCESS;
+  *resultDriver = CUEW_NOT_INITIALIZED;
+  *resultRtc = CUEW_NOT_INITIALIZED;
 
   if (flags & CUEW_INIT_CUDA) {
-    result = cuewCudaInit();
-    if (result != CUEW_SUCCESS) {
-      return result;
-    }
+    *resultDriver = cuewCudaInit();
   }
-
   if (flags & CUEW_INIT_NVRTC) {
-    result = cuewNvrtcInit();
-    if (result != CUEW_SUCCESS) {
-      return result;
-    }
+    *resultRtc = cuewNvrtcInit();
   }
-
-  return result;
 }
 
 const char *cuewErrorString(CUresult result)

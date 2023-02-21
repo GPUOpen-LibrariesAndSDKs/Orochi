@@ -81,34 +81,62 @@ int oroInitialize( oroApi api, oroU32 flags )
 	s_api = api;
 	int e = 0;
 	s_loadedApis = 0;
-	if( (api & ORO_API_CUDA) == ORO_API_CUDA )
+
+	if( api & ORO_API_CUDA )
 	{
-		e = cuewInit( CUEW_INIT_CUDA | CUEW_INIT_NVRTC );
-		if( e == 0 )
-			s_loadedApis |= ORO_API_CUDA | ORO_API_CUDADRIVER | ORO_API_CUDARTC;
-	}
-	if ((s_loadedApis & ORO_API_CUDA) == 0) {
-		if (api & ORO_API_CUDADRIVER)
+		cuuint32_t flag = 0;
+		if( api & ORO_API_CUDADRIVER )
 		{
-			cuuint32_t cuewInitFlags = CUEW_INIT_CUDA;
-			if ( api & ORO_API_CUDARTC ) cuewInitFlags |= CUEW_INIT_NVRTC;
-			e = cuewInit( cuewInitFlags );
-			if( e == 0 )
-			{
-				s_loadedApis |= ORO_API_CUDADRIVER;
-				if ( api & ORO_API_CUDARTC ) s_loadedApis |= ORO_API_CUDARTC;
-			}
+			flag |= CUEW_INIT_CUDA;
+		}
+		if( api & ORO_API_CUDARTC )
+		{
+			flag |= CUEW_INIT_NVRTC;
+		}
+		
+		int resultDriver, resultRtc;
+		cuewInit( &resultDriver, &resultRtc, flag );
+
+		if( resultDriver == CUEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_CUDADRIVER;
+		}
+		if( resultRtc == CUEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_CUDARTC;
 		}
 	}
 	if( api & ORO_API_HIP )
 	{
-		e = hipewInit( HIPEW_INIT_HIP );
-		if( e == 0 )
-			s_loadedApis |= ORO_API_HIP;
+		hipuint32_t flag = 0;
+		if( api & ORO_API_HIPDRIVER )
+		{
+			flag |= HIPEW_INIT_HIPDRIVER;
+		}
+		if( api & ORO_API_HIPRTC )
+		{
+			flag |= HIPEW_INIT_HIPRTC;
+		}
+
+		int resultDriver, resultRtc;
+		hipewInit( &resultDriver, &resultRtc, flag );
+
+		if( resultDriver == HIPEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_HIPDRIVER;
+		}
+		if( resultRtc == HIPEW_SUCCESS )
+		{
+			s_loadedApis |= ORO_API_HIPRTC;
+		}
 	}
 	if( s_loadedApis == 0 )
 		return ORO_ERROR_OPEN_FAILED;
 	return ORO_SUCCESS;
+}
+oroApi oroLoadedAPI() 
+{
+	return (oroApi)s_loadedApis;
 }
 oroApi oroGetCurAPI(oroU32 flags)
 {

@@ -1457,13 +1457,15 @@ enum {
   HIPEW_ERROR_OPEN_FAILED = -1,
   HIPEW_ERROR_ATEXIT_FAILED = -2,
   HIPEW_ERROR_OLD_DRIVER = -3,
+  HIPEW_NOT_INITIALIZED = -4,
 };
 
 enum {
-	HIPEW_INIT_HIP = 1,
+	HIPEW_INIT_HIPDRIVER = 1 << 0,
+	HIPEW_INIT_HIPRTC = 1 << 1,
 };
 
-int hipewInit(hipuint32_t flags);
+void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags );
 const char *hipewErrorString(hipError_t result);
 const char *hipewCompilerPath(void);
 int hipewCompilerVersion(void);

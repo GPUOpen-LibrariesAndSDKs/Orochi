@@ -1826,11 +1826,12 @@ enum {
   CUEW_SUCCESS = 0,
   CUEW_ERROR_OPEN_FAILED = -1,
   CUEW_ERROR_ATEXIT_FAILED = -2,
+  CUEW_NOT_INITIALIZED = -3,
 };
 
 enum { CUEW_INIT_CUDA = 1, CUEW_INIT_NVRTC = 2 };
 
-int cuewInit(cuuint32_t flags);
+void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags );
 const char *cuewErrorString(CUresult result);
 const char *cuewCompilerPath(void);
 int cuewCompilerVersion(void);
