@@ -480,8 +480,8 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLog );
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLogSize );
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCode );
-    // _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcodeSize );
-    // _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcode );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcodeSize );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcode );
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCodeSize );
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkCreate );
     _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkAddFile );
