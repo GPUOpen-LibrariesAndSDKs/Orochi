@@ -75,7 +75,7 @@ class OrochiUtils
 	}
 
 	template<typename T>
-	static void copyHtoD( T* dst, T* src, size_t n )
+	static void copyHtoD( T* dst, const T* src, size_t n )
 	{
 		oroError e = oroMemcpyHtoD( (oroDeviceptr)dst, (void*)src, sizeof( T ) * n );
 		OROASSERT( e == oroSuccess, 0 );
@@ -126,4 +126,36 @@ class OrochiUtils
 	std::string m_cacheDirectory;
 	std::recursive_mutex m_mutex;
 	std::unordered_map<std::string, oroFunction> m_kernelMap;
+};
+
+class OroStopwatch
+{
+  public:
+	OroStopwatch( oroStream stream ) 
+	{ 
+		m_stream = stream;
+		oroEventCreateWithFlags( &m_start, oroEventDefault );
+		oroEventCreateWithFlags( &m_stop, oroEventDefault );
+	}
+	~OroStopwatch() 
+	{
+		oroEventDestroy( m_start );
+		oroEventDestroy( m_stop );
+	}
+
+	void start() { oroEventRecord( m_start, m_stream ); }
+	void stop() { oroEventRecord( m_stop, m_stream ); }
+
+	float getMs() 
+	{ 
+		oroEventSynchronize( m_stop );
+		float ms = 0;
+		oroEventElapsedTime( &ms, m_start, m_stop );
+		return ms;
+	}
+
+  public:
+	oroStream m_stream;
+	oroEvent m_start;
+	oroEvent m_stop;
 };

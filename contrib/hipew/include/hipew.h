@@ -111,7 +111,6 @@ typedef struct ihipEvent_t* hipEvent_t;
 typedef struct ihipStream_t* hipStream_t;
 typedef unsigned long long hipTextureObject_t;
 typedef void* hipExternalMemory_t;
-typedef void* hipExternalSemaphore_t;
 
 typedef struct HIPuuid_st {
   char bytes[16];
@@ -1087,53 +1086,6 @@ typedef struct hipExternalMemoryBufferDesc_st {
   unsigned int flags;
 } hipExternalMemoryBufferDesc;
 
-typedef enum hipExternalSemaphoreHandleType_enum {
-  hipExternalSemaphoreHandleTypeOpaqueFd = 1,
-  hipExternalSemaphoreHandleTypeOpaqueWin32 = 2,
-  hipExternalSemaphoreHandleTypeOpaqueWin32Kmt = 3,
-  hipExternalSemaphoreHandleTypeD3D12Fence = 4
-} hipExternalSemaphoreHandleType;
-
-typedef struct hipExternalSemaphoreHandleDesc_st {
-  hipExternalSemaphoreHandleType type;
-  union {
-    int fd;
-    struct {
-      void* handle;
-      const void* name;
-    } win32;
-  } handle;
-  unsigned int flags;
-} hipExternalSemaphoreHandleDesc;
-
-typedef struct hipExternalSemaphoreSignalParams_st {
-  struct {
-    struct {
-      unsigned long long value;
-    } fence;
-    struct {
-      unsigned long long key;
-    } keyedMutex;
-    unsigned int reserved[12];
-  } params;
-  unsigned int flags;
-  unsigned int reserved[16];
-} hipExternalSemaphoreSignalParams;
-typedef struct hipExternalSemaphoreWaitParams_st {
-  struct {
-    struct {
-      unsigned long long value;
-    } fence;
-    struct {
-      unsigned long long key;
-      unsigned int timeoutMs;
-    } keyedMutex;
-    unsigned int reserved[10];
-  } params;
-  unsigned int flags;
-  unsigned int reserved[16];
-} hipExternalSemaphoreWaitParams;
-
 /**
 * hipRTC related
 */
@@ -1214,6 +1166,8 @@ typedef hipError_t HIPAPI thipGetDeviceProperties(hipDeviceProp_t* props, int de
 typedef hipError_t HIPAPI thipDeviceGet(hipDevice_t* device, int ordinal);
 typedef hipError_t HIPAPI thipDeviceGetName(char* name, int len, hipDevice_t dev);
 typedef hipError_t HIPAPI thipDeviceGetAttribute(int* pi, hipDeviceAttribute_t attrib, hipDevice_t dev);
+typedef hipError_t HIPAPI thipDeviceGetLimit(size_t* pValue, enum hipLimit_t limit);
+typedef hipError_t HIPAPI thipDeviceSetLimit(enum hipLimit_t limit, size_t value);
 typedef hipError_t HIPAPI thipDeviceComputeCapability(int* major, int* minor, hipDevice_t dev);
 typedef hipError_t HIPAPI thipDevicePrimaryCtxRetain(hipCtx_t* pctx, hipDevice_t dev);
 typedef hipError_t HIPAPI thipDevicePrimaryCtxRelease(hipDevice_t dev);
@@ -1332,10 +1286,6 @@ typedef hipError_t HIPAPI thipGLGetDevices(unsigned int* pHipDeviceCount, int* p
 typedef hipError_t HIPAPI thipImportExternalMemory(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc);
 typedef hipError_t HIPAPI thipExternalMemoryGetMappedBuffer(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc);
 typedef hipError_t HIPAPI thipDestroyExternalMemory(hipExternalMemory_t extMem);
-typedef hipError_t HIPAPI thipImportExternalSemaphore(hipExternalSemaphore_t* extSem_out, const hipExternalSemaphoreHandleDesc* semHandleDesc);
-typedef hipError_t HIPAPI thipDestroyExternalSemaphore(hipExternalSemaphore_t extSem);
-typedef hipError_t HIPAPI thipWaitExternalSemaphoresAsync(const hipExternalSemaphore_t* extSemArray, const hipExternalSemaphoreWaitParams* paramsArray, unsigned int numExtSems, hipStream_t stream);
-typedef hipError_t HIPAPI thipSignalExternalSemaphoresAsync(const hipExternalSemaphore_t* extSemArray, const hipExternalSemaphoreSignalParams* paramsArray, unsigned int numExtSems, hipStream_t stream);
 typedef const char* HIPAPI thiprtcGetErrorString(hiprtcResult result);
 typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char* name_expression);
 typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char** options);
@@ -1363,9 +1313,11 @@ extern thipDriverGetVersion *hipDriverGetVersion;
 extern thipGetDevice *hipGetDevice;
 extern thipGetDeviceCount *hipGetDeviceCount;
 extern thipGetDeviceProperties *hipGetDeviceProperties;
-extern thipDeviceGet* hipDeviceGet;
+extern thipDeviceGet *hipDeviceGet;
 extern thipDeviceGetName *hipDeviceGetName;
 extern thipDeviceGetAttribute *hipDeviceGetAttribute;
+extern thipDeviceGetLimit *hipDeviceGetLimit;
+extern thipDeviceSetLimit *hipDeviceSetLimit;
 extern thipDeviceComputeCapability *hipDeviceComputeCapability;
 extern thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
 extern thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
@@ -1479,12 +1431,8 @@ extern thipGraphicsUnmapResources *hipGraphicsUnmapResources;
 extern thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 extern thipGLGetDevices *hipGLGetDevices;
 extern thipImportExternalMemory *hipImportExternalMemory;
-extern thipImportExternalSemaphore* hipImportExternalSemaphore;
-extern thipDestroyExternalSemaphore* hipDestroyExternalSemaphore;
 extern thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
 extern thipDestroyExternalMemory *hipDestroyExternalMemory;
-extern thipSignalExternalSemaphoresAsync* hipSignalExternalSemaphoresAsync;
-extern thipWaitExternalSemaphoresAsync* hipWaitExternalSemaphoresAsync;
 
 extern thiprtcGetErrorString* hiprtcGetErrorString;
 extern thiprtcAddNameExpression* hiprtcAddNameExpression;
@@ -1509,13 +1457,15 @@ enum {
   HIPEW_ERROR_OPEN_FAILED = -1,
   HIPEW_ERROR_ATEXIT_FAILED = -2,
   HIPEW_ERROR_OLD_DRIVER = -3,
+  HIPEW_NOT_INITIALIZED = -4,
 };
 
 enum {
-	HIPEW_INIT_HIP = 1,
+	HIPEW_INIT_HIPDRIVER = 1 << 0,
+	HIPEW_INIT_HIPRTC = 1 << 1,
 };
 
-int hipewInit(hipuint32_t flags);
+void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags );
 const char *hipewErrorString(hipError_t result);
 const char *hipewCompilerPath(void);
 int hipewCompilerVersion(void);

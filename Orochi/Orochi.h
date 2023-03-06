@@ -26,9 +26,11 @@
 enum oroApi
 {
     ORO_API_AUTOMATIC = 1<<0,
-    ORO_API_HIP = 1<<1,
-    ORO_API_CUDADRIVER = 1<<2,
-    ORO_API_CUDARTC = 1<<3,
+	ORO_API_HIPDRIVER = 1 << 1,
+	ORO_API_HIPRTC = 1 << 2,
+	ORO_API_HIP = ORO_API_HIPDRIVER | ORO_API_HIPRTC,
+	ORO_API_CUDADRIVER = 1 << 3,
+	ORO_API_CUDARTC = 1 << 4,
     ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
 };
 
@@ -145,8 +147,7 @@ typedef struct ioroEvent_t* oroEvent;
 typedef struct ioroStream_t* oroStream;
 typedef struct ioroPointerAttribute_t* oroPointerAttribute;
 typedef unsigned long long oroTextureObject;
-typedef struct ioroExternalMemory_t* oroExternalMemory;
-typedef struct ioroExternalSemaphore_t* oroExternalSemaphore;
+typedef void* oroExternalMemory_t;
 typedef struct iorortcLinkState* orortcLinkState;
 typedef struct _orortcProgram* orortcProgram;
 
@@ -176,6 +177,13 @@ enum orortcResult
 	ORORTC_ERROR_LINKING = 100
 };
 
+typedef enum oroEvent_flags_enum
+{
+	oroEventDefault = 0x0,
+	oroEventBlockingSync = 0x1,
+	oroEventDisableTiming = 0x2,
+	oroEventInterprocess = 0x4,
+} oroEvent_flags;
 
 typedef enum oroDeviceAttribute {
   oroDeviceAttributeCudaCompatibleBegin = 0,
@@ -449,6 +457,15 @@ typedef enum oroSharedMemConfig {
     oroSharedMemBankSizeEightByte = 0x02,
 } oroSharedMemConfig;
 
+typedef enum {
+	ORO_LIMIT_STACK_SIZE = 0x00,
+	ORO_LIMIT_PRINTF_FIFO_SIZE = 0x01,
+	ORO_LIMIT_MALLOC_HEAP_SIZE = 0x02,
+	ORO_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
+	ORO_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
+	ORO_LIMIT_MAX,
+} oroLimit;
+
 typedef enum PPshared_carveout_enum {
     ORO_SHAREDMEM_CARVEOUT_DEFAULT,
     ORO_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
@@ -545,6 +562,7 @@ typedef enum orortcJITInputType
 	ORORTC_JIT_NUM_INPUT_TYPES = ( ORORTC_JIT_NUM_LEGACY_INPUT_TYPES + 3 )
 } orortcJITInputType;
 
+
 typedef enum oroExternalMemoryHandleType_enum {
   oroExternalMemoryHandleTypeOpaqueFd = 1,
   oroExternalMemoryHandleTypeOpaqueWin32 = 2,
@@ -574,55 +592,6 @@ typedef struct oroExternalMemoryBufferDesc_st {
   unsigned int reserved[16];
 } oroExternalMemoryBufferDesc;
 
-typedef enum oroExternalSemaphoreHandleType_enum {
-  oroExternalSemaphoreHandleTypeOpaqueFd = 1,
-  oroExternalSemaphoreHandleTypeOpaqueWin32 = 2,
-  oroExternalSemaphoreHandleTypeOpaqueWin32Kmt = 3,
-  oroExternalSemaphoreHandleTypeD3D12Fence = 4
-} oroExternalSemaphoreHandleType;
-
-typedef struct oroExternalSemaphoreHandleDesc_st {
-  oroExternalSemaphoreHandleType type;
-  union {
-    int fd;
-    struct {
-      void* handle;
-      const void* name;
-    } win32;
-  } handle;
-  unsigned int flags;
-  unsigned int reserved[16];
-} oroExternalSemaphoreHandleDesc;
-
-typedef struct oroExternalSemaphoreSignalParams_st {
-  struct {
-    struct {
-      unsigned long long value;
-    } fence;
-    struct {
-      unsigned long long key;
-    } keyedMutex;
-    unsigned int reserved[12];
-  } params;
-  unsigned int flags;
-  unsigned int reserved[16];
-} oroExternalSemaphoreSignalParams;
-
-typedef struct oroExternalSemaphoreWaitParams_st {
-  struct {
-    struct {
-      unsigned long long value;
-    } fence;
-    struct {
-      unsigned long long key;
-      unsigned int timeoutMs;
-    } keyedMutex;
-    unsigned int reserved[10];
-  } params;
-  unsigned int flags;
-  unsigned int reserved[16];
-} oroExternalSemaphoreWaitParams;
-
 /**
 * Stream CallBack struct
 */
@@ -638,6 +607,8 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev) ;
 oroError OROAPI oroDeviceGet(oroDevice* device, int ordinal ) ;
 oroError OROAPI oroDeviceGetName(char* name, int len, oroDevice dev) ;
 oroError OROAPI oroDeviceGetAttribute(int* pi, oroDeviceAttribute attrib, oroDevice dev) ;
+oroError OROAPI oroDeviceGetLimit(size_t* pValue, oroLimit limit) ;
+oroError OROAPI oroDeviceSetLimit(oroLimit limit, size_t value) ;
 oroError OROAPI oroDeviceComputeCapability(int* major, int* minor, oroDevice dev) ;
 oroError OROAPI oroDevicePrimaryCtxRetain(oroCtx* pctx, oroDevice dev) ;
 oroError OROAPI oroDevicePrimaryCtxRelease(oroDevice dev) ;
@@ -759,13 +730,9 @@ oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* b
 //oroError OROAPI oroGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, oroStream hStream);
 //oroError OROAPI oroGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
 //oroError OROAPI oroGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
-oroError OROAPI oroImportExternalMemory(oroExternalMemory* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
-oroError OROAPI oroExternalMemoryGetMappedBuffer(oroDeviceptr *devPtr, oroExternalMemory extMem, const oroExternalMemoryBufferDesc* bufferDesc);
-oroError OROAPI oroDestroyExternalMemory(oroExternalMemory extMem);
-oroError OROAPI oroImportExternalSemaphore(oroExternalSemaphore* extSem_out, const oroExternalSemaphoreHandleDesc* semHandleDesc);
-oroError OROAPI oroDestroyExternalSemaphore(oroExternalSemaphore extSem);
-oroError OROAPI oroWaitExternalSemaphoresAsync(const oroExternalSemaphore* extSemArray, const oroExternalSemaphoreWaitParams* paramsArray, unsigned int numExtSems, oroStream stream);
-oroError OROAPI oroSignalExternalSemaphoresAsync(const oroExternalSemaphore* extSemArray, const oroExternalSemaphoreSignalParams* paramsArray, unsigned int numExtSems, oroStream stream);
+oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
+oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc);
+oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem);
 // oroError OROAPI oroGetLastError(oroError oro_error);
 const char* OROAPI orortcGetErrorString(orortcResult result);
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression);
@@ -797,6 +764,7 @@ enum {
 
 
 int oroInitialize( oroApi api, oroU32 flags );
+oroApi oroLoadedAPI();
 oroApi oroGetCurAPI( oroU32 flags );
 void* oroGetRawCtx( oroCtx ctx );
 oroError oroCtxCreateFromRaw( oroCtx* ctxOut, oroApi api, void* ctxIn );

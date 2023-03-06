@@ -75,7 +75,6 @@ tcuDeviceGet *cuDeviceGet;
 tcuDeviceGetCount *cuDeviceGetCount;
 tcuDeviceGetName *cuDeviceGetName;
 tcuDeviceGetUuid *cuDeviceGetUuid;
-tcuDeviceGetLuid* cuDeviceGetLuid;
 tcuDeviceTotalMem_v2 *cuDeviceTotalMem_v2;
 tcuDeviceGetAttribute *cuDeviceGetAttribute;
 tcuDeviceGetProperties *cuDeviceGetProperties;
@@ -207,12 +206,8 @@ tcuEventSynchronize *cuEventSynchronize;
 tcuEventDestroy_v2 *cuEventDestroy_v2;
 tcuEventElapsedTime *cuEventElapsedTime;
 tcuImportExternalMemory *cuImportExternalMemory;
-tcuImportExternalSemaphore* cuImportExternalSemaphore;
 tcuExternalMemoryGetMappedBuffer *cuExternalMemoryGetMappedBuffer;
 tcuDestroyExternalMemory *cuDestroyExternalMemory;
-tcuDestroyExternalSemaphore* cuDestroyExternalSemaphore;
-tcuWaitExternalSemaphoresAsync* cuWaitExternalSemaphoresAsync;
-tcuSignalExternalSemaphoresAsync* cuSignalExternalSemaphoresAsync;
 tcuStreamWaitValue32 *cuStreamWaitValue32;
 tcuStreamWaitValue64 *cuStreamWaitValue64;
 tcuStreamWriteValue32 *cuStreamWriteValue32;
@@ -398,7 +393,6 @@ static int cuewCudaInit(void)
   CUDA_LIBRARY_FIND(cuDeviceGetCount);
   CUDA_LIBRARY_FIND(cuDeviceGetName);
   CUDA_LIBRARY_FIND(cuDeviceGetUuid);
-  CUDA_LIBRARY_FIND(cuDeviceGetLuid);
   CUDA_LIBRARY_FIND(cuDeviceTotalMem_v2);
   CUDA_LIBRARY_FIND(cuDeviceGetAttribute);
   CUDA_LIBRARY_FIND(cuDeviceGetProperties);
@@ -530,12 +524,8 @@ static int cuewCudaInit(void)
   CUDA_LIBRARY_FIND(cuEventDestroy_v2);
   CUDA_LIBRARY_FIND(cuEventElapsedTime);
   CUDA_LIBRARY_FIND(cuImportExternalMemory);
-  CUDA_LIBRARY_FIND(cuImportExternalSemaphore);
   CUDA_LIBRARY_FIND(cuExternalMemoryGetMappedBuffer);
   CUDA_LIBRARY_FIND(cuDestroyExternalMemory);
-  CUDA_LIBRARY_FIND(cuDestroyExternalSemaphore);
-  CUDA_LIBRARY_FIND(cuWaitExternalSemaphoresAsync);
-  CUDA_LIBRARY_FIND(cuSignalExternalSemaphoresAsync);
   CUDA_LIBRARY_FIND(cuStreamWaitValue32);
   CUDA_LIBRARY_FIND(cuStreamWaitValue64);
   CUDA_LIBRARY_FIND(cuStreamWriteValue32);
@@ -643,7 +633,7 @@ static int cuewNvrtcInit(void)
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in c:/windows/system or similar, no path needed. */
-  const char *nvrtc_paths[] = {"nvrtc64_120_0.dll",
+  const char* nvrtc_paths[] = {"nvrtc64_120_0.dll",
                                "nvrtc64_112_0.dll",
                                "nvrtc64_101_0.dll",
                                "nvrtc64_100_0.dll",
@@ -707,25 +697,17 @@ static int cuewNvrtcInit(void)
   return result;
 }
 
-int cuewInit(cuuint32_t flags)
+void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
 {
-  int result = CUEW_SUCCESS;
+  *resultDriver = CUEW_NOT_INITIALIZED;
+  *resultRtc = CUEW_NOT_INITIALIZED;
 
   if (flags & CUEW_INIT_CUDA) {
-    result = cuewCudaInit();
-    if (result != CUEW_SUCCESS) {
-      return result;
-    }
+    *resultDriver = cuewCudaInit();
   }
-
   if (flags & CUEW_INIT_NVRTC) {
-    result = cuewNvrtcInit();
-    if (result != CUEW_SUCCESS) {
-      return result;
-    }
+    *resultRtc = cuewNvrtcInit();
   }
-
-  return result;
 }
 
 const char *cuewErrorString(CUresult result)
