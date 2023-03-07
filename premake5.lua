@@ -8,6 +8,11 @@ newoption {
    description = "Use precompiled kernels"
 }
 
+newoption {
+   trigger = "kernelcompile",
+   description = "Compile kernels used for unit test"
+}
+
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
 	if not os.isdir(src_dir) then
 		printError("'%s' is not an existing directory!", src_dir)
