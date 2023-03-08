@@ -640,7 +640,7 @@ oroError OROAPI oroMemcpyDtoDAsync( oroDeviceptr dstDevice, oroDeviceptr srcDevi
 }
 oroError OROAPI oroMemset(oroDeviceptr dstDevice, unsigned int ui, size_t N)
 {
-	__ORO_FUNC1( MemsetD8( (CUdeviceptr)dstDevice, ui, N ), Memset((void*)dstDevice, ui, N));
+	__ORO_FUNC1( MemsetD32( (CUdeviceptr)dstDevice, ui, N/sizeof(int) ), Memset( (void*)dstDevice, ui, N ) );
 	return oroErrorUnknown;
 }
 
