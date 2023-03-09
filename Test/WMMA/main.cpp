@@ -74,6 +74,7 @@ int main( int argc, char** argv )
 	oroCtx ctx;
 	e = oroCtxCreate( &ctx, 0, device );
 	ERROR_CHECK( e );
+	oroCtxSetCurrent( ctx );
 
 	//try kernel execution
 	oroFunction function;
