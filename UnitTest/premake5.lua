@@ -19,3 +19,7 @@ project "Unittest"
       files { "../contrib/gtest-1.6.0/gtest-all.cc" }
       sysincludedirs{ "../contrib/gtest-1.6.0/" }
       defines { "GTEST_HAS_TR1_TUPLE=0" }
+      if _OPTIONS["kernelcompile"] then
+        os.execute( "cd ./bitcodes/ && generate_bitcodes.bat" )
+        os.execute( "cd ./bitcodes/ && generate_bitcodes_nvidia.bat" )
+      end

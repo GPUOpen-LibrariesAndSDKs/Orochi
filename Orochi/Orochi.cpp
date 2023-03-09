@@ -338,6 +338,9 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		e = cuDeviceGetAttribute( &props->computeMode, CU_DEVICE_ATTRIBUTE_COMPUTE_MODE, deviceId );
 		e = cuDeviceGetAttribute( &props->concurrentKernels, CU_DEVICE_ATTRIBUTE_CONCURRENT_KERNELS, deviceId );
 		e = cuDeviceGetAttribute( &props->ECCEnabled, CU_DEVICE_ATTRIBUTE_ECC_ENABLED, deviceId );
+		e = cuDeviceGetAttribute( &props->major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, deviceId );
+		e = cuDeviceGetAttribute( &props->minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, deviceId );
+
 		return oroSuccess;
 	}
 	return oroErrorUnknown;
@@ -637,7 +640,7 @@ oroError OROAPI oroMemcpyDtoDAsync( oroDeviceptr dstDevice, oroDeviceptr srcDevi
 }
 oroError OROAPI oroMemset(oroDeviceptr dstDevice, unsigned int ui, size_t N)
 {
-	__ORO_FUNC1( MemsetD8( (CUdeviceptr)dstDevice, ui, N ), Memset((void*)dstDevice, ui, N));
+	__ORO_FUNC1( MemsetD32( (CUdeviceptr)dstDevice, ui, N/sizeof(int) ), MemsetD32( dstDevice, ui, N / sizeof(int) ) );
 	return oroErrorUnknown;
 }
 
