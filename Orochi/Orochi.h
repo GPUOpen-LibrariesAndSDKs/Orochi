@@ -32,6 +32,7 @@ enum oroApi
 	ORO_API_CUDADRIVER = 1 << 3,
 	ORO_API_CUDARTC = 1 << 4,
     ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
+    ORO_API_INTEL = 1 << 5,
 };
 
 // Errors referenced from https://github.com/ROCm-Developer-Tools/HIP/blob/develop/include/hip/hip_runtime_api.h
@@ -127,6 +128,7 @@ enum oroMemcpyKind
 };
 
 typedef unsigned int oroU32;
+typedef unsigned long long oroU64;
 typedef unsigned long long oroDeviceptr;
 
 #ifdef _WIN32
@@ -137,7 +139,7 @@ typedef unsigned long long oroDeviceptr;
 #  define ORO_CB
 #endif
 
-typedef int oroDevice;
+typedef oroU64 oroDevice;
 typedef struct ioroCtx_t* oroCtx;
 typedef struct ioroModule_t* oroModule;
 typedef struct ioroModuleSymbol_t* oroFunction;
@@ -631,7 +633,7 @@ oroError OROAPI oroDeviceSynchronize(void) ;
 //oroError OROAPI oroCtxSetSharedMemConfig(hipSharedMemConfig config);
 oroError OROAPI oroCtxGetApiVersion(oroCtx ctx, unsigned int* version);
 oroError OROAPI oroModuleLoad(oroModule* module, const char* fname);
-oroError OROAPI oroModuleLoadData(oroModule* module, const void* image);
+oroError OROAPI oroModuleLoadData(oroModule* module, const void* image, unsigned int imageSize = 0);
 oroError OROAPI oroModuleLoadDataEx(oroModule* module, const void* image, unsigned int numOptions, oroJitOption* options, void** optionValues);
 oroError OROAPI oroModuleUnload(oroModule hmod);
 oroError OROAPI oroModuleGetFunction(oroFunction* hfunc, oroModule hmod, const char* name);
@@ -682,7 +684,7 @@ oroError OROAPI oroMemsetD32Async(oroDeviceptr dstDevice, unsigned int ui, size_
 //oroError OROAPI oroArrayDestroy(hArray hArray);
 //oroError OROAPI oroArray3DCreate(hArray * pHandle, const ORO_ARRAY3D_DESCRIPTOR* pAllocateArray);
 oroError OROAPI oroPointerGetAttributes(oroPointerAttribute* attr, oroDeviceptr dptr);
-oroError OROAPI oroStreamCreate(oroStream* stream);
+oroError OROAPI oroStreamCreate( oroStream* stream );
 //oroError OROAPI oroStreamCreateWithFlags(oroStream* phStream, unsigned int Flags);
 //oroError OROAPI oroStreamCreateWithPriority(oroStream* phStream, unsigned int flags, int priority);
 //oroError OROAPI oroStreamGetPriority(oroStream hStream, int* priority);

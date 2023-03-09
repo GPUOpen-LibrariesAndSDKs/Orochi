@@ -6,6 +6,12 @@ project "Unittest"
 
    if os.istarget("windows") then
       links{ "version" }
+      if _OPTIONS["intel"] then
+        libdirs{ "../contrib/levelZero/" }
+        links{ "ze_loader.lib" }
+        includedirs { "../contrib/levelZero/include/" }
+        defines{ "ORO_INTEL" }
+      end
    end
    if os.istarget("linux") then
       links { "pthread" }

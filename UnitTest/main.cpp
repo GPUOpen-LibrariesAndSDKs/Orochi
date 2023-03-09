@@ -12,13 +12,30 @@
 #define ORORTCCHECK( x ) { OROASSERT( x == ORORTC_SUCCESS ); }
 
 
+static
+void loadFile( const char* path, std::vector<char>& dst )
+{
+	std::fstream f( path, std::ios::binary | std::ios::in );
+	if( f.is_open() )
+	{
+		size_t sizeFile;
+		f.seekg( 0, std::fstream::end );
+		size_t size = sizeFile = (size_t)f.tellg();
+		dst.resize( size+1 );
+		f.seekg( 0, std::fstream::beg );
+		f.read( dst.data(), size );
+		dst[size] = 0;
+		f.close();
+	}
+}
+
 class OroTestBase : public ::testing::Test
 {
   public:
 	void SetUp() 
 	{
 		const int deviceIndex = 0;
-		oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
+		oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP | ORO_API_INTEL );
 		int a = oroInitialize( api, 0 );
 		OROASSERT( a == 0 );
 
@@ -58,6 +75,21 @@ TEST_F( OroTestBase, deviceprops )
 	}
 }
 
+TEST_F( OroTestBase, malloc )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 32, sizeof( int ) ) );
+	OrochiUtils::waitForCompletion( m_stream );
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OrochiUtils::waitForCompletion( m_stream );
+	OROASSERT( a_host == 32 );
+}
+
 TEST_F( OroTestBase, kernelExec ) 
 {
 	OrochiUtils o;
@@ -65,13 +97,109 @@ TEST_F( OroTestBase, kernelExec )
 	int* a_device = nullptr;
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
-	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
+	oroFunction kernel = o.getFunctionFromFile( m_device, 
+		( oroGetCurAPI( 0 ) != ORO_API_INTEL ) ? "../UnitTest/testKernel.h" : "../UnitTest/testKernel.cl", "testKernel", 0 ); 
 	const void* args[] = { &a_device };
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+}
+
+TEST_F( OroTestBase, kernelExecPreCompiled )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+	std::string archName( props.gcnArchName );
+	archName = archName.substr( 0, archName.find( ':' ) );
+
+	std::string path;
+	switch( oroGetCurAPI( 0 ) )
+	{
+	case ORO_API_HIP:
+		path = "../UnitTest/binary/testKernel1.hipfb";
+		break;
+	case ORO_API_CUDADRIVER:
+		path = "../UnitTest/binary/testKernel1.fatbin";
+		break;
+	case ORO_API_INTEL:
+		path = "../UnitTest/binary/testKernel1_Gen12LPdg1.spv";
+		break;
+	default:
+		break;
+	};
+
+	{
+		std::vector<char> binary;
+		loadFile( path.c_str(), binary );
+		oroFunction function;
+		oroModule module;
+		oroError ee = oroModuleLoadData( &module, binary.data(), binary.size() );
+		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		int x = 123;
+		const void* args[] = { &x };
+
+		OrochiUtils::launch1D( function, 64, args, 64 );
+		OrochiUtils::waitForCompletion( m_stream );
+//		OROCHECK( oroMemcpyDtoH( &x_host, (oroDeviceptr)x_device, sizeof( int ) ) );
+//		OROASSERT( x_host == 2016 );
+//		OROCHECK( oroFree( (oroDeviceptr)x_device ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
+	}
+}
+
+TEST_F( OroTestBase, kernelExecPreCompiled1 )
+{
+	oroDeviceProp props;
+	OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+	{
+		oroDeviceProp props;
+		OROCHECK( oroGetDeviceProperties( &props, m_device ) );
+		printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
+		printf( "%d multiProcessors\n", props.multiProcessorCount );
+	}
+
+	std::string path;
+	switch( oroGetCurAPI( 0 ) )
+	{
+	case ORO_API_HIP:
+		path = "../UnitTest/binary/testKernel1.hipfb";
+		break;
+	case ORO_API_CUDADRIVER:
+		path = "../UnitTest/binary/testKernel1.fatbin";
+		break;
+	case ORO_API_INTEL:
+		path = "../UnitTest/binary/testKernel1_Gen12LPdg1.spv";
+		break;
+	default:
+		break;
+	};
+
+	{
+		int a_host = -1;
+		int* a_device = nullptr;
+		OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+		OROCHECK( oroMemset( (oroDeviceptr)a_device, 100, sizeof( int ) ) );
+
+		std::vector<char> binary;
+		loadFile( path.c_str(), binary );
+		oroFunction function;
+		oroModule module;
+		OROCHECK( oroModuleLoadData( &module, binary.data(), binary.size() ) );
+		OROCHECK( oroModuleGetFunction( &function, module, "testKernel1" ) );
+		int x = 123;
+		const void* args[] = { &a_device, &x };
+
+		OrochiUtils::launch1D( function, 64, args, 64 );
+		OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+		OrochiUtils::waitForCompletion( m_stream );
+
+		OROASSERT( a_host == 124 );
+		OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+		ORORTCCHECK( oroModuleUnload( module ) );
+	}
 }
 
 TEST_F( OroTestBase, GpuMemoryTest )
@@ -136,20 +264,7 @@ TEST_F( OroTestBase, Event )
 	printf( "kernelExec: %3.2fms\n", ms );
 }
 
-void loadFile( const char* path, std::vector<char>& dst ) 
-{
-	std::fstream f( path, std::ios::binary | std::ios::in );
-	if( f.is_open() )
-	{
-		size_t sizeFile;
-		f.seekg( 0, std::fstream::end );
-		size_t size = sizeFile = (size_t)f.tellg();
-		dst.resize( size );
-		f.seekg( 0, std::fstream::beg );
-		f.read( dst.data(), size );
-		f.close();
-	}
-}
+
 #if 0
 TEST_F( OroTestBase, linkBc )
 {
