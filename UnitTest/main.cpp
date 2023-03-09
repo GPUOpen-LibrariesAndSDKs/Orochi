@@ -25,6 +25,7 @@ class OroTestBase : public ::testing::Test
 		OROCHECK( oroInit( 0 ) );
 		OROCHECK( oroDeviceGet( &m_device, deviceIndex ) );
 		OROCHECK( oroCtxCreate( &m_ctx, 0, m_device ) );
+		OROCHECK( oroCtxSetCurrent( m_ctx ) );
 		OROCHECK( oroStreamCreate( &m_stream ) );
 	}
 
