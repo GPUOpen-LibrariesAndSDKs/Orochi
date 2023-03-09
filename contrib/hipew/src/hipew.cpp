@@ -79,6 +79,8 @@ thipGetDeviceProperties *hipGetDeviceProperties;
 thipDeviceGet* hipDeviceGet;
 thipDeviceGetName *hipDeviceGetName;
 thipDeviceGetAttribute *hipDeviceGetAttribute;
+thipDeviceGetLimit *hipDeviceGetLimit;
+thipDeviceSetLimit *hipDeviceSetLimit;
 thipDeviceComputeCapability *hipDeviceComputeCapability;
 thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
 thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
@@ -192,12 +194,8 @@ thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
 thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 thipGLGetDevices *hipGLGetDevices;
 thipImportExternalMemory *hipImportExternalMemory;
-thipImportExternalSemaphore* hipImportExternalSemaphore;
-thipDestroyExternalSemaphore* hipDestroyExternalSemaphore;
 thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
 thipDestroyExternalMemory *hipDestroyExternalMemory;
-thipSignalExternalSemaphoresAsync *hipSignalExternalSemaphoresAsync;
-thipWaitExternalSemaphoresAsync *hipWaitExternalSemaphoresAsync;
 
 thiprtcGetErrorString* hiprtcGetErrorString;
 thiprtcAddNameExpression* hiprtcAddNameExpression;
@@ -241,14 +239,14 @@ static void hipewHipExit(void) {
 #ifdef _WIN32
 static int hipewHasOldDriver(const char *hip_path) {
   DWORD verHandle = 0;
-  DWORD verSize = GetFileVersionInfoSize(hip_path, &verHandle);
+  DWORD verSize = GetFileVersionInfoSizeA(hip_path, &verHandle);
   int old_driver = 0;
   if (verSize != 0) {
     LPSTR verData = (LPSTR)malloc(verSize);
-    if (GetFileVersionInfo(hip_path, verHandle, verSize, verData)) {
+    if (GetFileVersionInfoA(hip_path, verHandle, verSize, verData)) {
       LPBYTE lpBuffer = NULL;
       UINT size = 0;
-      if (VerQueryValue(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
+      if (VerQueryValueA(verData, "\\", (VOID FAR * FAR *)&lpBuffer, &size)) {
         if (size) {
           VS_FIXEDFILEINFO *verInfo = (VS_FIXEDFILEINFO *)lpBuffer;
           /* Magic value from
@@ -268,12 +266,13 @@ static int hipewHasOldDriver(const char *hip_path) {
 }
 #endif
 
-static int hipewHipInit(void) {
+void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
+{
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char* hiprtc_paths[] = {"hiprtc0504.dll",
+  const char *hiprtc_paths[] = {"hiprtc0504.dll",
                                 "hiprtc0503.dll",
                                 NULL};
 #elif defined(__APPLE__)
@@ -285,26 +284,34 @@ static int hipewHipInit(void) {
   const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so", NULL };
 #endif
   static int initialized = 0;
-  static int result = 0;
-  int error;
+  static int s_resultDriver = 0;
+  static int s_resultRtc = 0;
 
   if (initialized) {
-    return result;
+	*resultDriver = s_resultDriver;
+	*resultRtc = s_resultRtc;
+    return;
   }
 
   initialized = 1;
 
-  error = atexit(hipewHipExit);
+  int error = atexit( hipewHipExit );
   if (error) {
-    result = HIPEW_ERROR_ATEXIT_FAILED;
-    return result;
+    s_resultDriver = HIPEW_ERROR_ATEXIT_FAILED;
+    s_resultRtc = HIPEW_NOT_INITIALIZED;
+    *resultDriver = s_resultDriver;
+    *resultRtc = s_resultRtc;
+    return;
   }
 
 #ifdef _WIN32
   /* Test for driver version. */
   if(hipewHasOldDriver(hip_paths[0])) {
-     result = HIPEW_ERROR_OLD_DRIVER;
-     return result;
+    s_resultDriver = HIPEW_ERROR_OLD_DRIVER;
+    s_resultRtc = HIPEW_NOT_INITIALIZED;
+    *resultDriver = s_resultDriver;
+    *resultRtc = s_resultRtc;
+    return;
   }
 #endif
 
@@ -313,8 +320,11 @@ static int hipewHipInit(void) {
   hiprtc_lib = dynamic_library_open_find(hiprtc_paths);
 
   if (hip_lib == NULL) {
-    result = HIPEW_ERROR_OPEN_FAILED;
-    return result;
+    s_resultDriver = HIPEW_ERROR_ATEXIT_FAILED;
+    s_resultRtc = HIPEW_NOT_INITIALIZED;
+	*resultDriver = s_resultDriver;
+	*resultRtc = s_resultRtc;
+    return;
   }
 
   /* Fetch all function pointers. */
@@ -329,6 +339,8 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGet);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetName);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGetAttribute);
+  HIP_LIBRARY_FIND( hipDeviceGetLimit );
+  HIP_LIBRARY_FIND( hipDeviceSetLimit );
   HIP_LIBRARY_FIND_CHECKED(hipDeviceComputeCapability);
   HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRetain);
   HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRelease);
@@ -441,68 +453,51 @@ static int hipewHipInit(void) {
   HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
   HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
   HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
-  HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
-  HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
-  HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
-  if(hiprtc_lib)
+  // HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
+  // HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
+  // HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
+  // HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
+
+  s_resultDriver = HIPEW_SUCCESS;
+  *resultDriver = s_resultDriver;
+
+  if( ( flags & HIPEW_INIT_HIPRTC ) == 0 )
   {
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcAddNameExpression);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcCompileProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcCreateProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcDestroyProgram);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetLoweredName);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLog);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
-	  HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCode);
-	  HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetBitcodeSize);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetBitcode);
-      HIPRTC_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
-	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkCreate );
-	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkAddFile );
-	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkAddData );
-	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkComplete );
-	  HIPRTC_LIBRARY_FIND_CHECKED( hiprtcLinkDestroy );
+	s_resultRtc = HIPEW_NOT_INITIALIZED;
+	*resultRtc = s_resultRtc;
+	return;
+  }
+
+  auto rtcLib = hiprtc_lib ? hiprtc_lib : hip_lib;
+  _LIBRARY_FIND( rtcLib, hiprtcGetErrorString );
+  if( hiprtcGetErrorString )
+  {
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcAddNameExpression );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcCompileProgram );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcCreateProgram );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcDestroyProgram );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetLoweredName );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLog );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLogSize );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCode );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcodeSize );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcode );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCodeSize );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkCreate );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkAddFile );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkAddData );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkComplete );
+    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkDestroy );
+
+	s_resultRtc = HIPEW_SUCCESS;
+	*resultRtc = s_resultRtc;
   }
   else
   {
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetErrorString);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcAddNameExpression);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcCompileProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcCreateProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcDestroyProgram);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetLoweredName);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetProgramLog);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetProgramLogSize);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetCode);
-      HIP_LIBRARY_FIND_CHECKED(hiprtcGetCodeSize);
-	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkCreate );
-	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkAddFile );
-	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkAddData );
-	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkComplete );
-	  HIP_LIBRARY_FIND_CHECKED( hiprtcLinkDestroy );
+	s_resultRtc = HIPEW_ERROR_OPEN_FAILED;
+	*resultRtc = s_resultRtc;
   }
-
-  result = HIPEW_SUCCESS;
-  return result;
 }
-
-
-
-int hipewInit(hipuint32_t flags) {
-  int result = HIPEW_SUCCESS;
-
-  if (flags & HIPEW_INIT_HIP) {
-    result = hipewHipInit();
-    if (result != HIPEW_SUCCESS) {
-      return result;
-    }
-  }
-
-  return result;
-}
-
 
 const char *hipewErrorString(hipError_t result) {
   switch (result) {

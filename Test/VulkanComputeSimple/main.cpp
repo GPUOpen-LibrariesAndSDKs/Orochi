@@ -233,7 +233,7 @@ void *vkGetMemHandle(vk::raii::Device const &device, VkDevice m_device,
 #endif
 }
 
-void importPpExternalMemory( void** ppPtr, oroExternalMemory ppMem,
+void importPpExternalMemory(void **ppPtr, oroExternalMemory_t &ppMem,
 	vk::raii::Device const &device, VkDevice m_device,
 	VkDeviceMemory vkMem, VkDeviceSize size,
 	VkExternalMemoryHandleTypeFlagBits handleType) {
@@ -267,7 +267,7 @@ void importPpExternalMemory( void** ppPtr, oroExternalMemory ppMem,
 	externalMemBufferDesc.size = size;
 	externalMemBufferDesc.flags = 0;
 
-	oroExternalMemoryGetMappedBuffer((oroDeviceptr*)ppPtr, ppMem, &externalMemBufferDesc);
+	oroExternalMemoryGetMappedBuffer(ppPtr, ppMem, &externalMemBufferDesc);
 }
 
 static std::string AppName = "App";
@@ -408,7 +408,7 @@ int main(int argc, char **argv) {
 		vk::SubmitInfo submitInfo({}, {}, *commandBuffer);
 		queue.submit(submitInfo);
 		device.waitIdle();
-		oroExternalMemory externalMemory;
+		oroExternalMemory_t externalMemory;
 		void *deviceMemoryPp;
 		importPpExternalMemory(&deviceMemoryPp, externalMemory, device, *device,
 			*deviceMemory, memorySize,

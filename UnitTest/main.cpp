@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <Orochi/Orochi.h>
 #include <Orochi/OrochiUtils.h>
+#include <Orochi/GpuMemory.h>
 #include <fstream>
 
 #if defined( OROASSERT )
@@ -24,16 +25,19 @@ class OroTestBase : public ::testing::Test
 		OROCHECK( oroInit( 0 ) );
 		OROCHECK( oroDeviceGet( &m_device, deviceIndex ) );
 		OROCHECK( oroCtxCreate( &m_ctx, 0, m_device ) );
+		OROCHECK( oroStreamCreate( &m_stream ) );
 	}
 
 	void TearDown() 
 	{ 
+		OROCHECK( oroStreamDestroy( m_stream ) );
 		OROCHECK( oroCtxDestroy( m_ctx ) );
 	}
 
   protected:
 	oroDevice m_device;
 	oroCtx m_ctx;
+	oroStream m_stream;
 
 };
 
@@ -67,6 +71,68 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+}
+
+TEST_F( OroTestBase, GpuMemoryTest )
+{
+	OrochiUtils o;
+
+	Oro::GpuMemory<int> device_memory;
+	device_memory.resize( 1 );
+	OROASSERT( device_memory.size() == 1ULL );
+
+	device_memory.reset();
+
+	auto kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	const void* args[] = { Oro::arg_cast( device_memory.address() ) };
+
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
+	OrochiUtils::waitForCompletion();
+
+	const auto val = device_memory.getSingle();
+	OROASSERT( val == 2016 );
+
+	const auto values = device_memory.getData();
+	OROASSERT( std::size( values ) == 1ULL );
+	OROASSERT( values[0] == 2016 );
+
+	const auto test_value = 123;
+	const std::vector<int> test_data = { test_value, test_value, test_value };
+	device_memory.copyFromHost( std::data( test_data ), std::size( test_data ) );
+
+	OROASSERT( device_memory.size() == std::size( test_data ) );
+
+	const auto output_data = device_memory.getData();
+
+	for( auto&& out : output_data )
+	{
+		OROASSERT( out == test_value );
+	}
+}
+
+TEST_F( OroTestBase, Event )
+{
+	OrochiUtils o;
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
+
+	OroStopwatch sw( m_stream );
+
+	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	const void* args[] = { &a_device };
+	sw.start();
+	OrochiUtils::launch1D( kernel, 64, args, 64, 0, m_stream );
+	sw.stop();
+
+	OrochiUtils::waitForCompletion( m_stream );
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 2016 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+
+	float ms = sw.getMs();
+	printf( "kernelExec: %3.2fms\n", ms );
 }
 
 void loadFile( const char* path, std::vector<char>& dst ) 
@@ -647,7 +713,40 @@ TEST_F( OroTestBase, getErrorString )
 	}
 }
 
-int main( int argc, char* argv[] )
+TEST_F( OroTestBase, funcPointer )
+{
+	OrochiUtils o;
+	int a_host = -1;
+	int* a_device = nullptr;
+	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
+	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
+	oroFunction kernel;
+	char* deviceBuffer;
+	{
+		oroModule module;
+		std::string code;
+		const char* path = "../UnitTest/testKernel.h";
+		OrochiUtils::readSourceCode( path, code );
+		o.getModule( m_device, code.c_str(), path, 0, "testFuncPointerKernel", &module );
+		oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" );
+		{
+			oroDeviceptr dFuncPtr;
+			size_t numBytes = 0;
+			oroError ee = oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" );
+			o.malloc( deviceBuffer, numBytes );
+			o.copyDtoD( deviceBuffer, (char*)dFuncPtr, numBytes );
+		}
+	}
+	const void* args[] = { &a_device, &deviceBuffer };
+	OrochiUtils::launch1D( kernel, 64, args, 64 );
+	OrochiUtils::waitForCompletion();
+	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
+	OROASSERT( a_host == 7 );
+	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+	o.free( deviceBuffer );
+}
+
+int main( int argc, char* argv[] ) 
 {
 	::testing::InitGoogleTest( &argc, argv );
 	return RUN_ALL_TESTS();
