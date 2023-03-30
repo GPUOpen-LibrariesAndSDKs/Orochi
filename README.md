@@ -10,6 +10,7 @@ graph LR
     A(User code using <br/> driver API) --> B(Orochi)
     B --> |AMD GPU|C(HIP <br/> amdhip64.dll)
     B --> |NVIDIA GPU| D(CUDA <br/> nvcuda.dll)
+    B --> |Intel GPU| E(OneAPI <br/> ze_loader.dll)
 ```
 
 ---
