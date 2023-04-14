@@ -471,7 +471,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	{
 		orortcProgram prog;
 		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
+		e = orortcCreateProgram( &prog, code, funcName, numHeaders, headers, includeNames );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 		e = orortcCompileProgram( prog, opts.size(), opts.data() );
