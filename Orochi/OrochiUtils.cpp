@@ -376,7 +376,7 @@ struct OrochiUtilsImpl
 		std::string tmp_name = path;
 		for( std::string s : *opts )
 		{
-			if( s.find( "-I" ) != std::string::npos ) continue;
+			if( s[0] == '-' && s[1] == 'I' ) continue;
 			tmp_name += s;
 		}
 		return tmp_name + kernelname;
