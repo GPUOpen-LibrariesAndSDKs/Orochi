@@ -102,4 +102,5 @@ workspace "YamatanoOrochi"
      if os.istarget("windows") then
         group "Advanced"
         include "./Test/VulkanComputeSimple"
+        include "./Test/RadixSort"
      end
