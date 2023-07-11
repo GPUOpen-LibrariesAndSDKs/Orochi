@@ -90,7 +90,7 @@ int main( int argc, char** argv )
 
 	// Compile the WMMA kernel
 	printf( "Compiling WMMA kernel...\n" );
-	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
+	rtc_e = orortcCompileProgram( prog, static_cast<int>(opts.size()), opts.data() );
 	if( rtc_e != ORORTC_SUCCESS )
 	{
 		size_t logSize;

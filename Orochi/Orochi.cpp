@@ -560,6 +560,13 @@ oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize)
 	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), Malloc( dptr, bytesize ) );
 	return oroErrorUnknown;
 }
+
+oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, oroManagedMemoryAttachFlags flags)
+{
+	__ORO_FUNC1( MemAllocManaged((CUdeviceptr*)dptr, bytesize, (CUmemAttach_flags_enum)flags), MallocManaged( dptr, bytesize, (HIPmemAttach_flags_enum)flags ) );
+	return oroErrorUnknown;
+}
+
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize)
 {
 	__ORO_FUNC1( MemAlloc((CUdeviceptr*)dptr, bytesize), Malloc(dptr, bytesize) );

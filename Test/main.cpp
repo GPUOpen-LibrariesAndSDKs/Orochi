@@ -69,7 +69,7 @@ int main(int argc, char** argv )
 			std::vector<const char*> opts; 
 			opts.push_back( "-I ../" );
 
-			e = orortcCompileProgram( prog, opts.size(), opts.data() );
+			e = orortcCompileProgram( prog, static_cast<int>(opts.size()), opts.data() );
 			if( e != ORORTC_SUCCESS )
 			{
 				size_t logSize;

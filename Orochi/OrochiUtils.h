@@ -33,8 +33,13 @@ class OrochiUtils
 		int x, y, z, w;
 	};
 
-	OrochiUtils();
-	~OrochiUtils();
+	OrochiUtils() = default;
+	//make class non copyable and movable
+	OrochiUtils(const OrochiUtils&) = delete; 
+    OrochiUtils& operator=(const OrochiUtils&) = delete;
+    OrochiUtils(OrochiUtils&&) = delete; 
+    OrochiUtils& operator=(OrochiUtils&&) = delete;
+	~OrochiUtils() = default;
 
 	oroFunction getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName );
 
@@ -50,10 +55,20 @@ class OrochiUtils
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 
 	template<typename T>
-	static void malloc( T*& ptr, int n )
+	static void malloc( T*& ptr, size_t n )
 	{
 		oroError e = oroMalloc( (oroDeviceptr*)&ptr, sizeof( T ) * n );
 		OROASSERT( e == oroSuccess, 0 );
+	}
+
+	template<typename T>
+	static void mallocManaged( T*& ptr, size_t n, oroManagedMemoryAttachFlags flags )
+	{
+#if defined( _WIN32 )
+#else
+		oroError e = oroMallocManaged( (oroDeviceptr*)&ptr, sizeof( T ) * n, flags );
+		OROASSERT( e == oroSuccess, 0 );
+#endif
 	}
 
 	template<typename T>
@@ -123,7 +138,7 @@ class OrochiUtils
 	}
 
   public:
-	std::string m_cacheDirectory;
+	std::string m_cacheDirectory = "./cache/";
 	std::recursive_mutex m_mutex;
 	std::unordered_map<std::string, oroFunction> m_kernelMap;
 };
@@ -158,4 +173,98 @@ class OroStopwatch
 	oroStream m_stream;
 	oroEvent m_start;
 	oroEvent m_stop;
+};
+
+class Timer final
+{
+  public:
+	static constexpr bool EnableTimer = false;
+
+	using TokenType = int;
+	using TimeUnit	= float;
+
+	Timer() = default;
+
+	Timer( const Timer& ) = default;
+	Timer( Timer&& )	  = default;
+
+	Timer& operator=( const Timer& )  = default;
+	Timer& operator=( Timer&& other ) = default;
+
+	~Timer() = default;
+
+	class Profiler;
+
+	/// Call the callable and measure the elapsed time using Orochi events.
+	/// @param[in] token The token of the time record.
+	/// @param[in] callable The callable object to be called.
+	/// @param[in] args The parameters of the callable.
+	/// @return The forwarded returned result of the callable.
+	template <typename CallableType, typename... Args>
+	decltype( auto ) measure( const TokenType token, CallableType&& callable, Args&&... args ) noexcept
+	{
+
+#define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
+
+		TimeUnit time{};
+		oroEvent start{};
+		oroEvent stop{};
+		if constexpr ( EnableTimer )
+		{
+			OROCHECK( oroEventCreateWithFlags( &start, 0 ) );
+			OROCHECK( oroEventCreateWithFlags( &stop, 0 ) );
+			OROCHECK( oroEventRecord( start, 0 ) );
+		}
+
+		using return_type = std::invoke_result_t<CallableType, Args...>;
+		if constexpr ( std::is_void_v<return_type> )
+		{
+			std::invoke( std::forward<CallableType>( callable ), std::forward<Args>( args )... );
+			if constexpr ( EnableTimer )
+			{
+				OROCHECK( oroEventRecord( stop, 0 ) );
+				OROCHECK( oroEventSynchronize( stop ) );
+				OROCHECK( oroEventElapsedTime( &time, start, stop ) );
+				OROCHECK( oroEventDestroy( start ) );
+				OROCHECK( oroEventDestroy( stop ) );
+				timeRecord[token] += time;
+			}
+			return;
+		}
+		else
+		{
+			decltype( auto ) result{ std::invoke( std::forward<CallableType>( callable ), std::forward<Args>( args )... ) };
+			if constexpr ( EnableTimer )
+			{
+				OROCHECK( oroEventRecord( stop, 0 ) );
+				OROCHECK( oroEventSynchronize( stop ) );
+				OROCHECK( oroEventElapsedTime( &time, start, stop ) );
+				OROCHECK( oroEventDestroy( start ) );
+				OROCHECK( oroEventDestroy( stop ) );
+				timeRecord[token] += time;
+			}
+			return result;
+		}
+#undef OROCHECK
+	}
+
+	[[nodiscard]] TimeUnit getTimeRecord( const TokenType token ) const noexcept
+	{
+		if ( timeRecord.find( token ) != timeRecord.end() ) return timeRecord.at( token );
+		return TimeUnit{};
+	}
+
+	void reset( const TokenType token ) noexcept
+	{
+		if ( timeRecord.count( token ) > 0UL )
+		{
+			timeRecord[token] = TimeUnit{};
+		}
+	}
+
+	void clear() noexcept { timeRecord.clear(); }
+
+  private:
+	using TimeRecord = std::unordered_map<TokenType, TimeUnit>;
+	TimeRecord timeRecord;
 };

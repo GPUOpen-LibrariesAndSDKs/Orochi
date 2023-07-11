@@ -517,6 +517,13 @@ typedef enum oroJitOption {
     oroJitOptionNumOptions,
 } oroJitOption;
 
+typedef enum oroManagedMemoryAttachFlags
+{
+    oroMemAttachGlobal = 0x1,
+    oroMemAttachHost = 0x2,
+    oroMemAttachSingle = 0x4,
+}oroManagedMemoryAttachFlags;
+
 typedef enum orortcJIT_option
 {
 	ORORTC_JIT_MAX_REGISTERS = 0,
@@ -639,6 +646,7 @@ oroError OROAPI oroModuleGetGlobal(oroDeviceptr* dptr, size_t* bytes, oroModule 
 //oroError OROAPI oroModuleGetTexRef(textureReference** pTexRef, oroModule hmod, const char* name);
 oroError OROAPI oroMemGetInfo(size_t* free, size_t* total);
 oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize);
+oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, oroManagedMemoryAttachFlags flags);
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize);
 oroError OROAPI oroMemAllocPitch(oroDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes);
 oroError OROAPI oroFree(oroDeviceptr dptr);
@@ -650,7 +658,7 @@ oroError OROAPI oroFree2(oroDeviceptr dptr);
 oroError OROAPI oroHostRegister(void* p, size_t bytesize, unsigned int Flags);
 oroError OROAPI oroHostGetDevicePointer(oroDeviceptr* pdptr, void* p, unsigned int Flags);
 //oroError OROAPI oroHostGetFlags(unsigned int* pFlags, void* p);
-//oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, unsigned int flags);
+
 //oroError OROAPI oroDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
 //oroError OROAPI oroDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
 oroError OROAPI oroHostUnregister(void* p);

@@ -261,23 +261,21 @@ TEST_F( OroTestBase, link )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size );//todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
 		option_vals[5] = (void*)1;
@@ -472,23 +470,21 @@ TEST_F( OroTestBase, link_bundledBc )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
 		option_vals[5] = (void*)1;
@@ -552,23 +548,21 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
 		option_vals[5] = (void*)1;
@@ -647,23 +641,21 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
 		option_vals[5] = (void*)1;
@@ -750,6 +742,66 @@ TEST_F( OroTestBase, funcPointer )
 	OROASSERT( a_host == 7 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
+}
+
+TEST_F( OroTestBase, ManagedMemory )
+{
+
+#if defined( _WIN32 )
+	std::cout << "Managed memory not supported on windows! Skipping this test" << std::endl;
+#else
+	OrochiUtils o;
+	constexpr auto streamSize = 64000000; //64 MB
+	float* data = nullptr;
+	float* output = nullptr;
+	float value = 10.0f;
+	
+	enum TimerEvents { ManagedMemory, NonManagedMemory };
+	Timer timer;
+
+	{
+		o.mallocManaged(data, streamSize, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
+		OROASSERT(data != nullptr);
+		o.mallocManaged(output, streamSize, oroManagedMemoryAttachFlags::oroMemAttachSingle);
+		OROASSERT(output != nullptr);
+
+
+		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "testKernel", 0);
+		const void* args[] = { &data, &streamSize, &output, &value };
+
+		timer.measure(TimerEvents::ManagedMemory, [&]() { OrochiUtils::launch1D(kernel, 1024, args, 64); });
+
+		OrochiUtils::waitForCompletion();
+
+		o.free(data);
+		data = nullptr;
+		o.free(output);
+		output = nullptr;
+	}
+
+	{
+		o.malloc(data, streamSize);
+		OROASSERT(data != nullptr);
+		o.malloc(output, streamSize);
+		OROASSERT(output != nullptr);
+
+		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "testKernel", 0);
+		const void* args[] = { &data, &streamSize, &output, &value };
+
+		timer.measure(TimerEvents::NonManagedMemory, [&]() { OrochiUtils::launch1D(kernel, 1024, args, 64); });
+
+		OrochiUtils::waitForCompletion();
+
+		o.free(data);
+		data = nullptr;
+		o.free(output);
+		output = nullptr;
+	}
+
+	std::cout << "Managed Memory Kernel Execution Time : " << timer.getTimeRecord(TimerEvents::ManagedMemory) << std::endl;
+	std::cout << "Non Managed Memory Kernel Execution Time : " << timer.getTimeRecord(TimerEvents::NonManagedMemory) << std::endl;
+#endif
+
 }
 
 int main( int argc, char* argv[] ) 
