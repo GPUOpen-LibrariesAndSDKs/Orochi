@@ -746,37 +746,39 @@ TEST_F( OroTestBase, funcPointer )
 
 TEST_F( OroTestBase, ManagedMemory )
 {
-
 #if defined( _WIN32 )
 	std::cout << "Managed memory not supported on windows! Skipping this test" << std::endl;
 #else
+	OroStopwatch sw( m_stream );
 	OrochiUtils o;
 	constexpr auto streamSize = 64000000; //64 MB
 	float* data = nullptr;
 	float* output = nullptr;
 	float value = 10.0f;
-	
+	size_t n = streamSize / sizeof(float);
 	enum TimerEvents { ManagedMemory, NonManagedMemory };
-	Timer timer;
 
 	{
 		o.mallocManaged(data, streamSize, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
 		OROASSERT(data != nullptr);
-		o.mallocManaged(output, streamSize, oroManagedMemoryAttachFlags::oroMemAttachSingle);
+		o.mallocManaged(output, streamSize, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
 		OROASSERT(output != nullptr);
 
 
-		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "testKernel", 0);
-		const void* args[] = { &data, &streamSize, &output, &value };
+		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+		const void* args[] = { &data, &n, &output, &value };
 
-		timer.measure(TimerEvents::ManagedMemory, [&]() { OrochiUtils::launch1D(kernel, 1024, args, 64); });
-
+		sw.start();
+		OrochiUtils::launch1D(kernel, 4096, args, 64);;
+		sw.stop();
 		OrochiUtils::waitForCompletion();
+		std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
 
 		o.free(data);
 		data = nullptr;
 		o.free(output);
 		output = nullptr;
+		printf( "Managed Memory kernelExec: %3.2fms\n", sw.getMs() );
 	}
 
 	{
@@ -785,21 +787,21 @@ TEST_F( OroTestBase, ManagedMemory )
 		o.malloc(output, streamSize);
 		OROASSERT(output != nullptr);
 
-		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "testKernel", 0);
-		const void* args[] = { &data, &streamSize, &output, &value };
+		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+		const void* args[] = { &data, &n, &output, &value };
 
-		timer.measure(TimerEvents::NonManagedMemory, [&]() { OrochiUtils::launch1D(kernel, 1024, args, 64); });
-
+		sw.start();
+		OrochiUtils::launch1D(kernel, 4096, args, 64);
+		sw.stop();
 		OrochiUtils::waitForCompletion();
 
 		o.free(data);
 		data = nullptr;
 		o.free(output);
 		output = nullptr;
+		printf( "Non Managed Memory kernelExec: %3.2fms\n", sw.getMs() );
 	}
-
-	std::cout << "Managed Memory Kernel Execution Time : " << timer.getTimeRecord(TimerEvents::ManagedMemory) << std::endl;
-	std::cout << "Non Managed Memory Kernel Execution Time : " << timer.getTimeRecord(TimerEvents::NonManagedMemory) << std::endl;
+	
 #endif
 
 }

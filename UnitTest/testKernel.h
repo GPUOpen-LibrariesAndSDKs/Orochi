@@ -23,16 +23,15 @@ extern "C" __global__ void testFuncPointerKernel( int* __restrict__ a, FuncPoint
 	atomicAdd( a, b );
 }
 
-extern "C" __global__ void streamData(float *ptr, const size_t size, 
+extern "C" __global__ void streamData(float *ptr, const size_t n, 
                               float* output, const float val) 
 { 
-  size_t tid = threadIdx.x + blockIdx.x * blockDim.x; 
-  size_t n = size / sizeof(float); 
+  size_t idx = threadIdx.x; 
   float accum = 0.0f; 
 
-  for(; tid < n; tid += blockDim.x * gridDim.x) 
+  for(; idx < n; idx += blockDim.x) 
   {
-  		accum += ptr[tid]; 
+  		accum += ptr[idx]; 
   }
-   output[threadIdx.x + blockIdx.x * blockDim.x] = accum; 
+   output[threadIdx.x] = accum; 
 }
