@@ -63,11 +63,8 @@ class OrochiUtils
 	template<typename T>
 	static void mallocManaged( T*& ptr, size_t n, oroManagedMemoryAttachFlags flags )
 	{
-#if defined( _WIN32 )
-#else
 		oroError e = oroMallocManaged( (oroDeviceptr*)&ptr, sizeof( T ) * n, flags );
 		OROASSERT( e == oroSuccess, 0 );
-#endif
 	}
 
 	template<typename T>

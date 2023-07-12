@@ -764,9 +764,6 @@ TEST_F( OroTestBase, funcPointer )
 
 TEST_F( OroTestBase, ManagedMemory )
 {
-#if defined( _WIN32 )
-	std::cout << "Managed memory not supported on windows! Skipping this test" << std::endl;
-#else
 	OroStopwatch sw( m_stream );
 	OrochiUtils o;
 	constexpr auto streamSize = 64000000; //64 MB
@@ -819,8 +816,6 @@ TEST_F( OroTestBase, ManagedMemory )
 		output = nullptr;
 		printf( "Non Managed Memory kernelExec: %3.2fms\n", sw.getMs() );
 	}
-
-#endif
 
 }
 
