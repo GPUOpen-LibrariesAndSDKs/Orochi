@@ -432,7 +432,7 @@ TEST_F( OroTestBase, link_null_name )
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
-		OROASSERT(function != nullptr, 0);
+		OROASSERT(function != nullptr);
 
 		int x_host = -1;
 		int* x_device = nullptr;
@@ -637,7 +637,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		OrochiUtils::getProgram( m_device, code.c_str(), "../UnitTest/moduleTestKernel_loweredName.h", &opts, funcName, &prog );
 		const char* loweredName = nullptr;
 		ORORTCCHECK( orortcGetLoweredName( prog, funcName, &loweredName ) );
-		OROASSERT(loweredName != nullptr, 0);
+		OROASSERT(loweredName != nullptr);
 		loweredNameStr = std::string( loweredName );
 
 		size_t codeSize = 0;
