@@ -648,7 +648,7 @@ oroError OROAPI oroMemGetInfo(size_t* free, size_t* total);
 oroError OROAPI oroMalloc(oroDeviceptr* dptr, size_t bytesize);
 oroError OROAPI oroMalloc2(oroDeviceptr* dptr, size_t bytesize);
 oroError OROAPI oroMemAllocPitch(oroDeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes);
-oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, unsigned int flags);
+oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, oroManagedMemoryAttachFlags flags);
 oroError OROAPI oroFree(oroDeviceptr dptr);
 oroError OROAPI oroFree2(oroDeviceptr dptr);
 //oroError OROAPI oroMemGetAddressRange(oroDeviceptr* pbase, size_t* psize, oroDeviceptr dptr);
