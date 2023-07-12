@@ -220,7 +220,7 @@ typedef enum HIPipcMem_flags_enum {
 typedef enum HIPmemAttach_flags_enum {
   hipMemAttachGlobal = 0x1,
   hipMemAttachHost = 0x2,
-  HIP_MEM_ATTACH_SINGLE = 0x4,
+  hipMemAttachSingle  = 0x4,
 } HIPmemAttach_flags;
 
 typedef enum HIPctx_flags_enum {

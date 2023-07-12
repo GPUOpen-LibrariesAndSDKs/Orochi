@@ -33,8 +33,12 @@ class OrochiUtils
 		int x, y, z, w;
 	};
 
-	OrochiUtils();
-	~OrochiUtils();
+	OrochiUtils() = default;
+	OrochiUtils(const OrochiUtils&) = delete; 
+    OrochiUtils& operator=(const OrochiUtils&) = delete;
+    OrochiUtils(OrochiUtils&&) = delete; 
+    OrochiUtils& operator=(OrochiUtils&&) = delete;
+	~OrochiUtils() = default;
 
 	oroFunction getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName );
 
@@ -50,10 +54,20 @@ class OrochiUtils
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 
 	template<typename T>
-	static void malloc( T*& ptr, int n )
+	static void malloc( T*& ptr, size_t n )
 	{
 		oroError e = oroMalloc( (oroDeviceptr*)&ptr, sizeof( T ) * n );
 		OROASSERT( e == oroSuccess, 0 );
+	}
+
+	template<typename T>
+	static void mallocManaged( T*& ptr, size_t n, oroManagedMemoryAttachFlags flags )
+	{
+#if defined( _WIN32 )
+#else
+		oroError e = oroMallocManaged( (oroDeviceptr*)&ptr, sizeof( T ) * n, flags );
+		OROASSERT( e == oroSuccess, 0 );
+#endif
 	}
 
 	template<typename T>
@@ -123,7 +137,7 @@ class OrochiUtils
 	}
 
   public:
-	std::string m_cacheDirectory;
+	std::string m_cacheDirectory = "./cache/";
 	std::recursive_mutex m_mutex;
 	std::unordered_map<std::string, oroFunction> m_kernelMap;
 };
