@@ -29,7 +29,7 @@ extern "C" __global__ void streamData(float *ptr, const size_t n,
   size_t idx = threadIdx.x; 
   float accum = 0.0f; 
 
-  for(; idx < n; idx += blockDim.x) 
+  for(; idx < n; idx += 1) 
   {
   		accum += ptr[idx]; 
   }
