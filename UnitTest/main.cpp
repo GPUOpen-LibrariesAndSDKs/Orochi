@@ -594,6 +594,8 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -691,6 +693,8 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		oroError e =  oroModuleGetFunction( &function, module, loweredNameStr.c_str() );
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
