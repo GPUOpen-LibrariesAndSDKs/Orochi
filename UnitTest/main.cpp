@@ -778,47 +778,116 @@ TEST_F( OroTestBase, ManagedMemory )
 	enum TimerEvents { ManagedMemory, NonManagedMemory };
 
 	{
-		o.mallocManaged(data, streamSize, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
-		OROASSERT(data != nullptr);
-		o.mallocManaged(output, streamSize, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
-		OROASSERT(output != nullptr);
+		{
+			o.mallocManaged(data, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
+			OROASSERT(data != nullptr);
+			o.mallocManaged(output, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
+			OROASSERT(output != nullptr);
 
+		}
 
-		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
-		const void* args[] = { &data, &n, &output, &value };
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &data, &n, &output, &value };
 
-		sw.start();
-		OrochiUtils::launch1D(kernel, 4096, args, 64);;
-		sw.stop();
-		OrochiUtils::waitForCompletion();
-		std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);;
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Managed Memory kernelExec1: %3.2fms\n", sw.getMs() );
+		}
+
+		{
+			sw.start();
+			float* dataPtr = (float*)malloc(streamSize);
+			o.copyDtoH(dataPtr, data, n);
+			float* outputPtr = (float*)malloc(streamSize);
+			o.copyDtoH(outputPtr, output, n);
+			OrochiUtils::waitForCompletion();
+			sw.stop();
+			printf( "Host Copy Managed Exec: %3.2fms\n", sw.getMs() );
+
+			for (size_t i = 0; i < n; i++)
+			{
+				dataPtr[i] += outputPtr[i];
+			}
+
+			o.copyHtoD(data, dataPtr, n);
+			o.copyHtoD(output, outputPtr, n);
+			
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &output, &n, &data, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);;
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Managed Memory kernelExec2: %3.2fms\n", sw.getMs() );
+		}
 
 		o.free(data);
 		data = nullptr;
 		o.free(output);
 		output = nullptr;
-		printf( "Managed Memory kernelExec: %3.2fms\n", sw.getMs() );
+		
 	}
 
 	{
-		o.malloc(data, streamSize);
-		OROASSERT(data != nullptr);
-		o.malloc(output, streamSize);
-		OROASSERT(output != nullptr);
+		{
+			o.malloc(data, n);
+			OROASSERT(data != nullptr);
+			o.malloc(output, n);
+			OROASSERT(output != nullptr);
+		}
 
-		auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
-		const void* args[] = { &data, &n, &output, &value };
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &data, &n, &output, &value };
 
-		sw.start();
-		OrochiUtils::launch1D(kernel, 4096, args, 64);
-		sw.stop();
-		OrochiUtils::waitForCompletion();
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Non Managed Memory kernelExec1: %3.2fms\n", sw.getMs() );
+		}
+
+		{
+			sw.start();
+			float* dataPtr = (float*)malloc(streamSize);
+			o.copyDtoH(dataPtr, data, n);
+			float* outputPtr = (float*)malloc(streamSize);
+			o.copyDtoH(outputPtr, output, n);
+			OrochiUtils::waitForCompletion();
+			sw.stop();
+			printf( "Host Copy Non Managed Exec: %3.2fms\n", sw.getMs() );
+			for (size_t i = 0; i < n; i++)
+			{
+				dataPtr[i] += outputPtr[i];
+			}
+
+			o.copyHtoD(data, dataPtr, n);
+			o.copyHtoD(output, outputPtr, n);
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &output, &n, &data, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Non Managed Memory kernelExec2: %3.2fms\n", sw.getMs() );
+		}
 
 		o.free(data);
 		data = nullptr;
 		o.free(output);
 		output = nullptr;
-		printf( "Non Managed Memory kernelExec: %3.2fms\n", sw.getMs() );
+		
 	}
 
 }
