@@ -779,11 +779,13 @@ TEST_F( OroTestBase, ManagedMemory )
 
 	{
 		{
+			sw.start();
 			o.mallocManaged(data, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
 			OROASSERT(data != nullptr);
 			o.mallocManaged(output, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
 			OROASSERT(output != nullptr);
-
+			sw.stop();
+			printf( "Managed Malloc Time: %3.2fms\n", sw.getMs() );
 		}
 
 		{
@@ -837,10 +839,14 @@ TEST_F( OroTestBase, ManagedMemory )
 
 	{
 		{
+			sw.start();
 			o.malloc(data, n);
 			OROASSERT(data != nullptr);
 			o.malloc(output, n);
 			OROASSERT(output != nullptr);
+			sw.stop();
+			printf( "Malloc Time: %3.2fms\n", sw.getMs() );
+
 		}
 
 		{
