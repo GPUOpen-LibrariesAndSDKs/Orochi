@@ -376,7 +376,15 @@ struct OrochiUtilsImpl
 
 OrochiUtils::OrochiUtils() { m_cacheDirectory = "./cache/"; }
 
-OrochiUtils::~OrochiUtils() {}
+OrochiUtils::~OrochiUtils() {
+	
+	for (auto& instance : m_kernelMap) {
+
+		oroError e = oroModuleUnload( instance.second.module );
+		OROASSERT( e == oroSuccess, 0 );
+	}
+
+}
 
 bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) { return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); }
 
@@ -387,14 +395,19 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
 
 	std::string source;
 	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) return 0;
 
-	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn );
-	m_kernelMap[cacheName] = f;
+	oroModule module;
+
+	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn, 0, nullptr, nullptr, &module );
+
+	m_kernelMap[cacheName].function = f;
+	m_kernelMap[cacheName].module = module;
+
 	return f;
 }
 
@@ -405,10 +418,16 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
-	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames );
-	m_kernelMap[cacheName] = f;
+
+	oroModule module;
+
+	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames, &module );
+
+	m_kernelMap[cacheName].function = f;
+	m_kernelMap[cacheName].module = module;
+	
 	return f;
 }
 
@@ -419,7 +438,7 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
 
 	std::ifstream instream( path, std::ios::in | std::ios::binary );
@@ -433,11 +452,13 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	e = oroModuleGetFunction( &functionOut, module, funcName.c_str() );
 	OROASSERT( e == oroSuccess, 0 );
 
-	m_kernelMap[cacheName] = functionOut;
+	m_kernelMap[cacheName].function = functionOut;
+	m_kernelMap[cacheName].module = module;
+
 	return functionOut;
 }
 
-oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames )
+oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames, oroModule* loadedModule)
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
@@ -505,6 +526,10 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	OROASSERT( ee == oroSuccess, 0 );
 	ee = oroModuleGetFunction( &function, module, funcName );
 	OROASSERT( ee == oroSuccess, 0 );
+
+	if ( loadedModule ) {
+		*loadedModule = module;
+	}
 
 	return function;
 }

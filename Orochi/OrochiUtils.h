@@ -40,7 +40,7 @@ class OrochiUtils
 
 	oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );
 	oroFunction getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* opts, int numHeaders, const char** headers, const char** includeNames );
-	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, int numHeaders = 0, const char** headers = 0, const char** includeNames = 0 );
+	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, int numHeaders = 0, const char** headers = 0, const char** includeNames = 0, oroModule* loadedModule = 0 );
 
 	static bool readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes = 0 );
 	static void getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* opts, std::vector<char>& dst );
@@ -125,7 +125,13 @@ class OrochiUtils
   public:
 	std::string m_cacheDirectory;
 	std::recursive_mutex m_mutex;
-	std::unordered_map<std::string, oroFunction> m_kernelMap;
+
+	struct FunctionModule {
+		oroFunction function;
+		oroModule module;
+	};
+
+	std::unordered_map<std::string, FunctionModule> m_kernelMap;
 };
 
 class OroStopwatch
