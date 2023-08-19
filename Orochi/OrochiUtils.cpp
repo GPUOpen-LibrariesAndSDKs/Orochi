@@ -378,8 +378,8 @@ OrochiUtils::OrochiUtils() { m_cacheDirectory = "./cache/"; }
 
 OrochiUtils::~OrochiUtils() {
 	
-	for (auto& instance : m_kernelMap) {
-
+	for ( auto& instance : m_kernelMap ) 
+	{
 		oroError e = oroModuleUnload( instance.second.module );
 		OROASSERT( e == oroSuccess, 0 );
 	}
@@ -527,7 +527,8 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	ee = oroModuleGetFunction( &function, module, funcName );
 	OROASSERT( ee == oroSuccess, 0 );
 
-	if ( loadedModule ) {
+	if ( loadedModule ) 
+	{
 		*loadedModule = module;
 	}
 
