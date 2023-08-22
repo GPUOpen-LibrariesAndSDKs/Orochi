@@ -1,15 +1,18 @@
 #include <ParallelPrimitives/RadixSortConfigs.h>
 #define LDS_BARRIER __syncthreads()
 
+namespace
+{
+
 using namespace Oro;
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+
+using u8 = unsigned char;
+using u16 = unsigned short;
+using u32 = unsigned int;
+using u64 = unsigned long long;
+} // namespace
 
 // #define NV_WORKAROUND 1
-
-#define THE_FIRST_THREAD threadIdx.x == 0 && blockIdx.x == 0
 
 extern "C" __global__ void CountKernelReference( int* gSrc, int* gDst, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
 {
@@ -62,8 +65,10 @@ extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItem
 
 	LDS_BARRIER;
 
-	// Assume COUNT_WG_SIZE == BIN_SIZE
-	gDst[threadIdx.x * N_WGS_EXECUTED + blockIdx.x] = table[threadIdx.x];
+	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
+	{
+		gDst[i * N_WGS_EXECUTED + blockIdx.x] = table[i];
+	}
 }
 
 template<typename T, int STRIDE>
