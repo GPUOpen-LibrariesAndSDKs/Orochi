@@ -37,16 +37,17 @@ const HMODULE GetCurrentModule()
 void GetCurrentModule1() {}
 #endif
 
-void printKernelInfo( oroFunction func )
+void printKernelInfo( const std::string& name, oroFunction func )
 {
+	std::cout << "Function: " << name;
+
 	int numReg{};
 	int sharedSizeBytes{};
 	int constSizeBytes{};
 	oroFuncGetAttribute( &numReg, ORO_FUNC_ATTRIBUTE_NUM_REGS, func );
 	oroFuncGetAttribute( &sharedSizeBytes, ORO_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, func );
 	oroFuncGetAttribute( &constSizeBytes, ORO_FUNC_ATTRIBUTE_CONST_SIZE_BYTES, func );
-	std::cout << "vgpr : shared = " << numReg << " : "
-			  << " : " << sharedSizeBytes << " : " << constSizeBytes << '\n';
+	std::cout << ", vgpr : shared = " << numReg << " : " << sharedSizeBytes << " : " << constSizeBytes << '\n';
 }
 
 } // namespace
@@ -57,13 +58,16 @@ namespace Oro
 RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ device }, m_oroutils{ oroutils }
 {
 	oroGetDeviceProperties( &m_props, device );
+
+	m_thread_per_block_for_count = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_COUNT_BLOCK_SIZE;
+	m_thread_per_block_for_scan = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SCAN_BLOCK_SIZE;
+
 	configure();
 }
 
-void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) const noexcept
+void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, oroStream stream ) const noexcept
 {
-	// The buffer size for count depends on how many GPU blocks are launched.
-	const auto buffer_size = Oro::BIN_SIZE * n_block_executed;
+	const auto buffer_size = countsGpu.size();
 
 	std::vector<int> counts = countsGpu.getData();
 	std::vector<int> offsets( buffer_size );
@@ -121,9 +125,13 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	}
 
 	const auto includeArg{ "-I" + currentIncludeDir };
+	const auto count_block_size_param = "-DCOUNT_WG_SIZE=" + std::to_string( m_thread_per_block_for_count );
+	const auto scan_block_size_param = "-DSCAN_WG_SIZE=" + std::to_string( m_thread_per_block_for_scan );
 
 	std::vector<const char*> opts;
 	opts.push_back( includeArg.c_str() );
+	opts.push_back( count_block_size_param.c_str() );
+	opts.push_back( scan_block_size_param.c_str() );
 
 	struct Record
 	{
@@ -154,7 +162,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 #endif
 		if( m_flags == Flag::LOG )
 		{
-			printKernelInfo( oroFunctions[record.kernelType] );
+			printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );
 		}
 	}
 }
@@ -175,22 +183,23 @@ int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 		std::cout << "Occupancy: " << occupancy << '\n';
 	}
 
-	return m_props.multiProcessorCount * occupancy;
+	return std::max( 4, m_props.multiProcessorCount * occupancy );
 }
 
 void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 
-	m_num_blocks_for_count = calculateWGsToExecute( COUNT_WG_SIZE );
+	m_num_blocks_for_count = calculateWGsToExecute( m_thread_per_block_for_count );
 
 	/// The tmp buffer size of the count kernel and the scan kernel.
 
 	const auto tmp_buffer_size = BIN_SIZE * m_num_blocks_for_count;
 
-	/// @c tmp_buffer_size must be dividable by @c SCAN_WG_SIZE
+	/// @c tmp_buffer_size must be dividable by @c m_thread_per_block_for_scan
+	/// This is guaranteed since @c m_num_blocks_for_count will be at least 4
 
-	m_num_blocks_for_scan = tmp_buffer_size / SCAN_WG_SIZE;
+	m_num_blocks_for_scan = tmp_buffer_size / m_thread_per_block_for_scan;
 
 	m_tmp_buffer.resize( tmp_buffer_size );
 

@@ -61,8 +61,7 @@ class RadixSort final
 	/// It copies the count result from the Device to Host before computation, and then copies the offsets back from Host to Device afterward.
 	/// @param countsGpu The count result in GPU memory. Otuput: The offset.
 	/// @param offsetsGpu The offsets.
-	/// @param n_block_executed Number of GPU blocks to execute
-	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) const noexcept;
+	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, oroStream stream ) const noexcept;
 
 	/// @brief Configure the settings, compile the kernels and allocate the memory.
 	/// @param kernelPath The kernel path.
@@ -111,6 +110,9 @@ class RadixSort final
 
 	// This buffer holds the "bucket" table from all GPU blocks.
 	GpuMemory<int> m_tmp_buffer;
+
+	int m_thread_per_block_for_count{};
+	int m_thread_per_block_for_scan{};
 };
 
 #include <ParallelPrimitives/RadixSort.inl>

@@ -49,13 +49,13 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 	float t[3] = { 0.f };
 
 	{
-		const auto num_total_thread_for_count = COUNT_WG_SIZE * m_num_blocks_for_count;
+		const auto num_total_thread_for_count = m_thread_per_block_for_count * m_num_blocks_for_count;
 
 		Stopwatch sw;
 		sw.start();
 		const auto func{ oroFunctions[Kernel::COUNT] };
 		const void* args[] = { &srcKey, arg_cast( m_tmp_buffer.address() ), &n, &nItemPerWG, &startBit, &m_num_blocks_for_count };
-		OrochiUtils::launch1D( func, num_total_thread_for_count, args, COUNT_WG_SIZE, 0, stream );
+		OrochiUtils::launch1D( func, num_total_thread_for_count, args, m_thread_per_block_for_count, 0, stream );
 
 		if constexpr( enable_profile )
 		{
@@ -72,7 +72,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		{
 		case ScanAlgo::SCAN_CPU:
 		{
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, m_num_blocks_for_count, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
 		}
 		break;
 
@@ -85,15 +85,15 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 
 		case ScanAlgo::SCAN_GPU_PARALLEL:
 		{
-			const auto num_total_thread_for_scan = SCAN_WG_SIZE * m_num_blocks_for_scan;
+			const auto num_total_thread_for_scan = m_thread_per_block_for_scan * m_num_blocks_for_scan;
 
 			const void* args[] = { arg_cast( m_tmp_buffer.address() ), arg_cast( m_tmp_buffer.address() ), arg_cast( m_partial_sum.address() ), arg_cast( m_is_ready.address() ) };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], num_total_thread_for_scan, args, SCAN_WG_SIZE, 0, stream );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], num_total_thread_for_scan, args, m_thread_per_block_for_scan, 0, stream );
 		}
 		break;
 
 		default:
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, m_num_blocks_for_count, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
 			break;
 		}
 
