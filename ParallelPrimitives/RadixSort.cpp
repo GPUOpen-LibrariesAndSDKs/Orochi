@@ -60,7 +60,7 @@ RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ devi
 	configure();
 }
 
-void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) noexcept
+void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) const noexcept
 {
 	// The buffer size for count depends on how many GPU blocks are launched.
 	const auto buffer_size = Oro::BIN_SIZE * n_block_executed;
@@ -159,7 +159,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	}
 }
 
-int RadixSort::calculateWGsToExecute( const int blockSize ) noexcept
+int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 {
 	constexpr auto default_warp_size = 32;
 

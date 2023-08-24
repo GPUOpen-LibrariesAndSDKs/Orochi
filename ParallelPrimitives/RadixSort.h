@@ -55,14 +55,14 @@ class RadixSort final
 	/// @param includeDir The include directory.
 	void compileKernels( const std::string& kernelPath, const std::string& includeDir ) noexcept;
 
-	int calculateWGsToExecute( const int blockSize ) noexcept;
+	int calculateWGsToExecute( const int blockSize ) const noexcept;
 
 	/// @brief Exclusive scan algorithm on CPU for testing.
 	/// It copies the count result from the Device to Host before computation, and then copies the offsets back from Host to Device afterward.
 	/// @param countsGpu The count result in GPU memory. Otuput: The offset.
 	/// @param offsetsGpu The offsets.
 	/// @param n_block_executed Number of GPU blocks to execute
-	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) noexcept;
+	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, const int n_block_executed, oroStream stream ) const noexcept;
 
 	/// @brief Configure the settings, compile the kernels and allocate the memory.
 	/// @param kernelPath The kernel path.
