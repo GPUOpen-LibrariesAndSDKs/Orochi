@@ -52,10 +52,8 @@ using u32 = Oro::RadixSort::u32;
 class SortTest
 {
   public:
-	SortTest( oroDevice dev, oroCtx ctx, OrochiUtils& oroutils ) : m_device( dev ), m_ctx( ctx )
+	SortTest( oroDevice dev, oroCtx ctx, OrochiUtils& oroutils ) : m_device( dev ), m_ctx( ctx ), m_sort(dev, oroutils)
 	{
-		const auto s = m_sort.configure( m_device, oroutils );
-		OrochiUtils::malloc( m_tempBuffer, s );
 	}
 
 	~SortTest() { OrochiUtils::free( m_tempBuffer ); }
@@ -104,11 +102,11 @@ class SortTest
 
 			if constexpr( KEY_VALUE_PAIR )
 			{
-				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits, m_tempBuffer );
+				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits);
 			}
 			else
 			{
-				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits, m_tempBuffer );
+				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits );
 			}
 
 			OrochiUtils::waitForCompletion();

@@ -14,33 +14,7 @@ using u64 = unsigned long long;
 
 // #define NV_WORKAROUND 1
 
-extern "C" __global__ void CountKernelReference( int* gSrc, int* gDst, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	const int offset = blockIdx.x * blockDim.x * gNItemsPerWI;
-
-	int table[BIN_SIZE] = { 0 };
-
-	for( int i = 0; i < gNItemsPerWI; i++ )
-	{
-		int idx = offset + threadIdx.x * gNItemsPerWI + i;
-
-		if( idx >= gN ) continue;
-		int tableIdx = ( gSrc[idx] >> START_BIT ) & RADIX_MASK;
-		table[tableIdx]++;
-	}
-
-	const int wgIdx = blockIdx.x;
-
-	for( int i = 0; i < BIN_SIZE; i++ )
-	{
-		if( table[i] != 0 )
-		{
-			atomicAdd( &gDst[i * N_WGS_EXECUTED + wgIdx], table[i] );
-		}
-	}
-}
-
-//=====
+__device__ constexpr u32 getMaskedBits( const u32 value, const u32 shift ) noexcept { return ( value >> shift ) & RADIX_MASK; }
 
 extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
 {
@@ -51,7 +25,7 @@ extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItem
 		table[i] = 0;
 	}
 
-	LDS_BARRIER;
+	__syncthreads();
 
 	const int offset = blockIdx.x * gNItemsPerWG;
 	const int upperBound = ( offset + gNItemsPerWG > gN ) ? gN - offset : gNItemsPerWG;
@@ -59,11 +33,11 @@ extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItem
 	for( int i = threadIdx.x; i < upperBound; i += COUNT_WG_SIZE )
 	{
 		const int idx = offset + i;
-		const int tableIdx = ( gSrc[idx] >> START_BIT ) & RADIX_MASK;
+		const int tableIdx = getMaskedBits( gSrc[idx], START_BIT );
 		atomicAdd( &table[tableIdx], 1 );
 	}
 
-	LDS_BARRIER;
+	__syncthreads();
 
 	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
 	{
@@ -125,7 +99,7 @@ __device__ void ldsScanInclusive( T* lds, int width )
 	int inIndex = 1;
 
 	temp[outIndex][threadIdx.x] = lds[threadIdx.x];
-	LDS_BARRIER;
+	__syncthreads();
 
 	for( int i = 1; i < width; i *= 2 )
 	{
@@ -143,7 +117,7 @@ __device__ void ldsScanInclusive( T* lds, int width )
 			temp[outIndex][threadIdx.x] = temp[inIndex][threadIdx.x];
 		}
 
-		LDS_BARRIER;
+		__syncthreads();
 	}
 
 	lds[threadIdx.x] = temp[outIndex][threadIdx.x];
@@ -630,15 +604,9 @@ __device__ void SortSinglePass( int* gSrcKey, int* gSrcVal, int* gDstKey, int* g
 	}
 }
 
-extern "C" __global__ void SortSinglePassKernel( int* gSrcKey, int* gDstKey, int gN, const int START_BIT, const int END_BIT ) 
-{
-	SortSinglePass<false>( gSrcKey, nullptr, gDstKey, nullptr, gN, START_BIT, END_BIT ); 
-}
+extern "C" __global__ void SortSinglePassKernel( int* gSrcKey, int* gDstKey, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<false>( gSrcKey, nullptr, gDstKey, nullptr, gN, START_BIT, END_BIT ); }
 
-extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT ) 
-{ 
-	SortSinglePass<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gN, START_BIT, END_BIT ); 
-}
+extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gN, START_BIT, END_BIT ); }
 
 extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
 {
@@ -740,7 +708,7 @@ extern "C" __device__ void WorkgroupSync( int threadId, int blockId, int current
 		*currentGlobalOffset = offset;
 	}
 
-	LDS_BARRIER;
+	__syncthreads();
 }
 
 extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistogram, volatile int* gPartialSum, volatile bool* gIsReady )
@@ -750,13 +718,13 @@ extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistog
 
 	blockBuffer[threadIdx.x] = gCount[blockIdx.x * blockDim.x + threadIdx.x];
 
-	LDS_BARRIER;
+	__syncthreads();
 
 	// Do parallel exclusive scan on the LDS
 
 	int currentSegmentSum = ldsScanExclusive( blockBuffer, SCAN_WG_SIZE );
 
-	LDS_BARRIER;
+	__syncthreads();
 
 	// Sync all the Workgroups to calculate the global offset.
 
