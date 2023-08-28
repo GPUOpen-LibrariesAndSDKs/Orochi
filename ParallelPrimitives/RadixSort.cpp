@@ -1,6 +1,7 @@
 #include <ParallelPrimitives/RadixSort.h>
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <iostream>
 #include <numeric>
 
@@ -59,8 +60,17 @@ RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ devi
 {
 	oroGetDeviceProperties( &m_props, device );
 
-	m_thread_per_block_for_count = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_COUNT_BLOCK_SIZE;
-	m_thread_per_block_for_scan = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SCAN_BLOCK_SIZE;
+	m_num_threads_per_block_for_count = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_COUNT_BLOCK_SIZE;
+	m_num_threads_per_block_for_scan = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SCAN_BLOCK_SIZE;
+	m_num_threads_per_block_for_sort = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SORT_BLOCK_SIZE;
+
+	const auto warp_size = ( m_props.warpSize != 0 ) ? m_props.warpSize : DEFAULT_WARP_SIZE;
+
+	m_num_warps_per_block_for_sort = m_num_threads_per_block_for_sort / warp_size;
+
+	assert( m_num_threads_per_block_for_count % warp_size == 0 );
+	assert( m_num_threads_per_block_for_scan % warp_size == 0 );
+	assert( m_num_threads_per_block_for_sort % warp_size == 0 );
 
 	configure();
 }
@@ -84,8 +94,8 @@ void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::Gpu
 
 void RadixSort::compileKernels( const std::string& kernelPath, const std::string& includeDir ) noexcept
 {
-	constexpr auto defaultKernelPath{ "../ParallelPrimitives/RadixSortKernels.h" };
-	constexpr auto defaultIncludeDir{ "../" };
+	static constexpr auto defaultKernelPath{ "../ParallelPrimitives/RadixSortKernels.h" };
+	static constexpr auto defaultIncludeDir{ "../" };
 
 	const auto currentKernelPath{ ( kernelPath == "" ) ? defaultKernelPath : kernelPath };
 	const auto currentIncludeDir{ ( includeDir == "" ) ? defaultIncludeDir : includeDir };
@@ -125,13 +135,17 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	}
 
 	const auto includeArg{ "-I" + currentIncludeDir };
-	const auto count_block_size_param = "-DCOUNT_WG_SIZE=" + std::to_string( m_thread_per_block_for_count );
-	const auto scan_block_size_param = "-DSCAN_WG_SIZE=" + std::to_string( m_thread_per_block_for_scan );
+	const auto count_block_size_param = "-DCOUNT_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_count );
+	const auto scan_block_size_param = "-DSCAN_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_scan );
+	const auto sort_block_size_param = "-DSORT_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_sort );
+	const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK=" + std::to_string( m_num_warps_per_block_for_sort );
 
 	std::vector<const char*> opts;
 	opts.push_back( includeArg.c_str() );
 	opts.push_back( count_block_size_param.c_str() );
 	opts.push_back( scan_block_size_param.c_str() );
+	opts.push_back( sort_block_size_param.c_str() );
+	opts.push_back( sort_num_warps_param.c_str() );
 
 	struct Record
 	{
@@ -169,9 +183,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 
 int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 {
-	constexpr auto default_warp_size = 32;
-
-	const int warpSize = ( m_props.warpSize != 0 ) ? m_props.warpSize : default_warp_size;
+	const int warpSize = ( m_props.warpSize != 0 ) ? m_props.warpSize : DEFAULT_WARP_SIZE;
 	const int warpPerWG = blockSize / warpSize;
 	const int warpPerWGP = m_props.maxThreadsPerMultiProcessor / warpSize;
 	const int occupancyFromWarp = ( warpPerWGP > 0 ) ? ( warpPerWGP / warpPerWG ) : 1;
@@ -183,23 +195,35 @@ int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 		std::cout << "Occupancy: " << occupancy << '\n';
 	}
 
-	return std::max( 4, m_props.multiProcessorCount * occupancy );
+	static constexpr auto min_num_blocks = 16;
+	auto number_of_blocks = m_props.multiProcessorCount > 0 ? m_props.multiProcessorCount * occupancy : min_num_blocks;
+
+	if( m_num_threads_per_block_for_scan > BIN_SIZE )
+	{
+		// Note: both are divisible by 2
+		const auto base = m_num_threads_per_block_for_scan / BIN_SIZE;
+
+		// Floor
+		number_of_blocks = ( number_of_blocks / base ) * base;
+	}
+
+	return number_of_blocks;
 }
 
 void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 
-	m_num_blocks_for_count = calculateWGsToExecute( m_thread_per_block_for_count );
+	m_num_blocks_for_count = calculateWGsToExecute( m_num_threads_per_block_for_count );
 
 	/// The tmp buffer size of the count kernel and the scan kernel.
 
 	const auto tmp_buffer_size = BIN_SIZE * m_num_blocks_for_count;
 
-	/// @c tmp_buffer_size must be dividable by @c m_thread_per_block_for_scan
-	/// This is guaranteed since @c m_num_blocks_for_count will be at least 4
+	/// @c tmp_buffer_size must be divisible by @c m_num_threads_per_block_for_scan
+	/// This is guaranteed since @c m_num_blocks_for_count will be adjusted accordingly
 
-	m_num_blocks_for_scan = tmp_buffer_size / m_thread_per_block_for_scan;
+	m_num_blocks_for_scan = tmp_buffer_size / m_num_threads_per_block_for_scan;
 
 	m_tmp_buffer.resize( tmp_buffer_size );
 

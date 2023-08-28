@@ -615,11 +615,6 @@ extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistog
 	gHistogram[blockIdx.x * blockDim.x + threadIdx.x] = blockBuffer[threadIdx.x] + currentGlobalOffset;
 }
 
-constexpr auto REORDER_NUMBER_OF_WARPS = DEFAULT_NUM_WARP_PER_BLOCK;
-
-// TODO: Note that the parameter is changed from gNItemsPerWI to gNItemsPerWG
-// Need to change the launch function accordingly
-
 template<bool KEY_VALUE_PAIR>
 __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int numberOfInputs, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
 {
@@ -627,7 +622,7 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 	__shared__ u32 localPrefixSum[BIN_SIZE];
 	__shared__ u32 counters[BIN_SIZE];
 
-	__shared__ u32 matchMasks[REORDER_NUMBER_OF_WARPS][BIN_SIZE];
+	__shared__ u32 matchMasks[SORT_NUM_WARPS_PER_BLOCK][BIN_SIZE];
 
 	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
 	{
@@ -638,7 +633,7 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 		localPrefixSum[i] = 0;
 	}
 
-	for( int w = 0; w < REORDER_NUMBER_OF_WARPS; ++w )
+	for( int w = 0; w < SORT_NUM_WARPS_PER_BLOCK; ++w )
 	{
 		for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
 		{
@@ -673,7 +668,6 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 	{
 		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
 
-		// TODO:
 		const auto item = gSrcKey[itemIndex];
 		const u32 bucketIndex = getMaskedBits( item, START_BIT );
 
@@ -725,7 +719,6 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 		// Swap
 
-		// TODO:
 		if( itemIndex < numberOfInputs )
 		{
 			const u32 srcIndex = blockIdx.x * gNItemsPerWG + localSrcIndex;
@@ -740,12 +733,12 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 	}
 }
 
-extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
+extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
 {
-	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWI, START_BIT, N_WGS_EXECUTED );
+	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 }
 
-extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
+extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
 {
-	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWI, START_BIT, N_WGS_EXECUTED );
+	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 }
