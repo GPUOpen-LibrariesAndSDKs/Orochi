@@ -374,10 +374,6 @@ struct OrochiUtilsImpl
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
 };
 
-OrochiUtils::OrochiUtils() { m_cacheDirectory = "./cache/"; }
-
-OrochiUtils::~OrochiUtils() {}
-
 bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) { return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); }
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )

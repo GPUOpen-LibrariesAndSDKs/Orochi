@@ -19,7 +19,9 @@
 #  endif
 #  define popen _popen
 #  define pclose _pclose
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #  define _CRT_SECURE_NO_WARNINGS
+#endif
 #endif
 
 #include <contrib/hipew/include/hipew.h>
@@ -622,7 +624,9 @@ const char *hipewCompilerPath(void) {
 #endif
     if (handle) {
       char buffer[4096] = {0};
-      int len = fread(buffer, 1, sizeof(buffer) - 1, handle);
+      size_t elementSize = 1;
+      size_t elementCount = sizeof(buffer) - 1;
+      size_t len = fread(buffer, elementSize, elementCount, handle);
       buffer[len] = '\0';
       pclose(handle);
       if (buffer[0]) {
