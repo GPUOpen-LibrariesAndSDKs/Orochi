@@ -272,7 +272,15 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char* hiprtc_paths[] = { "hiprtc0507.dll",  
+  const char* hiprtc_paths[] = { 
+                                "hiprtc0514.dll",  
+                                "hiprtc0513.dll",  
+                                "hiprtc0512.dll",  
+                                "hiprtc0511.dll", 
+                                "hiprtc0510.dll",  
+                                "hiprtc0509.dll", 
+                                "hiprtc0508.dll",
+                                "hiprtc0507.dll",  
                                 "hiprtc0506.dll", 
                                 "hiprtc0505.dll", 
                                 "hiprtc0504.dll",
