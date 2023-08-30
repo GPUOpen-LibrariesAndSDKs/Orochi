@@ -444,117 +444,6 @@ __device__ void localSort8bitMulti( int* keys, u32* ldsKeys, int* values, u32* l
 }
 
 template<bool KEY_VALUE_PAIR>
-__device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	int offset = blockIdx.x * blockDim.x * gNItemsPerWI;
-	if( offset > gN )
-	{
-		return;
-	}
-
-	__shared__ u32 localOffsets[BIN_SIZE];
-	__shared__ u32 ldsKeys[SORT_WG_SIZE * SORT_N_ITEMS_PER_WI];
-	__shared__ u32 ldsValues[KEY_VALUE_PAIR ? SORT_WG_SIZE * SORT_N_ITEMS_PER_WI : 1];
-
-	__shared__ union
-	{
-		u16 histogram[2][BIN_SIZE]; // low and high// todo. can be aliased
-		u32 histogramU32[BIN_SIZE];
-	} lds;
-
-	int keys[SORT_N_ITEMS_PER_WI] = { 0 };
-	int values[KEY_VALUE_PAIR ? SORT_N_ITEMS_PER_WI : 1] = { 0 };
-
-	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
-	{
-		localOffsets[i] = gHistogram[i * N_WGS_EXECUTED + blockIdx.x];
-	}
-	LDS_BARRIER;
-
-	for( int ii = 0; ii < gNItemsPerWI; ii += SORT_N_ITEMS_PER_WI )
-	{
-		for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-		{
-			const int idx = offset + i * SORT_WG_SIZE + threadIdx.x;
-			ldsKeys[i * SORT_WG_SIZE + threadIdx.x] = ( idx < gN ) ? gSrcKey[idx] : 0xffffffff;
-
-			if constexpr( KEY_VALUE_PAIR )
-			{
-				ldsValues[i * SORT_WG_SIZE + threadIdx.x] = ( idx < gN ) ? gSrcVal[idx] : 0xffffffff;
-			}
-		}
-		LDS_BARRIER;
-
-		for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-		{
-			const int idx = threadIdx.x * SORT_N_ITEMS_PER_WI + i;
-			keys[i] = ldsKeys[idx];
-
-			if constexpr( KEY_VALUE_PAIR )
-			{
-				values[i] = ldsValues[idx];
-			}
-		}
-
-		localSort8bitMulti<KEY_VALUE_PAIR>( keys, ldsKeys, values, ldsValues, START_BIT );
-
-		for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
-		{
-			lds.histogramU32[i] = 0;
-		}
-		LDS_BARRIER;
-
-		for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-		{
-			const int a = threadIdx.x * SORT_N_ITEMS_PER_WI + i;
-			const int b = a - 1;
-			const int aa = ( ldsKeys[a] >> START_BIT ) & RADIX_MASK;
-			const int bb = ( ( ( b >= 0 ) ? ldsKeys[b] : 0xffffffff ) >> START_BIT ) & RADIX_MASK;
-			if( aa != bb )
-			{
-				lds.histogram[0][aa] = a;
-				if( b >= 0 ) lds.histogram[1][bb] = a;
-			}
-		}
-		if( threadIdx.x == 0 ) lds.histogram[1][( ldsKeys[SORT_N_ITEMS_PER_WI * SORT_WG_SIZE - 1] >> START_BIT ) & RADIX_MASK] = SORT_N_ITEMS_PER_WI * SORT_WG_SIZE;
-
-		LDS_BARRIER;
-
-		const int upperBound = ( offset + threadIdx.x * SORT_N_ITEMS_PER_WI + SORT_N_ITEMS_PER_WI > gN ) ? ( gN - ( offset + threadIdx.x * SORT_N_ITEMS_PER_WI ) ) : SORT_N_ITEMS_PER_WI;
-		if( upperBound < 0 )
-		{
-			return;
-		}
-
-		for( int i = 0; i < upperBound; ++i )
-		{
-			const int tableIdx = ( keys[i] >> START_BIT ) & RADIX_MASK;
-			const int dstIdx = localOffsets[tableIdx] + ( threadIdx.x * SORT_N_ITEMS_PER_WI + i ) - lds.histogram[0][tableIdx];
-			gDstKey[dstIdx] = keys[i];
-
-			if constexpr( KEY_VALUE_PAIR )
-			{
-				gDstVal[dstIdx] = values[i];
-			}
-		}
-
-		LDS_BARRIER;
-
-		for( int i = 0; i < N_BINS_PER_WI; i++ )
-		{
-			const int idx = threadIdx.x * N_BINS_PER_WI + i;
-			localOffsets[idx] += lds.histogram[1][idx] - lds.histogram[0][idx];
-		}
-
-		offset += SORT_WG_SIZE * SORT_N_ITEMS_PER_WI;
-		if( offset > gN )
-		{
-			return;
-		}
-	}
-}
-
-template<bool KEY_VALUE_PAIR>
 __device__ void SortSinglePass( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT )
 {
 	if( blockIdx.x > 0 )
@@ -607,16 +496,6 @@ __device__ void SortSinglePass( int* gSrcKey, int* gSrcVal, int* gDstKey, int* g
 extern "C" __global__ void SortSinglePassKernel( int* gSrcKey, int* gDstKey, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<false>( gSrcKey, nullptr, gDstKey, nullptr, gN, START_BIT, END_BIT ); }
 
 extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gN, START_BIT, END_BIT ); }
-
-extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWI, START_BIT, N_WGS_EXECUTED );
-}
-
-extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWI, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWI, START_BIT, N_WGS_EXECUTED );
-}
 
 extern "C" __global__ void ParallelExclusiveScanSingleWG( int* gCount, int* gHistogram, const int N_WGS_EXECUTED )
 {
@@ -734,4 +613,132 @@ extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistog
 	// Write back the result.
 
 	gHistogram[blockIdx.x * blockDim.x + threadIdx.x] = blockBuffer[threadIdx.x] + currentGlobalOffset;
+}
+
+template<bool KEY_VALUE_PAIR>
+__device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int numberOfInputs, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+{
+	__shared__ u32 globalOffset[BIN_SIZE];
+	__shared__ u32 localPrefixSum[BIN_SIZE];
+	__shared__ u32 counters[BIN_SIZE];
+
+	__shared__ u32 matchMasks[SORT_NUM_WARPS_PER_BLOCK][BIN_SIZE];
+
+	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+	{
+		// Note: The size of gHistogram is always BIN_SIZE * N_WGS_EXECUTED
+		globalOffset[i] = gHistogram[i * N_WGS_EXECUTED + blockIdx.x];
+
+		counters[i] = 0;
+		localPrefixSum[i] = 0;
+	}
+
+	for( int w = 0; w < SORT_NUM_WARPS_PER_BLOCK; ++w )
+	{
+		for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+		{
+			matchMasks[w][i] = 0;
+		}
+	}
+
+	__syncthreads();
+
+	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+	{
+		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
+		if( itemIndex < numberOfInputs )
+		{
+			const auto item = gSrcKey[itemIndex];
+			const u32 bucketIndex = getMaskedBits( item, START_BIT );
+			atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
+		}
+	}
+
+	__syncthreads();
+
+	// Compute Prefix Sum
+
+	ldsScanExclusive( localPrefixSum, BIN_SIZE );
+
+	__syncthreads();
+
+	// Reorder
+
+	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+	{
+		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
+
+		const auto item = gSrcKey[itemIndex];
+		const u32 bucketIndex = getMaskedBits( item, START_BIT );
+
+		const int warp = threadIdx.x / 32;
+		const int lane = threadIdx.x % 32;
+
+		__syncthreads();
+
+		if( itemIndex < numberOfInputs )
+		{
+			atomicOr( &matchMasks[warp][bucketIndex], 1u << lane );
+		}
+
+		__syncthreads();
+
+		bool flushMask = false;
+
+		u32 localOffset = 0;
+		u32 localSrcIndex = 0;
+
+		if( itemIndex < numberOfInputs )
+		{
+			const u32 matchMask = matchMasks[warp][bucketIndex];
+			const u32 lowerMask = ( 1u << lane ) - 1;
+			u32 offset = __popc( matchMask & lowerMask );
+
+			flushMask = ( offset == 0 );
+
+			for( int w = 0; w < warp; ++w )
+			{
+				offset += __popc( matchMasks[w][bucketIndex] );
+			}
+
+			localOffset = counters[bucketIndex] + offset;
+			localSrcIndex = i;
+		}
+
+		__syncthreads();
+
+		if( itemIndex < numberOfInputs )
+		{
+			atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
+		}
+
+		if( flushMask )
+		{
+			matchMasks[warp][bucketIndex] = 0;
+		}
+
+		// Swap
+
+		if( itemIndex < numberOfInputs )
+		{
+			const u32 srcIndex = blockIdx.x * gNItemsPerWG + localSrcIndex;
+			const u32 dstIndex = globalOffset[bucketIndex] + localOffset;
+			gDstKey[dstIndex] = gSrcKey[srcIndex];
+
+			if constexpr( KEY_VALUE_PAIR )
+			{
+				gDstVal[dstIndex] = gSrcVal[srcIndex];
+			}
+		}
+	}
+}
+
+extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+{
+	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
+}
+
+extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+{
+	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 }
