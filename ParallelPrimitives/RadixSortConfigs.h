@@ -16,17 +16,30 @@ constexpr auto N_BINS_PACK_FACTOR{ sizeof( long long ) / sizeof( short ) };
 constexpr auto N_BINS_PACKED_4BIT{ N_BINS_4BIT / N_BINS_PACK_FACTOR };
 
 constexpr auto N_BINS_8BIT{ 1 << 8 };
+
+constexpr auto DEFAULT_WARP_SIZE{ 32 };
+
+constexpr auto DEFAULT_NUM_WARPS_PER_BLOCK{ 8 };
+
 // count config
 
-constexpr auto COUNT_WG_SIZE{ BIN_SIZE };
+constexpr auto DEFAULT_COUNT_BLOCK_SIZE{ DEFAULT_WARP_SIZE * DEFAULT_NUM_WARPS_PER_BLOCK };
+
+// scan configs
+constexpr auto DEFAULT_SCAN_BLOCK_SIZE{ DEFAULT_WARP_SIZE * DEFAULT_NUM_WARPS_PER_BLOCK };
 
 // sort configs
-constexpr auto SORT_WG_SIZE{ 64 };
+constexpr auto DEFAULT_SORT_BLOCK_SIZE{ DEFAULT_WARP_SIZE * DEFAULT_NUM_WARPS_PER_BLOCK };
 constexpr auto SORT_N_ITEMS_PER_WI{ 12 };
 constexpr auto SINGLE_SORT_N_ITEMS_PER_WI{ 24 };
 constexpr auto SINGLE_SORT_WG_SIZE{ 128 };
 
-// scan configs
-constexpr auto SCAN_WG_SIZE{ BIN_SIZE };
+// Checks
+
+static_assert( BIN_SIZE % 2 == 0 );
+
+// Notice that, on some GPUs, the max size of a GPU block cannot be greater than 256
+static_assert( DEFAULT_COUNT_BLOCK_SIZE % DEFAULT_WARP_SIZE == 0 );
+static_assert( DEFAULT_SCAN_BLOCK_SIZE % DEFAULT_WARP_SIZE == 0 );
 
 }; // namespace Oro

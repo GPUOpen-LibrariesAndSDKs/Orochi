@@ -19,7 +19,9 @@
 #  endif
 #  define popen _popen
 #  define pclose _pclose
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #  define _CRT_SECURE_NO_WARNINGS
+#endif
 #endif
 
 #include <contrib/hipew/include/hipew.h>
@@ -272,7 +274,15 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char* hiprtc_paths[] = { "hiprtc0507.dll",  
+  const char* hiprtc_paths[] = { 
+                                "hiprtc0514.dll",  
+                                "hiprtc0513.dll",  
+                                "hiprtc0512.dll",  
+                                "hiprtc0511.dll", 
+                                "hiprtc0510.dll",  
+                                "hiprtc0509.dll", 
+                                "hiprtc0508.dll",
+                                "hiprtc0507.dll",  
                                 "hiprtc0506.dll", 
                                 "hiprtc0505.dll", 
                                 "hiprtc0504.dll",
@@ -622,7 +632,9 @@ const char *hipewCompilerPath(void) {
 #endif
     if (handle) {
       char buffer[4096] = {0};
-      int len = fread(buffer, 1, sizeof(buffer) - 1, handle);
+      size_t elementSize = 1;
+      size_t elementCount = sizeof(buffer) - 1;
+      size_t len = fread(buffer, elementSize, elementCount, handle);
       buffer[len] = '\0';
       pclose(handle);
       if (buffer[0]) {
