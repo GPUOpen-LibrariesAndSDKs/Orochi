@@ -95,7 +95,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		{
 		case ScanAlgo::SCAN_CPU:
 		{
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 		}
 		break;
 
@@ -116,7 +116,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		break;
 
 		default:
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 			break;
 		}
 	};

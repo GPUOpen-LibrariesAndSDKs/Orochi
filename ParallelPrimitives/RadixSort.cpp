@@ -56,7 +56,7 @@ void printKernelInfo( const std::string& name, oroFunction func )
 namespace Oro
 {
 
-RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ device }, m_oroutils{ oroutils }
+RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
 {
 	oroGetDeviceProperties( &m_props, device );
 
@@ -72,10 +72,10 @@ RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ devi
 	assert( m_num_threads_per_block_for_scan % warp_size == 0 );
 	assert( m_num_threads_per_block_for_sort % warp_size == 0 );
 
-	configure();
+	configure( kernelPath, includeDir );
 }
 
-void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, oroStream stream ) const noexcept
+void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu ) const noexcept
 {
 	const auto buffer_size = countsGpu.size();
 
@@ -210,7 +210,7 @@ int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 	return number_of_blocks;
 }
 
-void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
+void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 

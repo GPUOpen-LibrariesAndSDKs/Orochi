@@ -31,7 +31,7 @@ class RadixSort final
 		LOG,
 	};
 
-	RadixSort( oroDevice device, OrochiUtils& oroutils );
+	RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath = "", const std::string& includeDir = "" );
 
 	// Allow move but disallow copy.
 	RadixSort( RadixSort&& ) noexcept = default;
@@ -61,12 +61,12 @@ class RadixSort final
 	/// It copies the count result from the Device to Host before computation, and then copies the offsets back from Host to Device afterward.
 	/// @param countsGpu The count result in GPU memory. Otuput: The offset.
 	/// @param offsetsGpu The offsets.
-	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, oroStream stream ) const noexcept;
+	void exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu ) const noexcept;
 
 	/// @brief Configure the settings, compile the kernels and allocate the memory.
 	/// @param kernelPath The kernel path.
 	/// @param includeDir The include directory.
-	void configure( const std::string& kernelPath = "", const std::string& includeDir = "", oroStream stream = 0 ) noexcept;
+	void configure( const std::string& kernelPath, const std::string& includeDir ) noexcept;
 
   private:
 	// GPU blocks for the count kernel
