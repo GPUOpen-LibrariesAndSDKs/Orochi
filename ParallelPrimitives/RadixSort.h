@@ -7,6 +7,7 @@
 #include <Test/Stopwatch.h>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
