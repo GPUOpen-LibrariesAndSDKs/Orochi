@@ -14,6 +14,23 @@ using u64 = unsigned long long;
 
 // #define NV_WORKAROUND 1
 
+// default values
+#if defined( OVERWRITE )
+
+constexpr auto COUNT_WG_SIZE{ COUNT_WG_SIZE_VAL };
+constexpr auto SCAN_WG_SIZE{ SCAN_WG_SIZE_VAL };
+constexpr auto SORT_WG_SIZE{ SORT_WG_SIZE_VAL };
+constexpr auto SORT_NUM_WARPS_PER_BLOCK{ SORT_NUM_WARPS_PER_BLOCK_VAL };
+
+#else
+
+constexpr auto COUNT_WG_SIZE{ DEFAULT_COUNT_BLOCK_SIZE };
+constexpr auto SCAN_WG_SIZE{ DEFAULT_SCAN_BLOCK_SIZE };
+constexpr auto SORT_WG_SIZE{ DEFAULT_SORT_BLOCK_SIZE };
+constexpr auto SORT_NUM_WARPS_PER_BLOCK{ DEFAULT_NUM_WARPS_PER_BLOCK };
+
+#endif
+
 __device__ constexpr u32 getMaskedBits( const u32 value, const u32 shift ) noexcept { return ( value >> shift ) & RADIX_MASK; }
 
 extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
