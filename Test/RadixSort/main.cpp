@@ -67,6 +67,8 @@ class SortTest
 
 		OrochiUtils::malloc( srcGpu.key, testSize );
 		OrochiUtils::malloc( dstGpu.key, testSize );
+		void* temp;
+		oroMalloc( (oroDeviceptr*)&temp, m_sort.getRequiredTemporalStorageBytes( testSize ) );
 
 		std::vector<u32> srcKey( testSize );
 		for( int i = 0; i < testSize; i++ )
@@ -102,11 +104,11 @@ class SortTest
 
 			if constexpr( KEY_VALUE_PAIR )
 			{
-				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits);
+				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits, temp );
 			}
 			else
 			{
-				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits );
+				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits, temp );
 			}
 
 			OrochiUtils::waitForCompletion();
@@ -178,6 +180,7 @@ class SortTest
 
 		OrochiUtils::free( srcGpu.key );
 		OrochiUtils::free( dstGpu.key );
+		oroFree( (oroDeviceptr)temp );
 
 		printf( "passed: %3.2fK keys\n", testSize / 1000.f );
 	}

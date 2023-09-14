@@ -15,52 +15,52 @@ using u64 = unsigned long long;
 // #define NV_WORKAROUND 1
 
 // default values
-#if defined( OVERWRITE )
+//#if defined( OVERWRITE )
+//
+//constexpr auto COUNT_WG_SIZE{ COUNT_WG_SIZE_VAL };
+//constexpr auto SCAN_WG_SIZE{ SCAN_WG_SIZE_VAL };
+//constexpr auto SORT_WG_SIZE{ SORT_WG_SIZE_VAL };
+//constexpr auto SORT_NUM_WARPS_PER_BLOCK{ SORT_NUM_WARPS_PER_BLOCK_VAL };
+//
+//#else
+//
+//constexpr auto COUNT_WG_SIZE{ DEFAULT_COUNT_BLOCK_SIZE };
+//constexpr auto SCAN_WG_SIZE{ DEFAULT_SCAN_BLOCK_SIZE };
+//constexpr auto SORT_WG_SIZE{ DEFAULT_SORT_BLOCK_SIZE };
+//constexpr auto SORT_NUM_WARPS_PER_BLOCK{ DEFAULT_NUM_WARPS_PER_BLOCK };
+//
+//#endif
 
-constexpr auto COUNT_WG_SIZE{ COUNT_WG_SIZE_VAL };
-constexpr auto SCAN_WG_SIZE{ SCAN_WG_SIZE_VAL };
-constexpr auto SORT_WG_SIZE{ SORT_WG_SIZE_VAL };
-constexpr auto SORT_NUM_WARPS_PER_BLOCK{ SORT_NUM_WARPS_PER_BLOCK_VAL };
-
-#else
-
-constexpr auto COUNT_WG_SIZE{ DEFAULT_COUNT_BLOCK_SIZE };
-constexpr auto SCAN_WG_SIZE{ DEFAULT_SCAN_BLOCK_SIZE };
-constexpr auto SORT_WG_SIZE{ DEFAULT_SORT_BLOCK_SIZE };
-constexpr auto SORT_NUM_WARPS_PER_BLOCK{ DEFAULT_NUM_WARPS_PER_BLOCK };
-
-#endif
-
-__device__ constexpr u32 getMaskedBits( const u32 value, const u32 shift ) noexcept { return ( value >> shift ) & RADIX_MASK; }
-
-extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	__shared__ int table[BIN_SIZE];
-
-	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
-	{
-		table[i] = 0;
-	}
-
-	__syncthreads();
-
-	const int offset = blockIdx.x * gNItemsPerWG;
-	const int upperBound = ( offset + gNItemsPerWG > gN ) ? gN - offset : gNItemsPerWG;
-
-	for( int i = threadIdx.x; i < upperBound; i += COUNT_WG_SIZE )
-	{
-		const int idx = offset + i;
-		const int tableIdx = getMaskedBits( gSrc[idx], START_BIT );
-		atomicAdd( &table[tableIdx], 1 );
-	}
-
-	__syncthreads();
-
-	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
-	{
-		gDst[i * N_WGS_EXECUTED + blockIdx.x] = table[i];
-	}
-}
+//__device__ constexpr u32 getMaskedBits( const u32 value, const u32 shift ) noexcept { return ( value >> shift ) & RADIX_MASK; }
+//
+//extern "C" __global__ void CountKernel( int* gSrc, int* gDst, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+//{
+//	__shared__ int table[BIN_SIZE];
+//
+//	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
+//	{
+//		table[i] = 0;
+//	}
+//
+//	__syncthreads();
+//
+//	const int offset = blockIdx.x * gNItemsPerWG;
+//	const int upperBound = ( offset + gNItemsPerWG > gN ) ? gN - offset : gNItemsPerWG;
+//
+//	for( int i = threadIdx.x; i < upperBound; i += COUNT_WG_SIZE )
+//	{
+//		const int idx = offset + i;
+//		const int tableIdx = getMaskedBits( gSrc[idx], START_BIT );
+//		atomicAdd( &table[tableIdx], 1 );
+//	}
+//
+//	__syncthreads();
+//
+//	for( int i = threadIdx.x; i < BIN_SIZE; i += COUNT_WG_SIZE )
+//	{
+//		gDst[i * N_WGS_EXECUTED + blockIdx.x] = table[i];
+//	}
+//}
 
 template<typename T, int STRIDE>
 struct ScanImpl
@@ -326,139 +326,139 @@ __device__ void localSort4bitMulti( int* keys, u32* ldsKeys, int* values, u32* l
 	}
 }
 
-__device__ void localSort8bitMulti_shared_bin( int* keys, u32* ldsKeys, const int START_BIT )
-{
-	__shared__ unsigned table[BIN_SIZE];
+//__device__ void localSort8bitMulti_shared_bin( int* keys, u32* ldsKeys, const int START_BIT )
+//{
+//	__shared__ unsigned table[BIN_SIZE];
+//
+//	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+//	{
+//		table[i] = 0U;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
+//	{
+//		const int tableIdx = ( keys[i] >> START_BIT ) & RADIX_MASK;
+//		atomicAdd( &table[tableIdx], 1 );
+//	}
+//
+//	LDS_BARRIER;
+//
+//	int globalSum = 0;
+//	for( int binId = 0; binId < BIN_SIZE; binId += SORT_WG_SIZE * 2 )
+//	{
+//		unsigned* globalOffset = &table[binId];
+//		const unsigned currentGlobalSum = ldsScanExclusive( globalOffset, SORT_WG_SIZE * 2 );
+//		globalOffset[threadIdx.x * 2] += globalSum;
+//		globalOffset[threadIdx.x * 2 + 1] += globalSum;
+//		globalSum += currentGlobalSum;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	__shared__ u32 keyBuffer[SORT_WG_SIZE * SORT_N_ITEMS_PER_WI];
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
+//	{
+//		keyBuffer[threadIdx.x * SORT_N_ITEMS_PER_WI + i] = keys[i];
+//	}
+//
+//	LDS_BARRIER;
+//
+//	if( threadIdx.x == 0 )
+//	{
+//		for( int i = 0; i < SORT_WG_SIZE * SORT_N_ITEMS_PER_WI; ++i )
+//		{
+//			const int tableIdx = ( keyBuffer[i] >> START_BIT ) & RADIX_MASK;
+//			const int writeIndex = table[tableIdx];
+//
+//			ldsKeys[writeIndex] = keyBuffer[i];
+//
+//			++table[tableIdx];
+//		}
+//	}
+//
+//	LDS_BARRIER;
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
+//	{
+//		keys[i] = ldsKeys[threadIdx.x * SORT_N_ITEMS_PER_WI + i];
+//	}
+//}
+//
+//__device__ void localSort8bitMulti_group( int* keys, u32* ldsKeys, const int START_BIT )
+//{
+//	constexpr auto N_GROUP_SIZE{ N_BINS_8BIT / ( sizeof( u64 ) / sizeof( u16 ) ) };
+//
+//	__shared__ union
+//	{
+//		u16 m_ungrouped[SORT_WG_SIZE + 1][N_BINS_8BIT];
+//		u64 m_grouped[SORT_WG_SIZE + 1][N_GROUP_SIZE];
+//	} lds;
+//
+//	for( int i = 0; i < N_GROUP_SIZE; ++i )
+//	{
+//		lds.m_grouped[threadIdx.x][i] = 0U;
+//	}
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
+//	{
+//		const auto in8bit = ( keys[i] >> START_BIT ) & RADIX_MASK;
+//		++lds.m_ungrouped[threadIdx.x][in8bit];
+//	}
+//
+//	LDS_BARRIER;
+//
+//	for( int groupId = threadIdx.x; groupId < N_GROUP_SIZE; groupId += SORT_WG_SIZE )
+//	{
+//		u64 sum = 0U;
+//		for( int i = 0; i < SORT_WG_SIZE; i++ )
+//		{
+//			const auto current = lds.m_grouped[i][groupId];
+//			lds.m_grouped[i][groupId] = sum;
+//			sum += current;
+//		}
+//		lds.m_grouped[SORT_WG_SIZE][groupId] = sum;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	int globalSum = 0;
+//	for( int binId = 0; binId < N_BINS_8BIT; binId += SORT_WG_SIZE * 2 )
+//	{
+//		auto* globalOffset = &lds.m_ungrouped[SORT_WG_SIZE][binId];
+//		const int currentGlobalSum = ldsScanExclusive( globalOffset, SORT_WG_SIZE * 2 );
+//		globalOffset[threadIdx.x * 2] += globalSum;
+//		globalOffset[threadIdx.x * 2 + 1] += globalSum;
+//		globalSum += currentGlobalSum;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
+//	{
+//		const auto in8bit = ( keys[i] >> START_BIT ) & RADIX_MASK;
+//		const auto offset = lds.m_ungrouped[SORT_WG_SIZE][in8bit];
+//		const auto rank = lds.m_ungrouped[threadIdx.x][in8bit]++;
+//
+//		ldsKeys[offset + rank] = keys[i];
+//	}
+//
+//	LDS_BARRIER;
+//
+//	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
+//	{
+//		keys[i] = ldsKeys[threadIdx.x * SORT_N_ITEMS_PER_WI + i];
+//	}
+//}
 
-	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
-	{
-		table[i] = 0U;
-	}
-
-	LDS_BARRIER;
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-	{
-		const int tableIdx = ( keys[i] >> START_BIT ) & RADIX_MASK;
-		atomicAdd( &table[tableIdx], 1 );
-	}
-
-	LDS_BARRIER;
-
-	int globalSum = 0;
-	for( int binId = 0; binId < BIN_SIZE; binId += SORT_WG_SIZE * 2 )
-	{
-		unsigned* globalOffset = &table[binId];
-		const unsigned currentGlobalSum = ldsScanExclusive( globalOffset, SORT_WG_SIZE * 2 );
-		globalOffset[threadIdx.x * 2] += globalSum;
-		globalOffset[threadIdx.x * 2 + 1] += globalSum;
-		globalSum += currentGlobalSum;
-	}
-
-	LDS_BARRIER;
-
-	__shared__ u32 keyBuffer[SORT_WG_SIZE * SORT_N_ITEMS_PER_WI];
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-	{
-		keyBuffer[threadIdx.x * SORT_N_ITEMS_PER_WI + i] = keys[i];
-	}
-
-	LDS_BARRIER;
-
-	if( threadIdx.x == 0 )
-	{
-		for( int i = 0; i < SORT_WG_SIZE * SORT_N_ITEMS_PER_WI; ++i )
-		{
-			const int tableIdx = ( keyBuffer[i] >> START_BIT ) & RADIX_MASK;
-			const int writeIndex = table[tableIdx];
-
-			ldsKeys[writeIndex] = keyBuffer[i];
-
-			++table[tableIdx];
-		}
-	}
-
-	LDS_BARRIER;
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; ++i )
-	{
-		keys[i] = ldsKeys[threadIdx.x * SORT_N_ITEMS_PER_WI + i];
-	}
-}
-
-__device__ void localSort8bitMulti_group( int* keys, u32* ldsKeys, const int START_BIT )
-{
-	constexpr auto N_GROUP_SIZE{ N_BINS_8BIT / ( sizeof( u64 ) / sizeof( u16 ) ) };
-
-	__shared__ union
-	{
-		u16 m_ungrouped[SORT_WG_SIZE + 1][N_BINS_8BIT];
-		u64 m_grouped[SORT_WG_SIZE + 1][N_GROUP_SIZE];
-	} lds;
-
-	for( int i = 0; i < N_GROUP_SIZE; ++i )
-	{
-		lds.m_grouped[threadIdx.x][i] = 0U;
-	}
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
-	{
-		const auto in8bit = ( keys[i] >> START_BIT ) & RADIX_MASK;
-		++lds.m_ungrouped[threadIdx.x][in8bit];
-	}
-
-	LDS_BARRIER;
-
-	for( int groupId = threadIdx.x; groupId < N_GROUP_SIZE; groupId += SORT_WG_SIZE )
-	{
-		u64 sum = 0U;
-		for( int i = 0; i < SORT_WG_SIZE; i++ )
-		{
-			const auto current = lds.m_grouped[i][groupId];
-			lds.m_grouped[i][groupId] = sum;
-			sum += current;
-		}
-		lds.m_grouped[SORT_WG_SIZE][groupId] = sum;
-	}
-
-	LDS_BARRIER;
-
-	int globalSum = 0;
-	for( int binId = 0; binId < N_BINS_8BIT; binId += SORT_WG_SIZE * 2 )
-	{
-		auto* globalOffset = &lds.m_ungrouped[SORT_WG_SIZE][binId];
-		const int currentGlobalSum = ldsScanExclusive( globalOffset, SORT_WG_SIZE * 2 );
-		globalOffset[threadIdx.x * 2] += globalSum;
-		globalOffset[threadIdx.x * 2 + 1] += globalSum;
-		globalSum += currentGlobalSum;
-	}
-
-	LDS_BARRIER;
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
-	{
-		const auto in8bit = ( keys[i] >> START_BIT ) & RADIX_MASK;
-		const auto offset = lds.m_ungrouped[SORT_WG_SIZE][in8bit];
-		const auto rank = lds.m_ungrouped[threadIdx.x][in8bit]++;
-
-		ldsKeys[offset + rank] = keys[i];
-	}
-
-	LDS_BARRIER;
-
-	for( int i = 0; i < SORT_N_ITEMS_PER_WI; i++ )
-	{
-		keys[i] = ldsKeys[threadIdx.x * SORT_N_ITEMS_PER_WI + i];
-	}
-}
-
-template<bool KEY_VALUE_PAIR>
-__device__ void localSort8bitMulti( int* keys, u32* ldsKeys, int* values, u32* ldsValues, const int START_BIT )
-{
-	localSort4bitMulti<SORT_N_ITEMS_PER_WI, SORT_WG_SIZE, KEY_VALUE_PAIR>( keys, ldsKeys, values, ldsValues, START_BIT );
-	if( N_RADIX > 4 ) localSort4bitMulti<SORT_N_ITEMS_PER_WI, SORT_WG_SIZE, KEY_VALUE_PAIR>( keys, ldsKeys, values, ldsValues, START_BIT + 4 );
-}
+//template<bool KEY_VALUE_PAIR>
+//__device__ void localSort8bitMulti( int* keys, u32* ldsKeys, int* values, u32* ldsValues, const int START_BIT )
+//{
+//	localSort4bitMulti<SORT_N_ITEMS_PER_WI, SORT_WG_SIZE, KEY_VALUE_PAIR>( keys, ldsKeys, values, ldsValues, START_BIT );
+//	if( N_RADIX > 4 ) localSort4bitMulti<SORT_N_ITEMS_PER_WI, SORT_WG_SIZE, KEY_VALUE_PAIR>( keys, ldsKeys, values, ldsValues, START_BIT + 4 );
+//}
 
 template<bool KEY_VALUE_PAIR>
 __device__ void SortSinglePass( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT )
@@ -514,184 +514,593 @@ extern "C" __global__ void SortSinglePassKernel( int* gSrcKey, int* gDstKey, int
 
 extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gN, START_BIT, END_BIT ); }
 
-extern "C" __global__ void ParallelExclusiveScanSingleWG( int* gCount, int* gHistogram, const int N_WGS_EXECUTED )
+//extern "C" __global__ void ParallelExclusiveScanSingleWG( int* gCount, int* gHistogram, const int N_WGS_EXECUTED )
+//{
+//	// Use a single WG.
+//	if( blockIdx.x != 0 )
+//	{
+//		return;
+//	}
+//
+//	// LDS for the parallel scan of the global sum:
+//	// First we store the sum of the counters of each number to it,
+//	// then we compute the global offset using parallel exclusive scan.
+//	__shared__ int blockBuffer[BIN_SIZE];
+//
+//	// fill the LDS with the local sum
+//
+//	for( int binId = threadIdx.x; binId < BIN_SIZE; binId += WG_SIZE )
+//	{
+//		// Do exclusive scan for each segment handled by each WI in a WG
+//
+//		int localThreadSum = 0;
+//		for( int i = 0; i < N_WGS_EXECUTED; ++i )
+//		{
+//			int current = gCount[binId * N_WGS_EXECUTED + i];
+//			gCount[binId * N_WGS_EXECUTED + i] = localThreadSum;
+//
+//			localThreadSum += current;
+//		}
+//
+//		// Store the thread local sum to LDS.
+//
+//		blockBuffer[binId] = localThreadSum;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	// Do parallel exclusive scan on the LDS
+//
+//	int globalSum = 0;
+//	for( int binId = 0; binId < BIN_SIZE; binId += WG_SIZE * 2 )
+//	{
+//		int* globalOffset = &blockBuffer[binId];
+//		int currentGlobalSum = ldsScanExclusive( globalOffset, WG_SIZE * 2 );
+//		globalOffset[threadIdx.x * 2] += globalSum;
+//		globalOffset[threadIdx.x * 2 + 1] += globalSum;
+//		globalSum += currentGlobalSum;
+//	}
+//
+//	LDS_BARRIER;
+//
+//	// Add the global offset to the global histogram.
+//
+//	for( int binId = threadIdx.x; binId < BIN_SIZE; binId += WG_SIZE )
+//	{
+//		for( int i = 0; i < N_WGS_EXECUTED; ++i )
+//		{
+//			gHistogram[binId * N_WGS_EXECUTED + i] += blockBuffer[binId];
+//		}
+//	}
+//}
+//
+//extern "C" __device__ void WorkgroupSync( int threadId, int blockId, int currentSegmentSum, int* currentGlobalOffset, volatile int* gPartialSum, volatile bool* gIsReady )
+//{
+//	if( threadId == 0 )
+//	{
+//		int offset = 0;
+//
+//		if( blockId != 0 )
+//		{
+//			while( !gIsReady[blockId - 1] )
+//			{
+//			}
+//
+//			offset = gPartialSum[blockId - 1];
+//
+//			__threadfence();
+//
+//			// Reset the value
+//			gIsReady[blockId - 1] = false;
+//		}
+//
+//		gPartialSum[blockId] = offset + currentSegmentSum;
+//
+//		// Ensure that the gIsReady is only modified after the gPartialSum is written.
+//		__threadfence();
+//
+//		gIsReady[blockId] = true;
+//
+//		*currentGlobalOffset = offset;
+//	}
+//
+//	__syncthreads();
+//}
+//
+//extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistogram, volatile int* gPartialSum, volatile bool* gIsReady )
+//{
+//	// Fill the LDS with the partial sum of each segment
+//	__shared__ int blockBuffer[SCAN_WG_SIZE];
+//
+//	blockBuffer[threadIdx.x] = gCount[blockIdx.x * blockDim.x + threadIdx.x];
+//
+//	__syncthreads();
+//
+//	// Do parallel exclusive scan on the LDS
+//
+//	int currentSegmentSum = ldsScanExclusive( blockBuffer, SCAN_WG_SIZE );
+//
+//	__syncthreads();
+//
+//	// Sync all the Workgroups to calculate the global offset.
+//
+//	__shared__ int currentGlobalOffset;
+//	WorkgroupSync( threadIdx.x, blockIdx.x, currentSegmentSum, &currentGlobalOffset, gPartialSum, gIsReady );
+//
+//	// Write back the result.
+//
+//	gHistogram[blockIdx.x * blockDim.x + threadIdx.x] = blockBuffer[threadIdx.x] + currentGlobalOffset;
+//}
+//
+//template<bool KEY_VALUE_PAIR>
+//__device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int numberOfInputs, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+//{
+//	__shared__ u32 globalOffset[BIN_SIZE];
+//	__shared__ u32 localPrefixSum[BIN_SIZE];
+//	__shared__ u32 counters[BIN_SIZE];
+//
+//	__shared__ u32 matchMasks[SORT_NUM_WARPS_PER_BLOCK][BIN_SIZE];
+//
+//	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+//	{
+//		// Note: The size of gHistogram is always BIN_SIZE * N_WGS_EXECUTED
+//		globalOffset[i] = gHistogram[i * N_WGS_EXECUTED + blockIdx.x];
+//
+//		counters[i] = 0;
+//		localPrefixSum[i] = 0;
+//	}
+//
+//	for( int w = 0; w < SORT_NUM_WARPS_PER_BLOCK; ++w )
+//	{
+//		for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+//		{
+//			matchMasks[w][i] = 0;
+//		}
+//	}
+//
+//	__syncthreads();
+//
+//	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+//	{
+//		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
+//		if( itemIndex < numberOfInputs )
+//		{
+//			const auto item = gSrcKey[itemIndex];
+//			const u32 bucketIndex = getMaskedBits( item, START_BIT );
+//			atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
+//		}
+//	}
+//
+//	__syncthreads();
+//
+//	// Compute Prefix Sum
+//
+//	ldsScanExclusive( localPrefixSum, BIN_SIZE );
+//
+//	__syncthreads();
+//
+//	// Reorder
+//
+//	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+//	{
+//		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
+//
+//		const auto item = gSrcKey[itemIndex];
+//		const u32 bucketIndex = getMaskedBits( item, START_BIT );
+//
+//		const int warp = threadIdx.x / 32;
+//		const int lane = threadIdx.x % 32;
+//
+//		__syncthreads();
+//
+//		if( itemIndex < numberOfInputs )
+//		{
+//			atomicOr( &matchMasks[warp][bucketIndex], 1u << lane );
+//		}
+//
+//		__syncthreads();
+//
+//		bool flushMask = false;
+//
+//		u32 localOffset = 0;
+//		u32 localSrcIndex = 0;
+//
+//		if( itemIndex < numberOfInputs )
+//		{
+//			const u32 matchMask = matchMasks[warp][bucketIndex];
+//			const u32 lowerMask = ( 1u << lane ) - 1;
+//			u32 offset = __popc( matchMask & lowerMask );
+//
+//			flushMask = ( offset == 0 );
+//
+//			for( int w = 0; w < warp; ++w )
+//			{
+//				offset += __popc( matchMasks[w][bucketIndex] );
+//			}
+//
+//			localOffset = counters[bucketIndex] + offset;
+//			localSrcIndex = i;
+//		}
+//
+//		__syncthreads();
+//
+//		if( itemIndex < numberOfInputs )
+//		{
+//			atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
+//		}
+//
+//		if( flushMask )
+//		{
+//			matchMasks[warp][bucketIndex] = 0;
+//		}
+//
+//		// Swap
+//
+//		if( itemIndex < numberOfInputs )
+//		{
+//			const u32 srcIndex = blockIdx.x * gNItemsPerWG + localSrcIndex;
+//			const u32 dstIndex = globalOffset[bucketIndex] + localOffset;
+//			gDstKey[dstIndex] = gSrcKey[srcIndex];
+//
+//			if constexpr( KEY_VALUE_PAIR )
+//			{
+//				gDstVal[dstIndex] = gSrcVal[srcIndex];
+//			}
+//		}
+//	}
+//}
+//
+//extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+//{
+//	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
+//}
+//
+//extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+//{
+//	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
+//}
+
+#define RADIX_SORT_KEY_TYPE u32
+#define RADIX_SORT_VALUE_TYPE u32
+#define KEY_IS_16BYTE_ALIGNED 1
+
+
+typedef unsigned long long uint64_t;
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+
+//#define RADIX_SORT_BLOCK_SIZE 2048
+//
+//#define GHISTOGRAM_ITEM_PER_BLOCK 2048
+//#define GHISTOGRAM_THREADS_PER_BLOCK 256
+//
+//#define REORDER_NUMBER_OF_WARPS 8
+//#define REORDER_NUMBER_OF_THREADS_PER_BLOCK ( 32 * REORDER_NUMBER_OF_WARPS )
+
+#define PARTITIOIN_BIT_A 0x80000000
+#define PARTITIOIN_BIT_P 0x40000000
+#define PARTITIOIN_FLAG_MASK ( PARTITIOIN_BIT_A | PARTITIOIN_BIT_P )
+#define PARTITIOIN_VALUE_MASK 0x3FFFFFFF
+
+#define PARTITIOIN_BIT_A_64 0x8000000000000000llu
+#define PARTITIOIN_BIT_P_64 0x4000000000000000llu
+#define PARTITIOIN_FLAG_MASK_64 ( PARTITIOIN_BIT_A_64 | PARTITIOIN_BIT_P_64 )
+#define PARTITIOIN_VALUE_MASK_64 0x3FFFFFFFFFFFFFFFllu
+
+__device__ inline void partitionStoreA( volatile uint32_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_A | x; }
+__device__ inline void partitionStoreA( volatile uint64_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_A_64 | x; }
+__device__ inline void partitionStoreP( volatile uint32_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_P | x; }
+__device__ inline void partitionStoreP( volatile uint64_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_P_64 | x; }
+__device__ inline bool partitionIsX( uint32_t x ) { return ( x & PARTITIOIN_FLAG_MASK ) == 0; }
+__device__ inline bool partitionIsX( uint64_t x ) { return ( x & PARTITIOIN_FLAG_MASK_64 ) == 0; }
+__device__ inline bool partitionIsP( uint32_t x ) { return ( x & PARTITIOIN_BIT_P ) != 0; }
+__device__ inline bool partitionIsP( uint64_t x ) { return ( x & PARTITIOIN_BIT_P_64 ) != 0; }
+
+__device__ inline uint32_t partitionGetValue( uint32_t x ) { return x & PARTITIOIN_VALUE_MASK; }
+__device__ inline uint32_t partitionGetValue( uint64_t x ) { return static_cast<uint32_t>( x & PARTITIOIN_VALUE_MASK_64 ); }
+
+#if defined( DESCENDING_ORDER )
+#define ORDER_MASK_32 0xFFFFFFFF
+#define ORDER_MASK_64 0xFFFFFFFFFFFFFFFFllu
+#else
+#define ORDER_MASK_32 0
+#define ORDER_MASK_64 0llu
+#endif
+
+#if defined( CUDART_VERSION ) && CUDART_VERSION >= 9000
+#define ITS 1
+#endif
+
+__device__ inline uint32_t div_round_up( uint32_t val, uint32_t divisor ) { return ( val + divisor - 1 ) / divisor; }
+template<int NElement, int NThread, class T>
+__device__ void clearShared( T* sMem, T value )
 {
-	// Use a single WG.
-	if( blockIdx.x != 0 )
+	for( int i = 0; i < NElement; i += NThread )
 	{
-		return;
-	}
-
-	// LDS for the parallel scan of the global sum:
-	// First we store the sum of the counters of each number to it,
-	// then we compute the global offset using parallel exclusive scan.
-	__shared__ int blockBuffer[BIN_SIZE];
-
-	// fill the LDS with the local sum
-
-	for( int binId = threadIdx.x; binId < BIN_SIZE; binId += WG_SIZE )
-	{
-		// Do exclusive scan for each segment handled by each WI in a WG
-
-		int localThreadSum = 0;
-		for( int i = 0; i < N_WGS_EXECUTED; ++i )
+		if( i < NElement )
 		{
-			int current = gCount[binId * N_WGS_EXECUTED + i];
-			gCount[binId * N_WGS_EXECUTED + i] = localThreadSum;
-
-			localThreadSum += current;
-		}
-
-		// Store the thread local sum to LDS.
-
-		blockBuffer[binId] = localThreadSum;
-	}
-
-	LDS_BARRIER;
-
-	// Do parallel exclusive scan on the LDS
-
-	int globalSum = 0;
-	for( int binId = 0; binId < BIN_SIZE; binId += WG_SIZE * 2 )
-	{
-		int* globalOffset = &blockBuffer[binId];
-		int currentGlobalSum = ldsScanExclusive( globalOffset, WG_SIZE * 2 );
-		globalOffset[threadIdx.x * 2] += globalSum;
-		globalOffset[threadIdx.x * 2 + 1] += globalSum;
-		globalSum += currentGlobalSum;
-	}
-
-	LDS_BARRIER;
-
-	// Add the global offset to the global histogram.
-
-	for( int binId = threadIdx.x; binId < BIN_SIZE; binId += WG_SIZE )
-	{
-		for( int i = 0; i < N_WGS_EXECUTED; ++i )
-		{
-			gHistogram[binId * N_WGS_EXECUTED + i] += blockBuffer[binId];
+			sMem[i + threadIdx.x] = value;
 		}
 	}
 }
 
-extern "C" __device__ void WorkgroupSync( int threadId, int blockId, int currentSegmentSum, int* currentGlobalOffset, volatile int* gPartialSum, volatile bool* gIsReady )
+__device__ inline uint32_t getKeyBits( uint32_t x ) { return x ^ ORDER_MASK_32; }
+__device__ inline uint64_t getKeyBits( uint64_t x ) { return x ^ ORDER_MASK_64; }
+__device__ inline uint32_t getKeyBits( float x )
 {
-	if( threadId == 0 )
-	{
-		int offset = 0;
+	if( x == 0.0f ) x = 0.0f;
 
-		if( blockId != 0 )
-		{
-			while( !gIsReady[blockId - 1] )
-			{
-			}
+	uint32_t flip = uint32_t( __float_as_int( x ) >> 31 ) | 0x80000000;
+	return __float_as_uint( x ) ^ flip ^ ORDER_MASK_32;
+}
+__device__ inline uint64_t getKeyBits( double x )
+{
+	if( x == 0.0 ) x = 0.0;
 
-			offset = gPartialSum[blockId - 1];
-
-			__threadfence();
-
-			// Reset the value
-			gIsReady[blockId - 1] = false;
-		}
-
-		gPartialSum[blockId] = offset + currentSegmentSum;
-
-		// Ensure that the gIsReady is only modified after the gPartialSum is written.
-		__threadfence();
-
-		gIsReady[blockId] = true;
-
-		*currentGlobalOffset = offset;
-	}
-
-	__syncthreads();
+	uint64_t flip = uint64_t( __double_as_longlong( x ) >> 63 ) | 0x8000000000000000llu;
+	return (uint64_t)__double_as_longlong( x ) ^ flip ^ ORDER_MASK_64;
 }
 
-extern "C" __global__ void ParallelExclusiveScanAllWG( int* gCount, int* gHistogram, volatile int* gPartialSum, volatile bool* gIsReady )
+template<int NThreads>
+__device__ inline uint32_t prefixSumExclusive( uint32_t prefix, uint32_t* sMemIO )
 {
-	// Fill the LDS with the partial sum of each segment
-	__shared__ int blockBuffer[SCAN_WG_SIZE];
+	uint32_t value = sMemIO[threadIdx.x];
 
-	blockBuffer[threadIdx.x] = gCount[blockIdx.x * blockDim.x + threadIdx.x];
-
-	__syncthreads();
-
-	// Do parallel exclusive scan on the LDS
-
-	int currentSegmentSum = ldsScanExclusive( blockBuffer, SCAN_WG_SIZE );
-
-	__syncthreads();
-
-	// Sync all the Workgroups to calculate the global offset.
-
-	__shared__ int currentGlobalOffset;
-	WorkgroupSync( threadIdx.x, blockIdx.x, currentSegmentSum, &currentGlobalOffset, gPartialSum, gIsReady );
-
-	// Write back the result.
-
-	gHistogram[blockIdx.x * blockDim.x + threadIdx.x] = blockBuffer[threadIdx.x] + currentGlobalOffset;
-}
-
-template<bool KEY_VALUE_PAIR>
-__device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int numberOfInputs, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
-{
-	__shared__ u32 globalOffset[BIN_SIZE];
-	__shared__ u32 localPrefixSum[BIN_SIZE];
-	__shared__ u32 counters[BIN_SIZE];
-
-	__shared__ u32 matchMasks[SORT_NUM_WARPS_PER_BLOCK][BIN_SIZE];
-
-	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+	for( uint32_t offset = 1; offset < NThreads; offset <<= 1 )
 	{
-		// Note: The size of gHistogram is always BIN_SIZE * N_WGS_EXECUTED
-		globalOffset[i] = gHistogram[i * N_WGS_EXECUTED + blockIdx.x];
+		uint32_t x = sMemIO[threadIdx.x];
 
-		counters[i] = 0;
-		localPrefixSum[i] = 0;
-	}
-
-	for( int w = 0; w < SORT_NUM_WARPS_PER_BLOCK; ++w )
-	{
-		for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
+		if( offset <= threadIdx.x )
 		{
-			matchMasks[w][i] = 0;
+			x += sMemIO[threadIdx.x - offset];
 		}
-	}
-
-	__syncthreads();
-
-	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
-	{
-		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
-		if( itemIndex < numberOfInputs )
-		{
-			const auto item = gSrcKey[itemIndex];
-			const u32 bucketIndex = getMaskedBits( item, START_BIT );
-			atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
-		}
-	}
-
-	__syncthreads();
-
-	// Compute Prefix Sum
-
-	ldsScanExclusive( localPrefixSum, BIN_SIZE );
-
-	__syncthreads();
-
-	// Reorder
-
-	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
-	{
-		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
-
-		const auto item = gSrcKey[itemIndex];
-		const u32 bucketIndex = getMaskedBits( item, START_BIT );
-
-		const int warp = threadIdx.x / 32;
-		const int lane = threadIdx.x % 32;
 
 		__syncthreads();
+
+		sMemIO[threadIdx.x] = x;
+
+		__syncthreads();
+	}
+	uint32_t sum = sMemIO[NThreads - 1];
+
+	__syncthreads();
+
+	sMemIO[threadIdx.x] += prefix - value;
+
+	__syncthreads();
+
+	return sum;
+}
+
+extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t numberOfInputs, uint32_t* gpSumBuffer, uint32_t startBits, uint32_t* counter )
+{
+	__shared__ uint32_t localCounters[sizeof( RADIX_SORT_KEY_TYPE )][256];
+
+	for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+	{
+		for( int j = threadIdx.x; j < 256; j += GHISTOGRAM_THREADS_PER_BLOCK )
+		{
+			localCounters[i][j] = 0;
+		}
+	}
+
+	__syncthreads();
+
+	uint32_t numberOfBlocks = div_round_up( numberOfInputs, GHISTOGRAM_ITEM_PER_BLOCK );
+	__shared__ uint32_t iBlock;
+	if( threadIdx.x == 0 )
+	{
+		iBlock = atomicInc( counter, 0xFFFFFFFF );
+	}
+
+	__syncthreads();
+
+	bool hasData = false;
+
+	while( iBlock < numberOfBlocks )
+	{
+		hasData = true;
+
+#if defined( KEY_IS_16BYTE_ALIGNED )
+		if( ( iBlock + 1 ) * GHISTOGRAM_ITEM_PER_BLOCK <= numberOfInputs )
+		{
+			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK * 4 )
+			{
+				uint32_t itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i + threadIdx.x * 4;
+				struct alignas( 16 ) Key4
+				{
+					RADIX_SORT_KEY_TYPE xs[4];
+				};
+				Key4 key4 = *(Key4*)&inputs[itemIndex];
+				for( int k = 0; k < 4; k++ )
+				{
+					auto item = key4.xs[k];
+					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+					{
+						uint32_t bitLocation = startBits + i * 8;
+						uint32_t bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
+					}
+				}
+			}
+		}
+		else
+#endif
+			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
+			{
+				uint32_t itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x + i;
+				if( itemIndex < numberOfInputs )
+				{
+					auto item = inputs[itemIndex];
+					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+					{
+						uint32_t bitLocation = startBits + i * 8;
+						uint32_t bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
+					}
+				}
+			}
+
+		__syncthreads();
+
+		if( threadIdx.x == 0 )
+		{
+			iBlock = atomicInc( counter, 0xFFFFFFFF );
+		}
+
+		__syncthreads();
+	}
+
+	if( hasData )
+	{
+		__syncthreads();
+
+		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+		{
+			for( int j = threadIdx.x; j < 256; j += GHISTOGRAM_THREADS_PER_BLOCK )
+			{
+				atomicAdd( &gpSumBuffer[256 * i + j], localCounters[i][j] );
+			}
+		}
+	}
+}
+
+extern "C" __global__ void gPrefixSum( uint32_t* gpSumBuffer )
+{
+	__shared__ uint32_t smem[256];
+
+	smem[threadIdx.x] = gpSumBuffer[blockIdx.x * 256 + threadIdx.x];
+
+	__syncthreads();
+
+	prefixSumExclusive<256>( 0, smem );
+
+	gpSumBuffer[blockIdx.x * 256 + threadIdx.x] = smem[threadIdx.x];
+}
+
+template<class TLookBack>
+__device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
+												  volatile TLookBack* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+{
+	struct ElementLocation
+	{
+		uint32_t localSrcIndex : 12;
+		uint32_t localOffset : 12;
+		uint32_t bucket : 8;
+	};
+
+	__shared__ uint32_t pSum[256];
+	__shared__ uint32_t localPrefixSum[256];
+	__shared__ uint32_t counters[256];
+	__shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
+	__shared__ uint8_t elementBuckets[RADIX_SORT_BLOCK_SIZE];
+	__shared__ uint32_t matchMasks[REORDER_NUMBER_OF_WARPS][256];
+
+	uint32_t bitLocation = startBits + 8 * iteration;
+	uint32_t blockIndex = blockIdx.x;
+	uint32_t numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
+
+	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, uint32_t>( localPrefixSum, 0 );
+	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, uint32_t>( counters, 0 );
+
+	for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
+	{
+		for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		{
+			matchMasks[w][i + threadIdx.x] = 0;
+		}
+	}
+
+	__syncthreads();
+
+	// count
+#if defined( KEY_IS_16BYTE_ALIGNED )
+	if( ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs )
+	{
+		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK * 4 )
+		{
+			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x * 4;
+			struct alignas( 16 ) Key4
+			{
+				RADIX_SORT_KEY_TYPE xs[4];
+			};
+			Key4 key4 = *(Key4*)&inputKeys[itemIndex];
+			for( int k = 0; k < 4; k++ )
+			{
+				auto item = key4.xs[k];
+				uint32_t bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
+				elementBuckets[i + threadIdx.x * 4 + k] = bucketIndex;
+			}
+		}
+	}
+	else
+#endif
+	{
+		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		{
+			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			if( itemIndex < numberOfInputs )
+			{
+				auto item = inputKeys[itemIndex];
+				uint32_t bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
+
+				elementBuckets[i + threadIdx.x] = bucketIndex;
+			}
+		}
+	}
+
+	__syncthreads();
+
+	// Look back
+	for( int i = threadIdx.x; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	{
+		uint32_t s = localPrefixSum[i];
+		partitionStoreA( &lookBackBuffer[256 * blockIdx.x + i], s );
+		uint32_t gp = gpSumBuffer[iteration * 256 + i];
+
+		uint32_t p = 0;
+
+		for( int iBlock = (int)blockIdx.x - 1; 0 <= iBlock; iBlock-- )
+		{
+			TLookBack counter = lookBackBuffer[256 * iBlock + i];
+			while( partitionIsX( counter ) )
+			{
+				counter = lookBackBuffer[256 * iBlock + i];
+			}
+
+			uint32_t value = partitionGetValue( counter );
+			p += value;
+			if( partitionIsP( counter ) )
+			{
+				break;
+			}
+		}
+
+		partitionStoreP( &lookBackBuffer[256 * blockIdx.x + i], p + s );
+
+		// complete global output location
+		pSum[i] = gp + p;
+	}
+
+	uint32_t prefix = 0;
+	for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	{
+		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &localPrefixSum[i] );
+	}
+
+	// reorder
+	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	{
+		uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+		uint32_t bucketIndex = elementBuckets[i + threadIdx.x];
+
+		__syncthreads();
+
+		int warp = threadIdx.x / 32;
+		int lane = threadIdx.x % 32;
 
 		if( itemIndex < numberOfInputs )
 		{
@@ -702,24 +1111,27 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 		bool flushMask = false;
 
-		u32 localOffset = 0;
-		u32 localSrcIndex = 0;
-
 		if( itemIndex < numberOfInputs )
 		{
-			const u32 matchMask = matchMasks[warp][bucketIndex];
-			const u32 lowerMask = ( 1u << lane ) - 1;
-			u32 offset = __popc( matchMask & lowerMask );
+			uint32_t matchMask = matchMasks[warp][bucketIndex];
+			uint32_t lowerMask = ( 1u << lane ) - 1;
+			uint32_t offset = __popc( matchMask & lowerMask );
 
-			flushMask = ( offset == 0 );
+			flushMask = offset == 0;
 
-			for( int w = 0; w < warp; ++w )
+			for( int w = 0; w < warp; w++ )
 			{
 				offset += __popc( matchMasks[w][bucketIndex] );
 			}
 
-			localOffset = counters[bucketIndex] + offset;
-			localSrcIndex = i;
+			uint32_t localOffset = counters[bucketIndex] + offset;
+			uint32_t to = localOffset + localPrefixSum[bucketIndex];
+
+			ElementLocation el;
+			el.localSrcIndex = i + threadIdx.x;
+			el.localOffset = localOffset;
+			el.bucket = bucketIndex;
+			elementLocations[to] = el;
 		}
 
 		__syncthreads();
@@ -728,34 +1140,57 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 		{
 			atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
 		}
-
 		if( flushMask )
 		{
 			matchMasks[warp][bucketIndex] = 0;
 		}
+	}
 
-		// Swap
-
+	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	{
+		uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
 		if( itemIndex < numberOfInputs )
 		{
-			const u32 srcIndex = blockIdx.x * gNItemsPerWG + localSrcIndex;
-			const u32 dstIndex = globalOffset[bucketIndex] + localOffset;
-			gDstKey[dstIndex] = gSrcKey[srcIndex];
+			ElementLocation el = elementLocations[i + threadIdx.x];
+			uint32_t srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
+			uint8_t bucketIndex = el.bucket;
 
-			if constexpr( KEY_VALUE_PAIR )
+			uint32_t dstIndex = pSum[bucketIndex] + el.localOffset;
+			outputKeys[dstIndex] = inputKeys[srcIndex];
+		}
+	}
+	if( keyPair )
+	{
+		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		{
+			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			if( itemIndex < numberOfInputs )
 			{
-				gDstVal[dstIndex] = gSrcVal[srcIndex];
+				ElementLocation el = elementLocations[i + threadIdx.x];
+				uint32_t srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
+				uint8_t bucketIndex = el.bucket;
+
+				uint32_t dstIndex = pSum[bucketIndex] + el.localOffset;
+				outputValues[dstIndex] = inputValues[srcIndex];
 			}
 		}
 	}
 }
-
-extern "C" __global__ void SortKernel( int* gSrcKey, int* gDstKey, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+extern "C" __global__ void onesweep_reorderKey( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint32_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
 {
-	SortImpl<false>( gSrcKey, nullptr, gDstKey, nullptr, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
+	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
 }
-
-extern "C" __global__ void SortKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int* gHistogram, int gN, int gNItemsPerWG, const int START_BIT, const int N_WGS_EXECUTED )
+extern "C" __global__ void onesweep_reorderKeyPair( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
+													volatile uint32_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
 {
-	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
+	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
+}
+extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+{
+	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
+}
+extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
+													  volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+{
+	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
 }
