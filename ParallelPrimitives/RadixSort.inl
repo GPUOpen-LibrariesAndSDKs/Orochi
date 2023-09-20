@@ -36,6 +36,25 @@ constexpr void execute( CallableType&& callable, RecordType& time_record, const 
 		time_record[index] = stopwatch.getMs();
 	}
 }
+
+template<bool enable_profile, typename T>
+void resize_record( T& t ) noexcept
+{
+	if constexpr( enable_profile )
+	{
+		t.resize( 3 );
+	}
+}
+
+template<bool enable_profile, typename T>
+void print_record( const T& t ) noexcept
+{
+	if constexpr( enable_profile )
+	{
+		printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
+	}
+}
+
 } // namespace
 
 template<class T>
@@ -73,10 +92,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 	using RecordType = std::conditional_t<enable_profile, std::vector<float>, Empty>;
 	RecordType t;
 
-	if constexpr( enable_profile )
-	{
-		t.resize( 3 );
-	}
+	resize_record<enable_profile>( t );
 
 	const auto launch_count_kernel = [&]() noexcept
 	{
@@ -95,7 +111,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		{
 		case ScanAlgo::SCAN_CPU:
 		{
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 		}
 		break;
 
@@ -116,7 +132,7 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		break;
 
 		default:
-			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 			break;
 		}
 	};
@@ -143,8 +159,5 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 
 	execute<enable_profile>( launch_sort_kernel, t, 2, stream );
 
-	if constexpr( enable_profile )
-	{
-		printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
-	}
+	print_record<enable_profile>( t );
 }

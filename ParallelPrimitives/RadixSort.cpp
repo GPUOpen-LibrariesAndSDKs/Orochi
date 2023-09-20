@@ -56,26 +56,13 @@ void printKernelInfo( const std::string& name, oroFunction func )
 namespace Oro
 {
 
-RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils ) : m_device{ device }, m_oroutils{ oroutils }
+RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
 {
 	oroGetDeviceProperties( &m_props, device );
-
-	m_num_threads_per_block_for_count = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_COUNT_BLOCK_SIZE;
-	m_num_threads_per_block_for_scan = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SCAN_BLOCK_SIZE;
-	m_num_threads_per_block_for_sort = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SORT_BLOCK_SIZE;
-
-	const auto warp_size = ( m_props.warpSize != 0 ) ? m_props.warpSize : DEFAULT_WARP_SIZE;
-
-	m_num_warps_per_block_for_sort = m_num_threads_per_block_for_sort / warp_size;
-
-	assert( m_num_threads_per_block_for_count % warp_size == 0 );
-	assert( m_num_threads_per_block_for_scan % warp_size == 0 );
-	assert( m_num_threads_per_block_for_sort % warp_size == 0 );
-
-	configure();
+	configure( kernelPath, includeDir );
 }
 
-void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu, oroStream stream ) const noexcept
+void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu ) const noexcept
 {
 	const auto buffer_size = countsGpu.size();
 
@@ -123,10 +110,30 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 		binaryPath = getCurrentDir();
 		binaryPath += isAmd ? "oro_compiled_kernels.hipfb" : "oro_compiled_kernels.fatbin";
 		log = "loading pre-compiled kernels at path : " + binaryPath;
+
+		m_num_threads_per_block_for_count = DEFAULT_COUNT_BLOCK_SIZE;
+		m_num_threads_per_block_for_scan = DEFAULT_SCAN_BLOCK_SIZE;
+		m_num_threads_per_block_for_sort = DEFAULT_SORT_BLOCK_SIZE;
+
+		const auto warp_size = DEFAULT_WARP_SIZE;
+
+		m_num_warps_per_block_for_sort = m_num_threads_per_block_for_sort / warp_size;
 	}
 	else
 	{
 		log = "compiling kernels at path : " + currentKernelPath + " in : " + currentIncludeDir;
+
+		m_num_threads_per_block_for_count = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_COUNT_BLOCK_SIZE;
+		m_num_threads_per_block_for_scan = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SCAN_BLOCK_SIZE;
+		m_num_threads_per_block_for_sort = m_props.maxThreadsPerBlock > 0 ? m_props.maxThreadsPerBlock : DEFAULT_SORT_BLOCK_SIZE;
+
+		const auto warp_size = ( m_props.warpSize != 0 ) ? m_props.warpSize : DEFAULT_WARP_SIZE;
+
+		m_num_warps_per_block_for_sort = m_num_threads_per_block_for_sort / warp_size;
+
+		assert( m_num_threads_per_block_for_count % warp_size == 0 );
+		assert( m_num_threads_per_block_for_scan % warp_size == 0 );
+		assert( m_num_threads_per_block_for_sort % warp_size == 0 );
 	}
 
 	if( m_flags == Flag::LOG )
@@ -135,13 +142,15 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	}
 
 	const auto includeArg{ "-I" + currentIncludeDir };
-	const auto count_block_size_param = "-DCOUNT_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_count );
-	const auto scan_block_size_param = "-DSCAN_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_scan );
-	const auto sort_block_size_param = "-DSORT_WG_SIZE=" + std::to_string( m_num_threads_per_block_for_sort );
-	const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK=" + std::to_string( m_num_warps_per_block_for_sort );
+	const auto overwrite_flag = "-DOVERWRITE";
+	const auto count_block_size_param = "-DCOUNT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_count );
+	const auto scan_block_size_param = "-DSCAN_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_scan );
+	const auto sort_block_size_param = "-DSORT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_sort );
+	const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK_VAL=" + std::to_string( m_num_warps_per_block_for_sort );
 
 	std::vector<const char*> opts;
 	opts.push_back( includeArg.c_str() );
+	opts.push_back( overwrite_flag );
 	opts.push_back( count_block_size_param.c_str() );
 	opts.push_back( scan_block_size_param.c_str() );
 	opts.push_back( sort_block_size_param.c_str() );
@@ -210,7 +219,7 @@ int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 	return number_of_blocks;
 }
 
-void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
+void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 
