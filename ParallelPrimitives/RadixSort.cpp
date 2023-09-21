@@ -294,13 +294,15 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	void* gpSumBuffer = m_tmpBuffer.ptr();
 	void* lookBackBuffer = (void*)( m_tmpBuffer.ptr() + sizeof( u32 ) * 256 * sizeof( u32 /* key type */ ) );
 
+	// counter for gHistogram. 
+	void* counter = (uint8_t*)lookBackBuffer + ( 256 * LOOKBACK_TABLE_SIZE ) + sizeof( uint32_t );
+
 	{
-		oroMemsetD32Async( (oroDeviceptr)gpSumBuffer, 0, 256 * sizeof( u32 /* key */ ), stream );
-		oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, 1, stream );
+		oroMemsetD32Async( (oroDeviceptr)m_tmpBuffer.ptr(), 0, m_tmpBuffer.size() / 4, stream );
 
 		const int nBlocks = 2048;
 
-		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &lookBackBuffer };
+		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &counter };
 		OrochiUtils::launch1D( m_gHistogram, nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );
 	}
 	{
@@ -312,7 +314,10 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	auto d = dst;
 	for( int i = 0; i < nIteration; i++ )
 	{
-		oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, ( 256 * LOOKBACK_TABLE_SIZE + 1 ) * sizeof( uint64_t ) / 4, stream );
+		if( numberOfBlocks < LOOKBACK_TABLE_SIZE * 2 )
+		{
+			oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, ( 256 * LOOKBACK_TABLE_SIZE ) * sizeof( uint64_t ) / 4, stream );
+		} // other wise, we can skip zero clear look back buffer
 
 		if( keyPair )
 		{

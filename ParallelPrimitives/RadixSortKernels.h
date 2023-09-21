@@ -764,7 +764,6 @@ extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, i
 #define RADIX_SORT_VALUE_TYPE u32
 #define KEY_IS_16BYTE_ALIGNED 1
 
-
 typedef unsigned long long uint64_t;
 typedef unsigned int uint32_t;
 typedef unsigned short uint16_t;
@@ -1121,7 +1120,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		while( ( atomicAdd( gTailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
 			;
 
-		atomicInc( gTailIterator, 0xFFFFFFFF );
+		atomicInc( gTailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
 	}
 
 	// reorder
