@@ -641,6 +641,12 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 	__shared__ u32 matchMasks[SORT_NUM_WARPS_PER_BLOCK][BIN_SIZE];
 
+	__shared__ u32 tmpSrcKey[SORT_WG_SIZE];
+	__shared__ u32 tmpSrcVal[KEY_VALUE_PAIR ? SORT_WG_SIZE : 1];
+
+	const int startOffset = blockIdx.x * gNItemsPerWG;
+	const int upperBound = ( startOffset + gNItemsPerWG > numberOfInputs ) ? numberOfInputs - startOffset : gNItemsPerWG;
+
 	for( int i = threadIdx.x; i < BIN_SIZE; i += SORT_WG_SIZE )
 	{
 		// Note: The size of gHistogram is always BIN_SIZE * N_WGS_EXECUTED
@@ -660,15 +666,13 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 	__syncthreads();
 
-	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+	for( int i = threadIdx.x; i < upperBound; i += SORT_WG_SIZE )
 	{
 		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
-		if( itemIndex < numberOfInputs )
-		{
-			const auto item = gSrcKey[itemIndex];
-			const u32 bucketIndex = getMaskedBits( item, START_BIT );
-			atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
-		}
+
+		const auto item = gSrcKey[itemIndex];
+		const u32 bucketIndex = getMaskedBits( item, START_BIT );
+		atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 	}
 
 	__syncthreads();
@@ -681,11 +685,20 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 	// Reorder
 
-	for( int i = threadIdx.x; i < gNItemsPerWG; i += SORT_WG_SIZE )
+	for( int i = threadIdx.x; i < upperBound; i += SORT_WG_SIZE )
 	{
 		const u32 itemIndex = blockIdx.x * gNItemsPerWG + i;
 
 		const auto item = gSrcKey[itemIndex];
+
+		// cache the keys and values
+
+		tmpSrcKey[threadIdx.x] = item;
+		if constexpr( KEY_VALUE_PAIR )
+		{
+			tmpSrcVal[threadIdx.x] = gSrcVal[blockIdx.x * gNItemsPerWG + i];
+		}
+
 		const u32 bucketIndex = getMaskedBits( item, START_BIT );
 
 		const int warp = threadIdx.x / 32;
@@ -693,41 +706,29 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 		__syncthreads();
 
-		if( itemIndex < numberOfInputs )
-		{
-			atomicOr( &matchMasks[warp][bucketIndex], 1u << lane );
-		}
+		atomicOr( &matchMasks[warp][bucketIndex], 1u << lane );
 
 		__syncthreads();
 
 		bool flushMask = false;
 
-		u32 localOffset = 0;
-		u32 localSrcIndex = 0;
+		const u32 matchMask = matchMasks[warp][bucketIndex];
+		const u32 lowerMask = ( 1u << lane ) - 1;
+		u32 offset = __popc( matchMask & lowerMask );
 
-		if( itemIndex < numberOfInputs )
+		flushMask = ( offset == 0 );
+
+		for( int w = 0; w < warp; ++w )
 		{
-			const u32 matchMask = matchMasks[warp][bucketIndex];
-			const u32 lowerMask = ( 1u << lane ) - 1;
-			u32 offset = __popc( matchMask & lowerMask );
-
-			flushMask = ( offset == 0 );
-
-			for( int w = 0; w < warp; ++w )
-			{
-				offset += __popc( matchMasks[w][bucketIndex] );
-			}
-
-			localOffset = counters[bucketIndex] + offset;
-			localSrcIndex = i;
+			offset += __popc( matchMasks[w][bucketIndex] );
 		}
+
+		const u32 localOffset = counters[bucketIndex] + offset;
+		const u32 tmpSrcIndex = i % SORT_WG_SIZE;
 
 		__syncthreads();
 
-		if( itemIndex < numberOfInputs )
-		{
-			atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
-		}
+		atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
 
 		if( flushMask )
 		{
@@ -736,16 +737,15 @@ __device__ void SortImpl( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal
 
 		// Swap
 
-		if( itemIndex < numberOfInputs )
-		{
-			const u32 srcIndex = blockIdx.x * gNItemsPerWG + localSrcIndex;
-			const u32 dstIndex = globalOffset[bucketIndex] + localOffset;
-			gDstKey[dstIndex] = gSrcKey[srcIndex];
+		__threadfence_block();
 
-			if constexpr( KEY_VALUE_PAIR )
-			{
-				gDstVal[dstIndex] = gSrcVal[srcIndex];
-			}
+		const u32 dstIndex = globalOffset[bucketIndex] + localOffset;
+
+		gDstKey[dstIndex] = tmpSrcKey[tmpSrcIndex];
+
+		if constexpr( KEY_VALUE_PAIR )
+		{
+			gDstVal[dstIndex] = tmpSrcVal[tmpSrcIndex];
 		}
 	}
 }
