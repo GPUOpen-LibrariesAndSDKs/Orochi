@@ -50,9 +50,9 @@ static_assert( DEFAULT_SCAN_BLOCK_SIZE % DEFAULT_WARP_SIZE == 0 );
 #define REORDER_NUMBER_OF_WARPS 8
 #define REORDER_NUMBER_OF_THREADS_PER_BLOCK ( 32 * REORDER_NUMBER_OF_WARPS )
 
-#define MAX_ELEMENTS_WITH_32BIT_COUNTER 0x3FFFFFFF
-
-// Please uncomment this enforce 64bit counter for lookback counter to measure performance impact.
-// #define ENFORCE_64BIT_COUNTER 1
+#define LOOKBACK_TABLE_SIZE ( 1024 )
+#define MAX_LOOK_BACK 32
+#define TAIL_BITS 4
+#define TAIL_COUNT ( 1u << TAIL_BITS )
 
 }; // namespace Oro

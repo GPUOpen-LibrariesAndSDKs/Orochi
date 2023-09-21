@@ -43,11 +43,10 @@ class RadixSort final
 
 	void setFlag( Flag flag ) noexcept;
 
-	void sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, void* tempStorage, oroStream stream = 0 ) noexcept;
+	void sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, oroStream stream = 0 ) noexcept;
 
-	void sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, void* tempStorage, oroStream stream = 0 ) noexcept;
+	void sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, oroStream stream = 0 ) noexcept;
 
-	uint64_t getRequiredTemporalStorageBytes( u32 numberOfMaxInputs ) const;
   private:
 	//template<class T>
 	//void sort1pass( const T src, const T dst, int n, int startBit, int endBit, oroStream stream ) noexcept;
@@ -121,10 +120,10 @@ class RadixSort final
 
 	oroFunction m_gHistogram;
 	oroFunction m_gPrefixSum;
-	oroFunction m_onesweep_reorderKey;
-	oroFunction m_onesweep_reorderKeyPair;
 	oroFunction m_onesweep_reorderKey64;
 	oroFunction m_onesweep_reorderKeyPair64;
+
+	GpuMemory<uint8_t> m_tmpBuffer;
 };
 
 //#include <ParallelPrimitives/RadixSort.inl>

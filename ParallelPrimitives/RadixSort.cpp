@@ -200,8 +200,6 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 #define LOAD_FUNC( var, kernel ) var = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), kernel, &opts );
 	LOAD_FUNC( m_gHistogram, "gHistogram" );
 	LOAD_FUNC( m_gPrefixSum, "gPrefixSum" );
-	LOAD_FUNC( m_onesweep_reorderKey, "onesweep_reorderKey" );
-	LOAD_FUNC( m_onesweep_reorderKeyPair, "onesweep_reorderKeyPair" );
 	LOAD_FUNC( m_onesweep_reorderKey64, "onesweep_reorderKey64" );
 	LOAD_FUNC( m_onesweep_reorderKeyPair64, "onesweep_reorderKeyPair64" );
 #undef LOAD_FUNC
@@ -240,6 +238,10 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 {
 	compileKernels( kernelPath, includeDir );
 
+	u64 gpSumBuffer = sizeof( u32 ) * 256 * sizeof( u32 /* key type */ );
+	u64 lookBackBuffer = next_multiple64( sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE + 1 ), 16 );
+	m_tmpBuffer.resize( gpSumBuffer + lookBackBuffer );
+
 	//m_num_blocks_for_count = calculateWGsToExecute( m_num_threads_per_block_for_count );
 
 	///// The tmp buffer size of the count kernel and the scan kernel.
@@ -262,7 +264,7 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }
 
-void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, void* tempStorage, oroStream stream ) noexcept
+void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept
 {
 	bool keyPair = src.value != nullptr;
 
@@ -286,17 +288,11 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	}
 
 	int nIteration = div_round_up64( endBit - startBit, 8 );
-	bool use64bitCounter =
-#if defined( ENFORCE_64BIT_COUNTER )
-		true;
-#else
-		MAX_ELEMENTS_WITH_32BIT_COUNTER < n;
-#endif
 	uint64_t numberOfBlocks = div_round_up64( n, RADIX_SORT_BLOCK_SIZE );
 
 	// Buffers
-	void* gpSumBuffer = tempStorage;
-	void* lookBackBuffer = (void*)( (char*)tempStorage + sizeof( uint32_t ) * 256 * sizeof( u32 /* key */ ) );
+	void* gpSumBuffer = m_tmpBuffer.ptr();
+	void* lookBackBuffer = (void*)( m_tmpBuffer.ptr() + sizeof( u32 ) * 256 * sizeof( u32 /* key type */ ) );
 
 	{
 		oroMemsetD32Async( (oroDeviceptr)gpSumBuffer, 0, 256 * sizeof( u32 /* key */ ), stream );
@@ -316,17 +312,17 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	auto d = dst;
 	for( int i = 0; i < nIteration; i++ )
 	{
-		oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, 256 * numberOfBlocks * ( use64bitCounter ? 2 : 1 ), stream );
+		oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, ( 256 * LOOKBACK_TABLE_SIZE + 1 ) * sizeof( uint64_t ) / 4, stream );
 
 		if( keyPair )
 		{
 			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, &gpSumBuffer, &lookBackBuffer, &startBit, &i };
-			OrochiUtils::launch1D( use64bitCounter ? m_onesweep_reorderKeyPair64 : m_onesweep_reorderKeyPair, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
+			OrochiUtils::launch1D( m_onesweep_reorderKeyPair64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		else
 		{
 			const void* args[] = { &s.key, &d.key, &n, &gpSumBuffer, &lookBackBuffer, &startBit, &i };
-			OrochiUtils::launch1D( use64bitCounter ? m_onesweep_reorderKey64 : m_onesweep_reorderKey, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
+			OrochiUtils::launch1D( m_onesweep_reorderKey64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		std::swap( s, d );
 	}
@@ -342,23 +338,8 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	}
 }
 
-void RadixSort::sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, void* tempStorage, oroStream stream ) noexcept
+void RadixSort::sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept
 {
-	sort( KeyValueSoA{ src, nullptr }, KeyValueSoA{ dst, nullptr }, n, startBit, endBit, tempStorage, stream );
-}
-
-uint64_t RadixSort::getRequiredTemporalStorageBytes( u32 numberOfMaxInputs ) const
-{
-	static_assert( BIN_SIZE == 256, "check alignment of the buffers" );
-	uint64_t numberOfBlocks = div_round_up64( numberOfMaxInputs, RADIX_SORT_BLOCK_SIZE );
-	uint64_t gpSumBuffer = sizeof( uint32_t ) * 256 * sizeof( u32 /* key */ );
-	uint64_t lookBackBuffer = sizeof( uint32_t ) * 256 * numberOfBlocks;
-#if !defined( ENFORCE_64BIT_COUNTER )
-	if( MAX_ELEMENTS_WITH_32BIT_COUNTER < numberOfMaxInputs )
-#endif
-	{
-		lookBackBuffer *= 2; // to 64bit counter
-	}
-	return gpSumBuffer + lookBackBuffer;
+	sort( KeyValueSoA{ src, nullptr }, KeyValueSoA{ dst, nullptr }, n, startBit, endBit, stream );
 }
 }; // namespace Oro

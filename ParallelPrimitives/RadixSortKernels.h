@@ -777,28 +777,11 @@ typedef unsigned char uint8_t;
 //
 //#define REORDER_NUMBER_OF_WARPS 8
 //#define REORDER_NUMBER_OF_THREADS_PER_BLOCK ( 32 * REORDER_NUMBER_OF_WARPS )
-
-#define PARTITIOIN_BIT_A 0x80000000
-#define PARTITIOIN_BIT_P 0x40000000
-#define PARTITIOIN_FLAG_MASK ( PARTITIOIN_BIT_A | PARTITIOIN_BIT_P )
-#define PARTITIOIN_VALUE_MASK 0x3FFFFFFF
-
-#define PARTITIOIN_BIT_A_64 0x8000000000000000llu
-#define PARTITIOIN_BIT_P_64 0x4000000000000000llu
-#define PARTITIOIN_FLAG_MASK_64 ( PARTITIOIN_BIT_A_64 | PARTITIOIN_BIT_P_64 )
-#define PARTITIOIN_VALUE_MASK_64 0x3FFFFFFFFFFFFFFFllu
-
-__device__ inline void partitionStoreA( volatile uint32_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_A | x; }
-__device__ inline void partitionStoreA( volatile uint64_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_A_64 | x; }
-__device__ inline void partitionStoreP( volatile uint32_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_P | x; }
-__device__ inline void partitionStoreP( volatile uint64_t* to, uint32_t x ) { *to = PARTITIOIN_BIT_P_64 | x; }
-__device__ inline bool partitionIsX( uint32_t x ) { return ( x & PARTITIOIN_FLAG_MASK ) == 0; }
-__device__ inline bool partitionIsX( uint64_t x ) { return ( x & PARTITIOIN_FLAG_MASK_64 ) == 0; }
-__device__ inline bool partitionIsP( uint32_t x ) { return ( x & PARTITIOIN_BIT_P ) != 0; }
-__device__ inline bool partitionIsP( uint64_t x ) { return ( x & PARTITIOIN_BIT_P_64 ) != 0; }
-
-__device__ inline uint32_t partitionGetValue( uint32_t x ) { return x & PARTITIOIN_VALUE_MASK; }
-__device__ inline uint32_t partitionGetValue( uint64_t x ) { return static_cast<uint32_t>( x & PARTITIOIN_VALUE_MASK_64 ); }
+//
+//#define LOOKBACK_TABLE_SIZE ( 1024 )
+//#define MAX_LOOK_BACK 32
+//#define TAIL_BITS 4
+//#define TAIL_COUNT ( 1u << TAIL_BITS )
 
 #if defined( DESCENDING_ORDER )
 #define ORDER_MASK_32 0xFFFFFFFF
@@ -979,9 +962,8 @@ extern "C" __global__ void gPrefixSum( uint32_t* gpSumBuffer )
 	gpSumBuffer[blockIdx.x * 256 + threadIdx.x] = smem[threadIdx.x];
 }
 
-template<class TLookBack>
 __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-												  volatile TLookBack* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+												  volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
 {
 	struct ElementLocation
 	{
@@ -1052,34 +1034,77 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 	}
 
+	struct ParitionID
+	{
+		uint64_t value : 32;
+		uint64_t block : 30;
+		uint64_t flag : 2;
+	};
+	auto asPartition = []( uint64_t x )
+	{
+		ParitionID pa;
+		memcpy( &pa, &x, sizeof( ParitionID ) );
+		return pa;
+	};
+	auto asU64 = []( ParitionID pa )
+	{
+		uint64_t x;
+		memcpy( &x, &pa, sizeof( uint64_t ) );
+		return x;
+	};
+
+	uint32_t* gTailIterator = (uint32_t*)( lookBackBuffer + LOOKBACK_TABLE_SIZE * 256 );
+
+	if( threadIdx.x == 0 && LOOKBACK_TABLE_SIZE <= blockIndex )
+	{
+		uint32_t mustBeDone = blockIndex - LOOKBACK_TABLE_SIZE + MAX_LOOK_BACK;
+		while( ( atomicAdd( gTailIterator, 0 ) >> TAIL_BITS ) * TAIL_COUNT <= mustBeDone )
+			;
+	}
 	__syncthreads();
 
-	// Look back
 	for( int i = threadIdx.x; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		uint32_t s = localPrefixSum[i];
-		partitionStoreA( &lookBackBuffer[256 * blockIdx.x + i], s );
+		int pIndex = 256 * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
+
+		{
+			ParitionID pa;
+			pa.value = s;
+			pa.block = blockIndex;
+			pa.flag = 1;
+			lookBackBuffer[pIndex] = asU64( pa );
+		}
+
 		uint32_t gp = gpSumBuffer[iteration * 256 + i];
 
 		uint32_t p = 0;
 
-		for( int iBlock = (int)blockIdx.x - 1; 0 <= iBlock; iBlock-- )
+		for( int iBlock = (int)blockIndex - 1; 0 <= iBlock; iBlock-- )
 		{
-			TLookBack counter = lookBackBuffer[256 * iBlock + i];
-			while( partitionIsX( counter ) )
+			int lookbackIndex = 256 * ( iBlock % LOOKBACK_TABLE_SIZE ) + i;
+			ParitionID pa;
+			do
 			{
-				counter = lookBackBuffer[256 * iBlock + i];
-			}
+				pa = asPartition( lookBackBuffer[lookbackIndex] );
 
-			uint32_t value = partitionGetValue( counter );
+				// when you reach to the maximum, flag must be 2
+				if( MAX_LOOK_BACK == blockIndex - iBlock && pa.flag != 2 ) continue;
+			} while( pa.flag == 0 || pa.block != iBlock );
+
+			uint32_t value = pa.value;
 			p += value;
-			if( partitionIsP( counter ) )
+			if( pa.flag == 2 )
 			{
 				break;
 			}
 		}
 
-		partitionStoreP( &lookBackBuffer[256 * blockIdx.x + i], p + s );
+		ParitionID pa;
+		pa.value = p + s;
+		pa.block = blockIndex;
+		pa.flag = 2;
+		lookBackBuffer[pIndex] = asU64( pa );
 
 		// complete global output location
 		pSum[i] = gp + p;
@@ -1089,6 +1114,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &localPrefixSum[i] );
+	}
+
+	if( threadIdx.x == 0 )
+	{
+		while( ( atomicAdd( gTailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
+			;
+
+		atomicInc( gTailIterator, 0xFFFFFFFF );
 	}
 
 	// reorder
@@ -1175,15 +1208,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			}
 		}
 	}
-}
-extern "C" __global__ void onesweep_reorderKey( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint32_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
-{
-	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
-}
-extern "C" __global__ void onesweep_reorderKeyPair( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-													volatile uint32_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
-{
-	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
 }
 extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
 {
