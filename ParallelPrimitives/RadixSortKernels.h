@@ -778,7 +778,7 @@ typedef unsigned char uint8_t;
 //#define REORDER_NUMBER_OF_THREADS_PER_BLOCK ( 32 * REORDER_NUMBER_OF_WARPS )
 //
 //#define LOOKBACK_TABLE_SIZE ( 1024 )
-//#define MAX_LOOK_BACK 32
+//#define MAX_LOOK_BACK 64
 //#define TAIL_BITS 4
 //#define TAIL_COUNT ( 1u << TAIL_BITS )
 
@@ -1083,13 +1083,15 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		{
 			int lookbackIndex = 256 * ( iBlock % LOOKBACK_TABLE_SIZE ) + i;
 			ParitionID pa;
+
+			// when you reach to the maximum, flag must be 2. flagRequire = 0b10
+			// Otherwise, flag can be 1 or 2 flagRequire = 0b11
+			int flagRequire = MAX_LOOK_BACK == blockIndex - iBlock ? 2 : 3;
+
 			do
 			{
 				pa = asPartition( lookBackBuffer[lookbackIndex] );
-
-				// when you reach to the maximum, flag must be 2
-				if( MAX_LOOK_BACK == blockIndex - iBlock && pa.flag != 2 ) continue;
-			} while( pa.flag == 0 || pa.block != iBlock );
+			} while( ( pa.flag & flagRequire ) == 0 || pa.block != iBlock );
 
 			uint32_t value = pa.value;
 			p += value;
