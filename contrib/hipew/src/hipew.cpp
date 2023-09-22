@@ -168,8 +168,8 @@ thipEventElapsedTime *hipEventElapsedTime;
 thipFuncGetAttribute *hipFuncGetAttribute;
 thipFuncSetCacheConfig *hipFuncSetCacheConfig;
 thipModuleLaunchKernel *hipModuleLaunchKernel;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessor *hipDrvOccupancyMaxActiveBlocksPerMultiprocessor;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessor* hipModuleOccupancyMaxActiveBlocksPerMultiprocessor;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags* hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
 thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
 thipTexRefSetArray *hipTexRefSetArray;
 thipTexRefSetAddress *hipTexRefSetAddress;
@@ -274,14 +274,13 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
-  const char* hiprtc_paths[] = { 
-                                "hiprtc0514.dll",  
-                                "hiprtc0513.dll",  
-                                "hiprtc0512.dll",  
-                                "hiprtc0511.dll", 
-                                "hiprtc0510.dll",  
-                                "hiprtc0509.dll", 
-                                "hiprtc0508.dll",
+  const char* hiprtc_paths[] = {
+                                "hiprtc0605.dll",
+                                "hiprtc0604.dll",
+                                "hiprtc0603.dll",
+                                "hiprtc0602.dll",
+                                "hiprtc0601.dll",
+                                "hiprtc0600.dll",
                                 "hiprtc0507.dll",  
                                 "hiprtc0506.dll", 
                                 "hiprtc0505.dll", 
@@ -293,8 +292,10 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   const char *hip_paths[] = {"", NULL};
   const char* hiprtc_paths[] = { NULL };
 #else
-  const char *hip_paths[] = {"/opt/rocm/hip/lib/libamdhip64.so", NULL};
-  const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so", NULL };
+  const char *hip_paths[] = { "/opt/rocm/hip/lib/libamdhip64.so",
+                              "/opt/rocm/lib/libamdhip64.so", NULL };
+  const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so",
+                              "/opt/rocm/lib/libhiprtc.so", NULL };
 #endif
   static int initialized = 0;
   static int s_resultDriver = 0;
@@ -439,6 +440,7 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   HIP_LIBRARY_FIND_CHECKED(hipFuncGetAttribute);
   HIP_LIBRARY_FIND_CHECKED(hipFuncSetCacheConfig);
   HIP_LIBRARY_FIND_CHECKED(hipModuleLaunchKernel);
+  HIP_LIBRARY_FIND_CHECKED(hipModuleOccupancyMaxActiveBlocksPerMultiprocessor);
   HIP_LIBRARY_FIND_CHECKED(hipModuleOccupancyMaxPotentialBlockSize);
   HIP_LIBRARY_FIND_CHECKED(hipTexRefSetArray);
   HIP_LIBRARY_FIND_CHECKED(hipTexRefSetAddress);
