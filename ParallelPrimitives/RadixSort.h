@@ -117,6 +117,8 @@ class RadixSort final
 	int m_num_threads_per_block_for_sort{};
 
 	int m_num_warps_per_block_for_sort{};
+
+	int m_warp_size{};
 };
 
 #include <ParallelPrimitives/RadixSort.inl>
