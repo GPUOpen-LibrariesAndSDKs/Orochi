@@ -708,7 +708,7 @@ oroError OROAPI oroEventElapsedTime(float* pMilliseconds, oroEvent hStart, oroEv
 oroError OROAPI oroFuncGetAttribute(int* pi, oroFunction_attribute attrib, oroFunction hfunc);
 //oroError OROAPI oroFuncSetCacheConfig(hipFunction_t hfunc, hipFuncCache_t config);
 oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream hStream, void** kernelParams, void** extra);
-//oroError OROAPI oroDrvOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize);
+oroError OROAPI oroOccupancyMaxActiveBlocksPerMultiprocessor( int* numBlocks, oroFunction func, int blockSize, size_t dynamicSMemSize );
 //oroError OROAPI oroDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags);
 oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, oroFunction 
     

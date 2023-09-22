@@ -168,8 +168,8 @@ thipEventElapsedTime *hipEventElapsedTime;
 thipFuncGetAttribute *hipFuncGetAttribute;
 thipFuncSetCacheConfig *hipFuncSetCacheConfig;
 thipModuleLaunchKernel *hipModuleLaunchKernel;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessor *hipDrvOccupancyMaxActiveBlocksPerMultiprocessor;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessor* hipModuleOccupancyMaxActiveBlocksPerMultiprocessor;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags* hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
 thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
 thipTexRefSetArray *hipTexRefSetArray;
 thipTexRefSetAddress *hipTexRefSetAddress;
@@ -440,6 +440,7 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   HIP_LIBRARY_FIND_CHECKED(hipFuncGetAttribute);
   HIP_LIBRARY_FIND_CHECKED(hipFuncSetCacheConfig);
   HIP_LIBRARY_FIND_CHECKED(hipModuleLaunchKernel);
+  HIP_LIBRARY_FIND_CHECKED(hipModuleOccupancyMaxActiveBlocksPerMultiprocessor);
   HIP_LIBRARY_FIND_CHECKED(hipModuleOccupancyMaxPotentialBlockSize);
   HIP_LIBRARY_FIND_CHECKED(hipTexRefSetArray);
   HIP_LIBRARY_FIND_CHECKED(hipTexRefSetAddress);
