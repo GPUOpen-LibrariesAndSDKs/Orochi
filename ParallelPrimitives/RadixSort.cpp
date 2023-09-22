@@ -295,7 +295,7 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	void* lookBackBuffer = (void*)( m_tmpBuffer.ptr() + sizeof( u32 ) * 256 * sizeof( u32 /* key type */ ) );
 
 	// counter for gHistogram. 
-	void* counter = (uint8_t*)lookBackBuffer + ( 256 * LOOKBACK_TABLE_SIZE ) + sizeof( uint32_t );
+	void* counter = (uint8_t*)lookBackBuffer + ( 256 * LOOKBACK_TABLE_SIZE ) * sizeof( uint64_t ) + sizeof( uint32_t );
 
 	{
 		oroMemsetD32Async( (oroDeviceptr)m_tmpBuffer.ptr(), 0, m_tmpBuffer.size() / 4, stream );
