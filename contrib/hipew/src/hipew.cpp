@@ -196,8 +196,12 @@ thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
 thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 thipGLGetDevices *hipGLGetDevices;
 thipImportExternalMemory *hipImportExternalMemory;
+thipImportExternalSemaphore* hipImportExternalSemaphore;
+thipDestroyExternalSemaphore* hipDestroyExternalSemaphore;
 thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
 thipDestroyExternalMemory *hipDestroyExternalMemory;
+thipSignalExternalSemaphoresAsync* hipSignalExternalSemaphoresAsync;
+thipWaitExternalSemaphoresAsync* hipWaitExternalSemaphoresAsync;
 
 thiprtcGetErrorString* hiprtcGetErrorString;
 thiprtcAddNameExpression* hiprtcAddNameExpression;
@@ -468,10 +472,10 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
   HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
   HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
-  // HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
-  // HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
-  // HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
-  // HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
+  HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
+  HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
+  HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
+  HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
 
   s_resultDriver = HIPEW_SUCCESS;
   *resultDriver = s_resultDriver;

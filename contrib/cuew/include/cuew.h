@@ -155,6 +155,7 @@ typedef struct CUgraphicsResource_st *CUgraphicsResource;
 typedef unsigned long long CUtexObject;
 typedef unsigned long long CUsurfObject;
 typedef struct CUextMemory_st *CUexternalMemory;
+typedef struct CUexternalSemaphore_st* CUexternalSemaphore;
 
 typedef struct CUuuid_st {
   char bytes[16];
@@ -893,6 +894,29 @@ typedef enum CUexternalMemoryHandleType_enum {
     CU_EXTERNAL_MEMORY_HANDLE_TYPE_NVSCIBUF = 8
 } CUexternalMemoryHandleType;
 
+typedef enum CUexternalSemaphoreHandleType_enum {
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD = 1,
+  //Handle is an opaque file descriptor
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32 = 2,
+  //Handle is an opaque shared NT handle
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT = 3,
+  //Handle is an opaque, globally shared handle
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE = 4,
+  //Handle is a shared NT handle referencing a D3D12 fence object
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE = 5,
+  //Handle is a shared NT handle referencing a D3D11 fence object
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC = 6,
+  //Opaque handle to NvSciSync Object
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_KEYED_MUTEX = 7,
+  //Handle is a shared NT handle referencing a D3D11 keyed mutex object
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_KEYED_MUTEX_KMT = 8,
+  //Handle is a globally shared handle referencing a D3D11 keyed mutex object
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINE_SEMAPHORE_FD = 9,
+  //Handle is an opaque file descriptor referencing a timeline semaphore
+  CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINE_SEMAPHORE_WIN32 = 10
+  //Handle is an opaque shared NT handle referencing a timeline semaphore
+} CUexternalSemaphoreHandleType;
+
 /**
  * Indicates that the external memory object is a dedicated resource
  */
@@ -988,6 +1012,153 @@ typedef struct CUDA_EXTERNAL_MEMORY_HANDLE_DESC_st {
 } CUDA_EXTERNAL_MEMORY_HANDLE_DESC_v1;
 typedef CUDA_EXTERNAL_MEMORY_HANDLE_DESC_v1 CUDA_EXTERNAL_MEMORY_HANDLE_DESC;
 
+typedef struct CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC_st {
+  /**
+   * Type of the handle
+   */
+  CUexternalSemaphoreHandleType type;
+  union {
+    /**
+     * File descriptor referencing the memory object. Valid
+     * when type is
+     * 
+     CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINE_SEMAPHORE_FD
+     */
+    int fd;
+    /**
+     * Win32 handle referencing the semaphore object. Valid when
+     * type is one of the following:
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_KEYED_MUTEX
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_TIMELINE_SEMAPHORE_WIN32 Exactly one of 'handle' and 'name' must be non-NULL. If type is one of the following:
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT
+    CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_KEYED_MUTEX_KMT then 'name' must be NULL.
+    **/
+
+    struct {
+      /**
+       * Valid NT handle. Must be NULL if 'name' is non-NULL
+       */
+      void* handle;
+      /**
+       * Name of a valid memory object.
+       * Must be NULL if 'handle' is non-NULL.
+       */
+      const void* name;
+    } win32;
+    const void* nvSciSyncObj;
+  } handle;
+  unsigned int flags;
+  unsigned int reserved[16];
+} CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC_v1;
+typedef CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC_v1 CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC;
+
+
+/**
+ * External semaphore wait parameters
+ */
+typedef struct CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS_st {
+  struct {
+    /**
+     * Parameters for fence objects
+     */
+    struct {
+      /**
+       * Value of fence to be waited on
+       */
+      unsigned long long value;
+    } fence;
+    /**
+     * Pointer to NvSciSyncFence. Valid if CUexternalSemaphoreHandleType
+     * is of type CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC.
+     */
+    union {
+      void* fence;
+      unsigned long long reserved;
+    } nvSciSync;
+    /**
+     * Parameters for keyed mutex objects
+     */
+    struct {
+      /**
+       * Value of key to acquire the mutex with
+       */
+      unsigned long long key;
+      /**
+       * Timeout in milliseconds to wait to acquire the mutex
+       */
+      unsigned int timeoutMs;
+    } keyedMutex;
+    unsigned int reserved[10];
+  } params;
+  /**
+   * Only when ::CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS is used to wait on
+   * a ::CUexternalSemaphore of type ::CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC,
+   * the valid flag is ::CUDA_EXTERNAL_SEMAPHORE_WAIT_SKIP_NVSCIBUF_MEMSYNC
+   * which indicates that while waiting for the ::CUexternalSemaphore, no memory
+   * synchronization operations should be performed for any external memory
+   * object imported as ::CU_EXTERNAL_MEMORY_HANDLE_TYPE_NVSCIBUF.
+   * For all other types of ::CUexternalSemaphore, flags must be zero.
+   */
+  unsigned int flags;
+  unsigned int reserved[16];
+} CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS_v1;
+typedef CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS_v1 CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS;
+
+
+
+/**
+ * External semaphore signal parameters
+ */
+typedef struct CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS_st {
+  struct {
+    /**
+     * Parameters for fence objects
+     */
+    struct {
+      /**
+       * Value of fence to be signaled
+       */
+      unsigned long long value;
+    } fence;
+    union {
+      /**
+       * Pointer to NvSciSyncFence. Valid if ::CUexternalSemaphoreHandleType
+       * is of type ::CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC.
+       */
+      void* fence;
+      unsigned long long reserved;
+    } nvSciSync;
+    /**
+     * Parameters for keyed mutex objects
+     */
+    struct {
+      /**
+       * Value of key to release the mutex with
+       */
+      unsigned long long key;
+    } keyedMutex;
+    unsigned int reserved[12];
+  } params;
+  /**
+   * Only when ::CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS is used to
+   * signal a ::CUexternalSemaphore of type
+   * ::CU_EXTERNAL_SEMAPHORE_HANDLE_TYPE_NVSCISYNC, the valid flag is
+   * ::CUDA_EXTERNAL_SEMAPHORE_SIGNAL_SKIP_NVSCIBUF_MEMSYNC which indicates
+   * that while signaling the ::CUexternalSemaphore, no memory synchronization
+   * operations should be performed for any external memory object imported
+   * as ::CU_EXTERNAL_MEMORY_HANDLE_TYPE_NVSCIBUF.
+   * For all other types of ::CUexternalSemaphore, flags must be zero.
+   */
+  unsigned int flags;
+  unsigned int reserved[16];
+} CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS_v1;
+typedef CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS_v1 CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS;
+
 /**
  * External memory buffer descriptor
  */
@@ -1071,6 +1242,7 @@ typedef CUresult CUDAAPI tcuDeviceGet(CUdevice *device, int ordinal);
 typedef CUresult CUDAAPI tcuDeviceGetCount(int *count);
 typedef CUresult CUDAAPI tcuDeviceGetName(char *name, int len, CUdevice dev);
 typedef CUresult CUDAAPI tcuDeviceGetUuid(CUuuid *uuid, CUdevice dev);
+typedef CUresult CUDAAPI tcuDeviceGetLuid(char* luid, unsigned int* deviceNodeMask, CUdevice dev);
 typedef CUresult CUDAAPI tcuDeviceTotalMem_v2(size_t *bytes, CUdevice dev);
 typedef CUresult CUDAAPI tcuDeviceGetAttribute(int *pi, CUdevice_attribute attrib, CUdevice dev);
 typedef CUresult CUDAAPI tcuDeviceGetProperties(CUdevprop *prop, CUdevice dev);
@@ -1344,8 +1516,12 @@ typedef CUresult CUDAAPI tcuEventSynchronize(CUevent hEvent);
 typedef CUresult CUDAAPI tcuEventDestroy_v2(CUevent hEvent);
 typedef CUresult CUDAAPI tcuEventElapsedTime(float *pMilliseconds, CUevent hStart, CUevent hEnd);
 typedef CUresult CUDAAPI tcuImportExternalMemory(CUexternalMemory *extMem_out, const CUDA_EXTERNAL_MEMORY_HANDLE_DESC *memHandleDesc);
+typedef CUresult CUDAAPI tcuImportExternalSemaphore(CUexternalSemaphore* extSem_out, const CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC* semHandleDesc);
 typedef CUresult CUDAAPI tcuExternalMemoryGetMappedBuffer(CUdeviceptr *devPtr, CUexternalMemory extMem, const CUDA_EXTERNAL_MEMORY_BUFFER_DESC *bufferDesc);
 typedef CUresult CUDAAPI tcuDestroyExternalMemory(CUexternalMemory extMem);
+typedef CUresult CUDAAPI tcuDestroyExternalSemaphore(CUexternalSemaphore extSem);
+typedef CUresult CUDAAPI tcuWaitExternalSemaphoresAsync(const CUexternalSemaphore* extSemArray, const CUDA_EXTERNAL_SEMAPHORE_WAIT_PARAMS* paramsArray, unsigned int numExtSems, CUstream stream);
+typedef CUresult CUDAAPI tcuSignalExternalSemaphoresAsync(const CUexternalSemaphore* extSemArray, const CUDA_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS* paramsArray, unsigned int  numExtSems, CUstream stream);
 typedef CUresult CUDAAPI tcuStreamWaitValue32(CUstream stream,
                                               CUdeviceptr addr,
                                               cuuint32_t value,
@@ -1585,6 +1761,7 @@ extern tcuDeviceGet *cuDeviceGet;
 extern tcuDeviceGetCount *cuDeviceGetCount;
 extern tcuDeviceGetName *cuDeviceGetName;
 extern tcuDeviceGetUuid *cuDeviceGetUuid;
+extern tcuDeviceGetLuid* cuDeviceGetLuid;
 extern tcuDeviceTotalMem_v2 *cuDeviceTotalMem_v2;
 extern tcuDeviceGetAttribute *cuDeviceGetAttribute;
 extern tcuDeviceGetProperties *cuDeviceGetProperties;
@@ -1716,8 +1893,12 @@ extern tcuEventSynchronize *cuEventSynchronize;
 extern tcuEventDestroy_v2 *cuEventDestroy_v2;
 extern tcuEventElapsedTime *cuEventElapsedTime;
 extern tcuImportExternalMemory *cuImportExternalMemory;
+extern tcuImportExternalSemaphore* cuImportExternalSemaphore;
 extern tcuExternalMemoryGetMappedBuffer *cuExternalMemoryGetMappedBuffer;
 extern tcuDestroyExternalMemory *cuDestroyExternalMemory;
+extern tcuDestroyExternalSemaphore* cuDestroyExternalSemaphore;
+extern tcuWaitExternalSemaphoresAsync* cuWaitExternalSemaphoresAsync;
+extern tcuSignalExternalSemaphoresAsync* cuSignalExternalSemaphoresAsync;
 extern tcuStreamWaitValue32 *cuStreamWaitValue32;
 extern tcuStreamWaitValue64 *cuStreamWaitValue64;
 extern tcuStreamWriteValue32 *cuStreamWriteValue32;

@@ -269,11 +269,11 @@ void DX12OroInterop::LoadPipeline() {
 void DX12OroInterop::InitOro() {
   oroApi api = (oroApi)(ORO_API_CUDA | ORO_API_HIP);
   int a = oroInitialize(api, 0);
-  OROASSERT(a == 0);
+  OROASSERT(a == 0, 0);
 
   oroError error = oroSuccess;
   error = oroInit(0);
-  OROASSERT(error == 0);
+  OROASSERT(error == 0, 0);
 
   //gCuDevice;
   char name[100];
@@ -288,7 +288,7 @@ void DX12OroInterop::InitOro() {
   //cuDeviceGetLuid(luId, &m_nodeMask, gOroDevice);
   m_nodeMask = 0; //set manually (no hip access to nodemask. Works when only one device)
   error = oroCtxCreate(&gOroContext, 0, gOroDevice);
-  OROASSERT(error == 0);
+  OROASSERT(error == 0, 0);
 
 #ifdef USE_STREAM
   error = oroStreamCreate(&gOroStream);
