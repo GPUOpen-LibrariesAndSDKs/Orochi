@@ -69,6 +69,7 @@ TEST_F( OroTestBase, kernelExec )
 	int blockCount;
 	OROCHECK( oroOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
 	printf( "%d blocks per multiprocessor\n", blockCount );
+	OROASSERT( 0 < blockCount );
 	const void* args[] = { &a_device };
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
