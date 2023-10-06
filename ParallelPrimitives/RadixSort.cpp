@@ -170,7 +170,16 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 			const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK_VAL=" + std::to_string( m_num_warps_per_block_for_sort );
 
 			std::vector<const char*> opts;
-			opts.push_back( "-ffast-math" );
+
+			if( const std::string device_name = m_props.name; device_name.find( "AMD" ) != std::string::npos )
+			{
+				opts.push_back( "-ffast-math" );
+			}
+			else
+			{
+				opts.push_back( "--use_fast_math" );
+			}
+
 			opts.push_back( includeArg.c_str() );
 			opts.push_back( overwrite_flag );
 			opts.push_back( count_block_size_param.c_str() );
