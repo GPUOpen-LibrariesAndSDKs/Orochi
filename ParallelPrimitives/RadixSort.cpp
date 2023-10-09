@@ -171,13 +171,13 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 
 			std::vector<const char*> opts;
 
-			if( const std::string device_name = m_props.name; device_name.find( "AMD" ) != std::string::npos )
+			if( const std::string device_name = m_props.name; device_name.find( "NVIDIA" ) != std::string::npos )
 			{
-				opts.push_back( "-ffast-math" );
+				opts.push_back( "--use_fast_math" );
 			}
 			else
 			{
-				opts.push_back( "--use_fast_math" );
+				opts.push_back( "-ffast-math" );
 			}
 
 			opts.push_back( includeArg.c_str() );
