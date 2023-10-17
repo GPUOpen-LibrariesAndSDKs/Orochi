@@ -26,6 +26,20 @@ constexpr auto useBitCode = true;
 constexpr auto useBitCode = false;
 #endif
 
+#if defined( ORO_PP_LOAD_FROM_STRING )
+constexpr auto useBakeKernel = true;
+#else
+constexpr auto useBakeKernel = false;
+static const char* hip_RadixSortKernels = nullptr;
+namespace hip
+{
+static const char** RadixSortKernelsArgs = nullptr;
+static const char** RadixSortKernelsIncludes = nullptr;
+} // namespace hip
+#endif
+
+static_assert( !( useBitCode && useBakeKernel ), "useBitCode and useBakeKernel cannot coexist" );
+
 #if !defined( __GNUC__ )
 const HMODULE GetCurrentModule()
 {
@@ -150,47 +164,46 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 		{ "SortKVKernel", Kernel::SORT_KV }, { "SortSinglePassKernel", Kernel::SORT_SINGLE_PASS },		  { "SortSinglePassKVKernel", Kernel::SORT_SINGLE_PASS_KV },
 	};
 
+	const auto includeArg{ "-I" + currentIncludeDir };
+	const auto overwrite_flag = "-DOVERWRITE";
+	const auto count_block_size_param = "-DCOUNT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_count );
+	const auto scan_block_size_param = "-DSCAN_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_scan );
+	const auto sort_block_size_param = "-DSORT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_sort );
+	const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK_VAL=" + std::to_string( m_num_warps_per_block_for_sort );
+
+	std::vector<const char*> opts;
+
+	if( const std::string device_name = m_props.name; device_name.find( "NVIDIA" ) != std::string::npos )
+	{
+		opts.push_back( "--use_fast_math" );
+	}
+	else
+	{
+		opts.push_back( "-ffast-math" );
+	}
+
+	opts.push_back( includeArg.c_str() );
+	opts.push_back( overwrite_flag );
+	opts.push_back( count_block_size_param.c_str() );
+	opts.push_back( scan_block_size_param.c_str() );
+	opts.push_back( sort_block_size_param.c_str() );
+	opts.push_back( sort_num_warps_param.c_str() );
+
 	for( const auto& record : records )
 	{
-#if defined( ORO_PP_LOAD_FROM_STRING )
-		oroFunctions[record.kernelType] = oroutils.getFunctionFromString( device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts, 1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
-#else
-
-		if constexpr( useBitCode )
+		if constexpr( useBakeKernel )
+		{
+			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromString( m_device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts, 1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
+		}
+		else if constexpr( useBitCode )
 		{
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary( binaryPath.c_str(), record.kernelName.c_str() );
 		}
 		else
 		{
-			const auto includeArg{ "-I" + currentIncludeDir };
-			const auto overwrite_flag = "-DOVERWRITE";
-			const auto count_block_size_param = "-DCOUNT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_count );
-			const auto scan_block_size_param = "-DSCAN_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_scan );
-			const auto sort_block_size_param = "-DSORT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_sort );
-			const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK_VAL=" + std::to_string( m_num_warps_per_block_for_sort );
-
-			std::vector<const char*> opts;
-
-			if( const std::string device_name = m_props.name; device_name.find( "NVIDIA" ) != std::string::npos )
-			{
-				opts.push_back( "--use_fast_math" );
-			}
-			else
-			{
-				opts.push_back( "-ffast-math" );
-			}
-
-			opts.push_back( includeArg.c_str() );
-			opts.push_back( overwrite_flag );
-			opts.push_back( count_block_size_param.c_str() );
-			opts.push_back( scan_block_size_param.c_str() );
-			opts.push_back( sort_block_size_param.c_str() );
-			opts.push_back( sort_num_warps_param.c_str() );
-
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
 		}
 
-#endif
 		if( m_flags == Flag::LOG )
 		{
 			printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );

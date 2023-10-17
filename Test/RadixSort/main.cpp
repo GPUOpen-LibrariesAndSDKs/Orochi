@@ -57,8 +57,6 @@ class SortTest
   public:
 	SortTest( oroDevice dev, oroCtx ctx, OrochiUtils& oroutils ) : m_device( dev ), m_ctx( ctx ), m_sort( dev, oroutils ) {}
 
-	~SortTest() { OrochiUtils::free( m_tempBuffer ); }
-
 	template<bool KEY_VALUE_PAIR = true>
 	void test( int testSize, const int testBits = 32, const int nRuns = 1 )
 	{
@@ -284,7 +282,6 @@ class SortTest
 	oroDevice m_device;
 	oroCtx m_ctx;
 	Oro::RadixSort m_sort;
-	u32* m_tempBuffer;
 };
 
 enum TestType
