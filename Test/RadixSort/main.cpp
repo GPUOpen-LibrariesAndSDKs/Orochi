@@ -228,7 +228,7 @@ class SortTest
 		dstGpu.key = gpuDstKeys.ptr();
 		dstGpu.value = gpuDstValues.ptr();
 
-		m_sort.sort( srcGpu, dstGpu, size, 0, 32 );
+		m_sort.sort( srcGpu, dstGpu, static_cast<int>( size ), 0, 32 );
 
 		const auto dstKeys = gpuDstKeys.getData();
 		const auto dstValues = gpuDstValues.getData();

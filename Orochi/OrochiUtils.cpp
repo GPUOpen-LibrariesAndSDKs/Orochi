@@ -470,7 +470,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
@@ -528,14 +528,13 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
 	//		opts.push_back( "-G" );
 
-	oroFunction function;
 	std::vector<char>& codec = dst;
 	{
 		orortcProgram prog;
 		orortcResult e;
 		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
 
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
@@ -585,7 +584,7 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 		e = orortcCreateProgram( prog, code, path, 0, 0, 0 );
 		e = orortcAddNameExpression( *prog, funcName );
 
-		e = orortcCompileProgram( *prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
