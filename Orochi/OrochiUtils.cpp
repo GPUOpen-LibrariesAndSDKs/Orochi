@@ -633,6 +633,6 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 {
 	int4 tpb = { wgSizeX, wgSizeY, 0 };
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
-	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, 0, (void**)args, 0 );
+	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }

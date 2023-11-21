@@ -70,10 +70,10 @@ void printKernelInfo( const std::string& name, oroFunction func )
 namespace Oro
 {
 
-RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
+RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, oroStream stream, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
 {
 	oroGetDeviceProperties( &m_props, device );
-	configure( kernelPath, includeDir );
+	configure( kernelPath, includeDir, stream );
 }
 
 void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu ) const noexcept
@@ -239,7 +239,7 @@ int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
 	return number_of_blocks;
 }
 
-void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir ) noexcept
+void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 
@@ -254,14 +254,14 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 
 	m_num_blocks_for_scan = tmp_buffer_size / m_num_threads_per_block_for_scan;
 
-	m_tmp_buffer.resize( tmp_buffer_size );
+	m_tmp_buffer.resizeAsync( tmp_buffer_size, false, stream );
 
 	if( selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
 	{
 		// These are for the scan kernel
-		m_partial_sum.resize( m_num_blocks_for_scan );
-		m_is_ready.resize( m_num_blocks_for_scan );
-		m_is_ready.reset();
+		m_partial_sum.resizeAsync( m_num_blocks_for_scan, false, stream );
+		m_is_ready.resizeAsync( m_num_blocks_for_scan, false, stream );
+		m_is_ready.resetAsync( stream );
 	}
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }
