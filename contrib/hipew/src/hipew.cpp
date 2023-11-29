@@ -293,9 +293,11 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   const char* hiprtc_paths[] = { NULL };
 #else
   const char *hip_paths[] = { "/opt/rocm/hip/lib/libamdhip64.so",
-                              "/opt/rocm/lib/libamdhip64.so", NULL };
+                              "/opt/rocm/lib/libamdhip64.so",
+	                      "libamdhip64.so", NULL };
   const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so",
-                              "/opt/rocm/lib/libhiprtc.so", NULL };
+                              "/opt/rocm/lib/libhiprtc.so", 
+	                      "libamdhip64.so", NULL };
 #endif
   static int initialized = 0;
   static int s_resultDriver = 0;
