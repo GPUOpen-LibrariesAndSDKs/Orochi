@@ -1,61 +1,61 @@
 
 
-namespace
-{
-
-struct Empty
-{
-};
-
-/// @brief Call the callable and measure the elapsed time using the Stopwatch.
-/// @tparam CallableType The type of the callable to be invoked in this function.
-/// @tparam RecordType The type of the object that stores the recorded times.
-/// @tparam enable_profile The elapsed time will be recorded if this is set to True.
-/// @param callable The callable object to be called.
-/// @param time_record The object that stores the recorded times.
-/// @param index The index indicates where to store the elapsed time in @c time_record
-/// @param stream The GPU stream
-template<bool enable_profile, typename CallableType, typename RecordType>
-constexpr void execute( CallableType&& callable, RecordType& time_record, const int index, const oroStream stream ) noexcept
-{
-	using TimerType = std::conditional_t<enable_profile, Stopwatch, Empty>;
-
-	TimerType stopwatch;
-
-	if constexpr( enable_profile )
-	{
-		stopwatch.start();
-	}
-
-	std::invoke( std::forward<CallableType>( callable ) );
-
-	if constexpr( enable_profile )
-	{
-		OrochiUtils::waitForCompletion( stream );
-		stopwatch.stop();
-		time_record[index] = stopwatch.getMs();
-	}
-}
-
-template<bool enable_profile, typename T>
-void resize_record( T& t ) noexcept
-{
-	if constexpr( enable_profile )
-	{
-		t.resize( 3 );
-	}
-}
-
-template<bool enable_profile, typename T>
-void print_record( const T& t ) noexcept
-{
-	if constexpr( enable_profile )
-	{
-		printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
-	}
-}
-
-} // namespace
+//namespace
+//{
+//
+//struct Empty
+//{
+//};
+//
+///// @brief Call the callable and measure the elapsed time using the Stopwatch.
+///// @tparam CallableType The type of the callable to be invoked in this function.
+///// @tparam RecordType The type of the object that stores the recorded times.
+///// @tparam enable_profile The elapsed time will be recorded if this is set to True.
+///// @param callable The callable object to be called.
+///// @param time_record The object that stores the recorded times.
+///// @param index The index indicates where to store the elapsed time in @c time_record
+///// @param stream The GPU stream
+//template<bool enable_profile, typename CallableType, typename RecordType>
+//constexpr void execute( CallableType&& callable, RecordType& time_record, const int index, const oroStream stream ) noexcept
+//{
+//	using TimerType = std::conditional_t<enable_profile, Stopwatch, Empty>;
+//
+//	TimerType stopwatch;
+//
+//	if constexpr( enable_profile )
+//	{
+//		stopwatch.start();
+//	}
+//
+//	std::invoke( std::forward<CallableType>( callable ) );
+//
+//	if constexpr( enable_profile )
+//	{
+//		OrochiUtils::waitForCompletion( stream );
+//		stopwatch.stop();
+//		time_record[index] = stopwatch.getMs();
+//	}
+//}
+//
+//template<bool enable_profile, typename T>
+//void resize_record( T& t ) noexcept
+//{
+//	if constexpr( enable_profile )
+//	{
+//		t.resize( 3 );
+//	}
+//}
+//
+//template<bool enable_profile, typename T>
+//void print_record( const T& t ) noexcept
+//{
+//	if constexpr( enable_profile )
+//	{
+//		printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
+//	}
+//}
+//
+//} // namespace
 
 //template<class T>
 //void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int endBit, oroStream stream ) noexcept

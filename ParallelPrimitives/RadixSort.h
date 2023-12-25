@@ -125,7 +125,4 @@ class RadixSort final
 
 	GpuMemory<uint8_t> m_tmpBuffer;
 };
-
-//#include <ParallelPrimitives/RadixSort.inl>
-
 }; // namespace Oro
