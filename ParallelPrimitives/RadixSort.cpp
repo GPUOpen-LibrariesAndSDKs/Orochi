@@ -317,7 +317,7 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 
 	u64 gpSumBuffer = sizeof( u32 ) * 256 * sizeof( u32 /* key type */ );
 	u64 lookBackBuffer = next_multiple64( sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE + 1 ), 16 );
-	m_tmpBuffer.resize( gpSumBuffer + lookBackBuffer );
+	m_tmpBuffer.resizeAsync( gpSumBuffer + lookBackBuffer, false /*copy*/, stream );
 
 	//m_num_blocks_for_count = calculateWGsToExecute( m_num_threads_per_block_for_count );
 
