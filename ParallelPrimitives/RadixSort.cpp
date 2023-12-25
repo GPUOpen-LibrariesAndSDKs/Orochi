@@ -18,8 +18,8 @@
 #include <dlfcn.h>
 #endif
 
-inline uint64_t div_round_up64( uint64_t val, uint64_t divisor ) { return ( val + divisor - 1 ) / divisor; }
-inline uint64_t next_multiple64( uint64_t val, uint64_t divisor ) { return div_round_up64( val, divisor ) * divisor; }
+constexpr uint64_t div_round_up64( uint64_t val, uint64_t divisor ) noexcept { return ( val + divisor - 1 ) / divisor; }
+constexpr uint64_t next_multiple64( uint64_t val, uint64_t divisor ) noexcept { return div_round_up64( val, divisor ) * divisor; }
 
 namespace
 {
