@@ -29,6 +29,20 @@ constexpr auto useBitCode = true;
 constexpr auto useBitCode = false;
 #endif
 
+#if defined( ORO_PP_LOAD_FROM_STRING )
+constexpr auto useBakeKernel = true;
+#else
+constexpr auto useBakeKernel = false;
+static const char* hip_RadixSortKernels = nullptr;
+namespace hip
+{
+static const char** RadixSortKernelsArgs = nullptr;
+static const char** RadixSortKernelsIncludes = nullptr;
+} // namespace hip
+#endif
+
+static_assert( !( useBitCode && useBakeKernel ), "useBitCode and useBakeKernel cannot coexist" );
+
 #if !defined( __GNUC__ )
 const HMODULE GetCurrentModule()
 {
@@ -59,10 +73,10 @@ void printKernelInfo( const std::string& name, oroFunction func )
 namespace Oro
 {
 
-RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
+RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, oroStream stream, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
 {
-	//oroGetDeviceProperties( &m_props, device );
-	configure( kernelPath, includeDir );
+	// oroGetDeviceProperties( &m_props, device );
+	configure( kernelPath, includeDir, stream );
 }
 
 //void RadixSort::exclusiveScanCpu( const Oro::GpuMemory<int>& countsGpu, Oro::GpuMemory<int>& offsetsGpu ) const noexcept
@@ -221,6 +235,51 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	LOAD_FUNC( m_onesweep_reorderKey64, "onesweep_reorderKey64" );
 	LOAD_FUNC( m_onesweep_reorderKeyPair64, "onesweep_reorderKeyPair64" );
 #undef LOAD_FUNC
+	// const auto includeArg{ "-I" + currentIncludeDir };
+	// const auto overwrite_flag = "-DOVERWRITE";
+	// const auto count_block_size_param = "-DCOUNT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_count );
+	// const auto scan_block_size_param = "-DSCAN_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_scan );
+	// const auto sort_block_size_param = "-DSORT_WG_SIZE_VAL=" + std::to_string( m_num_threads_per_block_for_sort );
+	// const auto sort_num_warps_param = "-DSORT_NUM_WARPS_PER_BLOCK_VAL=" + std::to_string( m_num_warps_per_block_for_sort );
+
+	// std::vector<const char*> opts;
+
+	// if( const std::string device_name = m_props.name; device_name.find( "NVIDIA" ) != std::string::npos )
+	// {
+	// 	opts.push_back( "--use_fast_math" );
+	// }
+	// else
+	// {
+	// 	opts.push_back( "-ffast-math" );
+	// }
+
+	// opts.push_back( includeArg.c_str() );
+	// opts.push_back( overwrite_flag );
+	// opts.push_back( count_block_size_param.c_str() );
+	// opts.push_back( scan_block_size_param.c_str() );
+	// opts.push_back( sort_block_size_param.c_str() );
+	// opts.push_back( sort_num_warps_param.c_str() );
+
+	// for( const auto& record : records )
+	// {
+	// 	if constexpr( useBakeKernel )
+	// 	{
+	// 		oroFunctions[record.kernelType] = m_oroutils.getFunctionFromString( m_device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts, 1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
+	// 	}
+	// 	else if constexpr( useBitCode )
+	// 	{
+	// 		oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary( binaryPath.c_str(), record.kernelName.c_str() );
+	// 	}
+	// 	else
+	// 	{
+	// 		oroFunctions[record.kernelType] = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
+	// 	}
+
+	// 	if( m_flags == Flag::LOG )
+	// 	{
+	// 		printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );
+	// 	}
+	// }
 }
 
 //int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
@@ -252,7 +311,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 //	return number_of_blocks;
 //}
 
-void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir ) noexcept
+void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
 {
 	compileKernels( kernelPath, includeDir );
 
@@ -271,13 +330,14 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 
 	//m_num_blocks_for_scan = tmp_buffer_size / m_num_threads_per_block_for_scan;
 
-	//m_tmp_buffer.resize( tmp_buffer_size );
+	//m_tmp_buffer.resizeAsync( tmp_buffer_size, false, stream );
 
 	//if( selectedScanAlgo == ScanAlgo::SCAN_GPU_PARALLEL )
 	//{
 	//	// These are for the scan kernel
-	//	m_partial_sum.resize( m_num_blocks_for_scan );
-	//	m_is_ready.resize( m_num_blocks_for_scan );
+	//	m_partial_sum.resizeAsync( m_num_blocks_for_scan, false, stream );
+	//	m_is_ready.resizeAsync( m_num_blocks_for_scan, false, stream );
+	//  m_is_ready.resetAsync( stream );
 	//}
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }

@@ -307,6 +307,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 	ioroDevice d( dev );
 	int deviceId = d.getDevice();
 	oroApi api = d.getApi();
+	*props = {};
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
 	if( api & ORO_API_CUDADRIVER )
@@ -327,9 +328,10 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		cu2oro( cuDeviceTotalMem( &props->totalGlobalMem, deviceId ) );
 
 		e = cuDeviceGetAttribute( &props->pciDomainID, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, deviceId );
-		e = cuDeviceGetAttribute(&props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId);
+		e = cuDeviceGetAttribute( &props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId );
+		e = cuDeviceGetAttribute( &props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId );
+		e = cuDeviceGetAttribute( &props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId );
+		e = cuDeviceGetAttribute( &props->maxThreadsPerMultiProcessor, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR, deviceId );
 		e = cuDeviceGetAttribute( &props->warpSize, CU_DEVICE_ATTRIBUTE_WARP_SIZE, deviceId );
 		e = cuDeviceGetAttribute( (int*)&props->textureAlignment, CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT, deviceId );
 		e = cuDeviceGetAttribute( &props->kernelExecTimeoutEnabled, CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT, deviceId );
