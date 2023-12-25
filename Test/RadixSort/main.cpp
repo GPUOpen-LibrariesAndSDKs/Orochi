@@ -85,7 +85,6 @@ class SortTest
 			}
 		}
 
-		Stopwatch sw;
 		for( int i = 0; i < nRuns; i++ )
 		{
 			OrochiUtils::copyHtoD( srcGpu.key, srcKey.data(), testSize );
@@ -97,7 +96,8 @@ class SortTest
 				OrochiUtils::waitForCompletion();
 			}
 
-			sw.start();
+			OroStopwatch oroStream( nullptr );
+			oroStream.start();
 
 			if constexpr( KEY_VALUE_PAIR )
 			{
@@ -108,9 +108,10 @@ class SortTest
 				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits );
 			}
 
+			oroStream.stop();
+
 			OrochiUtils::waitForCompletion();
-			sw.stop();
-			float ms = sw.getMs();
+			float ms = oroStream.getMs();
 			float gKeys_s = static_cast<float>( testSize ) / 1000.f / 1000.f / ms;
 			printf( "%5.2fms (%3.2fGKeys/s) sorting %3.1fMkeys [%s]\n", ms, gKeys_s, testSize / 1000.f / 1000.f, KEY_VALUE_PAIR ? "keyValue" : "key" );
 		}
