@@ -316,9 +316,12 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 	compileKernels( kernelPath, includeDir );
 
 	u64 gpSumBuffer = sizeof( u32 ) * 256 * sizeof( u32 /* key type */ );
-	u64 lookBackBuffer = next_multiple64( sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE + 1 ), 16 );
+	u64 lookBackBuffer = next_multiple64( sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE ), 16 );
 	m_tmpBuffer.resizeAsync( gpSumBuffer + lookBackBuffer, false /*copy*/, stream );
 
+	m_tailIterator.resizeAsync( 1, false /*copy*/, stream );
+	m_tailIterator.resetAsync( stream );
+	m_gpSumCounter.resizeAsync( 1, false /*copy*/, stream );
 	//m_num_blocks_for_count = calculateWGsToExecute( m_num_threads_per_block_for_count );
 
 	///// The tmp buffer size of the count kernel and the scan kernel.
@@ -371,11 +374,13 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	// Buffers
 	void* gpSumBuffer = m_tmpBuffer.ptr();
 	void* lookBackBuffer = (void*)( m_tmpBuffer.ptr() + sizeof( u32 ) * 256 * sizeof( u32 /* key type */ ) );
+	void* tailIteratorBuffer = m_tailIterator.ptr();
 
 	// counter for gHistogram. 
-	void* counter = (uint8_t*)lookBackBuffer + ( 256 * LOOKBACK_TABLE_SIZE ) * sizeof( uint64_t ) + sizeof( uint32_t );
-
 	{
+		m_gpSumCounter.resetAsync( stream );
+		void* counter = m_gpSumCounter.ptr();
+
 		oroMemsetD32Async( (oroDeviceptr)m_tmpBuffer.ptr(), 0, m_tmpBuffer.size() / 4, stream );
 
 		const int nBlocks = 2048;
@@ -399,12 +404,12 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 
 		if( keyPair )
 		{
-			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, &gpSumBuffer, &lookBackBuffer, &startBit, &i };
+			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, &gpSumBuffer, &lookBackBuffer, &tailIteratorBuffer, & startBit, &i };
 			OrochiUtils::launch1D( m_onesweep_reorderKeyPair64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		else
 		{
-			const void* args[] = { &s.key, &d.key, &n, &gpSumBuffer, &lookBackBuffer, &startBit, &i };
+			const void* args[] = { &s.key, &d.key, &n, &gpSumBuffer, &lookBackBuffer, &tailIteratorBuffer, &startBit, &i };
 			OrochiUtils::launch1D( m_onesweep_reorderKey64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		std::swap( s, d );

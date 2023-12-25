@@ -962,7 +962,7 @@ extern "C" __global__ void gPrefixSum( uint32_t* gpSumBuffer )
 }
 
 __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-												  volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+												  volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits, uint32_t iteration )
 {
 	struct ElementLocation
 	{
@@ -1052,12 +1052,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		return x;
 	};
 
-	uint32_t* gTailIterator = (uint32_t*)( lookBackBuffer + LOOKBACK_TABLE_SIZE * 256 );
-
 	if( threadIdx.x == 0 && LOOKBACK_TABLE_SIZE <= blockIndex )
 	{
 		uint32_t mustBeDone = blockIndex - LOOKBACK_TABLE_SIZE + MAX_LOOK_BACK;
-		while( ( atomicAdd( gTailIterator, 0 ) >> TAIL_BITS ) * TAIL_COUNT <= mustBeDone )
+		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) * TAIL_COUNT <= mustBeDone )
 			;
 	}
 	__syncthreads();
@@ -1119,10 +1117,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	if( threadIdx.x == 0 )
 	{
-		while( ( atomicAdd( gTailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
+		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
 			;
 
-		atomicInc( gTailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
+		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
 	}
 
 	// reorder
@@ -1210,12 +1208,13 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 	}
 }
-extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits,
+												  uint32_t iteration )
 {
-	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
+	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
 extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-													  volatile uint64_t* lookBackBuffer, uint32_t startBits, uint32_t iteration )
+													  volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits, uint32_t iteration )
 {
-	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, startBits, iteration );
+	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
