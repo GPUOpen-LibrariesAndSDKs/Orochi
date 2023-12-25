@@ -123,7 +123,8 @@ class RadixSort final
 	oroFunction m_onesweep_reorderKey64;
 	oroFunction m_onesweep_reorderKeyPair64;
 
-	GpuMemory<uint8_t> m_tmpBuffer;
+	GpuMemory<uint8_t> m_lookbackBuffer;
+	GpuMemory<uint8_t> m_gpSumBuffer;
 	GpuMemory<u32> m_gpSumCounter;
 	GpuMemory<u32> m_tailIterator;
 };

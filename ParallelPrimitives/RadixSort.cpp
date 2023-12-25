@@ -316,8 +316,10 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 	compileKernels( kernelPath, includeDir );
 
 	u64 gpSumBuffer = sizeof( u32 ) * 256 * sizeof( u32 /* key type */ );
-	u64 lookBackBuffer = next_multiple64( sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE ), 16 );
-	m_tmpBuffer.resizeAsync( gpSumBuffer + lookBackBuffer, false /*copy*/, stream );
+	m_gpSumBuffer.resizeAsync( gpSumBuffer, false /*copy*/, stream );
+
+	u64 lookBackBuffer = sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE );
+	m_lookbackBuffer.resizeAsync( lookBackBuffer, false /*copy*/, stream );
 
 	m_tailIterator.resizeAsync( 1, false /*copy*/, stream );
 	m_tailIterator.resetAsync( stream );
@@ -372,17 +374,17 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	uint64_t numberOfBlocks = div_round_up64( n, RADIX_SORT_BLOCK_SIZE );
 
 	// Buffers
-	void* gpSumBuffer = m_tmpBuffer.ptr();
-	void* lookBackBuffer = (void*)( m_tmpBuffer.ptr() + sizeof( u32 ) * 256 * sizeof( u32 /* key type */ ) );
+	void* gpSumBuffer = m_gpSumBuffer.ptr();
+	void* lookBackBuffer = m_lookbackBuffer.ptr();
 	void* tailIteratorBuffer = m_tailIterator.ptr();
+
+	m_lookbackBuffer.resetAsync( stream );
+	m_gpSumCounter.resetAsync( stream );
+	m_gpSumBuffer.resetAsync( stream );
 
 	// counter for gHistogram. 
 	{
-		m_gpSumCounter.resetAsync( stream );
 		void* counter = m_gpSumCounter.ptr();
-
-		oroMemsetD32Async( (oroDeviceptr)m_tmpBuffer.ptr(), 0, m_tmpBuffer.size() / 4, stream );
-
 		const int nBlocks = 2048;
 
 		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &counter };
@@ -399,7 +401,7 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	{
 		if( numberOfBlocks < LOOKBACK_TABLE_SIZE * 2 )
 		{
-			oroMemsetD32Async( (oroDeviceptr)lookBackBuffer, 0, ( 256 * LOOKBACK_TABLE_SIZE ) * sizeof( uint64_t ) / 4, stream );
+			m_lookbackBuffer.resetAsync( stream );
 		} // other wise, we can skip zero clear look back buffer
 
 		if( keyPair )
