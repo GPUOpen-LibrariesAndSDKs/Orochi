@@ -760,7 +760,7 @@ extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, i
 //	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 //}
 
-#define KEY_IS_16BYTE_ALIGNED 1
+constexpr auto KEY_IS_16BYTE_ALIGNED = true;
 
 typedef unsigned long long uint64_t;
 typedef unsigned int uint32_t;
@@ -872,8 +872,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 	{
 		hasData = true;
 
-#if defined( KEY_IS_16BYTE_ALIGNED )
-		if( ( iBlock + 1 ) * GHISTOGRAM_ITEM_PER_BLOCK <= numberOfInputs )
+		if( KEY_IS_16BYTE_ALIGNED && ( iBlock + 1 ) * GHISTOGRAM_ITEM_PER_BLOCK <= numberOfInputs )
 		{
 			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK * 4 )
 			{
@@ -896,7 +895,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 			}
 		}
 		else
-#endif
+		{
 			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
 			{
 				uint32_t itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x + i;
@@ -911,7 +910,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 					}
 				}
 			}
-
+		}
 		__syncthreads();
 
 		if( threadIdx.x == 0 )
@@ -984,8 +983,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	__syncthreads();
 
 	// count
-#if defined( KEY_IS_16BYTE_ALIGNED )
-	if( ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs )
+	if( KEY_IS_16BYTE_ALIGNED && ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs )
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK * 4 )
 		{
@@ -1005,7 +1003,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 	}
 	else
-#endif
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
