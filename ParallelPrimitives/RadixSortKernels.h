@@ -788,6 +788,8 @@ __device__ void clearShared( T* sMem, T value )
 
 __device__ inline u32 getKeyBits( u32 x ) { return x ^ ORDER_MASK_32; }
 __device__ inline u64 getKeyBits( u64 x ) { return x ^ ORDER_MASK_64; }
+__device__ inline u32 extractDigit( u32 x, u32 bitLocation ) { return ( x >> bitLocation ) & RADIX_MASK; }
+__device__ inline u32 extractDigit( u64 x, u32 bitLocation ) { return (u32)( ( x >> bitLocation ) & RADIX_MASK ); }
 
 template<int NThreads>
 __device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
@@ -865,7 +867,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 					{
 						u32 bitLocation = startBits + i * 8;
-						u32 bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
 						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 					}
 				}
@@ -882,7 +884,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 					{
 						u32 bitLocation = startBits + i * 8;
-						u32 bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
 						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 					}
 				}
@@ -973,7 +975,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			for( int k = 0; k < 4; k++ )
 			{
 				auto item = key4.xs[k];
-				u32 bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				u32 bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 				elementBuckets[i + threadIdx.x * 4 + k] = bucketIndex;
 			}
@@ -987,7 +989,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			if( itemIndex < numberOfInputs )
 			{
 				auto item = inputKeys[itemIndex];
-				u32 bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				u32 bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 
 				elementBuckets[i + threadIdx.x] = bucketIndex;
