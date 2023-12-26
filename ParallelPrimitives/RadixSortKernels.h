@@ -762,13 +762,8 @@ extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, i
 
 constexpr auto KEY_IS_16BYTE_ALIGNED = true;
 
-typedef unsigned long long uint64_t;
-typedef unsigned int uint32_t;
-typedef unsigned short uint16_t;
-typedef unsigned char uint8_t;
-
-using RADIX_SORT_KEY_TYPE = uint32_t;
-using RADIX_SORT_VALUE_TYPE = uint32_t;
+using RADIX_SORT_KEY_TYPE = u32;
+using RADIX_SORT_VALUE_TYPE = u32;
 
 #if defined( DESCENDING_ORDER )
 #define ORDER_MASK_32 0xFFFFFFFF
@@ -782,7 +777,7 @@ using RADIX_SORT_VALUE_TYPE = uint32_t;
 #define ITS 1
 #endif
 
-__device__ inline uint32_t div_round_up( uint32_t val, uint32_t divisor ) { return ( val + divisor - 1 ) / divisor; }
+__device__ inline u32 div_round_up( u32 val, u32 divisor ) { return ( val + divisor - 1 ) / divisor; }
 template<int NElement, int NThread, class T>
 __device__ void clearShared( T* sMem, T value )
 {
@@ -795,31 +790,31 @@ __device__ void clearShared( T* sMem, T value )
 	}
 }
 
-__device__ inline uint32_t getKeyBits( uint32_t x ) { return x ^ ORDER_MASK_32; }
-__device__ inline uint64_t getKeyBits( uint64_t x ) { return x ^ ORDER_MASK_64; }
-__device__ inline uint32_t getKeyBits( float x )
+__device__ inline u32 getKeyBits( u32 x ) { return x ^ ORDER_MASK_32; }
+__device__ inline u64 getKeyBits( u64 x ) { return x ^ ORDER_MASK_64; }
+__device__ inline u32 getKeyBits( float x )
 {
 	if( x == 0.0f ) x = 0.0f;
 
-	uint32_t flip = uint32_t( __float_as_int( x ) >> 31 ) | 0x80000000;
+	u32 flip = u32( __float_as_int( x ) >> 31 ) | 0x80000000;
 	return __float_as_uint( x ) ^ flip ^ ORDER_MASK_32;
 }
-__device__ inline uint64_t getKeyBits( double x )
+__device__ inline u64 getKeyBits( double x )
 {
 	if( x == 0.0 ) x = 0.0;
 
-	uint64_t flip = uint64_t( __double_as_longlong( x ) >> 63 ) | 0x8000000000000000llu;
-	return (uint64_t)__double_as_longlong( x ) ^ flip ^ ORDER_MASK_64;
+	u64 flip = u64( __double_as_longlong( x ) >> 63 ) | 0x8000000000000000llu;
+	return (u64)__double_as_longlong( x ) ^ flip ^ ORDER_MASK_64;
 }
 
 template<int NThreads>
-__device__ inline uint32_t prefixSumExclusive( uint32_t prefix, uint32_t* sMemIO )
+__device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
 {
-	uint32_t value = sMemIO[threadIdx.x];
+	u32 value = sMemIO[threadIdx.x];
 
-	for( uint32_t offset = 1; offset < NThreads; offset <<= 1 )
+	for( u32 offset = 1; offset < NThreads; offset <<= 1 )
 	{
-		uint32_t x = sMemIO[threadIdx.x];
+		u32 x = sMemIO[threadIdx.x];
 
 		if( offset <= threadIdx.x )
 		{
@@ -832,7 +827,7 @@ __device__ inline uint32_t prefixSumExclusive( uint32_t prefix, uint32_t* sMemIO
 
 		__syncthreads();
 	}
-	uint32_t sum = sMemIO[NThreads - 1];
+	u32 sum = sMemIO[NThreads - 1];
 
 	__syncthreads();
 
@@ -843,9 +838,9 @@ __device__ inline uint32_t prefixSumExclusive( uint32_t prefix, uint32_t* sMemIO
 	return sum;
 }
 
-extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t numberOfInputs, uint32_t* gpSumBuffer, uint32_t startBits, uint32_t* counter )
+extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOfInputs, u32* gpSumBuffer, u32 startBits, u32* counter )
 {
-	__shared__ uint32_t localCounters[sizeof( RADIX_SORT_KEY_TYPE )][256];
+	__shared__ u32 localCounters[sizeof( RADIX_SORT_KEY_TYPE )][256];
 
 	for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 	{
@@ -857,8 +852,8 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 
 	__syncthreads();
 
-	uint32_t numberOfBlocks = div_round_up( numberOfInputs, GHISTOGRAM_ITEM_PER_BLOCK );
-	__shared__ uint32_t iBlock;
+	u32 numberOfBlocks = div_round_up( numberOfInputs, GHISTOGRAM_ITEM_PER_BLOCK );
+	__shared__ u32 iBlock;
 	if( threadIdx.x == 0 )
 	{
 		iBlock = atomicInc( counter, 0xFFFFFFFF );
@@ -876,7 +871,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 		{
 			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK * 4 )
 			{
-				uint32_t itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i + threadIdx.x * 4;
+				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i + threadIdx.x * 4;
 				struct alignas( 16 ) Key4
 				{
 					RADIX_SORT_KEY_TYPE xs[4];
@@ -887,8 +882,8 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 					auto item = key4.xs[k];
 					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 					{
-						uint32_t bitLocation = startBits + i * 8;
-						uint32_t bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						u32 bitLocation = startBits + i * 8;
+						u32 bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
 						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 					}
 				}
@@ -898,14 +893,14 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 		{
 			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
 			{
-				uint32_t itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x + i;
+				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x + i;
 				if( itemIndex < numberOfInputs )
 				{
 					auto item = inputs[itemIndex];
 					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 					{
-						uint32_t bitLocation = startBits + i * 8;
-						uint32_t bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+						u32 bitLocation = startBits + i * 8;
+						u32 bits = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
 						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 					}
 				}
@@ -935,9 +930,9 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, uint32_t num
 	}
 }
 
-extern "C" __global__ void gPrefixSum( uint32_t* gpSumBuffer )
+extern "C" __global__ void gPrefixSum( u32* gpSumBuffer )
 {
-	__shared__ uint32_t smem[256];
+	__shared__ u32 smem[256];
 
 	smem[threadIdx.x] = gpSumBuffer[blockIdx.x * 256 + threadIdx.x];
 
@@ -948,29 +943,29 @@ extern "C" __global__ void gPrefixSum( uint32_t* gpSumBuffer )
 	gpSumBuffer[blockIdx.x * 256 + threadIdx.x] = smem[threadIdx.x];
 }
 
-__device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-												  volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits, uint32_t iteration )
+__device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, u32 numberOfInputs, u32* gpSumBuffer,
+												  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
 	struct ElementLocation
 	{
-		uint32_t localSrcIndex : 12;
-		uint32_t localOffset : 12;
-		uint32_t bucket : 8;
+		u32 localSrcIndex : 12;
+		u32 localOffset : 12;
+		u32 bucket : 8;
 	};
 
-	__shared__ uint32_t pSum[256];
-	__shared__ uint32_t localPrefixSum[256];
-	__shared__ uint32_t counters[256];
+	__shared__ u32 pSum[256];
+	__shared__ u32 localPrefixSum[256];
+	__shared__ u32 counters[256];
 	__shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
-	__shared__ uint8_t elementBuckets[RADIX_SORT_BLOCK_SIZE];
-	__shared__ uint32_t matchMasks[REORDER_NUMBER_OF_WARPS][256];
+	__shared__ u8 elementBuckets[RADIX_SORT_BLOCK_SIZE];
+	__shared__ u32 matchMasks[REORDER_NUMBER_OF_WARPS][256];
 
-	uint32_t bitLocation = startBits + 8 * iteration;
-	uint32_t blockIndex = blockIdx.x;
-	uint32_t numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
+	u32 bitLocation = startBits + 8 * iteration;
+	u32 blockIndex = blockIdx.x;
+	u32 numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
 
-	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, uint32_t>( localPrefixSum, 0 );
-	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, uint32_t>( counters, 0 );
+	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( localPrefixSum, 0 );
+	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( counters, 0 );
 
 	for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
 	{
@@ -987,7 +982,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK * 4 )
 		{
-			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x * 4;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x * 4;
 			struct alignas( 16 ) Key4
 			{
 				RADIX_SORT_KEY_TYPE xs[4];
@@ -996,7 +991,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			for( int k = 0; k < 4; k++ )
 			{
 				auto item = key4.xs[k];
-				uint32_t bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				u32 bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
 				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 				elementBuckets[i + threadIdx.x * 4 + k] = bucketIndex;
 			}
@@ -1006,11 +1001,11 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
 			if( itemIndex < numberOfInputs )
 			{
 				auto item = inputKeys[itemIndex];
-				uint32_t bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
+				u32 bucketIndex = ( getKeyBits( item ) >> bitLocation ) & 0xFF;
 				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 
 				elementBuckets[i + threadIdx.x] = bucketIndex;
@@ -1020,11 +1015,11 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	struct ParitionID
 	{
-		uint64_t value : 32;
-		uint64_t block : 30;
-		uint64_t flag : 2;
+		u64 value : 32;
+		u64 block : 30;
+		u64 flag : 2;
 	};
-	auto asPartition = []( uint64_t x )
+	auto asPartition = []( u64 x )
 	{
 		ParitionID pa;
 		memcpy( &pa, &x, sizeof( ParitionID ) );
@@ -1032,14 +1027,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	};
 	auto asU64 = []( ParitionID pa )
 	{
-		uint64_t x;
-		memcpy( &x, &pa, sizeof( uint64_t ) );
+		u64 x;
+		memcpy( &x, &pa, sizeof( u64 ) );
 		return x;
 	};
 
 	if( threadIdx.x == 0 && LOOKBACK_TABLE_SIZE <= blockIndex )
 	{
-		uint32_t mustBeDone = blockIndex - LOOKBACK_TABLE_SIZE + MAX_LOOK_BACK;
+		u32 mustBeDone = blockIndex - LOOKBACK_TABLE_SIZE + MAX_LOOK_BACK;
 		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) * TAIL_COUNT <= mustBeDone )
 			;
 	}
@@ -1047,7 +1042,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	for( int i = threadIdx.x; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		uint32_t s = localPrefixSum[i];
+		u32 s = localPrefixSum[i];
 		int pIndex = 256 * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
 
 		{
@@ -1058,9 +1053,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			lookBackBuffer[pIndex] = asU64( pa );
 		}
 
-		uint32_t gp = gpSumBuffer[iteration * 256 + i];
+		u32 gp = gpSumBuffer[iteration * 256 + i];
 
-		uint32_t p = 0;
+		u32 p = 0;
 
 		for( int iBlock = (int)blockIndex - 1; 0 <= iBlock; iBlock-- )
 		{
@@ -1076,7 +1071,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 				pa = asPartition( lookBackBuffer[lookbackIndex] );
 			} while( ( pa.flag & flagRequire ) == 0 || pa.block != iBlock );
 
-			uint32_t value = pa.value;
+			u32 value = pa.value;
 			p += value;
 			if( pa.flag == 2 )
 			{
@@ -1094,7 +1089,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		pSum[i] = gp + p;
 	}
 
-	uint32_t prefix = 0;
+	u32 prefix = 0;
 	for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &localPrefixSum[i] );
@@ -1111,8 +1106,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	// reorder
 	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
-		uint32_t bucketIndex = elementBuckets[i + threadIdx.x];
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+		u32 bucketIndex = elementBuckets[i + threadIdx.x];
 
 		__syncthreads();
 
@@ -1130,9 +1125,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 		if( itemIndex < numberOfInputs )
 		{
-			uint32_t matchMask = matchMasks[warp][bucketIndex];
-			uint32_t lowerMask = ( 1u << lane ) - 1;
-			uint32_t offset = __popc( matchMask & lowerMask );
+			u32 matchMask = matchMasks[warp][bucketIndex];
+			u32 lowerMask = ( 1u << lane ) - 1;
+			u32 offset = __popc( matchMask & lowerMask );
 
 			flushMask = offset == 0;
 
@@ -1141,8 +1136,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 				offset += __popc( matchMasks[w][bucketIndex] );
 			}
 
-			uint32_t localOffset = counters[bucketIndex] + offset;
-			uint32_t to = localOffset + localPrefixSum[bucketIndex];
+			u32 localOffset = counters[bucketIndex] + offset;
+			u32 to = localOffset + localPrefixSum[bucketIndex];
 
 			ElementLocation el;
 			el.localSrcIndex = i + threadIdx.x;
@@ -1165,14 +1160,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
 		if( itemIndex < numberOfInputs )
 		{
 			ElementLocation el = elementLocations[i + threadIdx.x];
-			uint32_t srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-			uint8_t bucketIndex = el.bucket;
+			u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
+			u8 bucketIndex = el.bucket;
 
-			uint32_t dstIndex = pSum[bucketIndex] + el.localOffset;
+			u32 dstIndex = pSum[bucketIndex] + el.localOffset;
 			outputKeys[dstIndex] = inputKeys[srcIndex];
 		}
 	}
@@ -1180,26 +1175,26 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			uint32_t itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
 			if( itemIndex < numberOfInputs )
 			{
 				ElementLocation el = elementLocations[i + threadIdx.x];
-				uint32_t srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-				uint8_t bucketIndex = el.bucket;
+				u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
+				u8 bucketIndex = el.bucket;
 
-				uint32_t dstIndex = pSum[bucketIndex] + el.localOffset;
+				u32 dstIndex = pSum[bucketIndex] + el.localOffset;
 				outputValues[dstIndex] = inputValues[srcIndex];
 			}
 		}
 	}
 }
-extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, uint32_t numberOfInputs, uint32_t* gpSumBuffer, volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits,
-												  uint32_t iteration )
+extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, u32 numberOfInputs, u32* gpSumBuffer, volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits,
+												  u32 iteration )
 {
 	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
-extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, uint32_t numberOfInputs, uint32_t* gpSumBuffer,
-													  volatile uint64_t* lookBackBuffer, uint32_t* tailIterator, uint32_t startBits, uint32_t iteration )
+extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, u32 numberOfInputs, u32* gpSumBuffer,
+													  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
 	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
