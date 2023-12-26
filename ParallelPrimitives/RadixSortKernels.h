@@ -365,17 +365,17 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 		}
 		else
 		{
-			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
+			for( int i = threadIdx.x; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
 			{
-				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x + i;
+				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i;
 				if( itemIndex < numberOfInputs )
 				{
 					auto item = inputs[itemIndex];
-					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+					for( int j = 0; j < sizeof( RADIX_SORT_KEY_TYPE ); j++ )
 					{
-						u32 bitLocation = startBits + i * 8;
+						u32 bitLocation = startBits + j * 8;
 						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
-						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
+						atomicInc( &localCounters[j][bits], 0xFFFFFFFF );
 					}
 				}
 			}
@@ -444,9 +444,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
 	{
-		for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		for( int i = threadIdx.x; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			matchMasks[w][i + threadIdx.x] = 0;
+			matchMasks[w][i] = 0;
 		}
 	}
 
@@ -474,16 +474,16 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 	else
 	{
-		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 			if( itemIndex < numberOfInputs )
 			{
 				auto item = inputKeys[itemIndex];
 				u32 bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 				atomicInc( &localPrefixSum[bucketIndex], 0xFFFFFFFF );
 
-				elementBuckets[i + threadIdx.x] = bucketIndex;
+				elementBuckets[i] = bucketIndex;
 			}
 		}
 	}
@@ -589,12 +589,12 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	u32 globalOutput = matchMasks[0][0];
 	if( globalOutput-- /* -1 for the actual offset */ )
 	{
-		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 			if( itemIndex < numberOfInputs )
 			{
-				u32 dstIndex = globalOutput + i + threadIdx.x;
+				u32 dstIndex = globalOutput + i;
 				outputKeys[dstIndex] = inputKeys[itemIndex];
 				if constexpr( keyPair )
 				{
@@ -606,10 +606,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 
 	// reorder
-	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
-		u32 bucketIndex = elementBuckets[i + threadIdx.x];
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
+		u32 bucketIndex = elementBuckets[i];
 
 		__syncthreads();
 
@@ -642,7 +642,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			u32 to = localOffset + localPrefixSum[bucketIndex];
 
 			ElementLocation el;
-			el.localSrcIndex = i + threadIdx.x;
+			el.localSrcIndex = i;
 			el.localOffset = localOffset;
 			el.bucket = bucketIndex;
 			elementLocations[to] = el;
@@ -660,12 +660,12 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 	}
 
-	for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 		if( itemIndex < numberOfInputs )
 		{
-			ElementLocation el = elementLocations[i + threadIdx.x];
+			ElementLocation el = elementLocations[i];
 			u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
 			u8 bucketIndex = el.bucket;
 
@@ -675,12 +675,12 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 	if constexpr ( keyPair )
 	{
-		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
-			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 			if( itemIndex < numberOfInputs )
 			{
-				ElementLocation el = elementLocations[i + threadIdx.x];
+				ElementLocation el = elementLocations[i];
 				u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
 				u8 bucketIndex = el.bucket;
 
