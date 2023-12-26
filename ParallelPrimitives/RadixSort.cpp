@@ -75,7 +75,7 @@ namespace Oro
 
 RadixSort::RadixSort( oroDevice device, OrochiUtils& oroutils, oroStream stream, const std::string& kernelPath, const std::string& includeDir ) : m_device{ device }, m_oroutils{ oroutils }
 {
-	// oroGetDeviceProperties( &m_props, device );
+	oroGetDeviceProperties( &m_props, device );
 	configure( kernelPath, includeDir, stream );
 }
 
@@ -372,7 +372,9 @@ void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit
 	// counter for gHistogram. 
 	{
 		void* counter = m_gpSumCounter.ptr();
-		const int nBlocks = 2048;
+		int maxBlocksPerMP = 0;
+		oroError e = oroOccupancyMaxActiveBlocksPerMultiprocessor( &maxBlocksPerMP, m_gHistogram, GHISTOGRAM_THREADS_PER_BLOCK, 0 );
+		const int nBlocks = e == oroSuccess ? maxBlocksPerMP * m_props.multiProcessorCount : 2048;
 
 		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &counter };
 		OrochiUtils::launch1D( m_gHistogram, nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );

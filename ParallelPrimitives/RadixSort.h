@@ -105,7 +105,7 @@ class RadixSort final
 	//GpuMemory<bool> m_is_ready;
 
 	oroDevice m_device{};
-	//oroDeviceProp m_props{};
+	oroDeviceProp m_props{};
 
 	OrochiUtils& m_oroutils;
 
