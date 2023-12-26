@@ -43,7 +43,7 @@ class RadixSort final
 
 	void setFlag( Flag flag ) noexcept;
 
-	void sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, oroStream stream = 0 ) noexcept;
+	void sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n, int startBit, int endBit, oroStream stream = 0 ) noexcept;
 
 	void sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, oroStream stream = 0 ) noexcept;
 

@@ -334,7 +334,7 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }
 
-void RadixSort::sort( KeyValueSoA src, KeyValueSoA dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept
+void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept
 {
 	bool keyPair = src.value != nullptr;
 
