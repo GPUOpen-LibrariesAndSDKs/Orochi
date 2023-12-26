@@ -760,8 +760,8 @@ extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, i
 //	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 //}
 
-#define RADIX_SORT_KEY_TYPE u32
-#define RADIX_SORT_VALUE_TYPE u32
+using RADIX_SORT_KEY_TYPE = uint32_t;
+using RADIX_SORT_VALUE_TYPE = uint32_t;
 #define KEY_IS_16BYTE_ALIGNED 1
 
 typedef unsigned long long uint64_t;
