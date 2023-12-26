@@ -760,8 +760,6 @@ extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, i
 //	SortImpl<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gHistogram, gN, gNItemsPerWG, START_BIT, N_WGS_EXECUTED );
 //}
 
-using RADIX_SORT_KEY_TYPE = uint32_t;
-using RADIX_SORT_VALUE_TYPE = uint32_t;
 #define KEY_IS_16BYTE_ALIGNED 1
 
 typedef unsigned long long uint64_t;
@@ -769,18 +767,8 @@ typedef unsigned int uint32_t;
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
 
-//#define RADIX_SORT_BLOCK_SIZE 2048
-//
-//#define GHISTOGRAM_ITEM_PER_BLOCK 2048
-//#define GHISTOGRAM_THREADS_PER_BLOCK 256
-//
-//#define REORDER_NUMBER_OF_WARPS 8
-//#define REORDER_NUMBER_OF_THREADS_PER_BLOCK ( 32 * REORDER_NUMBER_OF_WARPS )
-//
-//#define LOOKBACK_TABLE_SIZE ( 1024 )
-//#define MAX_LOOK_BACK 64
-//#define TAIL_BITS 4
-//#define TAIL_COUNT ( 1u << TAIL_BITS )
+using RADIX_SORT_KEY_TYPE = uint32_t;
+using RADIX_SORT_VALUE_TYPE = uint32_t;
 
 #if defined( DESCENDING_ORDER )
 #define ORDER_MASK_32 0xFFFFFFFF
