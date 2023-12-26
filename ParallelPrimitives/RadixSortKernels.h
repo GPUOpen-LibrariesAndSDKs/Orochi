@@ -927,7 +927,8 @@ extern "C" __global__ void gPrefixSum( u32* gpSumBuffer )
 	gpSumBuffer[blockIdx.x * BIN_SIZE + threadIdx.x] = smem[threadIdx.x];
 }
 
-__device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, u32 numberOfInputs, u32* gpSumBuffer,
+template <bool keyPair>
+__device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, u32 numberOfInputs, u32* gpSumBuffer,
 												  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
 	struct ElementLocation
@@ -1155,7 +1156,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			outputKeys[dstIndex] = inputKeys[srcIndex];
 		}
 	}
-	if( keyPair )
+	if constexpr ( keyPair )
 	{
 		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
@@ -1175,10 +1176,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, u32 numberOfInputs, u32* gpSumBuffer, volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits,
 												  u32 iteration )
 {
-	onesweep_reorder( inputKeys, outputKeys, nullptr, nullptr, false, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
+	onesweep_reorder<false /*keyPair*/>( inputKeys, outputKeys, nullptr, nullptr, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
 extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, u32 numberOfInputs, u32* gpSumBuffer,
 													  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
-	onesweep_reorder( inputKeys, outputKeys, inputValues, outputValues, true, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
+	onesweep_reorder<true /*keyPair*/>( inputKeys, outputKeys, inputValues, outputValues, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
