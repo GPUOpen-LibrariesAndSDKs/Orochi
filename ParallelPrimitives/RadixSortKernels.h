@@ -904,9 +904,9 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 		{
-			for( int j = threadIdx.x; j < 256; j += GHISTOGRAM_THREADS_PER_BLOCK )
+			for( int j = threadIdx.x; j < BIN_SIZE; j += GHISTOGRAM_THREADS_PER_BLOCK )
 			{
-				atomicAdd( &gpSumBuffer[256 * i + j], localCounters[i][j] );
+				atomicAdd( &gpSumBuffer[BIN_SIZE * i + j], localCounters[i][j] );
 			}
 		}
 	}
@@ -914,15 +914,15 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 extern "C" __global__ void gPrefixSum( u32* gpSumBuffer )
 {
-	__shared__ u32 smem[256];
+	__shared__ u32 smem[BIN_SIZE];
 
-	smem[threadIdx.x] = gpSumBuffer[blockIdx.x * 256 + threadIdx.x];
+	smem[threadIdx.x] = gpSumBuffer[blockIdx.x * BIN_SIZE + threadIdx.x];
 
 	__syncthreads();
 
-	prefixSumExclusive<256>( 0, smem );
+	prefixSumExclusive<BIN_SIZE>( 0, smem );
 
-	gpSumBuffer[blockIdx.x * 256 + threadIdx.x] = smem[threadIdx.x];
+	gpSumBuffer[blockIdx.x * BIN_SIZE + threadIdx.x] = smem[threadIdx.x];
 }
 
 __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, bool keyPair, u32 numberOfInputs, u32* gpSumBuffer,
@@ -935,23 +935,23 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		u32 bucket : 8;
 	};
 
-	__shared__ u32 pSum[256];
-	__shared__ u32 localPrefixSum[256];
-	__shared__ u32 counters[256];
+	__shared__ u32 pSum[BIN_SIZE];
+	__shared__ u32 localPrefixSum[BIN_SIZE];
+	__shared__ u32 counters[BIN_SIZE];
 	__shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 	__shared__ u8 elementBuckets[RADIX_SORT_BLOCK_SIZE];
-	__shared__ u32 matchMasks[REORDER_NUMBER_OF_WARPS][256];
+	__shared__ u32 matchMasks[REORDER_NUMBER_OF_WARPS][BIN_SIZE];
 
 	u32 bitLocation = startBits + 8 * iteration;
 	u32 blockIndex = blockIdx.x;
 	u32 numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
 
-	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( localPrefixSum, 0 );
-	clearShared<256, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( counters, 0 );
+	clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( localPrefixSum, 0 );
+	clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( counters, 0 );
 
 	for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
 	{
-		for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
 			matchMasks[w][i + threadIdx.x] = 0;
 		}
@@ -1022,10 +1022,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 	__syncthreads();
 
-	for( int i = threadIdx.x; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	for( int i = threadIdx.x; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		u32 s = localPrefixSum[i];
-		int pIndex = 256 * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
+		int pIndex = BIN_SIZE * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
 
 		{
 			ParitionID pa;
@@ -1035,13 +1035,13 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			lookBackBuffer[pIndex] = asU64( pa );
 		}
 
-		u32 gp = gpSumBuffer[iteration * 256 + i];
+		u32 gp = gpSumBuffer[iteration * BIN_SIZE + i];
 
 		u32 p = 0;
 
 		for( int iBlock = (int)blockIndex - 1; 0 <= iBlock; iBlock-- )
 		{
-			int lookbackIndex = 256 * ( iBlock % LOOKBACK_TABLE_SIZE ) + i;
+			int lookbackIndex = BIN_SIZE * ( iBlock % LOOKBACK_TABLE_SIZE ) + i;
 			ParitionID pa;
 
 			// when you reach to the maximum, flag must be 2. flagRequire = 0b10
@@ -1072,7 +1072,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 
 	u32 prefix = 0;
-	for( int i = 0; i < 256; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &localPrefixSum[i] );
 	}

@@ -302,10 +302,10 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 {
 	compileKernels( kernelPath, includeDir );
 
-	u64 gpSumBuffer = sizeof( u32 ) * 256 * sizeof( u32 /* key type */ );
+	u64 gpSumBuffer = sizeof( u32 ) * BIN_SIZE * sizeof( u32 /* key type */ );
 	m_gpSumBuffer.resizeAsync( gpSumBuffer, false /*copy*/, stream );
 
-	u64 lookBackBuffer = sizeof( u64 ) * ( 256 * LOOKBACK_TABLE_SIZE );
+	u64 lookBackBuffer = sizeof( u64 ) * ( BIN_SIZE * LOOKBACK_TABLE_SIZE );
 	m_lookbackBuffer.resizeAsync( lookBackBuffer, false /*copy*/, stream );
 
 	m_tailIterator.resizeAsync( 1, false /*copy*/, stream );
@@ -381,7 +381,7 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 	}
 	{
 		const void* args[] = { &gpSumBuffer };
-		OrochiUtils::launch1D( m_gPrefixSum, nIteration * 256, args, 256, 0, stream );
+		OrochiUtils::launch1D( m_gPrefixSum, nIteration * BIN_SIZE, args, BIN_SIZE, 0, stream );
 	}
 
 	auto s = src;
