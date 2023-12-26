@@ -777,7 +777,8 @@ using RADIX_SORT_VALUE_TYPE = u32;
 #define ITS 1
 #endif
 
-__device__ inline u32 div_round_up( u32 val, u32 divisor ) { return ( val + divisor - 1 ) / divisor; }
+__device__ constexpr u32 div_round_up( u32 val, u32 divisor ) noexcept { return ( val + divisor - 1 ) / divisor; }
+
 template<int NElement, int NThread, class T>
 __device__ void clearShared( T* sMem, T value )
 {
