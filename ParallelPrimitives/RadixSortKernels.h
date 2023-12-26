@@ -561,7 +561,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		lookBackBuffer[pIndex] = asU64( pa );
 
 		// complete global output location
-		pSum[i] = gp + p;
+		u32 globalOutput = gp + p;
+		pSum[i] = globalOutput;
+
+		// A special case handling: all elements have the same digit
+		if( s == RADIX_SORT_BLOCK_SIZE )
+		{
+			matchMasks[0][0] = globalOutput + 1 /* +1 to avoid zero */;
+		}
 	}
 
 	u32 prefix = 0;
@@ -576,6 +583,26 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			;
 
 		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
+	}
+
+	// A special case handling: all elements have the same digit
+	u32 globalOutput = matchMasks[0][0];
+	if( globalOutput-- /* -1 for the actual offset */ )
+	{
+		for( int i = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+		{
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i + threadIdx.x;
+			if( itemIndex < numberOfInputs )
+			{
+				u32 dstIndex = globalOutput + i + threadIdx.x;
+				outputKeys[dstIndex] = inputKeys[itemIndex];
+				if constexpr( keyPair )
+				{
+					outputValues[dstIndex] = inputValues[itemIndex];
+				}
+			}
+		}
+		return;
 	}
 
 	// reorder
