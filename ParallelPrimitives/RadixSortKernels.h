@@ -1,6 +1,5 @@
 #include <ParallelPrimitives/RadixSortConfigs.h>
 #define LDS_BARRIER __syncthreads()
-
 namespace
 {
 
@@ -766,15 +765,11 @@ using RADIX_SORT_KEY_TYPE = u32;
 using RADIX_SORT_VALUE_TYPE = u32;
 
 #if defined( DESCENDING_ORDER )
-#define ORDER_MASK_32 0xFFFFFFFF
-#define ORDER_MASK_64 0xFFFFFFFFFFFFFFFFllu
+constexpr u32 ORDER_MASK_32 = 0xFFFFFFFF;
+constexpr u64 ORDER_MASK_64 = 0xFFFFFFFFFFFFFFFFllu;
 #else
-#define ORDER_MASK_32 0
-#define ORDER_MASK_64 0llu
-#endif
-
-#if defined( CUDART_VERSION ) && CUDART_VERSION >= 9000
-#define ITS 1
+constexpr u32 ORDER_MASK_32 = 0;
+constexpr u64 ORDER_MASK_64 = 0llu;
 #endif
 
 __device__ constexpr u32 div_round_up( u32 val, u32 divisor ) noexcept { return ( val + divisor - 1 ) / divisor; }
@@ -793,20 +788,6 @@ __device__ void clearShared( T* sMem, T value )
 
 __device__ inline u32 getKeyBits( u32 x ) { return x ^ ORDER_MASK_32; }
 __device__ inline u64 getKeyBits( u64 x ) { return x ^ ORDER_MASK_64; }
-__device__ inline u32 getKeyBits( float x )
-{
-	if( x == 0.0f ) x = 0.0f;
-
-	u32 flip = u32( __float_as_int( x ) >> 31 ) | 0x80000000;
-	return __float_as_uint( x ) ^ flip ^ ORDER_MASK_32;
-}
-__device__ inline u64 getKeyBits( double x )
-{
-	if( x == 0.0 ) x = 0.0;
-
-	u64 flip = u64( __double_as_longlong( x ) >> 63 ) | 0x8000000000000000llu;
-	return (u64)__double_as_longlong( x ) ^ flip ^ ORDER_MASK_64;
-}
 
 template<int NThreads>
 __device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
