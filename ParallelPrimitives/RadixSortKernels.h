@@ -466,6 +466,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	__syncthreads();
 
 	u8  bucketIndices[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+	u32 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+	// u32 bros[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 
 	int warp = threadIdx.x / 32;
 	int lane = threadIdx.x % 32;
@@ -495,8 +497,15 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 #endif
 			broThreads &= ~difference;
 		}
+		// bros[k] = broThreads;
 		int laneIndex = threadIdx.x % 32;
 		u32 lowerMask = ( 1u << laneIndex ) - 1;
+
+		if( itemIndex < numberOfInputs )
+		{
+			warpOffsets[k] = lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] + __popc( broThreads & lowerMask );
+		}
+
 		bool leader = ( broThreads & lowerMask ) == 0;
 		if( itemIndex < numberOfInputs && leader )
 		{
@@ -504,7 +513,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			atomicAdd( &blockHistogram[bucketIndex], n );
 			lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += n;
 		}
-		// warpOffsets[k] = __popc( broThreads & lowerMask );
 	}
 
 	__syncthreads();
@@ -606,14 +614,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 	// printf( "[%d] %d\n", threadIdx.x, blockHistogram[threadIdx.x] );
 
-	//{
-	//	u32 prefix = 0;
-	//	for( int i = 0; i < 256 * REORDER_NUMBER_OF_WARPS; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &lpSum[i] );
-	//	}
-	//}
-
 	__syncthreads();
 
 	if( threadIdx.x == 0 )
@@ -624,13 +624,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
 	}
 
-	//{
-	//	u32 prefix = 0;
-	//	for( int i = 0; i < 256 * REORDER_NUMBER_OF_WARPS; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &lpSum[i] );
-	//	}
-	//}
 	__syncthreads();
 
 	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
@@ -638,38 +631,17 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
 		u32 bucketIndex = bucketIndices[k];
 
-		int nNoneActiveItems = 32 - u32min( numberOfInputs - ( itemIndex - lane ), 32 ); // 0 - 32
-		u32 broThreads = 0xFFFFFFFF >> nNoneActiveItems;
-
-		for( int j = 0; j < 8; ++j )
-		{
-			u32 bit = ( bucketIndex >> j ) & 0x1;
-			u32 difference = ( 0xFFFFFFFF * bit ) ^
-#if defined( ITS )
-							 __ballot_sync( 0xFFFFFFFF, bit != 0 );
-#else
-							 __ballot( bit != 0 );
-#endif
-			broThreads &= ~difference;
-		}
-		int laneIndex = threadIdx.x % 32;
-		u32 lowerMask = ( 1u << laneIndex ) - 1;
-		bool leader = ( broThreads & lowerMask ) == 0;
-
 		if( itemIndex < numberOfInputs )
 		{
 			u32 localBase = lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
-			u32 to = localBase + __popc( broThreads & lowerMask );
+			// u32 to = localBase + __popc( broThreads & lowerMask );
+			u32 to = localBase + warpOffsets[k];
 
 			ElementLocation el;
 			el.localSrcIndex = itemIndex - blockIndex * RADIX_SORT_BLOCK_SIZE;
 			el.localOffset = to - blockHistogram[bucketIndex];
 			el.bucket = bucketIndex;
 			elementLocations[to] = el;
-		}
-		if( itemIndex < numberOfInputs && leader )
-		{
-			lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += __popc( broThreads );
 		}
 	}
 
@@ -688,6 +660,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			outputKeys[dstIndex] = inputKeys[srcIndex];
 		}
 	}
+
 	if constexpr( keyPair )
 	{
 		for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
