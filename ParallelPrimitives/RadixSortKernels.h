@@ -318,15 +318,16 @@ __device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
 	return sum;
 }
 
-__device__ inline u32 scanExclusive( u32 prefix, u32* sMemIO, int nElement )
+template <class T>
+__device__ inline T scanExclusive( T prefix, T* sMemIO, int nElement )
 {
 	// assert(nElement <= nThreads)
 	bool active = threadIdx.x < nElement;
-	u32 value = active ? sMemIO[threadIdx.x] : 0;
+	T value = active ? sMemIO[threadIdx.x] : 0;
 
 	for( u32 offset = 1; offset < nElement; offset <<= 1 )
 	{
-		u32 x;
+		T x;
 		if( active )
 		{
 			x = sMemIO[threadIdx.x];
@@ -347,7 +348,7 @@ __device__ inline u32 scanExclusive( u32 prefix, u32* sMemIO, int nElement )
 		__syncthreads();
 	}
 
-	u32 sum = sMemIO[nElement - 1];
+	T sum = sMemIO[nElement - 1];
 
 	__syncthreads();
 
@@ -477,7 +478,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		u32 bucket : 8;
 	};
 
-	__shared__ u32 blockHistogram[BIN_SIZE];
+	__shared__ u16 blockHistogram[BIN_SIZE];
 	__shared__ u32 pSum[BIN_SIZE];
 	// __shared__ u32 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
 	// __shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
@@ -523,7 +524,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//	}
 	//}
 
-	clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( blockHistogram, 0 );
+	// clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( blockHistogram, 0 );
 	clearShared<BIN_SIZE * REORDER_NUMBER_OF_WARPS, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u16>( smem.u.phase1.lpSum, 0 );
 
 	__syncthreads();
@@ -572,20 +573,34 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
+#else
+		__threadfence_block();
 #endif
 		bool leader = ( broThreads & lowerMask ) == 0;
 		if( itemIndex < numberOfInputs && leader )
 		{
 			u32 n = __popc( broThreads );
-			atomicAdd( &blockHistogram[bucketIndex], n );
 			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += n;
 		}
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
+#else
+		__threadfence_block();
 #endif
 	}
 
 	__syncthreads();
+
+	if( threadIdx.x < BIN_SIZE )
+	{
+		int bucketIndex = threadIdx.x;
+		u32 s = 0;
+		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
+		{
+			s += smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
+		}
+		blockHistogram[bucketIndex] = s;
+	}
 
 	struct ParitionID
 	{
@@ -672,7 +687,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//	prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &blockHistogram[i] );
 	//}
 
-	scanExclusive( 0, blockHistogram, BIN_SIZE );
+	scanExclusive<u16>( 0, blockHistogram, BIN_SIZE );
 
 	if( threadIdx.x < BIN_SIZE )
 	{
