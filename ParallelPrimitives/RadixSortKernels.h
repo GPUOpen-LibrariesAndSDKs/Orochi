@@ -524,7 +524,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		{
 			warpOffsets[k] = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] + __popc( broThreads & lowerMask );
 		}
-
+#if defined( ITS )
+		__syncwarp( 0xFFFFFFFF );
+#endif
 		bool leader = ( broThreads & lowerMask ) == 0;
 		if( itemIndex < numberOfInputs && leader )
 		{
@@ -532,6 +534,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			atomicAdd( &blockHistogram[bucketIndex], n );
 			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += n;
 		}
+#if defined( ITS )
+		__syncwarp( 0xFFFFFFFF );
+#endif
 	}
 
 	__syncthreads();
