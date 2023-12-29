@@ -20,7 +20,7 @@ constexpr auto SINGLE_SORT_WG_SIZE{ 128 };
 
 static_assert( BIN_SIZE % 2 == 0 );
 
-constexpr int RADIX_SORT_BLOCK_SIZE = 2048 * 2;
+constexpr int RADIX_SORT_BLOCK_SIZE = 2048 + 1024 + 1024;
 // constexpr int RADIX_SORT_BLOCK_SIZE = 512;
 
 constexpr int GHISTOGRAM_ITEM_PER_BLOCK = 2048;

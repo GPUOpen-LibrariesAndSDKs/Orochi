@@ -486,7 +486,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		struct Phase1
 		{
-			u32 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
+			u16 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
 		};
 		struct Phase2
 		{
@@ -524,7 +524,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//}
 
 	clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( blockHistogram, 0 );
-	clearShared<BIN_SIZE * REORDER_NUMBER_OF_WARPS, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( smem.u.phase1.lpSum, 0 );
+	clearShared<BIN_SIZE * REORDER_NUMBER_OF_WARPS, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u16>( smem.u.phase1.lpSum, 0 );
 
 	__syncthreads();
 
