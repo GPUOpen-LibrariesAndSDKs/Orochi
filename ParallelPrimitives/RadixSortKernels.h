@@ -318,6 +318,49 @@ __device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
 	return sum;
 }
 
+__device__ inline u32 scanExclusive( u32 prefix, u32* sMemIO, int nElement )
+{
+	// assert(nElement <= nThreads)
+	bool active = threadIdx.x < nElement;
+	u32 value = active ? sMemIO[threadIdx.x] : 0;
+
+	for( u32 offset = 1; offset < nElement; offset <<= 1 )
+	{
+		u32 x;
+		if( active )
+		{
+			x = sMemIO[threadIdx.x];
+		}
+
+		if( active && offset <= threadIdx.x )
+		{
+			x += sMemIO[threadIdx.x - offset];
+		}
+
+		__syncthreads();
+
+		if( active )
+		{
+			sMemIO[threadIdx.x] = x;
+		}
+
+		__syncthreads();
+	}
+
+	u32 sum = sMemIO[nElement - 1];
+
+	__syncthreads();
+
+	if( active )
+	{
+		sMemIO[threadIdx.x] += prefix - value;
+	}
+
+	__syncthreads();
+
+	return sum;
+}
+
 extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOfInputs, u32* gpSumBuffer, u32 startBits, u32* counter )
 {
 	__shared__ u32 localCounters[sizeof( RADIX_SORT_KEY_TYPE )][256];
@@ -620,11 +663,15 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	}
 
 
-	u32 prefix = 0;
-	for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	{
-		prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &blockHistogram[i] );
-	}
+	//u32 prefix = 0;
+	//for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	//{
+	//	prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &blockHistogram[i] );
+	//}
+
+	scanExclusive( 0, blockHistogram, BIN_SIZE );
+
+	if( threadIdx.x < BIN_SIZE )
 	{
 		int bucketIndex = threadIdx.x;
 		u32 s = blockHistogram[bucketIndex];
