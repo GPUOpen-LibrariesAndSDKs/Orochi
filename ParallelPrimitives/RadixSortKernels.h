@@ -478,7 +478,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		u32 bucket : 8;
 	};
 
-	__shared__ u16 blockHistogram[BIN_SIZE];
 	__shared__ u32 pSum[BIN_SIZE];
 	// __shared__ u32 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
 	// __shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
@@ -487,6 +486,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		struct Phase1
 		{
+			u16 blockHistogram[BIN_SIZE];
 			u16 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
 		};
 		struct Phase2
@@ -494,11 +494,18 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			// ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 			RADIX_SORT_KEY_TYPE elements[RADIX_SORT_BLOCK_SIZE];
 		};
+		struct Phase3
+		{
+			// ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
+			RADIX_SORT_VALUE_TYPE elements[RADIX_SORT_BLOCK_SIZE];
+			u8 buckets[RADIX_SORT_BLOCK_SIZE];
+		};
 
 		union
 		{
 			Phase1 phase1;
 			Phase2 phase2;
+			Phase3 phase3;
 		} u;
 	};
 	__shared__ SMem smem;
@@ -524,7 +531,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//	}
 	//}
 
-	// clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( blockHistogram, 0 );
 	clearShared<BIN_SIZE * REORDER_NUMBER_OF_WARPS, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u16>( smem.u.phase1.lpSum, 0 );
 
 	__syncthreads();
@@ -599,7 +605,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		{
 			s += smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
 		}
-		blockHistogram[bucketIndex] = s;
+		smem.u.phase1.blockHistogram[bucketIndex] = s;
 	}
 
 	struct ParitionID
@@ -632,7 +638,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	for( int i = threadIdx.x; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		//u32 s = localPrefixSum[i];
-		u32 s = blockHistogram[i];
+		u32 s = smem.u.phase1.blockHistogram[i];
 		int pIndex = BIN_SIZE * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
 
 		{
@@ -684,15 +690,15 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//u32 prefix = 0;
 	//for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	//{
-	//	prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &blockHistogram[i] );
+	//	prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &smem.u.phase1.blockHistogram[i] );
 	//}
 
-	scanExclusive<u16>( 0, blockHistogram, BIN_SIZE );
+	scanExclusive<u16>( 0, smem.u.phase1.blockHistogram, BIN_SIZE );
 
 	if( threadIdx.x < BIN_SIZE )
 	{
 		int bucketIndex = threadIdx.x;
-		u32 s = blockHistogram[bucketIndex];
+		u32 s = smem.u.phase1.blockHistogram[bucketIndex];
 		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
 		{
 			int index = bucketIndex * REORDER_NUMBER_OF_WARPS + warp;
@@ -716,9 +722,13 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	for( int k = 0; k < REORDER_NUMBER_OF_ITEM_PER_THREAD; k++ )
 	{
-		// u32 bucketIndex = bucketIndices[k];
 		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
 		warpOffsets[k] += smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
+	}
+
+	if( threadIdx.x < BIN_SIZE )
+	{
+		pSum[threadIdx.x] -= smem.u.phase1.blockHistogram[threadIdx.x];
 	}
 
 	__syncthreads();
@@ -727,50 +737,58 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
 	{
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
-		// u32 bucketIndex = bucketIndices[k];
 		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
-
 		if( itemIndex < numberOfInputs )
 		{
-			u32 to = warpOffsets[k];
-
-			ElementLocation el;
-			el.localSrcIndex = itemIndex - blockIndex * RADIX_SORT_BLOCK_SIZE;
-			// el.localOffset = to - blockHistogram[bucketIndex];
-			el.localOffset = 0;
-			el.bucket = bucketIndex;
-			// smem.u.phase2.elementLocations[to] = el;
-			
-			// smem.u.phase2.elements[to] = inputKeys[itemIndex];
-			smem.u.phase2.elements[to] = keys[k];
+			smem.u.phase2.elements[warpOffsets[k]] = keys[k];
 		}
-	}
-
-	if( threadIdx.x < BIN_SIZE )
-	{
-		pSum[threadIdx.x] -= blockHistogram[threadIdx.x];
 	}
 
 	__syncthreads();
 
-	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	for( int i = threadIdx.x, k = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK, k++ )
 	{
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 		if( itemIndex < numberOfInputs )
 		{
-		//	ElementLocation el = smem.u.phase2.elementLocations[i];
-		//	u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-		//	u8 bucketIndex = el.bucket;
-
-		//	// u32 dstIndex = pSum[bucketIndex] + el.localOffset;
-		//	u32 dstIndex = pSum[bucketIndex] + i - blockHistogram[bucketIndex];
-		//	outputKeys[dstIndex] = inputKeys[srcIndex];
-
 			auto item = smem.u.phase2.elements[i];
 			u32 bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
-			// u32 dstIndex = pSum[bucketIndex] + i - blockHistogram[bucketIndex];
+
+			// u32 dstIndex = pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex];
 			u32 dstIndex = pSum[bucketIndex] + i;
 			outputKeys[dstIndex] = item;
+		}
+	}
+
+	if constexpr( keyPair )
+	{
+		__syncthreads();
+
+		for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
+		{
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
+			u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
+			if( itemIndex < numberOfInputs )
+			{
+				smem.u.phase3.elements[warpOffsets[k]] = inputValues[itemIndex];
+				smem.u.phase3.buckets[warpOffsets[k]] = bucketIndex;
+			}
+		}
+
+		__syncthreads();
+
+		for( int i = threadIdx.x, k = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK, k++ )
+		{
+			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
+			if( itemIndex < numberOfInputs )
+			{
+				auto item       = smem.u.phase3.elements[i];
+				u32 bucketIndex = smem.u.phase3.buckets[i];
+
+				// u32 dstIndex = pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex];
+				u32 dstIndex = pSum[bucketIndex] + i;
+				outputValues[dstIndex] = item;
+			}
 		}
 	}
 
@@ -786,7 +804,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	//			u8 bucketIndex = el.bucket;
 
 	//			// u32 dstIndex = pSum[bucketIndex] + el.localOffset;
-	//			u32 dstIndex = pSum[bucketIndex] + i - blockHistogram[bucketIndex];
+	//			u32 dstIndex = pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex];
 	//			outputValues[dstIndex] = inputValues[srcIndex];
 	//		}
 	//	}
