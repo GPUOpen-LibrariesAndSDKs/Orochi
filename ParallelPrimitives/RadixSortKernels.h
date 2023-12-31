@@ -564,7 +564,11 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 				smem.u.phase1.batchKeys[warp][toK][toLane] = batchKeys.xs[v];
 			}
 
-			__syncthreads();
+#if defined( ITS )
+			__syncwarp( 0xFFFFFFFF );
+#else
+			__threadfence_block();
+#endif
 		}
 
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane;
