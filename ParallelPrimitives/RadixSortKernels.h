@@ -536,8 +536,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	__syncthreads();
 
 	// u8 bucketIndices[REORDER_NUMBER_OF_ITEM_PER_THREAD];
-	u32 keys[REORDER_NUMBER_OF_ITEM_PER_THREAD];
-	u32 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+	RADIX_SORT_KEY_TYPE keys[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+	u16 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	// u32 bros[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 
 	int warp = threadIdx.x / 32;
