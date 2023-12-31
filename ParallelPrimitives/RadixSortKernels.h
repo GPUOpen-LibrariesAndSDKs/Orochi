@@ -482,12 +482,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	// __shared__ u32 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
 	// __shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 
+	constexpr int N_BATCH_LOAD = 4;
 	struct SMem
 	{
 		struct Phase1
 		{
 			u16 blockHistogram[BIN_SIZE];
 			u16 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
+			RADIX_SORT_KEY_TYPE batchKeys[REORDER_NUMBER_OF_WARPS][N_BATCH_LOAD][32];
 		};
 		struct Phase2
 		{
@@ -537,19 +539,49 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	// u8 bucketIndices[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	RADIX_SORT_KEY_TYPE keys[REORDER_NUMBER_OF_ITEM_PER_THREAD];
-	u16 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+	u32 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	// u32 bros[REORDER_NUMBER_OF_ITEM_PER_THREAD];
+
+	bool batchLoading = ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs;
 
 	int warp = threadIdx.x / 32;
 	int lane = threadIdx.x % 32;
-	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
+	for( int i = 0, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
 	{
-		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
+		if( batchLoading && ( k % N_BATCH_LOAD ) == 0 )
+		{
+			struct alignas( 16 ) BatchKeys
+			{
+				RADIX_SORT_KEY_TYPE xs[N_BATCH_LOAD];
+			};
+			int srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane * N_BATCH_LOAD;
+			BatchKeys batchKeys = *(BatchKeys*)&inputKeys[srcIndex];
+			for( int v = 0; v < N_BATCH_LOAD; v++ )
+			{
+				int indexInWarp = lane * N_BATCH_LOAD + v;
+				int toK = indexInWarp / 32;
+				int toLane = indexInWarp % 32;
+				smem.u.phase1.batchKeys[warp][toK][toLane] = batchKeys.xs[v];
+			}
+
+			__syncthreads();
+		}
+
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane;
 
 		u32 bucketIndex = 0;
 		if( itemIndex < numberOfInputs )
 		{
-			auto item = inputKeys[itemIndex];
+			RADIX_SORT_KEY_TYPE item;
+			if( batchLoading )
+			{
+				item = smem.u.phase1.batchKeys[warp][k % N_BATCH_LOAD][lane];
+			}
+			else
+			{
+				item = inputKeys[itemIndex];
+			}
+
 			bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 			keys[k] = item;
 		}
