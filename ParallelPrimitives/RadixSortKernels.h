@@ -364,11 +364,11 @@ __device__ inline T scanExclusive( T prefix, T* sMemIO, int nElement )
 
 extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOfInputs, u32* gpSumBuffer, u32 startBits, u32* counter )
 {
-	__shared__ u32 localCounters[sizeof( RADIX_SORT_KEY_TYPE )][256];
+	__shared__ u32 localCounters[sizeof( RADIX_SORT_KEY_TYPE )][BIN_SIZE];
 
 	for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 	{
-		for( int j = threadIdx.x; j < 256; j += GHISTOGRAM_THREADS_PER_BLOCK )
+		for( int j = threadIdx.x; j < BIN_SIZE; j += GHISTOGRAM_THREADS_PER_BLOCK )
 		{
 			localCounters[i][j] = 0;
 		}
@@ -406,7 +406,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 					auto item = key4.xs[k];
 					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 					{
-						u32 bitLocation = startBits + i * 8;
+						u32 bitLocation = startBits + i * N_RADIX;
 						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
 						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 					}
@@ -423,7 +423,7 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 					auto item = inputs[itemIndex];
 					for( int j = 0; j < sizeof( RADIX_SORT_KEY_TYPE ); j++ )
 					{
-						u32 bitLocation = startBits + j * 8;
+						u32 bitLocation = startBits + j * N_RADIX;
 						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
 						atomicInc( &localCounters[j][bits], 0xFFFFFFFF );
 					}
@@ -470,7 +470,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		{
 			u16 blockHistogram[BIN_SIZE];
 			u16 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
-			RADIX_SORT_KEY_TYPE batchKeys[REORDER_NUMBER_OF_WARPS][N_BATCH_LOAD][32];
+			RADIX_SORT_KEY_TYPE batchKeys[REORDER_NUMBER_OF_WARPS][N_BATCH_LOAD][WARP_SIZE];
 		};
 		struct Phase2
 		{
@@ -491,7 +491,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	};
 	__shared__ SMem smem;
 
-	u32 bitLocation = startBits + 8 * iteration;
+	u32 bitLocation = startBits + N_RADIX * iteration;
 	u32 blockIndex = blockIdx.x;
 	u32 numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
 
@@ -504,9 +504,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	bool batchLoading = KEY_IS_16BYTE_ALIGNED && ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs;
 
-	int warp = threadIdx.x / 32;
-	int lane = threadIdx.x % 32;
-	for( int i = 0, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
+	int warp = threadIdx.x / WARP_SIZE;
+	int lane = threadIdx.x % WARP_SIZE;
+	for( int i = 0, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
 	{
 		if( batchLoading && ( k % N_BATCH_LOAD ) == 0 )
 		{
@@ -519,8 +519,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			for( int v = 0; v < N_BATCH_LOAD; v++ )
 			{
 				int indexInWarp = lane * N_BATCH_LOAD + v;
-				int toK = indexInWarp / 32;
-				int toLane = indexInWarp % 32;
+				int toK = indexInWarp / WARP_SIZE;
+				int toLane = indexInWarp % WARP_SIZE;
 				smem.u.phase1.batchKeys[warp][toK][toLane] = batchKeys.xs[v];
 			}
 
@@ -550,10 +550,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			keys[k] = item;
 		}
 
-		int nNoneActiveItems = 32 - u32min( numberOfInputs - ( itemIndex - lane ), 32 ); // 0 - 32
+		int nNoneActiveItems = WARP_SIZE - u32min( numberOfInputs - ( itemIndex - lane ), WARP_SIZE ); // 0 - 32
 		u32 broThreads = 0xFFFFFFFF >> nNoneActiveItems;
 
-		for( int j = 0; j < 8; ++j )
+		for( int j = 0; j < N_RADIX; ++j )
 		{
 			u32 bit = ( bucketIndex >> j ) & 0x1;
 			u32 difference = ( 0xFFFFFFFF * bit ) ^
@@ -565,8 +565,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			broThreads &= ~difference;
 		}
 
-		int laneIndex = threadIdx.x % 32;
-		u32 lowerMask = ( 1u << laneIndex ) - 1;
+		u32 lowerMask = ( 1u << lane ) - 1;
 
 		if( itemIndex < numberOfInputs )
 		{
@@ -632,7 +631,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	for( int i = threadIdx.x; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		//u32 s = localPrefixSum[i];
 		u32 s = smem.u.phase1.blockHistogram[i];
 		int pIndex = BIN_SIZE * ( blockIndex % LOOKBACK_TABLE_SIZE ) + i;
 
@@ -722,7 +720,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	__syncthreads();
 
 
-	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
+	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
 	{
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
 		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
@@ -752,7 +750,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	{
 		__syncthreads();
 
-		for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += 32, k++ )
+		for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
 		{
 			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i;
 			u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
