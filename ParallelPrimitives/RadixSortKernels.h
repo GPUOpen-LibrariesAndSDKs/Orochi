@@ -461,13 +461,6 @@ template <bool keyPair>
 __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, u32 numberOfInputs, u32* gpSumBuffer,
 												  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
-	struct ElementLocation
-	{
-		u32 localSrcIndex : 12;
-		u32 localOffset : 12;
-		u32 bucket : 8;
-	};
-
 	__shared__ u32 pSum[BIN_SIZE];
 
 	constexpr int N_BATCH_LOAD = 4;
@@ -481,12 +474,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		};
 		struct Phase2
 		{
-			// ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 			RADIX_SORT_KEY_TYPE elements[RADIX_SORT_BLOCK_SIZE];
 		};
 		struct Phase3
 		{
-			// ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 			RADIX_SORT_VALUE_TYPE elements[RADIX_SORT_BLOCK_SIZE];
 			u8 buckets[RADIX_SORT_BLOCK_SIZE];
 		};
@@ -558,7 +549,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 			keys[k] = item;
 		}
-		// bucketIndices[k] = bucketIndex;
 
 		int nNoneActiveItems = 32 - u32min( numberOfInputs - ( itemIndex - lane ), 32 ); // 0 - 32
 		u32 broThreads = 0xFFFFFFFF >> nNoneActiveItems;
@@ -574,7 +564,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 #endif
 			broThreads &= ~difference;
 		}
-		// bros[k] = broThreads;
+
 		int laneIndex = threadIdx.x % 32;
 		u32 lowerMask = ( 1u << laneIndex ) - 1;
 
