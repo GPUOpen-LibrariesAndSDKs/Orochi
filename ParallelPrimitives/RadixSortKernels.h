@@ -479,8 +479,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	};
 
 	__shared__ u32 pSum[BIN_SIZE];
-	// __shared__ u32 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
-	// __shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
 
 	constexpr int N_BATCH_LOAD = 4;
 	struct SMem
@@ -512,26 +510,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	};
 	__shared__ SMem smem;
 
-	//__shared__ u32 localPrefixSum[BIN_SIZE];
-	//__shared__ u32 counters[BIN_SIZE];
-	//__shared__ ElementLocation elementLocations[RADIX_SORT_BLOCK_SIZE];
-	//__shared__ u8 elementBuckets[RADIX_SORT_BLOCK_SIZE];
-	//__shared__ u32 matchMasks[REORDER_NUMBER_OF_WARPS][BIN_SIZE];
-
 	u32 bitLocation = startBits + 8 * iteration;
 	u32 blockIndex = blockIdx.x;
 	u32 numberOfBlocks = div_round_up( numberOfInputs, RADIX_SORT_BLOCK_SIZE );
-
-	// clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( localPrefixSum, 0 );
-	// clearShared<BIN_SIZE, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u32>( counters, 0 );
-
-	//for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
-	//{
-	//	for( int i = threadIdx.x; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		matchMasks[w][i] = 0;
-	//	}
-	//}
 
 	clearShared<BIN_SIZE * REORDER_NUMBER_OF_WARPS, REORDER_NUMBER_OF_THREADS_PER_BLOCK, u16>( smem.u.phase1.lpSum, 0 );
 
@@ -722,13 +703,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		pSum[i] = globalOutput;
 	}
 
-
-	//u32 prefix = 0;
-	//for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//{
-	//	prefix += prefixSumExclusive<REORDER_NUMBER_OF_THREADS_PER_BLOCK>( prefix, &smem.u.phase1.blockHistogram[i] );
-	//}
-
 	scanExclusive<u16>( 0, smem.u.phase1.blockHistogram, BIN_SIZE );
 
 	if( threadIdx.x < BIN_SIZE )
@@ -827,129 +801,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			}
 		}
 	}
-
-	//if constexpr( keyPair )
-	//{
-	//	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
-	//		if( itemIndex < numberOfInputs )
-	//		{
-	//			ElementLocation el = smem.u.phase2.elementLocations[i];
-	//			u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-	//			u8 bucketIndex = el.bucket;
-
-	//			// u32 dstIndex = pSum[bucketIndex] + el.localOffset;
-	//			u32 dstIndex = pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex];
-	//			outputValues[dstIndex] = inputValues[srcIndex];
-	//		}
-	//	}
-	//}
-
-	// A special case handling: all elements have the same digit
-	//u32 globalOutput = matchMasks[0][0];
-	//if( globalOutput-- /* -1 for the actual offset */ )
-	//{
-	//	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
-	//		if( itemIndex < numberOfInputs )
-	//		{
-	//			u32 dstIndex = globalOutput + i;
-	//			outputKeys[dstIndex] = inputKeys[itemIndex];
-	//			if constexpr( keyPair )
-	//			{
-	//				outputValues[dstIndex] = inputValues[itemIndex];
-	//			}
-	//		}
-	//	}
-	//	return;
-	//}
-
-	// reorder
-	//for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//{
-	//	u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
-	//	u32 bucketIndex = elementBuckets[i];
-
-	//	__syncthreads();
-
-	//	int warp = threadIdx.x / 32;
-	//	int lane = threadIdx.x % 32;
-
-	//	if( itemIndex < numberOfInputs )
-	//	{
-	//		atomicOr( &matchMasks[warp][bucketIndex], 1u << lane );
-	//	}
-
-	//	__syncthreads();
-
-	//	bool flushMask = false;
-
-	//	if( itemIndex < numberOfInputs )
-	//	{
-	//		u32 matchMask = matchMasks[warp][bucketIndex];
-	//		u32 lowerMask = ( 1u << lane ) - 1;
-	//		u32 offset = __popc( matchMask & lowerMask );
-
-	//		flushMask = offset == 0;
-
-	//		for( int w = 0; w < warp; w++ )
-	//		{
-	//			offset += __popc( matchMasks[w][bucketIndex] );
-	//		}
-
-	//		u32 localOffset = counters[bucketIndex] + offset;
-	//		u32 to = localOffset + localPrefixSum[bucketIndex];
-
-	//		ElementLocation el;
-	//		el.localSrcIndex = i;
-	//		el.localOffset = localOffset;
-	//		el.bucket = bucketIndex;
-	//		elementLocations[to] = el;
-	//	}
-
-	//	__syncthreads();
-
-	//	if( itemIndex < numberOfInputs )
-	//	{
-	//		atomicInc( &counters[bucketIndex], 0xFFFFFFFF );
-	//	}
-	//	if( flushMask )
-	//	{
-	//		matchMasks[warp][bucketIndex] = 0;
-	//	}
-	//}
-
-	//for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//{
-	//	u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
-	//	if( itemIndex < numberOfInputs )
-	//	{
-	//		ElementLocation el = elementLocations[i];
-	//		u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-	//		u8 bucketIndex = el.bucket;
-
-	//		u32 dstIndex = pSum[bucketIndex] + el.localOffset;
-	//		outputKeys[dstIndex] = inputKeys[srcIndex];
-	//	}
-	//}
-	//if constexpr ( keyPair )
-	//{
-	//	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	//	{
-	//		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
-	//		if( itemIndex < numberOfInputs )
-	//		{
-	//			ElementLocation el = elementLocations[i];
-	//			u32 srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + el.localSrcIndex;
-	//			u8 bucketIndex = el.bucket;
-
-	//			u32 dstIndex = pSum[bucketIndex] + el.localOffset;
-	//			outputValues[dstIndex] = inputValues[srcIndex];
-	//		}
-	//	}
-	//}
 }
 extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, u32 numberOfInputs, u32* gpSumBuffer, volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits,
 												  u32 iteration )
