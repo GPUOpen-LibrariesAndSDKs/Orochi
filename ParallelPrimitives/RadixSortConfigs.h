@@ -36,7 +36,7 @@ constexpr int MAX_LOOK_BACK = 64;
 constexpr int TAIL_BITS = 5;
 constexpr int TAIL_COUNT = 1u << TAIL_BITS;
 
-//static_assert( REORDER_NUMBER_OF_THREADS_PER_BLOCK <= BIN_SIZE, "please check prefixSumExclusive on onesweep_reorder" );
+static_assert( BIN_SIZE <= REORDER_NUMBER_OF_THREADS_PER_BLOCK, "please check scanExclusive" );
 //static_assert( BIN_SIZE % REORDER_NUMBER_OF_THREADS_PER_BLOCK == 0, "please check prefixSumExclusive on onesweep_reorder" );
 
 }; // namespace Oro

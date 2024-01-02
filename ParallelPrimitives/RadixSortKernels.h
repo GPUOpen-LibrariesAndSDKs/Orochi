@@ -442,7 +442,10 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 	if( hasData )
 	{
-		__syncthreads();
+		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+		{
+			scanExclusive<u32>( 0, &localCounters[i][0], BIN_SIZE );
+		}
 
 		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 		{
@@ -452,19 +455,6 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 			}
 		}
 	}
-}
-
-extern "C" __global__ void gPrefixSum( u32* gpSumBuffer )
-{
-	__shared__ u32 smem[BIN_SIZE];
-
-	smem[threadIdx.x] = gpSumBuffer[blockIdx.x * BIN_SIZE + threadIdx.x];
-
-	__syncthreads();
-
-	prefixSumExclusive<BIN_SIZE>( 0, smem );
-
-	gpSumBuffer[blockIdx.x * BIN_SIZE + threadIdx.x] = smem[threadIdx.x];
 }
 
 template <bool keyPair>
@@ -518,12 +508,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	__syncthreads();
 
-	// u8 bucketIndices[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	RADIX_SORT_KEY_TYPE keys[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	u32 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
-	// u32 bros[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 
-	bool batchLoading = ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs;
+	bool batchLoading = KEY_IS_16BYTE_ALIGNED && ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs;
 
 	int warp = threadIdx.x / 32;
 	int lane = threadIdx.x % 32;

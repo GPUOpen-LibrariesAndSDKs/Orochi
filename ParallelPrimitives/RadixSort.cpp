@@ -164,7 +164,6 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	// TODO: bit code support?
 #define LOAD_FUNC( var, kernel ) var = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), kernel, &opts );
 	LOAD_FUNC( m_gHistogram, "gHistogram" );
-	LOAD_FUNC( m_gPrefixSum, "gPrefixSum" );
 	LOAD_FUNC( m_onesweep_reorderKey64, "onesweep_reorderKey64" );
 	LOAD_FUNC( m_onesweep_reorderKeyPair64, "onesweep_reorderKeyPair64" );
 #undef LOAD_FUNC
@@ -231,10 +230,6 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &counter };
 		OrochiUtils::launch1D( m_gHistogram, nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );
-	}
-	{
-		const void* args[] = { &gpSumBuffer };
-		OrochiUtils::launch1D( m_gPrefixSum, nIteration * BIN_SIZE, args, BIN_SIZE, 0, stream );
 	}
 
 	auto s = src;

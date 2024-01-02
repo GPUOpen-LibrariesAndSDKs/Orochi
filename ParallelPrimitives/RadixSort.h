@@ -75,7 +75,6 @@ class RadixSort final
 	OrochiUtils& m_oroutils;
 
 	oroFunction m_gHistogram;
-	oroFunction m_gPrefixSum;
 	oroFunction m_onesweep_reorderKey64;
 	oroFunction m_onesweep_reorderKeyPair64;
 
