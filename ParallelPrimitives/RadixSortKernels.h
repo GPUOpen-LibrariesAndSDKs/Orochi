@@ -285,7 +285,6 @@ __device__ inline u32 getKeyBits( u32 x ) { return x ^ ORDER_MASK_32; }
 __device__ inline u64 getKeyBits( u64 x ) { return x ^ ORDER_MASK_64; }
 __device__ inline u32 extractDigit( u32 x, u32 bitLocation ) { return ( x >> bitLocation ) & RADIX_MASK; }
 __device__ inline u32 extractDigit( u64 x, u32 bitLocation ) { return (u32)( ( x >> bitLocation ) & RADIX_MASK ); }
-__device__ __forceinline__ u32 u32min( u32 x, u32 y ) { return ( y < x ) ? y : x; }
 
 template<int NThreads>
 __device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
@@ -550,8 +549,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 			keys[k] = item;
 		}
 
-		int nNoneActiveItems = WARP_SIZE - u32min( numberOfInputs - ( itemIndex - lane ), WARP_SIZE ); // 0 - 32
-		u32 broThreads = 0xFFFFFFFF >> nNoneActiveItems;
+		// check the attendees
+		u32 broThreads =
+#if defined( ITS )
+			__ballot_sync( 0xFFFFFFFF,
+#else
+			__ballot(
+#endif
+						   itemIndex < numberOfInputs );
 
 		for( int j = 0; j < N_RADIX; ++j )
 		{
