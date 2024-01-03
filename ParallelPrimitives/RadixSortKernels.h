@@ -286,37 +286,6 @@ __device__ inline u64 getKeyBits( u64 x ) { return x ^ ORDER_MASK_64; }
 __device__ inline u32 extractDigit( u32 x, u32 bitLocation ) { return ( x >> bitLocation ) & RADIX_MASK; }
 __device__ inline u32 extractDigit( u64 x, u32 bitLocation ) { return (u32)( ( x >> bitLocation ) & RADIX_MASK ); }
 
-template<int NThreads>
-__device__ inline u32 prefixSumExclusive( u32 prefix, u32* sMemIO )
-{
-	u32 value = sMemIO[threadIdx.x];
-
-	for( u32 offset = 1; offset < NThreads; offset <<= 1 )
-	{
-		u32 x = sMemIO[threadIdx.x];
-
-		if( offset <= threadIdx.x )
-		{
-			x += sMemIO[threadIdx.x - offset];
-		}
-
-		__syncthreads();
-
-		sMemIO[threadIdx.x] = x;
-
-		__syncthreads();
-	}
-	u32 sum = sMemIO[NThreads - 1];
-
-	__syncthreads();
-
-	sMemIO[threadIdx.x] += prefix - value;
-
-	__syncthreads();
-
-	return sum;
-}
-
 template <class T>
 __device__ inline T scanExclusive( T prefix, T* sMemIO, int nElement )
 {
