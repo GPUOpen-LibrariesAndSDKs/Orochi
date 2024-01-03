@@ -342,8 +342,6 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 		}
 	}
 
-	__syncthreads();
-
 	u32 numberOfBlocks = div_round_up( numberOfInputs, GHISTOGRAM_ITEM_PER_BLOCK );
 	__shared__ u32 iBlock;
 	if( threadIdx.x == 0 )
