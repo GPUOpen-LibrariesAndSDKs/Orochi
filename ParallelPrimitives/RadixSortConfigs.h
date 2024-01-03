@@ -22,23 +22,22 @@ static_assert( BIN_SIZE % 2 == 0 );
 
 constexpr int WARP_SIZE = 32;
 
-constexpr int RADIX_SORT_BLOCK_SIZE = 2048 + 1024 + 1024;
-// constexpr int RADIX_SORT_BLOCK_SIZE = 512;
+constexpr int RADIX_SORT_BLOCK_SIZE = 4096;
 
 constexpr int GHISTOGRAM_ITEM_PER_BLOCK = 2048;
 constexpr int GHISTOGRAM_THREADS_PER_BLOCK = 256;
 
 constexpr int REORDER_NUMBER_OF_WARPS = 8;
-constexpr int REORDER_NUMBER_OF_THREADS_PER_BLOCK = 32 * REORDER_NUMBER_OF_WARPS;
+constexpr int REORDER_NUMBER_OF_THREADS_PER_BLOCK = WARP_SIZE * REORDER_NUMBER_OF_WARPS;
 constexpr int REORDER_NUMBER_OF_ITEM_PER_WARP = RADIX_SORT_BLOCK_SIZE / REORDER_NUMBER_OF_WARPS;
-constexpr int REORDER_NUMBER_OF_ITEM_PER_THREAD = REORDER_NUMBER_OF_ITEM_PER_WARP / 32;
+constexpr int REORDER_NUMBER_OF_ITEM_PER_THREAD = REORDER_NUMBER_OF_ITEM_PER_WARP / WARP_SIZE;
 
 constexpr int LOOKBACK_TABLE_SIZE = 1024;
 constexpr int MAX_LOOK_BACK = 64;
 constexpr int TAIL_BITS = 5;
 constexpr int TAIL_COUNT = 1u << TAIL_BITS;
 
-static_assert( BIN_SIZE <= REORDER_NUMBER_OF_THREADS_PER_BLOCK, "please check scanExclusive" );
+//static_assert( BIN_SIZE <= REORDER_NUMBER_OF_THREADS_PER_BLOCK, "please check scanExclusive" );
 //static_assert( BIN_SIZE % REORDER_NUMBER_OF_THREADS_PER_BLOCK == 0, "please check prefixSumExclusive on onesweep_reorder" );
 
 }; // namespace Oro

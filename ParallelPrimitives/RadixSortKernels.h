@@ -680,7 +680,13 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		pSum[i] = globalOutput;
 	}
 
-	scanExclusive<u16>( 0, smem.u.phase1.blockHistogram, BIN_SIZE );
+	__syncthreads();
+
+	u32 prefix = 0;
+	for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
+	{
+		prefix += scanExclusive<u16>( prefix, smem.u.phase1.blockHistogram + i, min( REORDER_NUMBER_OF_THREADS_PER_BLOCK, BIN_SIZE ) );
+	}
 
 	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
