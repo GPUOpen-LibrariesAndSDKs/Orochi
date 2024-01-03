@@ -571,18 +571,15 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 
 		u32 lowerMask = ( 1u << lane ) - 1;
-
-		if( itemIndex < numberOfInputs )
-		{
-			warpOffsets[k] = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] + __popc( broThreads & lowerMask );
-		}
+		warpOffsets[k] = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] + __popc( broThreads & lowerMask );
+		
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
 #else
 		__threadfence_block();
 #endif
-		bool leader = ( broThreads & lowerMask ) == 0;
-		if( itemIndex < numberOfInputs && leader )
+		u32 leaderIdx = __ffs( broThreads ) - 1;
+		if( lane == leaderIdx )
 		{
 			u32 n = __popc( broThreads );
 			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += n;
