@@ -571,7 +571,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 
 		u32 lowerMask = ( 1u << lane ) - 1;
-		warpOffsets[k] = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] + __popc( broThreads & lowerMask );
+		auto digitCount = smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
+		warpOffsets[k] = digitCount + __popc( broThreads & lowerMask );
 		
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
@@ -581,8 +582,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		u32 leaderIdx = __ffs( broThreads ) - 1;
 		if( lane == leaderIdx )
 		{
-			u32 n = __popc( broThreads );
-			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] += n;
+			smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp] = digitCount + __popc( broThreads );
 		}
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
@@ -593,9 +593,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	__syncthreads();
 
-	if( threadIdx.x < BIN_SIZE )
+	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		int bucketIndex = threadIdx.x;
 		u32 s = 0;
 		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
 		{
@@ -683,9 +682,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	scanExclusive<u16>( 0, smem.u.phase1.blockHistogram, BIN_SIZE );
 
-	if( threadIdx.x < BIN_SIZE )
+	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		int bucketIndex = threadIdx.x;
 		u32 s = smem.u.phase1.blockHistogram[bucketIndex];
 		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
 		{
@@ -714,9 +712,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		warpOffsets[k] += smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
 	}
 
-	if( threadIdx.x < BIN_SIZE )
+	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
-		pSum[threadIdx.x] -= smem.u.phase1.blockHistogram[threadIdx.x];
+		pSum[bucketIndex] -= smem.u.phase1.blockHistogram[bucketIndex];
 	}
 
 	__syncthreads();
