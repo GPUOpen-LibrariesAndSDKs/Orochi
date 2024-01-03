@@ -651,6 +651,16 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	__syncthreads();
 
+	if( threadIdx.x == 0 )
+	{
+		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
+			;
+
+		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
+	}
+
+	__syncthreads();
+
 	u32 prefix = 0;
 	for( int i = 0; i < BIN_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
@@ -660,6 +670,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		u32 s = smem.u.phase1.blockHistogram[bucketIndex];
+
+		pSum[bucketIndex] -= s; // pre-substruct to avoid pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex] to calculate destinations
+
 		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
 		{
 			int index = bucketIndex * REORDER_NUMBER_OF_WARPS + warp;
@@ -671,29 +684,13 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	__syncthreads();
 
-	if( threadIdx.x == 0 )
-	{
-		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
-			;
-
-		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
-	}
-
-	__syncthreads();
-
 	for( int k = 0; k < REORDER_NUMBER_OF_ITEM_PER_THREAD; k++ )
 	{
 		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
 		warpOffsets[k] += smem.u.phase1.lpSum[bucketIndex * REORDER_NUMBER_OF_WARPS + warp];
 	}
 
-	for( int bucketIndex = threadIdx.x; bucketIndex < BIN_SIZE; bucketIndex += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
-	{
-		pSum[bucketIndex] -= smem.u.phase1.blockHistogram[bucketIndex];
-	}
-
 	__syncthreads();
-
 
 	for( int i = lane, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
 	{
