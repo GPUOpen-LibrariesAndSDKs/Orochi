@@ -692,7 +692,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	__syncthreads();
 
-	for( int i = threadIdx.x, k = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK, k++ )
+	for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 	{
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 		if( itemIndex < numberOfInputs )
@@ -723,7 +723,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 		__syncthreads();
 
-		for( int i = threadIdx.x, k = 0; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK, k++ )
+		for( int i = threadIdx.x; i < RADIX_SORT_BLOCK_SIZE; i += REORDER_NUMBER_OF_THREADS_PER_BLOCK )
 		{
 			u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + i;
 			if( itemIndex < numberOfInputs )
