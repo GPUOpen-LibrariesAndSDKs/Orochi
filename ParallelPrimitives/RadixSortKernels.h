@@ -498,20 +498,10 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane;
-
 		u32 bucketIndex = 0;
 		if( itemIndex < numberOfInputs )
 		{
-			RADIX_SORT_KEY_TYPE item;
-			if( batchLoading )
-			{
-				item = smem.u.phase1.batchKeys[warp][k % N_BATCH_LOAD][lane];
-			}
-			else
-			{
-				item = inputKeys[itemIndex];
-			}
-
+			RADIX_SORT_KEY_TYPE item = batchLoading ? smem.u.phase1.batchKeys[warp][k % N_BATCH_LOAD][lane] : inputKeys[itemIndex];
 			bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
 			keys[k] = item;
 		}
