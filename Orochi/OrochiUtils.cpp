@@ -424,6 +424,11 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	oroModule module;
 	oroFunction functionOut{};
 	oroError e = oroModuleLoadData( &module, binary.data() );
+	if ( e != oroSuccess )
+	{
+		// add some verbose info to help debugging missing file
+		printf("oroModuleLoadData FAILED (error = %d) loading file: %s\n", e, path.c_str());
+	}
 	OROASSERT( e == oroSuccess, 0 );
 
 	e = oroModuleGetFunction( &functionOut, module, funcName.c_str() );
