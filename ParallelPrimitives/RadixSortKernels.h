@@ -292,15 +292,10 @@ __device__ inline T scanExclusive( T prefix, T* sMemIO, int nElement )
 	// assert(nElement <= nThreads)
 	bool active = threadIdx.x < nElement;
 	T value = active ? sMemIO[threadIdx.x] : 0;
+	T x = value;
 
 	for( u32 offset = 1; offset < nElement; offset <<= 1 )
 	{
-		T x;
-		if( active )
-		{
-			x = sMemIO[threadIdx.x];
-		}
-
 		if( active && offset <= threadIdx.x )
 		{
 			x += sMemIO[threadIdx.x - offset];
@@ -322,7 +317,7 @@ __device__ inline T scanExclusive( T prefix, T* sMemIO, int nElement )
 
 	if( active )
 	{
-		sMemIO[threadIdx.x] += prefix - value;
+		sMemIO[threadIdx.x] = x + prefix - value;
 	}
 
 	__syncthreads();
@@ -436,7 +431,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		{
 			u16 blockHistogram[BIN_SIZE];
 			u16 lpSum[BIN_SIZE * REORDER_NUMBER_OF_WARPS];
-			RADIX_SORT_KEY_TYPE batchKeys[REORDER_NUMBER_OF_WARPS][N_BATCH_LOAD][WARP_SIZE];
 		};
 		struct Phase2
 		{
@@ -468,43 +462,21 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 	RADIX_SORT_KEY_TYPE keys[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 	u32 warpOffsets[REORDER_NUMBER_OF_ITEM_PER_THREAD];
 
-	bool batchLoading = KEY_IS_16BYTE_ALIGNED && ( blockIndex + 1 ) * RADIX_SORT_BLOCK_SIZE <= numberOfInputs;
-
 	int warp = threadIdx.x / WARP_SIZE;
 	int lane = threadIdx.x % WARP_SIZE;
+
 	for( int i = 0, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
 	{
-		if( batchLoading && ( k % N_BATCH_LOAD ) == 0 )
-		{
-			struct alignas( 16 ) BatchKeys
-			{
-				RADIX_SORT_KEY_TYPE xs[N_BATCH_LOAD];
-			};
-			int srcIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane * N_BATCH_LOAD;
-			BatchKeys batchKeys = *(BatchKeys*)&inputKeys[srcIndex];
-			for( int v = 0; v < N_BATCH_LOAD; v++ )
-			{
-				int indexInWarp = lane * N_BATCH_LOAD + v;
-				int toK = indexInWarp / WARP_SIZE;
-				int toLane = indexInWarp % WARP_SIZE;
-				smem.u.phase1.batchKeys[warp][toK][toLane] = batchKeys.xs[v];
-			}
-
-#if defined( ITS )
-			__syncwarp( 0xFFFFFFFF );
-#else
-			__threadfence_block();
-#endif
-		}
-
 		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane;
-		u32 bucketIndex = 0;
 		if( itemIndex < numberOfInputs )
 		{
-			RADIX_SORT_KEY_TYPE item = batchLoading ? smem.u.phase1.batchKeys[warp][k % N_BATCH_LOAD][lane] : inputKeys[itemIndex];
-			bucketIndex = extractDigit( getKeyBits( item ), bitLocation );
-			keys[k] = item;
+			keys[k] = inputKeys[itemIndex];
 		}
+	}
+	for( int i = 0, k = 0; i < REORDER_NUMBER_OF_ITEM_PER_WARP; i += WARP_SIZE, k++ )
+	{
+		u32 itemIndex = blockIndex * RADIX_SORT_BLOCK_SIZE + warp * REORDER_NUMBER_OF_ITEM_PER_WARP + i + lane;
+		u32 bucketIndex = extractDigit( getKeyBits( keys[k] ), bitLocation );
 
 		// check the attendees
 		u32 broThreads =
@@ -534,7 +506,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
 #else
-		__threadfence_block();
+		__syncthreads();
 #endif
 		u32 leaderIdx = __ffs( broThreads ) - 1;
 		if( lane == leaderIdx )
@@ -544,7 +516,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 #if defined( ITS )
 		__syncwarp( 0xFFFFFFFF );
 #else
-		__threadfence_block();
+		__syncthreads();
 #endif
 	}
 
@@ -661,9 +633,9 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 		pSum[bucketIndex] -= s; // pre-substruct to avoid pSum[bucketIndex] + i - smem.u.phase1.blockHistogram[bucketIndex] to calculate destinations
 
-		for( int warp = 0; warp < REORDER_NUMBER_OF_WARPS; warp++ )
+		for( int w = 0; w < REORDER_NUMBER_OF_WARPS; w++ )
 		{
-			int index = bucketIndex * REORDER_NUMBER_OF_WARPS + warp;
+			int index = bucketIndex * REORDER_NUMBER_OF_WARPS + w;
 			u32 n = smem.u.phase1.lpSum[index];
 			smem.u.phase1.lpSum[index] = s;
 			s += n;
@@ -738,12 +710,14 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 		}
 	}
 }
-extern "C" __global__ void onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, u32 numberOfInputs, u32* gpSumBuffer, volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits,
+extern "C" __global__ void __launch_bounds__( REORDER_NUMBER_OF_THREADS_PER_BLOCK ) onesweep_reorderKey64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, u32 numberOfInputs, u32* gpSumBuffer, volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits,
 												  u32 iteration )
 {
 	onesweep_reorder<false /*keyPair*/>( inputKeys, outputKeys, nullptr, nullptr, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
 }
-extern "C" __global__ void onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues, u32 numberOfInputs, u32* gpSumBuffer,
+extern "C" __global__ void __launch_bounds__( REORDER_NUMBER_OF_THREADS_PER_BLOCK ) onesweep_reorderKeyPair64( RADIX_SORT_KEY_TYPE* inputKeys, RADIX_SORT_KEY_TYPE* outputKeys, RADIX_SORT_VALUE_TYPE* inputValues, RADIX_SORT_VALUE_TYPE* outputValues,
+																											   u32 numberOfInputs,
+																								   u32* gpSumBuffer,
 													  volatile u64* lookBackBuffer, u32* tailIterator, u32 startBits, u32 iteration )
 {
 	onesweep_reorder<true /*keyPair*/>( inputKeys, outputKeys, inputValues, outputValues, numberOfInputs, gpSumBuffer, lookBackBuffer, tailIterator, startBits, iteration );
