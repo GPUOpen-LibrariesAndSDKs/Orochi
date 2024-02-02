@@ -76,6 +76,7 @@ thipGetLastError *hipGetLastError;
 thipInit *hipInit;
 thipDriverGetVersion *hipDriverGetVersion;
 thipGetDevice *hipGetDevice;
+thipSetDevice* hipSetDevice;
 thipGetDeviceCount *hipGetDeviceCount;
 thipGetDeviceProperties *hipGetDeviceProperties;
 thipDeviceGet* hipDeviceGet;
@@ -348,6 +349,7 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   HIP_LIBRARY_FIND_CHECKED(hipInit);
   HIP_LIBRARY_FIND_CHECKED(hipDriverGetVersion);
   HIP_LIBRARY_FIND_CHECKED(hipGetDevice);
+  HIP_LIBRARY_FIND_CHECKED(hipSetDevice);
   HIP_LIBRARY_FIND_CHECKED(hipGetDeviceCount);
   HIP_LIBRARY_FIND_CHECKED(hipGetDeviceProperties);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGet);

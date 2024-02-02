@@ -192,6 +192,11 @@ oroError cu2oro( CUresult a )
 	return (oroError)a;
 }
 inline
+oroError cuda2oro(cudaError_t a)
+{
+	return (oroError)a;
+}
+inline
 CUcontext* oroCtx2cu( oroCtx* a )
 {
 	ioroCtx_t* b = *a;
@@ -219,7 +224,8 @@ inline orortcResult cu2orortc( CUresult a ) { return (orortcResult)a; }
 
 #define __ORO_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC1X( API, cuname, hipname ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
-//#define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+//#define __ORO_FUNC2( cudaname, hipname ) if( s_api & ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+#define __ORO_FUNC3( name ) if( s_api & ORO_API_CUDA ) return cuda2oro( cuda##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 //#define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA || API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC( name ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORO_FUNCX( API, name ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( API == ORO_API_HIP ) return hip2oro( hip##name );
@@ -269,9 +275,21 @@ oroError OROAPI oroDriverGetVersion(int* driverVersion)
 	return oroErrorUnknown;
 }
 
-oroError OROAPI oroGetDevice(int* device)
+oroError OROAPI oroCtxGetDevice(int* device)
 {
 	__ORO_CTXT_FUNC( GetDevice(device) );
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroGetDevice(int* device)
+{
+	__ORO_FUNC3(GetDevice(device));
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroSetDevice(int device)
+{
+	__ORO_FUNC3(SetDevice(device));
 	return oroErrorUnknown;
 }
 

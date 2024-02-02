@@ -58,6 +58,18 @@ TEST_F( OroTestBase, deviceprops )
 	}
 }
 
+TEST_F(OroTestBase, deviceGetSet)
+{
+	int deviceIndex = 0;
+	OROCHECK(oroSetDevice(deviceIndex));
+	deviceIndex = -1;
+	OROCHECK(oroGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+	deviceIndex = -1;
+	OROCHECK(oroCtxGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+}
+
 TEST_F( OroTestBase, kernelExec ) 
 {
 	OrochiUtils o;

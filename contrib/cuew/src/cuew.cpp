@@ -287,6 +287,9 @@ tcuGraphicsMapResources *cuGraphicsMapResources;
 tcuGraphicsUnmapResources *cuGraphicsUnmapResources;
 tcuGetExportTable *cuGetExportTable;
 
+tcudaGetDevice* cudaGetDevice;
+tcudaSetDevice* cudaSetDevice;
+
 tcuGraphicsGLRegisterBuffer *cuGraphicsGLRegisterBuffer;
 tcuGraphicsGLRegisterImage *cuGraphicsGLRegisterImage;
 tcuGLGetDevices_v2 *cuGLGetDevices_v2;
@@ -603,6 +606,9 @@ static int cuewCudaInit(void)
   CUDA_LIBRARY_FIND(cuGraphicsMapResources);
   CUDA_LIBRARY_FIND(cuGraphicsUnmapResources);
   CUDA_LIBRARY_FIND(cuGetExportTable);
+
+  CUDA_LIBRARY_FIND(cudaGetDevice);
+  CUDA_LIBRARY_FIND(cudaSetDevice);
 
   CUDA_LIBRARY_FIND(cuGraphicsGLRegisterBuffer);
   CUDA_LIBRARY_FIND(cuGraphicsGLRegisterImage);
