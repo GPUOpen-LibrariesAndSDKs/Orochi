@@ -8,8 +8,8 @@
 	#undef OROASSERT
 #endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
-#define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
-#define ORORTCCHECK( x ) { OROASSERT( x == ORORTC_SUCCESS ); }
+#define OROCHECK( x ) { oroError e = x; ASSERT_EQ( e , ORO_SUCCESS ); }
+#define ORORTCCHECK( x ) { ASSERT_EQ( x , ORORTC_SUCCESS ); }
 
 
 class OroTestBase : public ::testing::Test
@@ -36,9 +36,9 @@ class OroTestBase : public ::testing::Test
 	}
 
   protected:
-	oroDevice m_device;
-	oroCtx m_ctx;
-	oroStream m_stream;
+	oroDevice m_device = 0;
+	oroCtx m_ctx = nullptr;
+	oroStream m_stream = nullptr;
 
 };
 
@@ -163,6 +163,10 @@ void loadFile( const char* path, std::vector<char>& dst )
 		f.seekg( 0, std::fstream::beg );
 		f.read( dst.data(), size );
 		f.close();
+	}
+	else
+	{
+		printf("WARNING: failed to open file %s\n", path);
 	}
 }
 #if 0
@@ -738,8 +742,8 @@ TEST_F( OroTestBase, getErrorString )
 	}
 	else if( api == ORO_API_HIP )
 	{
-		constexpr auto hipErrorMessage{ "hipErrorInvalidValue" };
-		OROASSERT( std::string( str ) == hipErrorMessage );
+		// the 'str' will look like "invalid argument". But it may change with the versions and the system language.
+		OROASSERT( str != nullptr );
 	}
 	else
 	{
@@ -756,18 +760,19 @@ TEST_F( OroTestBase, funcPointer )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel;
-	char* deviceBuffer;
+	char* deviceBuffer = nullptr;
 	{
-		oroModule module;
+		oroModule module = nullptr;
 		std::string code;
 		const char* path = "../UnitTest/testKernel.h";
-		OrochiUtils::readSourceCode( path, code );
+		bool readSrc = OrochiUtils::readSourceCode( path, code );
+		OROASSERT( readSrc );
 		o.getModule( m_device, code.c_str(), path, 0, "testFuncPointerKernel", &module );
-		oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" );
+		OROCHECK( oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" ) );
 		{
-			oroDeviceptr dFuncPtr;
+			oroDeviceptr dFuncPtr = 0;
 			size_t numBytes = 0;
-			oroError ee = oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" );
+			OROCHECK( oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" ) );
 			o.malloc( deviceBuffer, numBytes );
 			o.copyDtoD( deviceBuffer, (char*)dFuncPtr, numBytes );
 		}
@@ -776,7 +781,7 @@ TEST_F( OroTestBase, funcPointer )
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
-	OROASSERT( a_host == 7 );
+	ASSERT_EQ(a_host, 7);
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
 }
@@ -916,5 +921,6 @@ TEST_F( OroTestBase, ManagedMemory )
 int main( int argc, char* argv[] ) 
 {
 	::testing::InitGoogleTest( &argc, argv );
-	return RUN_ALL_TESTS();
+	int retCode = RUN_ALL_TESTS();
+	return retCode;
 }
