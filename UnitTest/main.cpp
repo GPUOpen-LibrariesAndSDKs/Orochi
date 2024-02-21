@@ -164,6 +164,10 @@ void loadFile( const char* path, std::vector<char>& dst )
 		f.read( dst.data(), size );
 		f.close();
 	}
+	else
+	{
+		printf("WARNING: failed to open file %s\n", path);
+	}
 }
 #if 0
 TEST_F( OroTestBase, linkBc )
@@ -916,5 +920,6 @@ TEST_F( OroTestBase, ManagedMemory )
 int main( int argc, char* argv[] ) 
 {
 	::testing::InitGoogleTest( &argc, argv );
-	return RUN_ALL_TESTS();
+	int retCode = RUN_ALL_TESTS();
+	return retCode;
 }
