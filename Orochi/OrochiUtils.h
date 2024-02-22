@@ -38,7 +38,7 @@ class OrochiUtils
     OrochiUtils& operator=(const OrochiUtils&) = delete;
     OrochiUtils(OrochiUtils&&) = delete; 
     OrochiUtils& operator=(OrochiUtils&&) = delete;
-	~OrochiUtils() = default;
+	~OrochiUtils();
 
 	oroFunction getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName );
 
