@@ -23,4 +23,4 @@ dist/**
 build/
 
 result.xml
-
+UnitTest/bitcodes/*.fatbin
