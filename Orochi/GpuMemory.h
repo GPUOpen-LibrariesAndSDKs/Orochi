@@ -91,8 +91,34 @@ class GpuMemory final
 		*this = std::move( tmp );
 	}
 
+	/// @brief Asynchronous version of 'resize' using a given Orochi stream.
+	/// @param new_size The new memory size after the function is called.
+	/// @param copy If true, the function will copy the data to the newly created memory space as well.
+	/// @param stream The Orochi stream used for the underlying operations.
+	void resizeAsync( const size_t new_size, const bool copy = false, oroStream stream = 0 ) noexcept
+	{
+		if( new_size <= m_capacity )
+		{
+			m_size = new_size;
+			return;
+		}
+
+		GpuMemory tmp( new_size );
+
+		if( copy )
+		{
+			OrochiUtils::copyDtoDAsync( tmp.m_data, m_data, m_size, stream );
+		}
+
+		*this = std::move( tmp );
+	}
+
 	/// @brief Reset the memory space so that all bits inside are cleared to zero.
 	void reset() noexcept { OrochiUtils::memset( m_data, 0, m_size * sizeof( T ) ); }
+
+	/// @brief Asynchronous version of 'reset' using a given Orochi stream.
+	/// @param stream The Orochi stream used for the underlying operations.
+	void resetAsync( oroStream stream = 0 ) noexcept { OrochiUtils::memsetAsync( m_data, 0, m_size * sizeof( T ), stream ); }
 
 	/// @brief Copy the data from device memory to host.
 	/// @param host_ptr The host pointer.

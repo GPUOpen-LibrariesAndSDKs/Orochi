@@ -1,9 +1,66 @@
 
 
-template<class T>
-void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int endBit, int* temps, oroStream stream ) noexcept
+namespace
 {
-	constexpr bool reference = false;
+
+struct Empty
+{
+};
+
+/// @brief Call the callable and measure the elapsed time using the Stopwatch.
+/// @tparam CallableType The type of the callable to be invoked in this function.
+/// @tparam RecordType The type of the object that stores the recorded times.
+/// @tparam enable_profile The elapsed time will be recorded if this is set to True.
+/// @param callable The callable object to be called.
+/// @param time_record The object that stores the recorded times.
+/// @param index The index indicates where to store the elapsed time in @c time_record
+/// @param stream The GPU stream
+template<bool enable_profile, typename CallableType, typename RecordType>
+constexpr void execute( CallableType&& callable, RecordType& time_record, const int index, const oroStream stream ) noexcept
+{
+	using TimerType = std::conditional_t<enable_profile, Stopwatch, Empty>;
+
+	TimerType stopwatch;
+
+	if constexpr( enable_profile )
+	{
+		stopwatch.start();
+	}
+
+	std::invoke( std::forward<CallableType>( callable ) );
+
+	if constexpr( enable_profile )
+	{
+		OrochiUtils::waitForCompletion( stream );
+		stopwatch.stop();
+		time_record[index] = stopwatch.getMs();
+	}
+}
+
+template<bool enable_profile, typename T>
+void resize_record( T& t ) noexcept
+{
+	if constexpr( enable_profile )
+	{
+		t.resize( 3 );
+	}
+}
+
+template<bool enable_profile, typename T>
+void print_record( const T& t ) noexcept
+{
+	if constexpr( enable_profile )
+	{
+		printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
+	}
+}
+
+} // namespace
+
+template<class T>
+void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int endBit, oroStream stream ) noexcept
+{
+	static constexpr auto enable_profile = false;
 
 	const u32* srcKey{ nullptr };
 	const u32* dstKey{ nullptr };
@@ -11,9 +68,9 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 	const u32* srcVal{ nullptr };
 	const u32* dstVal{ nullptr };
 
-	constexpr auto keyValuePairedEnabled{ std::is_same_v<T, KeyValueSoA> };
+	static constexpr auto enable_key_value_pair_sorting{ std::is_same_v<T, KeyValueSoA> };
 
-	if constexpr( keyValuePairedEnabled )
+	if constexpr( enable_key_value_pair_sorting )
 	{
 		srcKey = src.key;
 		dstKey = dst.key;
@@ -28,99 +85,79 @@ void RadixSort::sort1pass( const T src, const T dst, int n, int startBit, int en
 		dstKey = dst;
 	}
 
-	// allocate temps
-	// clear temps
-	// count kernel
-	// scan
-	// sort
+	const int nItemPerWG = ( n + m_num_blocks_for_count - 1 ) / m_num_blocks_for_count;
 
-	const int nWIs = WG_SIZE * m_nWGsToExecute;
-	int nItemsPerWI = ( n + ( nWIs - 1 ) ) / nWIs;
+	// Timer records
 
-	// Adjust nItemsPerWI to be dividable by SORT_N_ITEMS_PER_WI.
-	nItemsPerWI = ( std::ceil( static_cast<double>( nItemsPerWI ) / SORT_N_ITEMS_PER_WI ) ) * SORT_N_ITEMS_PER_WI;
+	using RecordType = std::conditional_t<enable_profile, std::vector<float>, Empty>;
+	RecordType t;
 
-	int nItemPerWG = nItemsPerWI * WG_SIZE;
+	resize_record<enable_profile>( t );
 
-	if( m_flags == Flag::LOG )
+	const auto launch_count_kernel = [&]() noexcept
 	{
-		printf( "nWGs: %d\n", m_nWGsToExecute );
-		printf( "nNItemsPerWI: %d\n", nItemsPerWI );
-		printf( "nItemPerWG: %d\n", nItemPerWG );
-	}
+		const auto num_total_thread_for_count = m_num_threads_per_block_for_count * m_num_blocks_for_count;
 
-	float t[3] = { 0.f };
-	{
-		Stopwatch sw;
-		sw.start();
-		const auto func{ reference ? oroFunctions[Kernel::COUNT_REF] : oroFunctions[Kernel::COUNT] };
-		const void* args[] = { &srcKey, &temps, &n, &nItemPerWG, &startBit, &m_nWGsToExecute };
-		OrochiUtils::launch1D( func, COUNT_WG_SIZE * m_nWGsToExecute, args, COUNT_WG_SIZE, 0, stream );
-#if defined( PROFILE )
-		OrochiUtils::waitForCompletion( stream );
-		sw.stop();
-		t[0] = sw.getMs();
-#endif
-	}
+		const auto func{ oroFunctions[Kernel::COUNT] };
+		const void* args[] = { &srcKey, arg_cast( m_tmp_buffer.address() ), &n, &nItemPerWG, &startBit, &m_num_blocks_for_count };
+		OrochiUtils::launch1D( func, num_total_thread_for_count, args, m_num_threads_per_block_for_count, 0, stream );
+	};
 
+	execute<enable_profile>( launch_count_kernel, t, 0, stream );
+
+	const auto launch_scan_kernel = [&]() noexcept
 	{
-		Stopwatch sw;
-		sw.start();
 		switch( selectedScanAlgo )
 		{
 		case ScanAlgo::SCAN_CPU:
 		{
-			exclusiveScanCpu( temps, temps, m_nWGsToExecute, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 		}
 		break;
 
 		case ScanAlgo::SCAN_GPU_SINGLE_WG:
 		{
-			const void* args[] = { &temps, &temps, &m_nWGsToExecute };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_SINGLE_WG], WG_SIZE * m_nWGsToExecute, args, WG_SIZE, 0, stream );
+			const void* args[] = { arg_cast( m_tmp_buffer.address() ), arg_cast( m_tmp_buffer.address() ), &m_num_blocks_for_count };
+			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_SINGLE_WG], WG_SIZE * m_num_blocks_for_count, args, WG_SIZE, 0, stream );
 		}
 		break;
 
 		case ScanAlgo::SCAN_GPU_PARALLEL:
 		{
-			const void* args[] = { &temps, &temps, arg_cast( m_partialSum.address() ), &m_isReady };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], SCAN_WG_SIZE * m_nWGsToExecute, args, SCAN_WG_SIZE, 0, stream );
+			const auto num_total_thread_for_scan = m_num_threads_per_block_for_scan * m_num_blocks_for_scan;
+
+			const void* args[] = { arg_cast( m_tmp_buffer.address() ), arg_cast( m_tmp_buffer.address() ), arg_cast( m_partial_sum.address() ), arg_cast( m_is_ready.address() ) };
+			OrochiUtils::launch1D( oroFunctions[Kernel::SCAN_PARALLEL], num_total_thread_for_scan, args, m_num_threads_per_block_for_scan, 0, stream );
 		}
 		break;
 
 		default:
-			exclusiveScanCpu( temps, temps, m_nWGsToExecute, stream );
+			exclusiveScanCpu( m_tmp_buffer, m_tmp_buffer );
 			break;
 		}
-#if defined( PROFILE )
-		OrochiUtils::waitForCompletion( stream );
-		sw.stop();
-		t[1] = sw.getMs();
-#endif
-	}
+	};
 
+	execute<enable_profile>( launch_scan_kernel, t, 1, stream );
+
+	const auto launch_sort_kernel = [&]() noexcept
 	{
-		Stopwatch sw;
-		sw.start();
+		const auto num_blocks_for_sort = m_num_blocks_for_count;
+		const auto num_total_thread_for_sort = m_num_threads_per_block_for_sort * num_blocks_for_sort;
+		const auto num_items_per_block = nItemPerWG;
 
-		if constexpr( keyValuePairedEnabled )
+		if constexpr( enable_key_value_pair_sorting )
 		{
-			const void* args[] = { &srcKey, &srcVal, &dstKey, &dstVal, &temps, &n, &nItemsPerWI, &startBit, &m_nWGsToExecute };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SORT_KV], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE, 0, stream );
+			const void* args[] = { &srcKey, &srcVal, &dstKey, &dstVal, arg_cast( m_tmp_buffer.address() ), &n, &num_items_per_block, &startBit, &num_blocks_for_sort };
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT_KV], num_total_thread_for_sort, args, m_num_threads_per_block_for_sort, 0, stream );
 		}
 		else
 		{
-			const void* args[] = { &srcKey, &dstKey, &temps, &n, &nItemsPerWI, &startBit, &m_nWGsToExecute };
-			OrochiUtils::launch1D( oroFunctions[Kernel::SORT], SORT_WG_SIZE * m_nWGsToExecute, args, SORT_WG_SIZE, 0, stream );
+			const void* args[] = { &srcKey, &dstKey, arg_cast( m_tmp_buffer.address() ), &n, &num_items_per_block, &startBit, &num_blocks_for_sort };
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT], num_total_thread_for_sort, args, m_num_threads_per_block_for_sort, 0, stream );
 		}
+	};
 
-#if defined( PROFILE )
-		OrochiUtils::waitForCompletion( stream );
-		sw.stop();
-		t[2] = sw.getMs();
-#endif
-	}
-#if defined( PROFILE )
-	printf( "%3.2f, %3.2f, %3.2f\n", t[0], t[1], t[2] );
-#endif
+	execute<enable_profile>( launch_sort_kernel, t, 2, stream );
+
+	print_record<enable_profile>( t );
 }

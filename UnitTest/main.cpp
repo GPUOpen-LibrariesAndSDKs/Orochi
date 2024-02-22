@@ -8,8 +8,8 @@
 	#undef OROASSERT
 #endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
-#define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
-#define ORORTCCHECK( x ) { OROASSERT( x == ORORTC_SUCCESS ); }
+#define OROCHECK( x ) { oroError e = x; ASSERT_EQ( e , ORO_SUCCESS ); }
+#define ORORTCCHECK( x ) { ASSERT_EQ( x , ORORTC_SUCCESS ); }
 
 
 class OroTestBase : public ::testing::Test
@@ -27,6 +27,10 @@ class OroTestBase : public ::testing::Test
 		OROCHECK( oroCtxCreate( &m_ctx, 0, m_device ) );
 		OROCHECK( oroCtxSetCurrent( m_ctx ) );
 		OROCHECK( oroStreamCreate( &m_stream ) );
+
+		const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+		m_jitLogVerbose = isAmd ? 1 : 0; // on CUDA, if using '1', orortcLinkComplete crashes... (driver 546.33 / CUDA 12.2)
+
 	}
 
 	void TearDown() 
@@ -36,10 +40,11 @@ class OroTestBase : public ::testing::Test
 	}
 
   protected:
-	oroDevice m_device;
-	oroCtx m_ctx;
-	oroStream m_stream;
+	oroDevice m_device = 0;
+	oroCtx m_ctx = nullptr;
+	oroStream m_stream = nullptr;
 
+	int32_t m_jitLogVerbose = 1; // used for ORORTC_JIT_LOG_VERBOSE
 };
 
 
@@ -58,6 +63,25 @@ TEST_F( OroTestBase, deviceprops )
 	}
 }
 
+TEST_F(OroTestBase, deviceGetSet)
+{
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+
+	// TODO: this unit test doesn't work on CUDA,
+	//       because Orochi needs to add support of "Cuda Runtime" for function like: cudaGetDevice/cudaSetDevice
+	if ( !isAmd )
+		return;
+
+	int deviceIndex = 0;
+	OROCHECK(oroSetDevice(deviceIndex));
+	deviceIndex = -1;
+	OROCHECK(oroGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+	deviceIndex = -1;
+	OROCHECK(oroCtxGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+}
+
 TEST_F( OroTestBase, kernelExec ) 
 {
 	OrochiUtils o;
@@ -66,6 +90,9 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
+	int blockCount;
+	OROCHECK( oroOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
+	printf( "%d blocks per multiprocessor\n", blockCount );
 	const void* args[] = { &a_device };
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
@@ -149,6 +176,10 @@ void loadFile( const char* path, std::vector<char>& dst )
 		f.read( dst.data(), size );
 		f.close();
 	}
+	else
+	{
+		printf("WARNING: failed to open file %s\n", path);
+	}
 }
 #if 0
 TEST_F( OroTestBase, linkBc )
@@ -200,7 +231,7 @@ TEST_F( OroTestBase, linkBc )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary;
 		size_t binarySize = 0;
@@ -261,29 +292,27 @@ TEST_F( OroTestBase, link )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size );//todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;
 
-		void* binary;
-		size_t binarySize;
+		void* binary = nullptr;
+		size_t binarySize = 0;
 
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 
@@ -292,12 +321,16 @@ TEST_F( OroTestBase, link )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		OROASSERT(binary != nullptr);
+		OROASSERT(binarySize != 0);
 
-		oroFunction function;
+		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		OrochiUtils::waitForCompletion();
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -354,7 +387,7 @@ TEST_F( OroTestBase, link_addFile )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary;
 		size_t binarySize;
@@ -414,8 +447,8 @@ TEST_F( OroTestBase, link_null_name )
 	{
 		orortcLinkState rtc_link_state;
 
-		void* binary;
-		size_t binarySize;
+		void* binary = nullptr;
+		size_t binarySize = 0;
 		orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 
 		ORORTCCHECK( orortcLinkCreate( 0, 0, 0, &rtc_link_state ) );
@@ -423,11 +456,15 @@ TEST_F( OroTestBase, link_null_name )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		OROASSERT(binary != nullptr);
+		OROASSERT(binarySize != 0);
 
-		oroFunction function;
+		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -472,39 +509,41 @@ TEST_F( OroTestBase, link_bundledBc )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] =  static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] =  static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] =  static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
-		void* binary;
+		void* binary = nullptr;
 		size_t binarySize = 0;
 		const orortcJITInputType type = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
 		ORORTCCHECK( orortcLinkCreate( 6, options, option_vals, &rtc_link_state ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		OROASSERT(binary != nullptr);
+		OROASSERT(binarySize != 0);
 
-		oroFunction function;
+		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -552,28 +591,26 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
-		void* binary;
+		void* binary = nullptr;
 		size_t binarySize = 0;
 		const orortcJITInputType type0 = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 		const orortcJITInputType type1 = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
@@ -581,11 +618,15 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type1, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type0, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		OROASSERT(binary != nullptr);
+		OROASSERT(binarySize != 0);
 
-		oroFunction function;
+		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -627,12 +668,14 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 
 		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel_loweredName.h", code );
 		OrochiUtils::getProgram( m_device, code.c_str(), "../UnitTest/moduleTestKernel_loweredName.h", &opts, funcName, &prog );
-		const char* loweredName = 0;
+		const char* loweredName = nullptr;
 		ORORTCCHECK( orortcGetLoweredName( prog, funcName, &loweredName ) );
+		OROASSERT(loweredName != nullptr);
 		loweredNameStr = std::string( loweredName );
-		size_t codeSize;
-		ORORTCCHECK( orortcGetBitcodeSize( prog, &codeSize ) );
 
+		size_t codeSize = 0;
+		ORORTCCHECK( orortcGetBitcodeSize( prog, &codeSize ) );
+		OROASSERT(codeSize != 0);
 		data0.resize( codeSize );
 		ORORTCCHECK( orortcGetBitcode( prog, data0.data() ) );
 		ORORTCCHECK( orortcDestroyProgram( &prog ) );
@@ -647,28 +690,26 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		unsigned int log_size = 8192;
 		char error_log[8192];
 		char info_log[8192];
-		size_t out_size;
-		void* cuOut;
 
 		options[0] = ORORTC_JIT_WALL_TIME;
-		option_vals[0] = (void*)( &wall_time );
+		option_vals[0] = static_cast<void*>( &wall_time );
 
 		options[1] = ORORTC_JIT_INFO_LOG_BUFFER;
 		option_vals[1] = info_log;
 
 		options[2] = ORORTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES;
-		option_vals[2] = (void*)( log_size );
+		option_vals[2] = static_cast<void*>( &log_size );
 
 		options[3] = ORORTC_JIT_ERROR_LOG_BUFFER;
 		option_vals[3] = error_log;
 
 		options[4] = ORORTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES;
-		option_vals[4] = (void*)( log_size ); // todo. behavior difference
+		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
-		void* binary;
+		void* binary = nullptr;
 		size_t binarySize = 0;
 		const orortcJITInputType type0 = isAmd ? ORORTC_JIT_INPUT_LLVM_BITCODE : ORORTC_JIT_INPUT_CUBIN;
 		const orortcJITInputType type1 = isAmd ? ORORTC_JIT_INPUT_LLVM_BUNDLED_BITCODE : ORORTC_JIT_INPUT_FATBINARY;
@@ -676,11 +717,15 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type1, data1.data(), data1.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkAddData( rtc_link_state, type0, data0.data(), data0.size(), 0, 0, 0, 0 ) );
 		ORORTCCHECK( orortcLinkComplete( rtc_link_state, &binary, &binarySize ) );
+		OROASSERT(binary != nullptr);
+		OROASSERT(binarySize != 0);
 
-		oroFunction function;
+		oroFunction function = static_cast<oroFunction>(nullptr);;
 		oroModule module;
 		oroError ee = oroModuleLoadData( &module, binary );
 		oroError e =  oroModuleGetFunction( &function, module, loweredNameStr.c_str() );
+		OROASSERT(function != nullptr);
+
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -709,8 +754,8 @@ TEST_F( OroTestBase, getErrorString )
 	}
 	else if( api == ORO_API_HIP )
 	{
-		constexpr auto hipErrorMessage{ "hipErrorInvalidValue" };
-		OROASSERT( std::string( str ) == hipErrorMessage );
+		// the 'str' will look like "invalid argument". But it may change with the versions and the system language.
+		OROASSERT( str != nullptr );
 	}
 	else
 	{
@@ -727,18 +772,19 @@ TEST_F( OroTestBase, funcPointer )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel;
-	char* deviceBuffer;
+	char* deviceBuffer = nullptr;
 	{
-		oroModule module;
+		oroModule module = nullptr;
 		std::string code;
 		const char* path = "../UnitTest/testKernel.h";
-		OrochiUtils::readSourceCode( path, code );
+		bool readSrc = OrochiUtils::readSourceCode( path, code );
+		OROASSERT( readSrc );
 		o.getModule( m_device, code.c_str(), path, 0, "testFuncPointerKernel", &module );
-		oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" );
+		OROCHECK( oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" ) );
 		{
-			oroDeviceptr dFuncPtr;
+			oroDeviceptr dFuncPtr = 0;
 			size_t numBytes = 0;
-			oroError ee = oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" );
+			OROCHECK( oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" ) );
 			o.malloc( deviceBuffer, numBytes );
 			o.copyDtoD( deviceBuffer, (char*)dFuncPtr, numBytes );
 		}
@@ -747,13 +793,146 @@ TEST_F( OroTestBase, funcPointer )
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
-	OROASSERT( a_host == 7 );
+	ASSERT_EQ(a_host, 7);
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
+}
+
+TEST_F( OroTestBase, ManagedMemory )
+{
+	OroStopwatch sw( m_stream );
+	OrochiUtils o;
+	constexpr auto streamSize = 64000000; //64 MB
+	float* data = nullptr;
+	float* output = nullptr;
+	const float value = 10.0f;
+	size_t n = streamSize / sizeof(float);
+	enum TimerEvents { ManagedMemory, NonManagedMemory };
+
+	{
+		{
+			sw.start();
+			o.mallocManaged(data, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
+			OROASSERT(data != nullptr);
+			o.mallocManaged(output, n, oroManagedMemoryAttachFlags::oroMemAttachGlobal);
+			OROASSERT(output != nullptr);
+			sw.stop();
+			printf( "Managed Malloc Time: %3.2fms\n", sw.getMs() );
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &data, &n, &output, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);;
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Managed Memory kernelExec1: %3.2fms\n", sw.getMs() );
+		}
+
+		{
+			sw.start();
+			float* dataPtr = (float*)malloc(streamSize);
+			o.copyDtoH(dataPtr, data, n);
+			float* outputPtr = (float*)malloc(streamSize);
+			o.copyDtoH(outputPtr, output, n);
+			OrochiUtils::waitForCompletion();
+			sw.stop();
+			printf( "Host Copy Managed Exec: %3.2fms\n", sw.getMs() );
+
+			for (size_t i = 0; i < n; i++)
+			{
+				dataPtr[i] += outputPtr[i];
+			}
+
+			o.copyHtoD(data, dataPtr, n);
+			o.copyHtoD(output, outputPtr, n);
+			
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &output, &n, &data, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);;
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Managed Memory kernelExec2: %3.2fms\n", sw.getMs() );
+		}
+
+		o.free(data);
+		data = nullptr;
+		o.free(output);
+		output = nullptr;
+		
+	}
+
+	{
+		{
+			sw.start();
+			o.malloc(data, n);
+			OROASSERT(data != nullptr);
+			o.malloc(output, n);
+			OROASSERT(output != nullptr);
+			sw.stop();
+			printf( "Malloc Time: %3.2fms\n", sw.getMs() );
+
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &data, &n, &output, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Non Managed Memory kernelExec1: %3.2fms\n", sw.getMs() );
+		}
+
+		{
+			sw.start();
+			float* dataPtr = (float*)malloc(streamSize);
+			o.copyDtoH(dataPtr, data, n);
+			float* outputPtr = (float*)malloc(streamSize);
+			o.copyDtoH(outputPtr, output, n);
+			OrochiUtils::waitForCompletion();
+			sw.stop();
+			printf( "Host Copy Non Managed Exec: %3.2fms\n", sw.getMs() );
+			for (size_t i = 0; i < n; i++)
+			{
+				dataPtr[i] += outputPtr[i];
+			}
+
+			o.copyHtoD(data, dataPtr, n);
+			o.copyHtoD(output, outputPtr, n);
+		}
+
+		{
+			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			const void* args[] = { &output, &n, &data, &value };
+
+			sw.start();
+			OrochiUtils::launch1D(kernel, 4096, args, 64);
+			sw.stop();
+			OrochiUtils::waitForCompletion();
+			printf( "Non Managed Memory kernelExec2: %3.2fms\n", sw.getMs() );
+		}
+
+		o.free(data);
+		data = nullptr;
+		o.free(output);
+		output = nullptr;
+		
+	}
+
 }
 
 int main( int argc, char* argv[] ) 
 {
 	::testing::InitGoogleTest( &argc, argv );
-	return RUN_ALL_TESTS();
+	int retCode = RUN_ALL_TESTS();
+	return retCode;
 }

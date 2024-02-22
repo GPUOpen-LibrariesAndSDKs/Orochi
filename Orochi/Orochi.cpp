@@ -192,6 +192,11 @@ oroError cu2oro( CUresult a )
 	return (oroError)a;
 }
 inline
+oroError cuda2oro(cudaError_t a)
+{
+	return (oroError)a;
+}
+inline
 CUcontext* oroCtx2cu( oroCtx* a )
 {
 	ioroCtx_t* b = *a;
@@ -219,7 +224,8 @@ inline orortcResult cu2orortc( CUresult a ) { return (orortcResult)a; }
 
 #define __ORO_FUNC1( cuname, hipname ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC1X( API, cuname, hipname ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##cuname ); if( API == ORO_API_HIP ) return hip2oro( hip##hipname );
-//#define __ORO_FUNC2( cudaname, hipname ) if( s_api == ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+//#define __ORO_FUNC2( cudaname, hipname ) if( s_api & ORO_API_CUDA ) return cuda2oro( cuda##cudaname ); if( s_api == ORO_API_HIP ) return hip2oro( hip##hipname );
+#define __ORO_FUNC3( name ) if( s_api & ORO_API_CUDA ) return cuda2oro( cuda##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 //#define __ORO_FUNC1( cuname, hipname ) if( s_api == ORO_API_CUDA || API == ORO_API_CUDA ) return cu2oro( cu##cuname ); if( s_api == API_HIP || API == API_HIP ) return hip2oro( hip##hipname );
 #define __ORO_FUNC( name ) if( s_api & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( s_api == ORO_API_HIP ) return hip2oro( hip##name );
 #define __ORO_FUNCX( API, name ) if( API & ORO_API_CUDADRIVER ) return cu2oro( cu##name ); if( API == ORO_API_HIP ) return hip2oro( hip##name );
@@ -269,9 +275,21 @@ oroError OROAPI oroDriverGetVersion(int* driverVersion)
 	return oroErrorUnknown;
 }
 
-oroError OROAPI oroGetDevice(int* device)
+oroError OROAPI oroCtxGetDevice(int* device)
 {
 	__ORO_CTXT_FUNC( GetDevice(device) );
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroGetDevice(int* device)
+{
+	__ORO_FUNC3(GetDevice(device));
+	return oroErrorUnknown;
+}
+
+oroError OROAPI oroSetDevice(int device)
+{
+	__ORO_FUNC3(SetDevice(device));
 	return oroErrorUnknown;
 }
 
@@ -307,6 +325,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 	ioroDevice d( dev );
 	int deviceId = d.getDevice();
 	oroApi api = d.getApi();
+	*props = {};
 	if( api == ORO_API_HIP )
 		return hip2oro(hipGetDeviceProperties((hipDeviceProp_t*)props, deviceId));
 	if( api & ORO_API_CUDADRIVER )
@@ -327,9 +346,10 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp* props, oroDevice dev)
 		cu2oro( cuDeviceTotalMem( &props->totalGlobalMem, deviceId ) );
 
 		e = cuDeviceGetAttribute( &props->pciDomainID, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, deviceId );
-		e = cuDeviceGetAttribute(&props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId);
-		e = cuDeviceGetAttribute(&props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId);
+		e = cuDeviceGetAttribute( &props->pciBusID, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, deviceId );
+		e = cuDeviceGetAttribute( &props->pciDeviceID, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, deviceId );
+		e = cuDeviceGetAttribute( &props->multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, deviceId );
+		e = cuDeviceGetAttribute( &props->maxThreadsPerMultiProcessor, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR, deviceId );
 		e = cuDeviceGetAttribute( &props->warpSize, CU_DEVICE_ATTRIBUTE_WARP_SIZE, deviceId );
 		e = cuDeviceGetAttribute( (int*)&props->textureAlignment, CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT, deviceId );
 		e = cuDeviceGetAttribute( &props->kernelExecTimeoutEnabled, CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT, deviceId );
@@ -569,6 +589,11 @@ oroError OROAPI oroMemAllocPitch(oroDeviceptr* dptr, size_t* pPitch, size_t Widt
 {
 	return oroErrorUnknown;
 }
+oroError OROAPI oroMallocManaged(oroDeviceptr* dptr, size_t bytesize, oroManagedMemoryAttachFlags flags)
+{
+	__ORO_FUNC1( MemAllocManaged((CUdeviceptr*)dptr, bytesize, (CUmemAttach_flags_enum)flags), MallocManaged( dptr, bytesize, (HIPmemAttach_flags_enum)flags ) );
+	return oroErrorUnknown;
+}
 oroError OROAPI oroFree(oroDeviceptr dptr)
 {
 	__ORO_FUNC1( MemFree( dptr ), Free( dptr ) );
@@ -688,7 +713,14 @@ oroError OROAPI oroModuleLaunchKernel(oroFunction f, unsigned int gridDimX, unsi
 		ModuleLaunchKernel( (hipFunction_t)f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, (hipStream_t)hStream, kernelParams, extra ) );
 	return oroErrorUnknown;
 }
-
+oroError OROAPI oroOccupancyMaxActiveBlocksPerMultiprocessor( int* numBlocks, oroFunction func, int blockSize, size_t dynamicSMemSize )
+{
+	if( s_api & ORO_API_CUDADRIVER )
+		return cu2oro( cuOccupancyMaxActiveBlocksPerMultiprocessor( numBlocks, (CUfunction)func, blockSize, dynamicSMemSize ) );
+	else
+		return hip2oro( hipModuleOccupancyMaxActiveBlocksPerMultiprocessor( numBlocks, (hipFunction_t)func, blockSize, dynamicSMemSize ) );
+	return oroErrorUnknown;
+}
 oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize( int* minGridSize, int* blockSize, oroFunction func, size_t dynamicSMemSize, int blockSizeLimit ) 
 { 
 	if( s_api & ORO_API_CUDADRIVER )

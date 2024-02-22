@@ -220,7 +220,7 @@ typedef enum HIPipcMem_flags_enum {
 typedef enum HIPmemAttach_flags_enum {
   hipMemAttachGlobal = 0x1,
   hipMemAttachHost = 0x2,
-  HIP_MEM_ATTACH_SINGLE = 0x4,
+  hipMemAttachSingle  = 0x4,
 } HIPmemAttach_flags;
 
 typedef enum HIPctx_flags_enum {
@@ -1161,6 +1161,7 @@ typedef hipError_t HIPAPI thipGetLastError(hipError_t error);
 typedef hipError_t HIPAPI thipInit(unsigned int Flags);
 typedef hipError_t HIPAPI thipDriverGetVersion(int* driverVersion);
 typedef hipError_t HIPAPI thipGetDevice(int* device);
+typedef hipError_t HIPAPI thipSetDevice(int device);
 typedef hipError_t HIPAPI thipGetDeviceCount(int* count);
 typedef hipError_t HIPAPI thipGetDeviceProperties(hipDeviceProp_t* props, int deviceId);
 typedef hipError_t HIPAPI thipDeviceGet(hipDevice_t* device, int ordinal);
@@ -1257,8 +1258,8 @@ typedef hipError_t HIPAPI thipEventElapsedTime(float* pMilliseconds, hipEvent_t 
 typedef hipError_t HIPAPI thipFuncGetAttribute(int* pi, hipFunction_attribute attrib, hipFunction_t hfunc);
 typedef hipError_t HIPAPI thipFuncSetCacheConfig(hipFunction_t hfunc, hipFuncCache_t config);
 typedef hipError_t HIPAPI thipModuleLaunchKernel(hipFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, hipStream_t hStream, void** kernelParams, void** extra);
-typedef hipError_t HIPAPI thipDrvOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize);
-typedef hipError_t HIPAPI thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags);
+typedef hipError_t HIPAPI thipModuleOccupancyMaxActiveBlocksPerMultiprocessor( int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize );
+typedef hipError_t HIPAPI thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags( int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags );
 typedef hipError_t HIPAPI thipModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, hipFunction_t func, size_t dynamicSMemSize, int blockSizeLimit);
 typedef hipError_t HIPAPI thipTexRefSetArray(hipTexRef hTexRef, hArray * hArray, unsigned int Flags);
 typedef hipError_t HIPAPI thipTexRefSetAddress(size_t* ByteOffset, hipTexRef hTexRef, hipDeviceptr_t dptr, size_t bytes);
@@ -1311,6 +1312,7 @@ extern thipGetLastError* hipGetLastError;
 extern thipInit *hipInit;
 extern thipDriverGetVersion *hipDriverGetVersion;
 extern thipGetDevice *hipGetDevice;
+extern thipSetDevice *hipSetDevice;
 extern thipGetDeviceCount *hipGetDeviceCount;
 extern thipGetDeviceProperties *hipGetDeviceProperties;
 extern thipDeviceGet *hipDeviceGet;
@@ -1403,8 +1405,8 @@ extern thipEventElapsedTime *hipEventElapsedTime;
 extern thipFuncGetAttribute *hipFuncGetAttribute;
 extern thipFuncSetCacheConfig *hipFuncSetCacheConfig;
 extern thipModuleLaunchKernel *hipModuleLaunchKernel;
-extern thipDrvOccupancyMaxActiveBlocksPerMultiprocessor *hipDrvOccupancyMaxActiveBlocksPerMultiprocessor;
-extern thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+extern thipModuleOccupancyMaxActiveBlocksPerMultiprocessor* hipModuleOccupancyMaxActiveBlocksPerMultiprocessor;
+extern thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags* hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
 extern thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
 extern thipTexRefSetArray *hipTexRefSetArray;
 extern thipTexRefSetAddress *hipTexRefSetAddress;

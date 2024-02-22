@@ -374,7 +374,7 @@ struct OrochiUtilsImpl
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
 };
 
-OrochiUtils::OrochiUtils() { m_cacheDirectory = "./cache/"; }
+
 
 OrochiUtils::~OrochiUtils() {
 	
@@ -385,6 +385,7 @@ OrochiUtils::~OrochiUtils() {
 	}
 
 }
+
 
 bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) { return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); }
 
@@ -447,6 +448,11 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	oroModule module;
 	oroFunction functionOut{};
 	oroError e = oroModuleLoadData( &module, binary.data() );
+	if ( e != oroSuccess )
+	{
+		// add some verbose info to help debugging missing file
+		printf("oroModuleLoadData FAILED (error = %d) loading file: %s\n", e, path.c_str());
+	}
 	OROASSERT( e == oroSuccess, 0 );
 
 	e = oroModuleGetFunction( &functionOut, module, funcName.c_str() );
@@ -492,10 +498,10 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	{
 		orortcProgram prog;
 		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
+		e = orortcCreateProgram( &prog, code, funcName, numHeaders, headers, includeNames );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
@@ -558,14 +564,13 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
 	//		opts.push_back( "-G" );
 
-	oroFunction function;
 	std::vector<char>& codec = dst;
 	{
 		orortcProgram prog;
 		orortcResult e;
 		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
 
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
@@ -615,7 +620,7 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 		e = orortcCreateProgram( prog, code, path, 0, 0, 0 );
 		e = orortcAddNameExpression( *prog, funcName );
 
-		e = orortcCompileProgram( *prog, opts.size(), opts.data() );
+		e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
 			size_t logSize;
@@ -664,6 +669,6 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 {
 	int4 tpb = { wgSizeX, wgSizeY, 0 };
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
-	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, 0, (void**)args, 0 );
+	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }

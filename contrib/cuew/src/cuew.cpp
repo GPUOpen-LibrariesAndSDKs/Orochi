@@ -20,7 +20,9 @@
 #  endif
 #  define popen _popen
 #  define pclose _pclose
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #  define _CRT_SECURE_NO_WARNINGS
+#endif
 #endif
 
 #include <assert.h>
@@ -284,6 +286,9 @@ tcuGraphicsResourceSetMapFlags_v2 *cuGraphicsResourceSetMapFlags_v2;
 tcuGraphicsMapResources *cuGraphicsMapResources;
 tcuGraphicsUnmapResources *cuGraphicsUnmapResources;
 tcuGetExportTable *cuGetExportTable;
+
+tcudaGetDevice* cudaGetDevice;
+tcudaSetDevice* cudaSetDevice;
 
 tcuGraphicsGLRegisterBuffer *cuGraphicsGLRegisterBuffer;
 tcuGraphicsGLRegisterImage *cuGraphicsGLRegisterImage;
@@ -602,6 +607,9 @@ static int cuewCudaInit(void)
   CUDA_LIBRARY_FIND(cuGraphicsUnmapResources);
   CUDA_LIBRARY_FIND(cuGetExportTable);
 
+  CUDA_LIBRARY_FIND(cudaGetDevice);
+  CUDA_LIBRARY_FIND(cudaSetDevice);
+
   CUDA_LIBRARY_FIND(cuGraphicsGLRegisterBuffer);
   CUDA_LIBRARY_FIND(cuGraphicsGLRegisterImage);
   CUDA_LIBRARY_FIND(cuGLGetDevices_v2);
@@ -912,7 +920,9 @@ const char *cuewCompilerPath(void)
 #endif
     if (handle) {
       char buffer[4096] = {0};
-      int len = fread(buffer, 1, sizeof(buffer) - 1, handle);
+      size_t elementSize = 1;
+      size_t elementCount = sizeof(buffer) - 1;
+      size_t len = fread(buffer, elementSize, elementCount, handle);
       buffer[len] = '\0';
       pclose(handle);
       if (buffer[0]) {

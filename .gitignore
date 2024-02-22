@@ -21,3 +21,6 @@ dist/**
 .DS_Store
 .vs/
 build/
+
+result.xml
+UnitTest/bitcodes/*.fatbin

@@ -23,12 +23,15 @@
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
 
+#include <Orochi/GpuMemory.h>
 #include <Orochi/OrochiUtils.h>
 #include <ParallelPrimitives/RadixSort.h>
 #include <ParallelPrimitives/RadixSortConfigs.h>
 #include <algorithm>
-#include <vector>
+#include <fstream>
 #include <numeric>
+#include <vector>
+
 #if 1
 #include <Test/Stopwatch.h>
 #else
@@ -52,13 +55,7 @@ using u32 = Oro::RadixSort::u32;
 class SortTest
 {
   public:
-	SortTest( oroDevice dev, oroCtx ctx, OrochiUtils& oroutils ) : m_device( dev ), m_ctx( ctx )
-	{
-		const auto s = m_sort.configure( m_device, oroutils );
-		OrochiUtils::malloc( m_tempBuffer, s );
-	}
-
-	~SortTest() { OrochiUtils::free( m_tempBuffer ); }
+	SortTest( oroDevice dev, oroCtx ctx, OrochiUtils& oroutils ) : m_device( dev ), m_ctx( ctx ), m_sort( dev, oroutils ) {}
 
 	template<bool KEY_VALUE_PAIR = true>
 	void test( int testSize, const int testBits = 32, const int nRuns = 1 )
@@ -104,18 +101,18 @@ class SortTest
 
 			if constexpr( KEY_VALUE_PAIR )
 			{
-				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits, m_tempBuffer );
+				m_sort.sort( srcGpu, dstGpu, testSize, 0, testBits );
 			}
 			else
 			{
-				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits, m_tempBuffer );
+				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits );
 			}
 
 			OrochiUtils::waitForCompletion();
 			sw.stop();
 			float ms = sw.getMs();
-			float gKeys_s = static_cast<float>(testSize) / 1000.f / 1000.f / ms;
-			printf( "%5.2fms (%3.2fGKeys/s) sorting %3.1fMkeys [%s]\n", ms, gKeys_s, testSize / 1000.f / 1000.f, KEY_VALUE_PAIR? "keyValue":"key" );
+			float gKeys_s = static_cast<float>( testSize ) / 1000.f / 1000.f / ms;
+			printf( "%5.2fms (%3.2fGKeys/s) sorting %3.1fMkeys [%s]\n", ms, gKeys_s, testSize / 1000.f / 1000.f, KEY_VALUE_PAIR ? "keyValue" : "key" );
 		}
 
 		std::vector<u32> dstKey( testSize );
@@ -184,6 +181,95 @@ class SortTest
 		printf( "passed: %3.2fK keys\n", testSize / 1000.f );
 	}
 
+	void test( const std::string& input_file )
+	{
+		std::ifstream fin( input_file );
+
+		if( !fin )
+		{
+			std::cerr << "Error when opening the file." << std::endl;
+			return;
+		}
+
+		std::vector<u32> numbers;
+		std::vector<u32> values;
+
+		u32 number{};
+		u32 j{ 0 };
+
+		while( fin >> number )
+		{
+			numbers.push_back( number );
+			values.push_back( j );
+
+			++j;
+		}
+
+		const auto size = std::size( numbers );
+
+		std::cout << "Input Size: " << size << std::endl;
+
+		Oro::GpuMemory<u32> gpuSrcKeys( size );
+		Oro::GpuMemory<u32> gpuSrcValues( size );
+
+		gpuSrcKeys.copyFromHost( numbers.data(), size );
+		gpuSrcValues.copyFromHost( values.data(), size );
+
+		Oro::RadixSort::KeyValueSoA srcGpu{};
+
+		srcGpu.key = gpuSrcKeys.ptr();
+		srcGpu.value = gpuSrcValues.ptr();
+
+		Oro::GpuMemory<u32> gpuDstKeys( size );
+		Oro::GpuMemory<u32> gpuDstValues( size );
+
+		Oro::RadixSort::KeyValueSoA dstGpu{};
+
+		dstGpu.key = gpuDstKeys.ptr();
+		dstGpu.value = gpuDstValues.ptr();
+
+		m_sort.sort( srcGpu, dstGpu, static_cast<int>( size ), 0, 32 );
+
+		const auto dstKeys = gpuDstKeys.getData();
+		const auto dstValues = gpuDstValues.getData();
+
+		std::vector<u32> orders( size );
+		std::iota( std::begin( orders ), std::end( orders ), 0U );
+
+		std::stable_sort( std::begin( orders ), std::end( orders ), [&]( const auto indexA, const auto indexB ) noexcept { return numbers[indexA] < numbers[indexB]; } );
+
+		const auto rearrange = []( auto& targetBuffer, const auto& indexBuffer ) noexcept
+		{
+			std::vector<u32> tmpBuffer( std::size( targetBuffer ) );
+
+			for( auto i = 0UL; i < std::size( targetBuffer ); ++i )
+			{
+				tmpBuffer[i] = targetBuffer[indexBuffer[i]];
+			}
+
+			targetBuffer = std::move( tmpBuffer );
+		};
+
+		rearrange( numbers, orders );
+		rearrange( values, orders );
+
+		// Check
+
+		const auto check = [&]( const size_t i ) noexcept { return dstKeys[i] != numbers[i] || dstValues[i] != values[i]; };
+
+		for( int i = 0; i < size; ++i )
+		{
+			if( check( i ) )
+			{
+				printf( "fail at %d\n", i );
+				__debugbreak();
+				break;
+			}
+		}
+
+		printf( "passed: %3.2fK keys\n", size / 1000.f );
+	}
+
 	template<typename T>
 	inline T getRandom( const T minV, const T maxV )
 	{
@@ -196,7 +282,6 @@ class SortTest
 	oroDevice m_device;
 	oroCtx m_ctx;
 	Oro::RadixSort m_sort;
-	u32* m_tempBuffer;
 };
 
 enum TestType
@@ -205,6 +290,7 @@ enum TestType
 	TEST_SIMPLE,
 	TEST_PERF,
 	TEST_BITS,
+	TEST_MISC,
 };
 
 int main( int argc, char** argv )
@@ -284,6 +370,16 @@ int main( int argc, char** argv )
 		sort.test( testSize, 32, nRuns );
 	}
 	break;
+
+	case TEST_MISC:
+	{
+		static constexpr auto file = "input.txt";
+		sort.test( file );
+	}
+	break;
+
+	default:
+		break;
 	};
 
 	printf( ">> done\n" );
