@@ -17,7 +17,7 @@ project "Unittest"
       files { "../contrib/**.h", "../contrib/**.cpp" }
 
       files { "../contrib/gtest-1.6.0/gtest-all.cc" }
-      sysincludedirs{ "../contrib/gtest-1.6.0/" }
+      externalincludedirs{ "../contrib/gtest-1.6.0/" }
       defines { "GTEST_HAS_TR1_TUPLE=0" }
       if _OPTIONS["kernelcompile"] then
         os.execute( "cd ./bitcodes/ && generate_bitcodes.bat" )
