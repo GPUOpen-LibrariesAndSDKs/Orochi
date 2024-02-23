@@ -76,6 +76,7 @@ thipGetLastError *hipGetLastError;
 thipInit *hipInit;
 thipDriverGetVersion *hipDriverGetVersion;
 thipGetDevice *hipGetDevice;
+thipSetDevice* hipSetDevice;
 thipGetDeviceCount *hipGetDeviceCount;
 thipGetDeviceProperties *hipGetDeviceProperties;
 thipDeviceGet* hipDeviceGet;
@@ -277,7 +278,7 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
-  const char* hip_paths[] = {"amdhip64.dll", NULL};
+  const char* hip_paths[] = {"amdhip64_6.dll", "amdhip64.dll", NULL};
   const char* hiprtc_paths[] = {
                                 "hiprtc0605.dll",
                                 "hiprtc0604.dll",
@@ -352,6 +353,7 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   HIP_LIBRARY_FIND_CHECKED(hipInit);
   HIP_LIBRARY_FIND_CHECKED(hipDriverGetVersion);
   HIP_LIBRARY_FIND_CHECKED(hipGetDevice);
+  HIP_LIBRARY_FIND_CHECKED(hipSetDevice);
   HIP_LIBRARY_FIND_CHECKED(hipGetDeviceCount);
   HIP_LIBRARY_FIND_CHECKED(hipGetDeviceProperties);
   HIP_LIBRARY_FIND_CHECKED(hipDeviceGet);

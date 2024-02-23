@@ -86,7 +86,11 @@ workspace "YamatanoOrochi"
     copydir("./contrib/bin/win64", "./dist/bin/Release/")
 	if _OPTIONS["bakeKernel"] then
 		defines { "ORO_PP_LOAD_FROM_STRING" }
-		os.execute(".\\tools\\bakeKernel.bat")
+      if os.ishost("windows") then
+		   os.execute(".\\tools\\bakeKernel.bat")
+      else
+         os.execute(".\\tools\\bakeKernel.sh")
+      end
 	end
 
    if _OPTIONS["precompiled"] then

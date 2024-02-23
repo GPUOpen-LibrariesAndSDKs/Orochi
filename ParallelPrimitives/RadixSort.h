@@ -32,7 +32,7 @@ class RadixSort final
 		LOG,
 	};
 
-	RadixSort( oroDevice device, OrochiUtils& oroutils, const std::string& kernelPath = "", const std::string& includeDir = "" );
+	RadixSort( oroDevice device, OrochiUtils& oroutils, oroStream stream = 0, const std::string& kernelPath = "", const std::string& includeDir = "" );
 
 	// Allow move but disallow copy.
 	RadixSort( RadixSort&& ) noexcept = default;
@@ -67,7 +67,7 @@ class RadixSort final
 	/// @brief Configure the settings, compile the kernels and allocate the memory.
 	/// @param kernelPath The kernel path.
 	/// @param includeDir The include directory.
-	void configure( const std::string& kernelPath, const std::string& includeDir ) noexcept;
+	void configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept;
 
   private:
 	// GPU blocks for the count kernel

@@ -8,8 +8,8 @@
 	#undef OROASSERT
 #endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
-#define OROCHECK( x ) { oroError e = x; OROASSERT( e == ORO_SUCCESS ); }
-#define ORORTCCHECK( x ) { OROASSERT( x == ORORTC_SUCCESS ); }
+#define OROCHECK( x ) { oroError e = x; ASSERT_EQ( e , ORO_SUCCESS ); }
+#define ORORTCCHECK( x ) { ASSERT_EQ( x , ORORTC_SUCCESS ); }
 
 
 class OroTestBase : public ::testing::Test
@@ -27,6 +27,10 @@ class OroTestBase : public ::testing::Test
 		OROCHECK( oroCtxCreate( &m_ctx, 0, m_device ) );
 		OROCHECK( oroCtxSetCurrent( m_ctx ) );
 		OROCHECK( oroStreamCreate( &m_stream ) );
+
+		const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+		m_jitLogVerbose = isAmd ? 1 : 0; // on CUDA, if using '1', orortcLinkComplete crashes... (driver 546.33 / CUDA 12.2)
+
 	}
 
 	void TearDown() 
@@ -36,10 +40,11 @@ class OroTestBase : public ::testing::Test
 	}
 
   protected:
-	oroDevice m_device;
-	oroCtx m_ctx;
-	oroStream m_stream;
+	oroDevice m_device = 0;
+	oroCtx m_ctx = nullptr;
+	oroStream m_stream = nullptr;
 
+	int32_t m_jitLogVerbose = 1; // used for ORORTC_JIT_LOG_VERBOSE
 };
 
 
@@ -58,6 +63,25 @@ TEST_F( OroTestBase, deviceprops )
 	}
 }
 
+TEST_F(OroTestBase, deviceGetSet)
+{
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+
+	// TODO: this unit test doesn't work on CUDA,
+	//       because Orochi needs to add support of "Cuda Runtime" for function like: cudaGetDevice/cudaSetDevice
+	if ( !isAmd )
+		return;
+
+	int deviceIndex = 0;
+	OROCHECK(oroSetDevice(deviceIndex));
+	deviceIndex = -1;
+	OROCHECK(oroGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+	deviceIndex = -1;
+	OROCHECK(oroCtxGetDevice(&deviceIndex));
+	OROASSERT(deviceIndex == 0);
+}
+
 TEST_F( OroTestBase, kernelExec ) 
 {
 	OrochiUtils o;
@@ -66,9 +90,10 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
-	int blockCount;
+	int blockCount = 0;
 	OROCHECK( oroOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
 	printf( "%d blocks per multiprocessor\n", blockCount );
+	OROASSERT( 0 < blockCount );
 	const void* args[] = { &a_device };
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
@@ -152,6 +177,10 @@ void loadFile( const char* path, std::vector<char>& dst )
 		f.read( dst.data(), size );
 		f.close();
 	}
+	else
+	{
+		printf("WARNING: failed to open file %s\n", path);
+	}
 }
 #if 0
 TEST_F( OroTestBase, linkBc )
@@ -203,7 +232,7 @@ TEST_F( OroTestBase, linkBc )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary;
 		size_t binarySize = 0;
@@ -281,7 +310,7 @@ TEST_F( OroTestBase, link )
 		option_vals[4] = static_cast<void*>( &log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -359,7 +388,7 @@ TEST_F( OroTestBase, link_addFile )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary;
 		size_t binarySize;
@@ -498,7 +527,7 @@ TEST_F( OroTestBase, link_bundledBc )
 		option_vals[4] =  static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -580,7 +609,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -679,7 +708,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)1;
+		option_vals[5] = (void*)m_jitLogVerbose;;
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -726,8 +755,8 @@ TEST_F( OroTestBase, getErrorString )
 	}
 	else if( api == ORO_API_HIP )
 	{
-		constexpr auto hipErrorMessage{ "hipErrorInvalidValue" };
-		OROASSERT( std::string( str ) == hipErrorMessage );
+		// the 'str' will look like "invalid argument". But it may change with the versions and the system language.
+		OROASSERT( str != nullptr );
 	}
 	else
 	{
@@ -744,18 +773,19 @@ TEST_F( OroTestBase, funcPointer )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel;
-	char* deviceBuffer;
+	char* deviceBuffer = nullptr;
+	oroModule module = nullptr;
 	{
-		oroModule module;
 		std::string code;
 		const char* path = "../UnitTest/testKernel.h";
-		OrochiUtils::readSourceCode( path, code );
+		bool readSrc = OrochiUtils::readSourceCode( path, code );
+		OROASSERT( readSrc );
 		o.getModule( m_device, code.c_str(), path, 0, "testFuncPointerKernel", &module );
-		oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" );
+		OROCHECK( oroModuleGetFunction( &kernel, module, "testFuncPointerKernel" ) );
 		{
-			oroDeviceptr dFuncPtr;
+			oroDeviceptr dFuncPtr = 0;
 			size_t numBytes = 0;
-			oroError ee = oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" );
+			OROCHECK( oroModuleGetGlobal( &dFuncPtr, &numBytes, module, "gFuncPointer" ) );
 			o.malloc( deviceBuffer, numBytes );
 			o.copyDtoD( deviceBuffer, (char*)dFuncPtr, numBytes );
 		}
@@ -764,7 +794,8 @@ TEST_F( OroTestBase, funcPointer )
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
-	OROASSERT( a_host == 7 );
+	ASSERT_EQ(a_host, 7);
+	ORORTCCHECK( oroModuleUnload( module ) );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
 }
@@ -904,5 +935,6 @@ TEST_F( OroTestBase, ManagedMemory )
 int main( int argc, char* argv[] ) 
 {
 	::testing::InitGoogleTest( &argc, argv );
-	return RUN_ALL_TESTS();
+	int retCode = RUN_ALL_TESTS();
+	return retCode;
 }
