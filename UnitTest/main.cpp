@@ -66,7 +66,7 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
-	int blockCount;
+	int blockCount = 0;
 	OROCHECK( oroOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
 	printf( "%d blocks per multiprocessor\n", blockCount );
 	OROASSERT( 0 < blockCount );
