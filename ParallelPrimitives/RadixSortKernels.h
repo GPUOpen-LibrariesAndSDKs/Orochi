@@ -253,9 +253,6 @@ extern "C" __global__ void SortSinglePassKernel( int* gSrcKey, int* gDstKey, int
 
 extern "C" __global__ void SortSinglePassKVKernel( int* gSrcKey, int* gSrcVal, int* gDstKey, int* gDstVal, int gN, const int START_BIT, const int END_BIT ) { SortSinglePass<true>( gSrcKey, gSrcVal, gDstKey, gDstVal, gN, START_BIT, END_BIT ); }
 
-
-constexpr auto KEY_IS_16BYTE_ALIGNED = true;
-
 using RADIX_SORT_KEY_TYPE = u32;
 using RADIX_SORT_VALUE_TYPE = u32;
 
@@ -348,45 +345,21 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 	while( iBlock < numberOfBlocks )
 	{
-		if( KEY_IS_16BYTE_ALIGNED && ( iBlock + 1 ) * GHISTOGRAM_ITEM_PER_BLOCK <= numberOfInputs )
+		for( int j = 0; j < GHISTOGRAM_ITEMS_PER_THREAD; j++ )
 		{
-			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK * 4 )
+			u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x * GHISTOGRAM_ITEMS_PER_THREAD + j;
+			if( itemIndex < numberOfInputs )
 			{
-				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i + threadIdx.x * 4;
-				struct alignas( 16 ) Key4
+				auto item = inputs[itemIndex];
+				for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 				{
-					RADIX_SORT_KEY_TYPE xs[4];
-				};
-				Key4 key4 = *(Key4*)&inputs[itemIndex];
-				for( int k = 0; k < 4; k++ )
-				{
-					auto item = key4.xs[k];
-					for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
-					{
-						u32 bitLocation = startBits + i * N_RADIX;
-						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
-						atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
-					}
+					u32 bitLocation = startBits + i * N_RADIX;
+					u32 bits = extractDigit( getKeyBits( item ), bitLocation );
+					atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 				}
 			}
 		}
-		else
-		{
-			for( int i = threadIdx.x; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK )
-			{
-				u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + i;
-				if( itemIndex < numberOfInputs )
-				{
-					auto item = inputs[itemIndex];
-					for( int j = 0; j < sizeof( RADIX_SORT_KEY_TYPE ); j++ )
-					{
-						u32 bitLocation = startBits + j * N_RADIX;
-						u32 bits = extractDigit( getKeyBits( item ), bitLocation );
-						atomicInc( &localCounters[j][bits], 0xFFFFFFFF );
-					}
-				}
-			}
-		}
+
 		__syncthreads();
 
 		if( threadIdx.x == 0 )
