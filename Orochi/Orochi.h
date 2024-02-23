@@ -147,7 +147,8 @@ typedef struct ioroEvent_t* oroEvent;
 typedef struct ioroStream_t* oroStream;
 typedef struct ioroPointerAttribute_t* oroPointerAttribute;
 typedef unsigned long long oroTextureObject;
-typedef void* oroExternalMemory_t;
+typedef struct ioroExternalMemory_t* oroExternalMemory;
+typedef struct ioroExternalSemaphore_t* oroExternalSemaphore;
 typedef struct iorortcLinkState* orortcLinkState;
 typedef struct _orortcProgram* orortcProgram;
 
@@ -599,6 +600,55 @@ typedef struct oroExternalMemoryBufferDesc_st {
   unsigned int reserved[16];
 } oroExternalMemoryBufferDesc;
 
+typedef enum oroExternalSemaphoreHandleType_enum {
+  oroExternalSemaphoreHandleTypeOpaqueFd = 1,
+  oroExternalSemaphoreHandleTypeOpaqueWin32 = 2,
+  oroExternalSemaphoreHandleTypeOpaqueWin32Kmt = 3,
+  oroExternalSemaphoreHandleTypeD3D12Fence = 4
+} oroExternalSemaphoreHandleType;
+
+typedef struct oroExternalSemaphoreHandleDesc_st {
+  oroExternalSemaphoreHandleType type;
+  union {
+    int fd;
+    struct {
+      void* handle;
+      const void* name;
+    } win32;
+  } handle;
+  unsigned int flags;
+  unsigned int reserved[16];
+} oroExternalSemaphoreHandleDesc;
+
+typedef struct oroExternalSemaphoreSignalParams_st {
+  struct {
+    struct {
+      unsigned long long value;
+    } fence;
+    struct {
+      unsigned long long key;
+    } keyedMutex;
+    unsigned int reserved[12];
+  } params;
+  unsigned int flags;
+  unsigned int reserved[16];
+} oroExternalSemaphoreSignalParams;
+
+typedef struct oroExternalSemaphoreWaitParams_st {
+  struct {
+    struct {
+      unsigned long long value;
+    } fence;
+    struct {
+      unsigned long long key;
+      unsigned int timeoutMs;
+    } keyedMutex;
+    unsigned int reserved[10];
+  } params;
+  unsigned int flags;
+  unsigned int reserved[16];
+} oroExternalSemaphoreWaitParams;
+
 /**
 * Stream CallBack struct
 */
@@ -739,9 +789,13 @@ oroError OROAPI oroModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* b
 //oroError OROAPI oroGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, oroStream hStream);
 //oroError OROAPI oroGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
 //oroError OROAPI oroGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
-oroError OROAPI oroImportExternalMemory(oroExternalMemory_t* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
-oroError OROAPI oroExternalMemoryGetMappedBuffer(void **devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc* bufferDesc);
-oroError OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem);
+oroError OROAPI oroImportExternalMemory(oroExternalMemory* extMem_out, const oroExternalMemoryHandleDesc* memHandleDesc);
+oroError OROAPI oroExternalMemoryGetMappedBuffer(oroDeviceptr *devPtr, oroExternalMemory extMem, const oroExternalMemoryBufferDesc* bufferDesc);
+oroError OROAPI oroDestroyExternalMemory(oroExternalMemory extMem);
+oroError OROAPI oroImportExternalSemaphore(oroExternalSemaphore* extSem_out, const oroExternalSemaphoreHandleDesc* semHandleDesc);
+oroError OROAPI oroDestroyExternalSemaphore(oroExternalSemaphore extSem);
+oroError OROAPI oroWaitExternalSemaphoresAsync(const oroExternalSemaphore* extSemArray, const oroExternalSemaphoreWaitParams* paramsArray, unsigned int numExtSems, oroStream stream);
+oroError OROAPI oroSignalExternalSemaphoresAsync(const oroExternalSemaphore* extSemArray, const oroExternalSemaphoreSignalParams* paramsArray, unsigned int numExtSems, oroStream stream);
 // oroError OROAPI oroGetLastError(oroError oro_error);
 const char* OROAPI orortcGetErrorString(orortcResult result);
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char* name_expression);
