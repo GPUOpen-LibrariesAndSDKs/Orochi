@@ -35,7 +35,8 @@ constexpr int REORDER_NUMBER_OF_ITEM_PER_THREAD = REORDER_NUMBER_OF_ITEM_PER_WAR
 constexpr int LOOKBACK_TABLE_SIZE = 1024;
 constexpr int MAX_LOOK_BACK = 64;
 constexpr int TAIL_BITS = 5;
-constexpr int TAIL_COUNT = 1u << TAIL_BITS;
+constexpr auto TAIL_MASK = 0xFFFFFFFFu << TAIL_BITS;
+static_assert( MAX_LOOK_BACK < LOOKBACK_TABLE_SIZE, "" );
 
 //static_assert( BIN_SIZE <= REORDER_NUMBER_OF_THREADS_PER_BLOCK, "please check scanExclusive" );
 //static_assert( BIN_SIZE % REORDER_NUMBER_OF_THREADS_PER_BLOCK == 0, "please check prefixSumExclusive on onesweep_reorder" );

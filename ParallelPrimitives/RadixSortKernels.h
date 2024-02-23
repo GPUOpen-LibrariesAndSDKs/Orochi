@@ -546,8 +546,8 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	if( threadIdx.x == 0 && LOOKBACK_TABLE_SIZE <= blockIndex )
 	{
-		u32 mustBeDone = blockIndex - LOOKBACK_TABLE_SIZE + MAX_LOOK_BACK;
-		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) * TAIL_COUNT <= mustBeDone )
+		// Wait until blockIndex < tail - MAX_LOOK_BACK + LOOKBACK_TABLE_SIZE
+		while( ( atomicAdd( tailIterator, 0 ) & TAIL_MASK ) - MAX_LOOK_BACK + LOOKBACK_TABLE_SIZE <= blockIndex )
 			;
 	}
 	__syncthreads();
@@ -606,7 +606,7 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 
 	if( threadIdx.x == 0 )
 	{
-		while( ( atomicAdd( tailIterator, 0 ) >> TAIL_BITS ) != blockIndex / TAIL_COUNT )
+		while( ( atomicAdd( tailIterator, 0 ) & TAIL_MASK ) != ( blockIndex & TAIL_MASK ) )
 			;
 
 		atomicInc( tailIterator, numberOfBlocks - 1 /* after the vary last item, it will be zero */ );
