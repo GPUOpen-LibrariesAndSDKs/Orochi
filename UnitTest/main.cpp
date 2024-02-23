@@ -773,8 +773,8 @@ TEST_F( OroTestBase, funcPointer )
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel;
 	char* deviceBuffer = nullptr;
+	oroModule module = nullptr;
 	{
-		oroModule module = nullptr;
 		std::string code;
 		const char* path = "../UnitTest/testKernel.h";
 		bool readSrc = OrochiUtils::readSourceCode( path, code );
@@ -794,6 +794,7 @@ TEST_F( OroTestBase, funcPointer )
 	OrochiUtils::waitForCompletion();
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	ASSERT_EQ(a_host, 7);
+	ORORTCCHECK( oroModuleUnload( module ) );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
 }
