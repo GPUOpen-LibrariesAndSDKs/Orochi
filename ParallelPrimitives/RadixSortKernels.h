@@ -346,12 +346,8 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 	__syncthreads();
 
-	bool hasData = false;
-
 	while( iBlock < numberOfBlocks )
 	{
-		hasData = true;
-
 		if( KEY_IS_16BYTE_ALIGNED && ( iBlock + 1 ) * GHISTOGRAM_ITEM_PER_BLOCK <= numberOfInputs )
 		{
 			for( int i = 0; i < GHISTOGRAM_ITEM_PER_BLOCK; i += GHISTOGRAM_THREADS_PER_BLOCK * 4 )
@@ -401,19 +397,16 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 		__syncthreads();
 	}
 
-	if( hasData )
+	for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
 	{
-		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
-		{
-			scanExclusive<u32>( 0, &localCounters[i][0], BIN_SIZE );
-		}
+		scanExclusive<u32>( 0, &localCounters[i][0], BIN_SIZE );
+	}
 
-		for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+	for( int i = 0; i < sizeof( RADIX_SORT_KEY_TYPE ); i++ )
+	{
+		for( int j = threadIdx.x; j < BIN_SIZE; j += GHISTOGRAM_THREADS_PER_BLOCK )
 		{
-			for( int j = threadIdx.x; j < BIN_SIZE; j += GHISTOGRAM_THREADS_PER_BLOCK )
-			{
-				atomicAdd( &gpSumBuffer[BIN_SIZE * i + j], localCounters[i][j] );
-			}
+			atomicAdd( &gpSumBuffer[BIN_SIZE * i + j], localCounters[i][j] );
 		}
 	}
 }
