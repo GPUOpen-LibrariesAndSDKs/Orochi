@@ -336,15 +336,18 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 
 	u32 numberOfBlocks = div_round_up( numberOfInputs, GHISTOGRAM_ITEM_PER_BLOCK );
 	__shared__ u32 iBlock;
-	if( threadIdx.x == 0 )
+	for(;;)
 	{
-		iBlock = atomicInc( counter, 0xFFFFFFFF );
-	}
+		if( threadIdx.x == 0 )
+		{
+			iBlock = atomicInc( counter, 0xFFFFFFFF );
+		}
 
-	__syncthreads();
+		__syncthreads();
 
-	while( iBlock < numberOfBlocks )
-	{
+		if( numberOfBlocks <= iBlock )
+			break;
+    
 		for( int j = 0; j < GHISTOGRAM_ITEMS_PER_THREAD; j++ )
 		{
 			u32 itemIndex = iBlock * GHISTOGRAM_ITEM_PER_BLOCK + threadIdx.x * GHISTOGRAM_ITEMS_PER_THREAD + j;
@@ -358,13 +361,6 @@ extern "C" __global__ void gHistogram( RADIX_SORT_KEY_TYPE* inputs, u32 numberOf
 					atomicInc( &localCounters[i][bits], 0xFFFFFFFF );
 				}
 			}
-		}
-
-		__syncthreads();
-
-		if( threadIdx.x == 0 )
-		{
-			iBlock = atomicInc( counter, 0xFFFFFFFF );
 		}
 
 		__syncthreads();
