@@ -390,7 +390,6 @@ __device__ __forceinline__ void onesweep_reorder( RADIX_SORT_KEY_TYPE* inputKeys
 {
 	__shared__ u32 pSum[BIN_SIZE];
 
-	constexpr int N_BATCH_LOAD = 4;
 	struct SMem
 	{
 		struct Phase1
