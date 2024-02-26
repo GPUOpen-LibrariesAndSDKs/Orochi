@@ -375,13 +375,8 @@ struct OrochiUtilsImpl
 	{
 		std::string tmp_name = path + kernelname;
 
-<<<<<<< HEAD
 		if (opts == nullptr)
 			return tmp_name;
-=======
-        if (opts == nullptr)
-            return tmp_name;
->>>>>>> c349b2cad6808774cd9b611d0239f98276c1c052
 
 		for( std::string s : *opts )
 		{
