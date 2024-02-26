@@ -373,13 +373,17 @@ struct OrochiUtilsImpl
 
 	static std::string getCacheName( const std::string& path, const std::string& kernelname, std::vector<const char*>* opts ) noexcept
 	{
-		std::string tmp_name = path;
+		std::string tmp_name = path + kernelname;
+
+		if (opts == nullptr)
+			return tmp_name;
+
 		for( std::string s : *opts )
 		{
-			if( s[0] == '-' && s[1] == 'I' ) continue;
+			if( s.size() > 1 && s[0] == '-' && s[1] == 'I' ) continue;
 			tmp_name += s;
 		}
-		return tmp_name + kernelname;
+		return tmp_name;
 	}
 
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
