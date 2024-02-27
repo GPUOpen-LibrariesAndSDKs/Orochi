@@ -371,6 +371,21 @@ struct OrochiUtilsImpl
 		return 0;
 	}
 
+	static std::string getCacheName( const std::string& path, const std::string& kernelname, std::vector<const char*>* opts ) noexcept
+	{
+		std::string tmp_name = path + kernelname;
+
+		if (opts == nullptr)
+			return tmp_name;
+
+		for( std::string s : *opts )
+		{
+			if( s.size() > 1 && s[0] == '-' && s[1] == 'I' ) continue;
+			tmp_name += s;
+		}
+		return tmp_name;
+	}
+
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
 };
 
@@ -393,7 +408,7 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
-	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName, optsIn );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
 		return m_kernelMap[cacheName].function;
@@ -416,7 +431,7 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
-	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName, optsIn );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
 		return m_kernelMap[cacheName].function;
