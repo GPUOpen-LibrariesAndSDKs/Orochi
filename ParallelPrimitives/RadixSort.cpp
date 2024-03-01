@@ -212,23 +212,17 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 	int nIteration = div_round_up64( endBit - startBit, 8 );
 	uint64_t numberOfBlocks = div_round_up64( n, RADIX_SORT_BLOCK_SIZE );
 
-	// Buffers
-	void* gpSumBuffer = m_gpSumBuffer.ptr();
-	void* lookBackBuffer = m_lookbackBuffer.ptr();
-	void* tailIteratorBuffer = m_tailIterator.ptr();
-
 	m_lookbackBuffer.resetAsync( stream );
 	m_gpSumCounter.resetAsync( stream );
 	m_gpSumBuffer.resetAsync( stream );
 
 	// counter for gHistogram. 
 	{
-		void* counter = m_gpSumCounter.ptr();
 		int maxBlocksPerMP = 0;
 		oroError e = oroOccupancyMaxActiveBlocksPerMultiprocessor( &maxBlocksPerMP, m_gHistogram, GHISTOGRAM_THREADS_PER_BLOCK, 0 );
 		const int nBlocks = e == oroSuccess ? maxBlocksPerMP * m_props.multiProcessorCount : 2048;
 
-		const void* args[] = { &src.key, &n, &gpSumBuffer, &startBit, &counter };
+		const void* args[] = { &src.key, &n, arg_cast( m_gpSumBuffer.address() ), &startBit, arg_cast( m_gpSumCounter.address() ) };
 		OrochiUtils::launch1D( m_gHistogram, nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );
 	}
 
@@ -243,12 +237,12 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 		if( keyPair )
 		{
-			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, &gpSumBuffer, &lookBackBuffer, &tailIteratorBuffer, & startBit, &i };
+			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, arg_cast( m_gpSumBuffer.address() ), arg_cast( m_lookbackBuffer.address() ), arg_cast( m_tailIterator.address() ), &startBit, &i };
 			OrochiUtils::launch1D( m_onesweep_reorderKeyPair64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		else
 		{
-			const void* args[] = { &s.key, &d.key, &n, &gpSumBuffer, &lookBackBuffer, &tailIteratorBuffer, &startBit, &i };
+			const void* args[] = { &s.key, &d.key, &n, arg_cast( m_gpSumBuffer.address() ), arg_cast( m_lookbackBuffer.address() ), arg_cast( m_tailIterator.address() ), &startBit, &i };
 			OrochiUtils::launch1D( m_onesweep_reorderKey64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		std::swap( s, d );
