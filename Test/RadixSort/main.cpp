@@ -49,19 +49,6 @@ class Stopwatch
 };
 #endif
 
-struct splitmix64
-{
-	uint64_t x = 0; /* The state can be seeded with any value. */
-
-	uint64_t next()
-	{
-		uint64_t z = ( x += 0x9e3779b97f4a7c15 );
-		z = ( z ^ ( z >> 30 ) ) * 0xbf58476d1ce4e5b9;
-		z = ( z ^ ( z >> 27 ) ) * 0x94d049bb133111eb;
-		return z ^ ( z >> 31 );
-	}
-};
-
 using u64 = Oro::RadixSort::u64;
 using u32 = Oro::RadixSort::u32;
 
@@ -82,13 +69,9 @@ class SortTest
 
 		std::vector<u32> srcKey( testSize );
 
-		splitmix64 rng;
 		for( int i = 0; i < testSize; i++ )
 		{
 			srcKey[i] = getRandom( 0u, (u32)( ( 1ull << (u64)testBits ) - 1 ) );
-
-			//u32 mask = (u32)( ( 1ull << (u64)testBits ) - 1 );
-			//srcKey[i] = rng.next() & mask;
 		}
 
 		std::vector<u32> srcValue( testSize );
