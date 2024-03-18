@@ -689,3 +689,20 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
+
+void OrochiUtils::loadFile( const std::filesystem::path filepath, std::vector<char>& dst )
+{
+	std::fstream fin( filepath, std::ios::in );
+	if( !fin )
+	{
+		const auto err = "File Error: " + filepath.string();
+		std::cout << err << std::endl;
+		return;
+	}
+	fin.seekg( 0, std::ios::end );
+	size_t filesize = fin.tellg();
+	fin.seekg( 0, std::ios::beg );
+	dst.resize( filesize );
+	fin.read( dst.data(), filesize );
+	return;
+}

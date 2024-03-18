@@ -2,6 +2,7 @@
 #include <Orochi/Orochi.h>
 #include <mutex>
 #include <string>
+#include <filesystem>
 #include <unordered_map>
 #include <vector>
 
@@ -52,6 +53,10 @@ class OrochiUtils
 	static void getModule( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, oroModule* moduleOut );
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
+
+	// Load a file into a std::vector
+	static void loadFile( const std::filesystem::path filepath, std::vector<char>& dst );
+
 
 	template<typename T>
 	static void malloc( T*& ptr, size_t n )

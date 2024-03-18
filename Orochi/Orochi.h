@@ -23,6 +23,21 @@
 
 
 
+
+// This part allows Orochi.h to be included by the device kernel code to compile, and use generic oro** names.
+// TODO: make this list exhaustive by auto-generating it with Orochi Summoner.
+#if defined(__CUDACC__)
+    typedef cudaTextureObject_t oroTextureObject_t;
+    typedef cudaSurfaceObject_t oroSurfaceObject_t;
+#elif defined(__HIPCC__)
+    typedef hipTextureObject_t oroTextureObject_t;
+    typedef hipSurfaceObject_t oroSurfaceObject_t;
+#else
+
+
+
+
+
 #include "../contrib/hipew/include/hipew.h"
 
 
@@ -424,54 +439,6 @@ typedef hipPointer_attribute oroPointer_attribute;
 	const hipPointer_attribute ORO_POINTER_ATTRIBUTE_IS_GPU_DIRECT_RDMA_CAPABLE = HIP_POINTER_ATTRIBUTE_IS_GPU_DIRECT_RDMA_CAPABLE;
 	const hipPointer_attribute ORO_POINTER_ATTRIBUTE_ACCESS_FLAGS = HIP_POINTER_ATTRIBUTE_ACCESS_FLAGS;
 	const hipPointer_attribute ORO_POINTER_ATTRIBUTE_MEMPOOL_HANDLE = HIP_POINTER_ATTRIBUTE_MEMPOOL_HANDLE;
-typedef uchar1 uchar1;
-typedef uchar2 uchar2;
-typedef uchar3 uchar3;
-typedef uchar4 uchar4;
-typedef char1 char1;
-typedef char2 char2;
-typedef char3 char3;
-typedef char4 char4;
-typedef ushort1 ushort1;
-typedef ushort2 ushort2;
-typedef ushort3 ushort3;
-typedef ushort4 ushort4;
-typedef short1 short1;
-typedef short2 short2;
-typedef short3 short3;
-typedef short4 short4;
-typedef uint1 uint1;
-typedef uint2 uint2;
-typedef uint3 uint3;
-typedef uint4 uint4;
-typedef int1 int1;
-typedef int2 int2;
-typedef int3 int3;
-typedef int4 int4;
-typedef ulong1 ulong1;
-typedef ulong2 ulong2;
-typedef ulong3 ulong3;
-typedef ulong4 ulong4;
-typedef long1 long1;
-typedef long2 long2;
-typedef long3 long3;
-typedef long4 long4;
-typedef ulonglong1 ulonglong1;
-typedef ulonglong2 ulonglong2;
-typedef ulonglong3 ulonglong3;
-typedef ulonglong4 ulonglong4;
-typedef longlong1 longlong1;
-typedef longlong2 longlong2;
-typedef longlong3 longlong3;
-typedef longlong4 longlong4;
-typedef float1 float1;
-typedef float2 float2;
-typedef float3 float3;
-typedef float4 float4;
-typedef double1 double1;
-typedef double2 double2;
-typedef double3 double3;
-typedef double4 double4;
 typedef hipTextureObject_t oroTextureObject_t;
 typedef hipTextureAddressMode oroTextureAddressMode;
 	const hipTextureAddressMode oroAddressModeWrap = hipAddressModeWrap;
@@ -484,10 +451,8 @@ typedef hipTextureFilterMode oroTextureFilterMode;
 typedef hipTextureReadMode oroTextureReadMode;
 	const hipTextureReadMode oroReadModeElementType = hipReadModeElementType;
 	const hipTextureReadMode oroReadModeNormalizedFloat = hipReadModeNormalizedFloat;
-typedef textureReference textureReference;
 typedef hipTextureDesc oroTextureDesc;
 typedef hipSurfaceObject_t oroSurfaceObject_t;
-typedef surfaceReference surfaceReference;
 typedef hipSurfaceBoundaryMode oroSurfaceBoundaryMode;
 	const hipSurfaceBoundaryMode oroBoundaryModeZero = hipBoundaryModeZero;
 	const hipSurfaceBoundaryMode oroBoundaryModeTrap = hipBoundaryModeTrap;
@@ -594,7 +559,6 @@ typedef hipSharedMemConfig oroSharedMemConfig;
 	const hipSharedMemConfig oroSharedMemBankSizeDefault = hipSharedMemBankSizeDefault;
 	const hipSharedMemConfig oroSharedMemBankSizeFourByte = hipSharedMemBankSizeFourByte;
 	const hipSharedMemConfig oroSharedMemBankSizeEightByte = hipSharedMemBankSizeEightByte;
-typedef dim3 dim3;
 typedef hipLaunchParams_t oroLaunchParams_t;
 typedef hipLaunchParams oroLaunchParams;
 typedef hipFunctionLaunchParams_t oroFunctionLaunchParams_t;
@@ -1203,17 +1167,14 @@ typedef int oroDevice;
 
 
 
-#define oroHostRegisterPortable 0x01
-#define oroHostRegisterMapped 0x02
-#define oroHostRegisterIoMemory 0x04
-
-#define ORO_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
-#define ORO_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
-#define ORO_HIP_LAUNCH_PARAM_END ((void*)0x03)
-#define ORO_CUDA_LAUNCH_PARAM_END ((void*)0x00)
-
-
+#define oroHostRegisterPortable hipHostRegisterPortable
+#define oroHostRegisterMapped hipHostRegisterMapped
+#define oroHostRegisterIoMemory hipHostRegisterIoMemory
+#define ORO_LAUNCH_PARAM_BUFFER_POINTER HIP_LAUNCH_PARAM_BUFFER_POINTER
+#define ORO_LAUNCH_PARAM_BUFFER_SIZE HIP_LAUNCH_PARAM_BUFFER_SIZE
 #define ORO_EXTERNAL_MEMORY_DEDICATED 0x1
+#define ORO_TRSF_READ_AS_INTEGER 0x01
+#define oroArrayDefault hipArrayDefault
 
 
 typedef enum oroEvent_flags_enum
@@ -1305,4 +1266,5 @@ orortcResult OROAPI orortcGetBitcode(orortcProgram prog, char* bitcode);
 orortcResult OROAPI orortcGetBitcodeSize(orortcProgram prog, size_t* bitcodeSizeRet);
 
 
+#endif // if not __CUDACC__ and no __HIPCC__
 
