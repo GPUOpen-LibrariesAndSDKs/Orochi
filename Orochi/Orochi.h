@@ -27,11 +27,13 @@
 // This part allows Orochi.h to be included by the device kernel code to compile, and use generic oro** names.
 // TODO: make this list exhaustive by auto-generating it with Orochi Summoner.
 #if defined(__CUDACC__)
-    typedef cudaTextureObject_t oroTextureObject_t;
-    typedef cudaSurfaceObject_t oroSurfaceObject_t;
+	typedef cudaMipmappedArray_t oroMipmappedArray_t;
+	typedef cudaTextureObject_t oroTextureObject_t;
+	typedef cudaSurfaceObject_t oroSurfaceObject_t;
 #elif defined(__HIPCC__)
-    typedef hipTextureObject_t oroTextureObject_t;
-    typedef hipSurfaceObject_t oroSurfaceObject_t;
+	typedef hipMipmappedArray_t oroMipmappedArray_t;
+	typedef hipTextureObject_t oroTextureObject_t;
+	typedef hipSurfaceObject_t oroSurfaceObject_t;
 #else
 
 
@@ -1133,13 +1135,13 @@ orortcResult OROAPI orortcLinkDestroy(orortcLinkState hip_link_state);
 
 enum oroApi
 {
-    ORO_API_AUTOMATIC = 1<<0,
+	ORO_API_AUTOMATIC = 1<<0,
 	ORO_API_HIPDRIVER = 1 << 1,
 	ORO_API_HIPRTC = 1 << 2,
 	ORO_API_HIP = ORO_API_HIPDRIVER | ORO_API_HIPRTC,
 	ORO_API_CUDADRIVER = 1 << 3,
 	ORO_API_CUDARTC = 1 << 4,
-    ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
+	ORO_API_CUDA = ORO_API_CUDADRIVER | ORO_API_CUDARTC,
 };
 
 
@@ -1196,33 +1198,33 @@ typedef enum {
 } oroLimit;
 
 typedef enum PPshared_carveout_enum {
-    ORO_SHAREDMEM_CARVEOUT_DEFAULT,
-    ORO_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
-    ORO_SHAREDMEM_CARVEOUT_MAX_L1 = 0,
+	ORO_SHAREDMEM_CARVEOUT_DEFAULT,
+	ORO_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
+	ORO_SHAREDMEM_CARVEOUT_MAX_L1 = 0,
 } PPshared_carveout;
 
 
 typedef enum OROmem_advise_enum {
-    ORO_MEM_ADVISE_SET_READ_MOSTLY = 1,
-    ORO_MEM_ADVISE_UNSET_READ_MOSTLY = 2,
-    ORO_MEM_ADVISE_SET_PREFERRED_LOCATION = 3,
-    ORO_MEM_ADVISE_UNSET_PREFERRED_LOCATION = 4,
-    ORO_MEM_ADVISE_SET_ACCESSED_BY = 5,
-    ORO_MEM_ADVISE_UNSET_ACCESSED_BY = 6,
+	ORO_MEM_ADVISE_SET_READ_MOSTLY = 1,
+	ORO_MEM_ADVISE_UNSET_READ_MOSTLY = 2,
+	ORO_MEM_ADVISE_SET_PREFERRED_LOCATION = 3,
+	ORO_MEM_ADVISE_UNSET_PREFERRED_LOCATION = 4,
+	ORO_MEM_ADVISE_SET_ACCESSED_BY = 5,
+	ORO_MEM_ADVISE_UNSET_ACCESSED_BY = 6,
 } PPmem_advise;
 
 typedef enum OROmem_range_attribute_enum {
-    ORO_MEM_RANGE_ATTRIBUTE_READ_MOSTLY = 1,
-    ORO_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION = 2,
-    ORO_MEM_RANGE_ATTRIBUTE_ACCESSED_BY = 3,
-    ORO_MEM_RANGE_ATTRIBUTE_LAST_PREFETCH_LOCATION = 4,
+	ORO_MEM_RANGE_ATTRIBUTE_READ_MOSTLY = 1,
+	ORO_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION = 2,
+	ORO_MEM_RANGE_ATTRIBUTE_ACCESSED_BY = 3,
+	ORO_MEM_RANGE_ATTRIBUTE_LAST_PREFETCH_LOCATION = 4,
 } PPmem_range_attribute;
 
 typedef enum oroManagedMemoryAttachFlags
 {
-    oroMemAttachGlobal = 0x1,
-    oroMemAttachHost = 0x2,
-    oroMemAttachSingle = 0x4,
+	oroMemAttachGlobal = 0x1,
+	oroMemAttachHost = 0x2,
+	oroMemAttachSingle = 0x4,
 }oroManagedMemoryAttachFlags;
 
 
