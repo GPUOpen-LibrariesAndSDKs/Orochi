@@ -33,13 +33,16 @@
 #include <wrl.h>
 //#include <shellapi.h> //not used?
 
+// Orochi
+#include <Orochi/Orochi.h>
+#include <Orochi/OrochiUtils.h>
+
+
 #include "ShaderStructs.h"
 #include "simpleD3D12.h"
 #include <aclapi.h>
 
-// Oroshi
-#include <Orochi/Orochi.h>
-#include <Orochi/OrochiUtils.h>
+
 
 //#define USE_STREAM
 
@@ -419,7 +422,7 @@ void DX12OroInterop::LoadAssets() {
     externalMemoryHandleDesc.type = oroExternalMemoryHandleTypeD3D12Resource;
     externalMemoryHandleDesc.handle.win32.handle = sharedHandle;
     externalMemoryHandleDesc.size = actualSize;
-    externalMemoryHandleDesc.flags = CUDA_EXTERNAL_MEMORY_DEDICATED; //tochange?
+    externalMemoryHandleDesc.flags = ORO_EXTERNAL_MEMORY_DEDICATED;
 
     oroImportExternalMemory(&gOroExtMem, &externalMemoryHandleDesc);
     CloseHandle(sharedHandle);
@@ -450,8 +453,7 @@ void DX12OroInterop::LoadAssets() {
       IID_PPV_ARGS(&m_fence)));
 
     oroExternalSemaphoreHandleDesc externalSemaphoreHandleDesc;
-    assert(sizeof(externalSemaphoreHandleDesc) == sizeof(CUDA_EXTERNAL_SEMAPHORE_HANDLE_DESC)); //tochange?
-
+   
     memset(&externalSemaphoreHandleDesc, 0,
       sizeof(externalSemaphoreHandleDesc));
     WindowsSecurityAttributes windowsSecurityAttributes;

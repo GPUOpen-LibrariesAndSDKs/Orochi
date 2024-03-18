@@ -75,13 +75,13 @@ class OrochiUtils
 
 	static void memset( void* ptr, int val, size_t n )
 	{
-		oroError e = oroMemset( (oroDeviceptr)ptr, val, n );
+		oroError e = oroMemset( ptr, val, n );
 		OROASSERT( e == oroSuccess, 0 );
 	}
 
 	static void memsetAsync( void* ptr, int val, size_t n, oroStream stream )
 	{
-		oroError e = oroMemsetD8Async( (oroDeviceptr)ptr, val, n, stream );
+		oroError e = oroMemsetD8Async( ptr, val, n, stream );
 		OROASSERT( e == oroSuccess, 0 );
 	}
 

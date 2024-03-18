@@ -31,7 +31,6 @@
 #include <dxgi1_4.h>
 #include <D3Dcompiler.h>
 #include <DirectXMath.h>
-#include <contrib/cuew/include/cuew.h>
 
 using namespace DirectX;
 
@@ -42,5 +41,5 @@ struct Vertex {
 
 
 void RunSineWaveKernel(size_t mesh_width, size_t mesh_height,
-                       Vertex *cudaDevVertptr, CUstream streamToRun,
+                       Vertex *cudaDevVertptr, oroStream streamToRun,
                        float AnimTime);

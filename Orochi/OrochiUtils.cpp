@@ -197,7 +197,8 @@ struct OrochiUtilsImpl
 
 		oroDeviceProp props;
 		oroGetDeviceProperties( &props, device );
-		int v;
+
+		int v = 0;
 		oroDriverGetVersion( &v );
 		std::string deviceName = props.name;
 		std::string driverVersion = std::to_string( v );
@@ -220,6 +221,7 @@ struct OrochiUtilsImpl
 
 		deviceName = deviceName.substr( 0, deviceName.find( ":" ) );
 		binFileName = cacheDirectory + "/"s + moduleHash + "-"s + optionHash + ".v."s + deviceName + "."s + driverVersion + "_"s + std::to_string( 8 * sizeof( void* ) ) + ".bin"s;
+		return;
 	}
 	static bool isFileUpToDate( const char* binaryFileName, const char* srcFileName )
 	{
