@@ -1,5 +1,5 @@
 
-#include "../../Orochi/Orochi.h"
+#include <Orochi/Orochi.h>
 
 
 //

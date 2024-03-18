@@ -1,6 +1,6 @@
 
 
-#include "contrib/hipew/include/hipew.h"
+
 #include <Orochi/GpuMemory.h>
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
@@ -82,6 +82,7 @@ int main()
 	}
 
 	std::vector<const char*> opts;
+	opts.push_back( "-I ../../../" );
 	opts.push_back( "-I ../" );
 	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
 	if( rtc_e != ORORTC_SUCCESS )
