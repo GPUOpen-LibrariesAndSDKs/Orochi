@@ -2,6 +2,7 @@
 #include <Orochi/Orochi.h>
 #include <mutex>
 #include <string>
+#include <filesystem>
 #include <unordered_map>
 #include <vector>
 
@@ -53,6 +54,10 @@ class OrochiUtils
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 
+	// Load a file into a std::vector
+	static void loadFile( const std::filesystem::path filepath, std::vector<char>& dst );
+
+
 	template<typename T>
 	static void malloc( T*& ptr, size_t n )
 	{
@@ -75,13 +80,13 @@ class OrochiUtils
 
 	static void memset( void* ptr, int val, size_t n )
 	{
-		oroError e = oroMemset( (oroDeviceptr)ptr, val, n );
+		oroError e = oroMemset( ptr, val, n );
 		OROASSERT( e == oroSuccess, 0 );
 	}
 
 	static void memsetAsync( void* ptr, int val, size_t n, oroStream stream )
 	{
-		oroError e = oroMemsetD8Async( (oroDeviceptr)ptr, val, n, stream );
+		oroError e = oroMemsetD8Async( ptr, val, n, stream );
 		OROASSERT( e == oroSuccess, 0 );
 	}
 

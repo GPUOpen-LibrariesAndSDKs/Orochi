@@ -24,3 +24,4 @@ build/
 
 result.xml
 UnitTest/bitcodes/*.fatbin
+Test/SimpleD3D12/cache/**

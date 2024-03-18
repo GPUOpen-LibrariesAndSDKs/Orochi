@@ -102,6 +102,7 @@ workspace "YamatanoOrochi"
    	include "./Test"
    	include "./Test/DeviceEnum"
 	include "./Test/WMMA"
+	include "./Test/Texture"
    
      if os.istarget("windows") then
         group "Advanced"

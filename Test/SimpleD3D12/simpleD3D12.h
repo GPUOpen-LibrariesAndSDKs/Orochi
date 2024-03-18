@@ -28,8 +28,9 @@
 #pragma once
 
 #include "DX12OroSample.h"
-#include "ShaderStructs.h"
 #include <Orochi/Orochi.h>
+#include "ShaderStructs.h"
+
 
 using namespace DirectX;
 

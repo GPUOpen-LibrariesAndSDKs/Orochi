@@ -197,7 +197,8 @@ struct OrochiUtilsImpl
 
 		oroDeviceProp props;
 		oroGetDeviceProperties( &props, device );
-		int v;
+
+		int v = 0;
 		oroDriverGetVersion( &v );
 		std::string deviceName = props.name;
 		std::string driverVersion = std::to_string( v );
@@ -220,6 +221,7 @@ struct OrochiUtilsImpl
 
 		deviceName = deviceName.substr( 0, deviceName.find( ":" ) );
 		binFileName = cacheDirectory + "/"s + moduleHash + "-"s + optionHash + ".v."s + deviceName + "."s + driverVersion + "_"s + std::to_string( 8 * sizeof( void* ) ) + ".bin"s;
+		return;
 	}
 	static bool isFileUpToDate( const char* binaryFileName, const char* srcFileName )
 	{
@@ -686,4 +688,21 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
+}
+
+void OrochiUtils::loadFile( const std::filesystem::path filepath, std::vector<char>& dst )
+{
+	std::fstream fin( filepath, std::ios::in );
+	if( !fin )
+	{
+		const auto err = "File Error: " + filepath.string();
+		std::cout << err << std::endl;
+		return;
+	}
+	fin.seekg( 0, std::ios::end );
+	size_t filesize = fin.tellg();
+	fin.seekg( 0, std::ios::beg );
+	dst.resize( filesize );
+	fin.read( dst.data(), filesize );
+	return;
 }

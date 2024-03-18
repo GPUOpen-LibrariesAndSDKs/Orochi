@@ -91,7 +91,7 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
 	int blockCount = 0;
-	OROCHECK( oroOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
+	OROCHECK( oroModuleOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
 	printf( "%d blocks per multiprocessor\n", blockCount );
 	OROASSERT( 0 < blockCount );
 	const void* args[] = { &a_device };
@@ -745,7 +745,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 
 TEST_F( OroTestBase, getErrorString )
 {
-	oroError error = oroError::oroErrorInvalidValue;
+	oroError error = oroErrorInvalidValue;
 	const char* str = nullptr;
 	OROCHECK( oroGetErrorString( error, &str ) );
 	const oroApi api = oroGetCurAPI( 0 );
