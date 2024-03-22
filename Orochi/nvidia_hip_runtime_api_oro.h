@@ -23,8 +23,16 @@ THE SOFTWARE.
 #ifndef HIP_INCLUDE_HIP_NVIDIA_DETAIL_HIP_RUNTIME_API_H
 #define HIP_INCLUDE_HIP_NVIDIA_DETAIL_HIP_RUNTIME_API_H
 
+#include <cuda_runtime_api.h>
+#include <cuda.h>
+#include <cuda_profiler_api.h>
+#include <cuda_fp16.h>
+
 
 #include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
 
 #define CUDA_9000 9000
 #define CUDA_10010 10010
@@ -42,17 +50,8 @@ extern "C" {
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef _WIN32
-#define CUDART_CB __stdcall
-#else
-#define CUDART_CB
-#endif
 
 
-#undef __dparm
-#define __dparm(x)
 
 
 enum hipMemoryType
@@ -65,6 +64,89 @@ enum hipMemoryType
 	hipMemoryTypeUnified = 11,
 };
 typedef enum hipMemoryType hipMemoryType;
+
+enum hipError_t
+{
+	hipSuccess = 0,
+	hipErrorInvalidValue = 1,
+	hipErrorOutOfMemory = 2,
+	hipErrorMemoryAllocation = 2,
+	hipErrorNotInitialized = 3,
+	hipErrorInitializationError = 3,
+	hipErrorDeinitialized = 4,
+	hipErrorProfilerDisabled = 5,
+	hipErrorProfilerNotInitialized = 6,
+	hipErrorProfilerAlreadyStarted = 7,
+	hipErrorProfilerAlreadyStopped = 8,
+	hipErrorInvalidConfiguration = 9,
+	hipErrorInvalidPitchValue = 12,
+	hipErrorInvalidSymbol = 13,
+	hipErrorInvalidDevicePointer = 17,
+	hipErrorInvalidMemcpyDirection = 21,
+	hipErrorInsufficientDriver = 35,
+	hipErrorMissingConfiguration = 52,
+	hipErrorPriorLaunchFailure = 53,
+	hipErrorInvalidDeviceFunction = 98,
+	hipErrorNoDevice = 100,
+	hipErrorInvalidDevice = 101,
+	hipErrorInvalidImage = 200,
+	hipErrorInvalidContext = 201,
+	hipErrorContextAlreadyCurrent = 202,
+	hipErrorMapFailed = 205,
+	hipErrorMapBufferObjectFailed = 205,
+	hipErrorUnmapFailed = 206,
+	hipErrorArrayIsMapped = 207,
+	hipErrorAlreadyMapped = 208,
+	hipErrorNoBinaryForGpu = 209,
+	hipErrorAlreadyAcquired = 210,
+	hipErrorNotMapped = 211,
+	hipErrorNotMappedAsArray = 212,
+	hipErrorNotMappedAsPointer = 213,
+	hipErrorECCNotCorrectable = 214,
+	hipErrorUnsupportedLimit = 215,
+	hipErrorContextAlreadyInUse = 216,
+	hipErrorPeerAccessUnsupported = 217,
+	hipErrorInvalidKernelFile = 218,
+	hipErrorInvalidGraphicsContext = 219,
+	hipErrorInvalidSource = 300,
+	hipErrorFileNotFound = 301,
+	hipErrorSharedObjectSymbolNotFound = 302,
+	hipErrorSharedObjectInitFailed = 303,
+	hipErrorOperatingSystem = 304,
+	hipErrorInvalidHandle = 400,
+	hipErrorInvalidResourceHandle = 400,
+	hipErrorIllegalState = 401,
+	hipErrorNotFound = 500,
+	hipErrorNotReady = 600,
+	hipErrorIllegalAddress = 700,
+	hipErrorLaunchOutOfResources = 701,
+	hipErrorLaunchTimeOut = 702,
+	hipErrorPeerAccessAlreadyEnabled = 704,
+	hipErrorPeerAccessNotEnabled = 705,
+	hipErrorSetOnActiveProcess = 708,
+	hipErrorContextIsDestroyed = 709,
+	hipErrorAssert = 710,
+	hipErrorHostMemoryAlreadyRegistered = 712,
+	hipErrorHostMemoryNotRegistered = 713,
+	hipErrorLaunchFailure = 719,
+	hipErrorCooperativeLaunchTooLarge = 720,
+	hipErrorNotSupported = 801,
+	hipErrorStreamCaptureUnsupported = 900,
+	hipErrorStreamCaptureInvalidated = 901,
+	hipErrorStreamCaptureMerge = 902,
+	hipErrorStreamCaptureUnmatched = 903,
+	hipErrorStreamCaptureUnjoined = 904,
+	hipErrorStreamCaptureIsolation = 905,
+	hipErrorStreamCaptureImplicit = 906,
+	hipErrorCapturedEvent = 907,
+	hipErrorStreamCaptureWrongThread = 908,
+	hipErrorGraphExecUpdateFailure = 910,
+	hipErrorUnknown = 999,
+	hipErrorRuntimeMemory = 1052,
+	hipErrorRuntimeOther = 1053,
+	hipErrorTbd = 1054,
+};
+typedef enum hipError_t hipError_t;
 
 
 struct hipPointerAttribute_t
@@ -196,92 +278,6 @@ enum hipDeviceAttribute_t
 	hipDeviceAttributeVendorSpecificBegin = 20000,
 };
 typedef enum hipDeviceAttribute_t hipDeviceAttribute_t;
-
-
-
-enum hipError_t
-{
-	hipSuccess = 0,
-	hipErrorInvalidValue = 1,
-	hipErrorOutOfMemory = 2,
-	hipErrorMemoryAllocation = 2,
-	hipErrorNotInitialized = 3,
-	hipErrorInitializationError = 3,
-	hipErrorDeinitialized = 4,
-	hipErrorProfilerDisabled = 5,
-	hipErrorProfilerNotInitialized = 6,
-	hipErrorProfilerAlreadyStarted = 7,
-	hipErrorProfilerAlreadyStopped = 8,
-	hipErrorInvalidConfiguration = 9,
-	hipErrorInvalidPitchValue = 12,
-	hipErrorInvalidSymbol = 13,
-	hipErrorInvalidDevicePointer = 17,
-	hipErrorInvalidMemcpyDirection = 21,
-	hipErrorInsufficientDriver = 35,
-	hipErrorMissingConfiguration = 52,
-	hipErrorPriorLaunchFailure = 53,
-	hipErrorInvalidDeviceFunction = 98,
-	hipErrorNoDevice = 100,
-	hipErrorInvalidDevice = 101,
-	hipErrorInvalidImage = 200,
-	hipErrorInvalidContext = 201,
-	hipErrorContextAlreadyCurrent = 202,
-	hipErrorMapFailed = 205,
-	hipErrorMapBufferObjectFailed = 205,
-	hipErrorUnmapFailed = 206,
-	hipErrorArrayIsMapped = 207,
-	hipErrorAlreadyMapped = 208,
-	hipErrorNoBinaryForGpu = 209,
-	hipErrorAlreadyAcquired = 210,
-	hipErrorNotMapped = 211,
-	hipErrorNotMappedAsArray = 212,
-	hipErrorNotMappedAsPointer = 213,
-	hipErrorECCNotCorrectable = 214,
-	hipErrorUnsupportedLimit = 215,
-	hipErrorContextAlreadyInUse = 216,
-	hipErrorPeerAccessUnsupported = 217,
-	hipErrorInvalidKernelFile = 218,
-	hipErrorInvalidGraphicsContext = 219,
-	hipErrorInvalidSource = 300,
-	hipErrorFileNotFound = 301,
-	hipErrorSharedObjectSymbolNotFound = 302,
-	hipErrorSharedObjectInitFailed = 303,
-	hipErrorOperatingSystem = 304,
-	hipErrorInvalidHandle = 400,
-	hipErrorInvalidResourceHandle = 400,
-	hipErrorIllegalState = 401,
-	hipErrorNotFound = 500,
-	hipErrorNotReady = 600,
-	hipErrorIllegalAddress = 700,
-	hipErrorLaunchOutOfResources = 701,
-	hipErrorLaunchTimeOut = 702,
-	hipErrorPeerAccessAlreadyEnabled = 704,
-	hipErrorPeerAccessNotEnabled = 705,
-	hipErrorSetOnActiveProcess = 708,
-	hipErrorContextIsDestroyed = 709,
-	hipErrorAssert = 710,
-	hipErrorHostMemoryAlreadyRegistered = 712,
-	hipErrorHostMemoryNotRegistered = 713,
-	hipErrorLaunchFailure = 719,
-	hipErrorCooperativeLaunchTooLarge = 720,
-	hipErrorNotSupported = 801,
-	hipErrorStreamCaptureUnsupported = 900,
-	hipErrorStreamCaptureInvalidated = 901,
-	hipErrorStreamCaptureMerge = 902,
-	hipErrorStreamCaptureUnmatched = 903,
-	hipErrorStreamCaptureUnjoined = 904,
-	hipErrorStreamCaptureIsolation = 905,
-	hipErrorStreamCaptureImplicit = 906,
-	hipErrorCapturedEvent = 907,
-	hipErrorStreamCaptureWrongThread = 908,
-	hipErrorGraphExecUpdateFailure = 910,
-	hipErrorUnknown = 999,
-	hipErrorRuntimeMemory = 1052,
-	hipErrorRuntimeOther = 1053,
-	hipErrorTbd = 1054,
-};
-typedef enum hipError_t hipError_t;
-
 
 struct hipUUID_t
 {
@@ -425,9 +421,28 @@ typedef struct hipDeviceProp_tR0600 hipDeviceProp_tR0600;
 typedef struct hipDeviceProp_tR0600 hipDeviceProp_t;
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifdef __cplusplus
+#define __dparm(x) = x
+#else
+#define __dparm(x)
+#endif
 
 // Add Deprecated Support for CUDA Mapped HIP APIs
 #if defined(__DOXYGEN_ONLY__) || defined(HIP_ENABLE_DEPRECATED)
@@ -3092,7 +3107,7 @@ inline static hipError_t hipPointerGetAttributes(hipPointerAttribute_t* attribut
     hipError_t err = hipCUDAErrorTohipError(cudaPointerGetAttributes(&cPA, ptr));
     if (err == hipSuccess) {
 #if (CUDART_VERSION >= 11000)
-        auto memType = cPA.type;
+        enum cudaMemoryType memType = cPA.type;
 #else
         unsigned memType = cPA.memoryType; // No auto because cuda 10.2 doesnt force c++11
 #endif
@@ -3217,7 +3232,7 @@ inline static hipError_t hipStreamAddCallback(hipStream_t stream, hipStreamCallb
 
 inline static hipError_t hipStreamGetDevice(hipStream_t stream, hipDevice_t* device) {
     hipCtx_t context;
-    auto err = hipCUResultTohipError(cuStreamGetCtx(stream, &context));
+    hipError_t err = hipCUResultTohipError(cuStreamGetCtx(stream, &context));
     if (err != hipSuccess) return err;
 
     err = hipCUResultTohipError(cuCtxPushCurrent(context));

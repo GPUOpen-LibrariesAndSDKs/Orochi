@@ -22,6 +22,8 @@ THE SOFTWARE.
 #ifndef HIPRTC_H
 #define HIPRTC_H
 
+#include <cuda.h>
+#include <nvrtc.h>
 
 #ifdef __cplusplus
 extern "C" {
