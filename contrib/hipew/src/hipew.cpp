@@ -12,7 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License
+ *
+ * Modifications made by Advanced Micro Devices, Inc.:
+ * Copyright(C) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * The modifications include updates to maintain an up-to-date API,
+ * enhancing compatibility in response to evolving technical standards.
+ * These changes are designed to augment the original work by the Blender Foundation,
+ * ensuring the software remains relevant and efficient for its intended applications.
+ *
+ * The modified software is provided under the Apache License, Version 2.0.
+ * For more details, see the License above.
  */
+
 #ifdef _MSC_VER
 #  if _MSC_VER < 1900
 #    define snprintf _snprintf
@@ -780,7 +792,6 @@ _LIBRARY_FIND( hip_lib, hipDeviceTotalMem );
 _LIBRARY_FIND( hip_lib, hipDriverGetVersion );
 _LIBRARY_FIND( hip_lib, hipDrvGetErrorName );
 _LIBRARY_FIND( hip_lib, hipDrvGetErrorString );
-// DLL not found for: hipDrvGraphAddMemcpyNode
 _LIBRARY_FIND( hip_lib, hipDrvMemcpy2DUnaligned );
 _LIBRARY_FIND( hip_lib, hipDrvMemcpy3D );
 _LIBRARY_FIND( hip_lib, hipDrvMemcpy3DAsync );
@@ -919,7 +930,6 @@ _LIBRARY_FIND( hip_lib, hipIpcGetMemHandle );
 _LIBRARY_FIND( hip_lib, hipIpcOpenEventHandle );
 _LIBRARY_FIND( hip_lib, hipIpcOpenMemHandle );
 _LIBRARY_FIND( hip_lib, hipKernelNameRef );
-// DLL not found for: hipKernelNameRefByPtr
 _LIBRARY_FIND( hip_lib, hipLaunchByPtr );
 _LIBRARY_FIND( hip_lib, hipLaunchCooperativeKernel );
 _LIBRARY_FIND( hip_lib, hipLaunchCooperativeKernelMultiDevice );
@@ -1057,7 +1067,6 @@ _LIBRARY_FIND( hip_lib, hipOccupancyMaxPotentialBlockSize );
 _LIBRARY_FIND( hip_lib, hipPeekAtLastError );
 _LIBRARY_FIND( hip_lib, hipPointerGetAttribute );
 _LIBRARY_FIND( hip_lib, hipPointerGetAttributes );
-// DLL not found for: hipPointerSetAttribute
 _LIBRARY_FIND( hip_lib, hipProfilerStart );
 _LIBRARY_FIND( hip_lib, hipProfilerStop );
 _LIBRARY_FIND( hip_lib, hipRuntimeGetVersion );
@@ -1109,7 +1118,6 @@ _LIBRARY_FIND( hip_lib, hipTexRefGetFilterMode );
 _LIBRARY_FIND( hip_lib, hipTexRefGetFlags );
 _LIBRARY_FIND( hip_lib, hipTexRefGetFormat );
 _LIBRARY_FIND( hip_lib, hipTexRefGetMaxAnisotropy );
-// DLL not found for: hipTexRefGetMipMappedArray
 _LIBRARY_FIND( hip_lib, hipTexRefGetMipmapFilterMode );
 _LIBRARY_FIND( hip_lib, hipTexRefGetMipmapLevelBias );
 _LIBRARY_FIND( hip_lib, hipTexRefGetMipmapLevelClamp );
@@ -1132,57 +1140,6 @@ _LIBRARY_FIND( hip_lib, hipUserObjectCreate );
 _LIBRARY_FIND( hip_lib, hipUserObjectRelease );
 _LIBRARY_FIND( hip_lib, hipUserObjectRetain );
 _LIBRARY_FIND( hip_lib, hipWaitExternalSemaphoresAsync );
-// DLL not found for: make_char1
-// DLL not found for: make_char2
-// DLL not found for: make_char3
-// DLL not found for: make_char4
-// DLL not found for: make_double1
-// DLL not found for: make_double2
-// DLL not found for: make_double3
-// DLL not found for: make_double4
-// DLL not found for: make_float1
-// DLL not found for: make_float2
-// DLL not found for: make_float3
-// DLL not found for: make_float4
-// DLL not found for: make_hipExtent
-// DLL not found for: make_hipPitchedPtr
-// DLL not found for: make_hipPos
-// DLL not found for: make_int1
-// DLL not found for: make_int2
-// DLL not found for: make_int3
-// DLL not found for: make_int4
-// DLL not found for: make_long1
-// DLL not found for: make_long2
-// DLL not found for: make_long3
-// DLL not found for: make_long4
-// DLL not found for: make_longlong1
-// DLL not found for: make_longlong2
-// DLL not found for: make_longlong3
-// DLL not found for: make_longlong4
-// DLL not found for: make_short1
-// DLL not found for: make_short2
-// DLL not found for: make_short3
-// DLL not found for: make_short4
-// DLL not found for: make_uchar1
-// DLL not found for: make_uchar2
-// DLL not found for: make_uchar3
-// DLL not found for: make_uchar4
-// DLL not found for: make_uint1
-// DLL not found for: make_uint2
-// DLL not found for: make_uint3
-// DLL not found for: make_uint4
-// DLL not found for: make_ulong1
-// DLL not found for: make_ulong2
-// DLL not found for: make_ulong3
-// DLL not found for: make_ulong4
-// DLL not found for: make_ulonglong1
-// DLL not found for: make_ulonglong2
-// DLL not found for: make_ulonglong3
-// DLL not found for: make_ulonglong4
-// DLL not found for: make_ushort1
-// DLL not found for: make_ushort2
-// DLL not found for: make_ushort3
-// DLL not found for: make_ushort4
 
 
 ///// END REGION: OROCHI_SUMMONER_REGION_hipew_cpp_2
