@@ -764,6 +764,40 @@ typedef hiprtcJITInputType orortcJITInputType;
 typedef hiprtcLinkState orortcLinkState;
 typedef hiprtcProgram orortcProgram;
 
+
+// Add Orochi Alias
+typedef oroArray_const_t oroArray_const;
+typedef oroArray_t oroArray;
+typedef oroDeviceArch_t oroDeviceArch;
+typedef oroDeviceAttribute_t oroDeviceAttribute;
+typedef oroDevice_t oroDevice;
+typedef oroDeviceptr_t oroDeviceptr;
+typedef oroError_t oroError;
+typedef oroEvent_t oroEvent;
+typedef oroExternalMemory_t oroExternalMemory;
+typedef oroExternalSemaphore_t oroExternalSemaphore;
+typedef oroFuncCache_t oroFuncCache;
+typedef oroFunction_t oroFunction;
+typedef oroGraphExec_t oroGraphExec;
+typedef oroGraphNode_t oroGraphNode;
+typedef oroGraph_t oroGraph;
+typedef oroHostFn_t oroHostFn;
+typedef oroIpcEventHandle_t oroIpcEventHandle;
+typedef oroIpcMemHandle_t oroIpcMemHandle;
+typedef oroLimit_t oroLimit;
+typedef oroMemGenericAllocationHandle_t oroMemGenericAllocationHandle;
+typedef oroMemPool_t oroMemPool;
+typedef oroMipmappedArray_const_t oroMipmappedArray_const;
+typedef oroModule_t oroModule;
+typedef oroPointerAttribute_t oroPointerAttribute;
+typedef oroStreamCallback_t oroStreamCallback;
+typedef oroStream_t oroStream;
+typedef oroSurfaceObject_t oroSurfaceObject;
+typedef oroTextureObject_t oroTextureObject;
+typedef oroUserObject_t oroUserObject;
+
+
+
 oroError_t OROAPI oroChooseDeviceR0600(int * device, const oroDeviceProp_tR0600 * prop);
 oroError_t OROAPI oroCreateSurfaceObject(oroSurfaceObject_t * pSurfObject, const oroResourceDesc * pResDesc);
 oroError_t OROAPI oroCreateTextureObject(oroTextureObject_t * pTexObject, const oroResourceDesc * pResDesc, const oroTextureDesc * pTexDesc, const  oroResourceViewDesc * pResViewDesc);
@@ -1147,26 +1181,14 @@ enum oroApi
 
 
 typedef hipDeviceProp_t oroDeviceProp_t;
-
-
-typedef oroError_t oroError;
-typedef unsigned int oroU32;
-
-typedef struct ioroCtx_t* oroCtx;
-
-typedef oroModule_t oroModule;
-typedef oroFunction_t oroFunction;
-typedef oroArray_t oroArray;
-typedef oroEvent_t oroEvent;
-typedef oroStream_t oroStream;
-typedef oroPointerAttribute_t oroPointerAttribute;
-typedef oroExternalMemory_t oroExternalMemory;
-typedef oroExternalSemaphore_t oroExternalSemaphore;
-typedef oroDeviceptr_t oroDeviceptr;
 typedef oroDeviceProp_t oroDeviceProp;
 
-typedef int oroDevice;
 
+typedef unsigned int oroU32;
+
+// oroCtx represent a special struct override by Orochi.
+// It doesn't represent the original 'hipCtx_t'
+typedef struct ioroCtx_t* oroCtx;
 
 
 #define oroHostRegisterPortable hipHostRegisterPortable
@@ -1187,15 +1209,6 @@ typedef enum oroEvent_flags_enum
 	oroEventInterprocess = 0x4,
 } oroEvent_flags;
 
-
-typedef enum {
-	ORO_LIMIT_STACK_SIZE = 0x00,
-	ORO_LIMIT_PRINTF_FIFO_SIZE = 0x01,
-	ORO_LIMIT_MALLOC_HEAP_SIZE = 0x02,
-	ORO_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
-	ORO_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
-	ORO_LIMIT_MAX,
-} oroLimit;
 
 typedef enum PPshared_carveout_enum {
 	ORO_SHAREDMEM_CARVEOUT_DEFAULT,
