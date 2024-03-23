@@ -27,6 +27,15 @@ This library doesn't require you to link to CUDA nor HIP at build-time. This pro
 
 To run an application compiled with Orochi, you need to install a driver of your choice with the corresponding .dll/.so files based on the GPU(s) available. Orochi will automatically link with the corresponding shared library at runtime.
 
+---
+
+## SDK multiple versions support
+
+Orochi will try to keep its API up-to-date with both latest CUDA and HIP SDK releases in its `main` branch.
+
+it will also keep the previous versions in branches: 
+
+For example, a branch named `hip5.7_cuda12.2` means this branch is based on HIP SDK 5.7 and CUDA SDK 12.2.
 
 ----
 
