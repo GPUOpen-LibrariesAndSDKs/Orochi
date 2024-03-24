@@ -251,6 +251,8 @@ TEST_F( OroTestBase, link )
 	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
 											:  std::vector<const char *>({ "--device-c", arch.c_str() });
 	{
+		// known issue: On Linux, rocm 6, orortcCompileProgram will report a fail, because using an 'extern' function.
+		// but the bitcode is correctly generated and executed. the output of the execution is also checked by this unit test, and is correct.
 		std::string code;
 		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel.h", code );
 		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestKernel.h", &opts, data1 );
@@ -411,6 +413,8 @@ TEST_F( OroTestBase, link_null_name )
 	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
 											:  std::vector<const char *>({ "--device-c", arch.c_str() });
 	{
+		// known issue: On Linux, rocm 6, orortcCompileProgram will report a fail, because using an 'extern' function.
+		// but the bitcode is correctly generated and executed. the output of the execution is also checked by this unit test, and is correct.
 		std::string code;
 		OrochiUtils::readSourceCode( "../UnitTest/moduleTestKernel.h", code );
 		OrochiUtils::getData( m_device, code.c_str(), "../UnitTest/moduleTestKernel.h", &opts, data1 );

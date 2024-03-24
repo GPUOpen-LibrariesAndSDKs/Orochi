@@ -426,7 +426,10 @@ OrochiUtils::~OrochiUtils() {
 }
 
 
-bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) { return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); }
+bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) 
+{
+	return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); 
+}
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 {
@@ -439,7 +442,8 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 	}
 
 	std::string source;
-	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) return 0;
+	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) 
+		return 0;
 
 	oroModule module;
 
