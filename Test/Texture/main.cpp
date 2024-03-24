@@ -21,6 +21,7 @@
 //
 
 
+#include <cstring> // std::memset
 #include <Orochi/GpuMemory.h>
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
