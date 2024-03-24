@@ -53,6 +53,7 @@ void writeImageToPNG(const uchar4 *image, int width, int height, const char *fil
 int main()
 {
 	bool testErrorFlag = false;
+	OrochiUtils o;
 
 	oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
 	if( oroInitialize( api, 0 ) != 0 )
@@ -81,58 +82,10 @@ int main()
 	ERROR_CHECK( oroCtxCreate( &ctx, 0, device ) );
 	ERROR_CHECK( oroCtxSetCurrent( ctx ) );
 
-	std::vector<char> code;
-	const char* funcName = "texture_test";
-
-	static constexpr auto filepath = "../Test/Texture/texture_test_kernel.hpp";
-
-	OrochiUtils::loadFile( filepath, code );
-
-	orortcProgram prog;
-	orortcResult rtc_e;
-	rtc_e = orortcCreateProgram( &prog, code.data(), funcName, 0, 0, 0 );
-
-	if( rtc_e != ORORTC_SUCCESS )
-	{
-		std::cerr << "orortcCreateProgram failed" << std::endl;
-		return OROCHI_TEST_RETCODE__ERROR;
-	}
 
 	std::vector<const char*> opts;
 	opts.push_back( "-I../" );
-	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
-	if( rtc_e != ORORTC_SUCCESS )
-	{
-		size_t logSize = 0;
-		orortcGetProgramLogSize( prog, &logSize );
-		if( logSize )
-		{
-			std::cout << "ERROR orortcCompileProgram. compile log:" << std::endl;
-
-			std::string log( logSize, '\0' );
-			orortcGetProgramLog( prog, &log[0] );
-			std::cout << log << '\n';
-
-			return OROCHI_TEST_RETCODE__ERROR;
-		}
-		else
-		{
-			std::cout << "ERROR orortcCompileProgram without log." << std::endl;
-			return OROCHI_TEST_RETCODE__ERROR;
-		}
-	}
-
-	size_t codeSize = 0;
-	ERROR_CHECK( orortcGetCodeSize( prog, &codeSize ) );
-
-	std::vector<char> codec( codeSize );
-	ERROR_CHECK( orortcGetCode( prog, codec.data() ) );
-	ERROR_CHECK( orortcDestroyProgram( &prog ) );
-
-	oroModule module;
-	oroFunction function;
-	ERROR_CHECK( oroModuleLoadData( &module, codec.data() ) );
-	ERROR_CHECK( oroModuleGetFunction( &function, module, funcName ) );
+	oroFunction function = o.getFunctionFromFile(device, "../Test/Texture/texture_test_kernel.hpp", "texture_test", &opts);
 
 
 	static constexpr auto grid_resolution = 256;
@@ -301,7 +254,6 @@ int main()
 
 	stbi_image_free(imgInStbi); imgInStbi=nullptr;
 	ERROR_CHECK( oroStreamDestroy( stream ) );
-	ERROR_CHECK( oroModuleUnload( module ) );
 	ERROR_CHECK( oroDestroySurfaceObject(surfObj)) ;  surfObj=nullptr;
 	ERROR_CHECK( oroArrayDestroy(oroArray)) ;  oroArray=nullptr;
 	ERROR_CHECK( oroCtxDestroy( ctx ) );

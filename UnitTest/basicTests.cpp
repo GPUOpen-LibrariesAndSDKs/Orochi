@@ -139,6 +139,7 @@ TEST_F( OroTestBase, Event )
 	printf( "kernelExec: %3.2fms\n", ms );
 }
 
+// Load a Binary file and put content to std::vector
 void loadFile( const char* path, std::vector<char>& dst ) 
 {
 	std::fstream f( path, std::ios::binary | std::ios::in );

@@ -515,8 +515,6 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 		for( int i = 0; i < optsIn->size(); i++ )
 			opts.push_back( ( *optsIn )[i] );
 	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
 
 	oroFunction function;
 	std::vector<char> codec;
@@ -543,14 +541,19 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
-			size_t logSize;
+			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
+			size_t logSize = 0;
 			orortcGetProgramLogSize( prog, &logSize );
 			if( logSize )
 			{
 				std::string log( logSize, '\0' );
 				orortcGetProgramLog( prog, &log[0] );
 				std::cout << log << '\n';
-			};
+			}
+			else
+			{
+				std::cout << "<NO LOG>\n";
+			}
 		}
 		size_t codeSize;
 		e = orortcGetCodeSize( prog, &codeSize );
@@ -600,8 +603,6 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 		for( int i = 0; i < optsIn->size(); i++ )
 			opts.push_back( ( *optsIn )[i] );
 	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
 
 	std::vector<char>& codec = dst;
 	{
@@ -612,14 +613,19 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
-			size_t logSize;
+			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
+			size_t logSize = 0;
 			orortcGetProgramLogSize( prog, &logSize );
 			if( logSize )
 			{
 				std::string log( logSize, '\0' );
 				orortcGetProgramLog( prog, &log[0] );
 				std::cout << log << '\n';
-			};
+			}
+			else
+			{
+				std::cout << "<NO LOG>\n";
+			}
 		}
 		size_t codeSize;
 		e = orortcGetBitcodeSize( prog, &codeSize );
@@ -651,8 +657,6 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 		for( int i = 0; i < optsIn->size(); i++ )
 			opts.push_back( ( *optsIn )[i] );
 	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
 
 	{
 		orortcResult e;
@@ -662,14 +666,19 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 		e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
 		if( e != ORORTC_SUCCESS )
 		{
-			size_t logSize;
+			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
+			size_t logSize = 0;
 			orortcGetProgramLogSize( *prog, &logSize );
 			if( logSize )
 			{
 				std::string log( logSize, '\0' );
 				orortcGetProgramLog( *prog, &log[0] );
 				std::cout << log << '\n';
-			};
+			}
+			else
+			{
+				std::cout << "<NO LOG>\n";
+			}
 		}
 	}
 	return;
@@ -712,19 +721,3 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 	OROASSERT( e == oroSuccess, 0 );
 }
 
-void OrochiUtils::loadFile( const std::filesystem::path filepath, std::vector<char>& dst )
-{
-	std::fstream fin( filepath, std::ios::in );
-	if( !fin )
-	{
-		const auto err = "File Error: " + filepath.string();
-		std::cout << err << std::endl;
-		return;
-	}
-	fin.seekg( 0, std::ios::end );
-	size_t filesize = fin.tellg();
-	fin.seekg( 0, std::ios::beg );
-	dst.resize( filesize );
-	fin.read( dst.data(), filesize );
-	return;
-}
