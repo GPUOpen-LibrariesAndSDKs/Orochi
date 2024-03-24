@@ -22,10 +22,13 @@
 
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
+#include "../../UnitTest/demoErrorCodes.h"
 
 
 int main( int argc, char** argv )
 {
+	bool testErrorFlag = false;
+
 	int a = oroInitialize( ( oroApi )( ORO_API_CUDA | ORO_API_HIP ), 0 );
 
 	oroError e;
@@ -107,5 +110,8 @@ int main( int argc, char** argv )
 		printf( "executed on %s\n", api == ORO_API_HIP ? "AMD" : "NVIDIA" );
 		e = oroCtxDestroy( ctx );
 	}
-	return 0;
+
+	if ( testErrorFlag )
+		return OROCHI_TEST_RETCODE__ERROR;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }

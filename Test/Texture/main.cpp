@@ -28,6 +28,7 @@
 #include <iostream>
 #include "contrib/stb/stb_image_write.h"
 #include "contrib/stb/stb_image.h"
+#include "../../UnitTest/demoErrorCodes.h"
 
 
 void writeImageToPNG(const uchar4 *image, int width, int height, const char *filename) 
@@ -51,39 +52,34 @@ void writeImageToPNG(const uchar4 *image, int width, int height, const char *fil
 
 int main()
 {
+	bool testErrorFlag = false;
+
 	oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
 	if( oroInitialize( api, 0 ) != 0 )
 	{
 		std::cerr << "Unable to initialize Orochi. Please check your HIP installation or create an issue at our github for assistance.\n";
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
-
 
 	oroError e{};
 	oroDevice device{};
 	
-
-	e = oroInit( 0 );
-	ERROR_CHECK( e );
+	ERROR_CHECK( oroInit( 0 ) );
 
 	// Get the device at index 0
-	e = oroDeviceGet( &device, 0 );
-	ERROR_CHECK( e );
+	ERROR_CHECK( oroDeviceGet( &device, 0 ) );
 
 	static constexpr auto name_size = 128;
-	char name[128];
-	e = oroDeviceGetName( name, name_size, device );
-	ERROR_CHECK( e );
+	char name[name_size];
+	ERROR_CHECK( oroDeviceGetName( name, name_size, device ) );
 
 	oroDeviceProp props{};
-	e = oroGetDeviceProperties( &props, device );
-	ERROR_CHECK( e );
+	ERROR_CHECK( oroGetDeviceProperties( &props, device ) );
 	printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
 
 	oroCtx ctx{};
-	e = oroCtxCreate( &ctx, 0, device );
-	ERROR_CHECK( e );
-	oroCtxSetCurrent( ctx );
+	ERROR_CHECK( oroCtxCreate( &ctx, 0, device ) );
+	ERROR_CHECK( oroCtxSetCurrent( ctx ) );
 
 	std::vector<char> code;
 	const char* funcName = "texture_test";
@@ -99,7 +95,7 @@ int main()
 	if( rtc_e != ORORTC_SUCCESS )
 	{
 		std::cerr << "orortcCreateProgram failed" << std::endl;
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 	std::vector<const char*> opts;
@@ -107,7 +103,7 @@ int main()
 	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
 	if( rtc_e != ORORTC_SUCCESS )
 	{
-		size_t logSize;
+		size_t logSize = 0;
 		orortcGetProgramLogSize( prog, &logSize );
 		if( logSize )
 		{
@@ -117,27 +113,27 @@ int main()
 			orortcGetProgramLog( prog, &log[0] );
 			std::cout << log << '\n';
 
-			return 0;
+			return OROCHI_TEST_RETCODE__ERROR;
 		}
 		else
 		{
 			std::cout << "ERROR orortcCompileProgram without log." << std::endl;
-			return 0;
+			return OROCHI_TEST_RETCODE__ERROR;
 		}
 	}
 
-	size_t codeSize;
-	rtc_e = orortcGetCodeSize( prog, &codeSize );
+	size_t codeSize = 0;
+	ERROR_CHECK( orortcGetCodeSize( prog, &codeSize ) );
 
 	std::vector<char> codec( codeSize );
-	rtc_e = orortcGetCode( prog, codec.data() );
-	rtc_e = orortcDestroyProgram( &prog );
+	ERROR_CHECK( orortcGetCode( prog, codec.data() ) );
+	ERROR_CHECK( orortcDestroyProgram( &prog ) );
 
 	oroModule module;
 	oroFunction function;
-	e = oroModuleLoadData( &module, codec.data() );
-	e = oroModuleGetFunction( &function, module, funcName );
-	ERROR_CHECK( e );
+	ERROR_CHECK( oroModuleLoadData( &module, codec.data() ) );
+	ERROR_CHECK( oroModuleGetFunction( &function, module, funcName ) );
+
 
 	static constexpr auto grid_resolution = 256;
 	static constexpr auto num_features = 4;
@@ -152,7 +148,7 @@ int main()
 	if ( !imgInStbi )
 	{
 		printf("ERROR: can't open image.\n");
-		return 0;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 	if (   stbi_dimX != grid_resolution
@@ -161,7 +157,7 @@ int main()
 		)
 	{
 		printf("ERROR: TODO improve management of image input\n");
-		return 0;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 	std::vector<float> test_data_temp_img_cpu;
@@ -174,8 +170,6 @@ int main()
 		test_data_temp_img_cpu[i*4+3] = 1.0;
 	}
 
-	stbi_image_free(imgInStbi); imgInStbi=nullptr;
-
 	grid_data.copyFromHost( std::data( test_data_temp_img_cpu ), std::size( test_data_temp_img_cpu ) );
 
 	oroError_t status = oroSuccess;
@@ -185,19 +179,16 @@ int main()
 	// Resource Desc
 	ORO_RESOURCE_DESC resDesc;
 	std::memset( &resDesc, 0, sizeof( resDesc ) );
-
 	resDesc.resType = ORO_RESOURCE_TYPE_PITCH2D;
 	resDesc.res.pitch2D.devPtr = reinterpret_cast<oroDeviceptr_t>( grid_data.ptr() );
-
 	resDesc.res.pitch2D.format = format;
 	resDesc.res.pitch2D.numChannels = num_features;
-
 	resDesc.res.pitch2D.width = grid_resolution;
 	resDesc.res.pitch2D.height = grid_resolution;
 	resDesc.res.pitch2D.pitchInBytes = grid_resolution * sizeof( float ) * num_features;
 
 	OROaddress_mode address_mode = ORO_TR_ADDRESS_MODE_WRAP;
-	OROfilter_mode filter_mode = ORO_TR_FILTER_MODE_LINEAR;
+	OROfilter_mode filter_mode = ORO_TR_FILTER_MODE_POINT;
 
 	ORO_TEXTURE_DESC texDesc;
 	std::memset( &texDesc, 0, sizeof( texDesc ) );
@@ -208,7 +199,7 @@ int main()
 	texDesc.flags = ORO_TRSF_READ_AS_INTEGER;
 
 	oroTextureObject_t textureObject{};
-	const auto ret = oroTexObjectCreate( &textureObject, &resDesc, &texDesc, nullptr );
+	ERROR_CHECK( oroTexObjectCreate( &textureObject, &resDesc, &texDesc, nullptr ) );
 
 	int width = grid_resolution;
 	int height = grid_resolution;
@@ -217,7 +208,6 @@ int main()
 	oroArray_t oroArray = nullptr;
 	{
 		
-
 		oroChannelFormatDesc channelDesc;
 		channelDesc.x = 8;
 		channelDesc.y = 8;
@@ -225,12 +215,11 @@ int main()
 		channelDesc.w = 8;
 		channelDesc.f = oroChannelFormatKindUnsigned;
 
-
 		status = oroMallocArray(&oroArray, &channelDesc, width, height, oroArrayDefault);
 		if (status != ORO_SUCCESS) 
 		{
 			std::cerr << "Failed to allocate array" << std::endl;
-			return -1;
+			return OROCHI_TEST_RETCODE__ERROR;
 		}
 
 
@@ -247,25 +236,14 @@ int main()
 			oroArrayDestroy(oroArray); // Cleanup array if surface creation fails
 			e = oroCtxDestroy( ctx ); 
 			ERROR_CHECK( e );
-			return status;
+			return OROCHI_TEST_RETCODE__ERROR;
 		}
 
 	}
 
 
-	if( ret == oroSuccess )
-	{
-		std::cerr << "oroTexObjectCreate succeed !" << std::endl;
-	}
-	else
-	{
-		std::cerr << "oroTexObjectCreate failed !" << std::endl;
-	}
-
 	oroStream stream;
-	e = oroStreamCreate( &stream );
-	ERROR_CHECK( e );
-
+	ERROR_CHECK( oroStreamCreate( &stream ) );
 
 	const int blockDimX = 16;
 	const int blockDimY = 16;
@@ -274,25 +252,17 @@ int main()
 	const int gridDimY = (height + blockDimY - 1) / blockDimY; 
 
 
-
-	{
-		const void* args[] = { &textureObject, &surfObj, &grid_resolution, &grid_resolution };
-		//e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, stream, (void**)args, nullptr );
-
-		// Launch the kernel
-		e = oroModuleLaunchKernel(function, gridDimX, gridDimY, 1, blockDimX,blockDimY,1,  0 , stream, (void**)args, nullptr );
-		ERROR_CHECK( e );
-	}
-
-	oroDeviceSynchronize();
+	// Launch the kernel
+	const void* args[] = { &textureObject, &surfObj, &grid_resolution, &grid_resolution };
+	ERROR_CHECK( oroModuleLaunchKernel(function, gridDimX, gridDimY, 1, blockDimX,blockDimY,1,  0 , stream, (void**)args, nullptr ) );
+	ERROR_CHECK( oroDeviceSynchronize() );
 
 
-	
 	uchar4* hostImage = (uchar4*)malloc(width * height * sizeof(uchar4));
 	if (hostImage == nullptr) 
 	{
 		std::cerr << "Failed to allocate host image memory" << std::endl;
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 
@@ -303,24 +273,40 @@ int main()
 		std::cerr << "Failed to copy data from array to host" << std::endl;
 	}
 
+
+	// Optional Code - specific for Unit Tests:
+	// do the same compute, but on CPU side, to check the results
+	{
+		for(int i=0; i<grid_resolution*grid_resolution; i++)
+		{
+			if ( 
+			   hostImage[i].x != std::min(imgInStbi[i*4+0] + 40, 255)
+			|| hostImage[i].y != std::max(imgInStbi[i*4+1] - 40, 0)
+			|| hostImage[i].z != std::max(imgInStbi[i*4+2] - 40, 0)
+			|| hostImage[i].w != imgInStbi[i*4+3]
+				)
+			{
+				testErrorFlag = true;
+				std::cerr << "ERROR: The output image seems wrong compared to reference." << std::endl;
+				break;
+			}
+		}
+	}
+
+
 	std::string outFile = "texture_out.png";
-
 	writeImageToPNG(hostImage, width, height, outFile.c_str());
-
 	std::cout<< "file " + outFile + " has been created.\n";
 
-	e = oroStreamDestroy( stream );
-	ERROR_CHECK( e );
 
-	e = oroModuleUnload( module );
-	ERROR_CHECK( e );
-
+	stbi_image_free(imgInStbi); imgInStbi=nullptr;
+	ERROR_CHECK( oroStreamDestroy( stream ) );
+	ERROR_CHECK( oroModuleUnload( module ) );
 	ERROR_CHECK( oroDestroySurfaceObject(surfObj)) ;  surfObj=nullptr;
 	ERROR_CHECK( oroArrayDestroy(oroArray)) ;  oroArray=nullptr;
+	ERROR_CHECK( oroCtxDestroy( ctx ) );
 
-
-	e = oroCtxDestroy( ctx );
-	ERROR_CHECK( e );
-
-	return 0;
+	if ( testErrorFlag )
+		return OROCHI_TEST_RETCODE__ERROR;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }

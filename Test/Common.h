@@ -20,12 +20,33 @@ oroApi getApiType( int argc, char** argv )
 	return api;
 }
 
-inline void checkError( oroError e )
+// return true if error
+inline bool checkError( oroError e )
 {
-	const char* pStr;
+	const char* pStr = nullptr;
 	oroGetErrorString( e, &pStr );
-	if( e != oroSuccess ) 
-		printf( "ERROR==================\n%s\n", pStr);
+	if( e != oroSuccess )
+	{
+		printf("ERROR==================\n");
+		if ( pStr )
+			printf("%s\n", pStr);
+		else
+			printf("<No Error String>\n");
+		return true;
+	}
+	return false;
 }
 
-#define ERROR_CHECK( e ) checkError( e )
+// return true if error
+inline bool checkError( orortcResult e )
+{
+	if ( e != ORORTC_SUCCESS )
+	{
+		printf("ERROR in RTC==================\n");
+		return true;
+	}
+	return false;
+}
+
+#define ERROR_CHECK( e ) if( checkError(e) ) testErrorFlag=true;
+

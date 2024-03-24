@@ -20,36 +20,11 @@
 // THE SOFTWARE.
 //
 
+#pragma once
 
-#include <Orochi/Orochi.h>
+// it's advised to use those error code for the return of the Demos standalones.
+// Some Demos are played by the UnitTest program, and those return codes will be checked by it.
+// Using a custom code for success ( 100 instead of 0 ) is just to add an additional level of check and confirm that the Demo was fully executed.
+const int OROCHI_TEST_RETCODE__SUCCESS = 100;
+const int OROCHI_TEST_RETCODE__ERROR   =  99;
 
-
-//
-// simple code to slightly modify the pixels of an input texture, and output the result into a surface.
-// 
-extern "C" __global__ void texture_test( 
-	oroTextureObject_t texObj, 
-	oroSurfaceObject_t surfObj, 
-	int width, 
-	int height
-	)
-{
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-	if (x < width && y < height) 
-	{
-		uchar4 dataOut;
-
-		float4 dataIn = tex2D<float4>(texObj, x, y);
-
-		dataOut.x = min((int)(dataIn.x*255.0f + 40.0f), 255);
-		dataOut.y = max((int)(dataIn.y*255.0f - 40.0f), 0);
-		dataOut.z = max((int)(dataIn.z*255.0f - 40.0f), 0);
-		dataOut.w = 255;
-
-		surf2Dwrite(dataOut, surfObj, x * sizeof(uchar4), y);
-	}
-
-	return;
-}

@@ -23,6 +23,7 @@
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
 #include <fstream>
+#include "../../UnitTest/demoErrorCodes.h"
 
 // use a third-party library half.hpp to use the fp16 half dataype on the host side
 #include "half.hpp"
@@ -46,11 +47,13 @@ void loadFile( const char* path, std::vector<char>& dst )
 
 int main( int argc, char** argv )
 {
+	bool testErrorFlag = false;
+
 	// Initialize Orochi
 	if ( oroInitialize( ( oroApi )( ORO_API_HIP ), 0 ) != 0 )
 	{ 
 		printf( "Unable to initialize Orochi. Please check your HIP installation or create an issue at our github for assistance.\n" );
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 	oroError e;
@@ -101,7 +104,7 @@ int main( int argc, char** argv )
 			orortcGetProgramLog( prog, &log[0] );
 			std::cout << log << '\n';
 		};
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 	size_t codeSize;
 	rtc_e = orortcGetCodeSize( prog, &codeSize );
@@ -157,5 +160,9 @@ int main( int argc, char** argv )
 	printf( "Done!\n" );
 	e = oroCtxDestroy( ctx );
 
-	return 0;
+
+
+	if ( testErrorFlag )
+		return OROCHI_TEST_RETCODE__ERROR;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }

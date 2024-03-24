@@ -139,14 +139,13 @@ workspace "YamatanoOrochi"
 
 
    include "./UnitTest"
-   group "Samples"
+   group "Demos"
    	include "./Test"
    	include "./Test/DeviceEnum"
 	include "./Test/WMMA"
 	include "./Test/Texture"
    
      if os.istarget("windows") then
-        group "Advanced"
         include "./Test/VulkanComputeSimple"
         include "./Test/RadixSort"
         include "./Test/simpleD3D12"

@@ -24,6 +24,7 @@
 
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
+#include "../../UnitTest/demoErrorCodes.h"
 
 #include <fstream>
 #include <iostream>
@@ -469,5 +470,5 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	return 0;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }
