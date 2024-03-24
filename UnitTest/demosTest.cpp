@@ -67,7 +67,11 @@ void ExecDemo(const std::string& testName)
 
 	int retCode = std::system(  std::string( "\"" + programName + "\"" ).c_str()  );
 
+	#ifdef _WIN32
 	if ( retCode != OROCHI_TEST_RETCODE__SUCCESS )
+	#else
+	if ( WEXITSTATUS(retCode) != OROCHI_TEST_RETCODE__SUCCESS ) // for Unix, return code needs to be processed to get the original return value.
+	#endif
 	{
 		std::cout << "Error: The Demo \"" << programName << "\" program returned an error return code: " << retCode << std::endl;
 		ASSERT_TRUE(0);
