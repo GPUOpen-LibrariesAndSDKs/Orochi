@@ -38,11 +38,24 @@ void FormatPathForOS(std::string& path)
 
 void ExecDemo(const std::string& testName)
 {
-	std::string programName = "../dist/bin/Debug/" + testName 
+	std::string programName = "../dist/bin/"
+		
 	#ifdef _DEBUG
-		+ "D" 
+		+ std::string("Debug/")
+	#else
+		+ std::string("Release/")
 	#endif
-		+ ".exe";
+		
+		+ testName
+
+	#ifdef _DEBUG
+		+ std::string("D")
+	#endif
+
+	#ifdef _WIN32
+		+ std::string(".exe")
+	#endif
+		;
 
 	FormatPathForOS(programName);
 
