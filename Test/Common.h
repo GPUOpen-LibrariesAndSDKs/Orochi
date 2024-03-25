@@ -23,10 +23,10 @@ oroApi getApiType( int argc, char** argv )
 // return true if error
 inline bool checkError( oroError e )
 {
-	const char* pStr = nullptr;
-	oroGetErrorString( e, &pStr );
 	if( e != oroSuccess )
 	{
+		const char* pStr = nullptr;
+		oroGetErrorString( e, &pStr );
 		printf("ERROR==================\n");
 		if ( pStr )
 			printf("%s\n", pStr);
