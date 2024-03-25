@@ -112,52 +112,52 @@ inline static hiprtcResult nvrtcResultTohiprtcResult(nvrtcResult result) {
   }
 }
 
-inline static const char* hiprtcGetErrorString(hiprtcResult result) {
+inline static const char* hiprtcGetErrorString_cu4oro(hiprtcResult result) {
   return nvrtcGetErrorString(hiprtcResultTonvrtcResult(result));
 }
 
-inline static hiprtcResult hiprtcVersion(int* major, int* minor) {
+inline static hiprtcResult hiprtcVersion_cu4oro(int* major, int* minor) {
   return nvrtcResultTohiprtcResult(nvrtcVersion(major, minor));
 }
 
 typedef nvrtcProgram hiprtcProgram;
 
-inline static hiprtcResult hiprtcAddNameExpression(hiprtcProgram prog, const char* name_expression) {
+inline static hiprtcResult hiprtcAddNameExpression_cu4oro(hiprtcProgram prog, const char* name_expression) {
   return nvrtcResultTohiprtcResult(nvrtcAddNameExpression(prog, name_expression));
 }
 
-inline static hiprtcResult hiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char** options) {
+inline static hiprtcResult hiprtcCompileProgram_cu4oro(hiprtcProgram prog, int numOptions, const char** options) {
   return nvrtcResultTohiprtcResult(nvrtcCompileProgram(prog, numOptions, options));
 }
 
-inline static hiprtcResult hiprtcCreateProgram(hiprtcProgram* prog, const char* src, const char* name,
+inline static hiprtcResult hiprtcCreateProgram_cu4oro(hiprtcProgram* prog, const char* src, const char* name,
                                  int numHeaders, const char** headers, const char** includeNames) {
   return nvrtcResultTohiprtcResult(
       nvrtcCreateProgram(prog, src, name, numHeaders, headers, includeNames));
 }
 
-inline static hiprtcResult hiprtcDestroyProgram(hiprtcProgram* prog) {
+inline static hiprtcResult hiprtcDestroyProgram_cu4oro(hiprtcProgram* prog) {
   return nvrtcResultTohiprtcResult(nvrtcDestroyProgram(prog));
 }
 
-inline static hiprtcResult hiprtcGetLoweredName(hiprtcProgram prog, const char* name_expression,
+inline static hiprtcResult hiprtcGetLoweredName_cu4oro(hiprtcProgram prog, const char* name_expression,
                                   const char** lowered_name) {
   return nvrtcResultTohiprtcResult(nvrtcGetLoweredName(prog, name_expression, lowered_name));
 }
 
-inline static hiprtcResult hiprtcGetProgramLog(hiprtcProgram prog, char* log) {
+inline static hiprtcResult hiprtcGetProgramLog_cu4oro(hiprtcProgram prog, char* log) {
   return nvrtcResultTohiprtcResult(nvrtcGetProgramLog(prog, log));
 }
 
-inline static hiprtcResult hiprtcGetProgramLogSize(hiprtcProgram prog, size_t* logSizeRet) {
+inline static hiprtcResult hiprtcGetProgramLogSize_cu4oro(hiprtcProgram prog, size_t* logSizeRet) {
   return nvrtcResultTohiprtcResult(nvrtcGetProgramLogSize(prog, logSizeRet));
 }
 
-inline static hiprtcResult hiprtcGetCode(hiprtcProgram prog, char* code) {
+inline static hiprtcResult hiprtcGetCode_cu4oro(hiprtcProgram prog, char* code) {
   return nvrtcResultTohiprtcResult(nvrtcGetPTX(prog, code));
 }
 
-inline static hiprtcResult hiprtcGetCodeSize(hiprtcProgram prog, size_t* codeSizeRet) {
+inline static hiprtcResult hiprtcGetCodeSize_cu4oro(hiprtcProgram prog, size_t* codeSizeRet) {
   return nvrtcResultTohiprtcResult(nvrtcGetPTXSize(prog, codeSizeRet));
 }
 

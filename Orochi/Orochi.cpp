@@ -1071,7 +1071,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp_t* props, oroDevice dev)
 	if( api & ORO_API_CUDADRIVER )
 	{
 		#ifdef OROCHI_ENABLE_CUEW
-		return  (oroError_t)( CU4ORO::hipGetDeviceProperties( (CU4ORO::hipDeviceProp_t*) props, deviceId) );
+		return  (oroError_t)( CU4ORO::hipGetDevicePropertiesR0600_cu4oro( (CU4ORO::hipDeviceProp_t*) props, deviceId) );
 		#endif
 	}
 	return oroErrorUnknown;
@@ -1180,7 +1180,7 @@ oroError OROAPI oroCtxSetCurrent(oroCtx ctx)
 {
 	s_api = ctx->getApi();
 	__ORO_FUNC(
-		CU4ORO::hipCtxSetCurrent( *oroCtx2cu(&ctx) ),
+		CU4ORO::hipCtxSetCurrent_cu4oro( *oroCtx2cu(&ctx) ),
 				hipCtxSetCurrent( *oroCtx2hip(&ctx) )  );
 	return oroErrorUnknown;
 }
@@ -1211,7 +1211,7 @@ oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 oroError OROAPI oroCtxGetApiVersion(oroCtx ctx, int* version)
 {
 	__ORO_FUNC(
-	CU4ORO::hipCtxGetApiVersion(*oroCtx2cu(&ctx),  version ),
+	CU4ORO::hipCtxGetApiVersion_cu4oro(*oroCtx2cu(&ctx),  version ),
 			hipCtxGetApiVersion(*oroCtx2hip(&ctx), version )  );
 	return oroErrorUnknown;
 }
@@ -1224,7 +1224,7 @@ oroChannelFormatDesc OROAPI oroCreateChannelDesc(int x, int y, int z, int w,  or
 	 if( s_api & ORO_API_CUDADRIVER )
 	 {
 		#ifdef OROCHI_ENABLE_CUEW
-		CU4ORO::hipChannelFormatDesc ret = CU4ORO::hipCreateChannelDesc(__ORO_FORCE_CAST(int,x), __ORO_FORCE_CAST(int,y), __ORO_FORCE_CAST(int,z), __ORO_FORCE_CAST(int,w), __ORO_FORCE_CAST(CU4ORO::hipChannelFormatKind,f));
+		CU4ORO::hipChannelFormatDesc ret = CU4ORO::hipCreateChannelDesc_cu4oro(__ORO_FORCE_CAST(int,x), __ORO_FORCE_CAST(int,y), __ORO_FORCE_CAST(int,z), __ORO_FORCE_CAST(int,w), __ORO_FORCE_CAST(CU4ORO::hipChannelFormatKind,f));
 		return __ORO_FORCE_CAST(oroChannelFormatDesc, ret);
 		#endif
 	 }
@@ -1263,1659 +1263,1659 @@ orortcResult OROAPI orortcGetBitcodeSize(orortcProgram prog, size_t* bitcodeSize
 oroError_t OROAPI oroChooseDeviceR0600(int * device, const oroDeviceProp_tR0600 * prop)
 {
 	__ORO_FUNC(
-		CU4ORO::hipChooseDeviceR0600(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const CU4ORO::hipDeviceProp_t *,prop)),
+		CU4ORO::hipChooseDeviceR0600_cu4oro(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const CU4ORO::hipDeviceProp_t *,prop)),
 		hipChooseDeviceR0600(device, prop)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCreateSurfaceObject(oroSurfaceObject_t * pSurfObject, const oroResourceDesc * pResDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCreateSurfaceObject(__ORO_FORCE_CAST(CU4ORO::hipSurfaceObject_t *,pSurfObject), __ORO_FORCE_CAST(const CU4ORO::hipResourceDesc *,pResDesc)),
+		CU4ORO::hipCreateSurfaceObject_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSurfaceObject_t *,pSurfObject), __ORO_FORCE_CAST(const CU4ORO::hipResourceDesc *,pResDesc)),
 		hipCreateSurfaceObject(pSurfObject, pResDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCreateTextureObject(oroTextureObject_t * pTexObject, const oroResourceDesc * pResDesc, const oroTextureDesc * pTexDesc, const  oroResourceViewDesc * pResViewDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCreateTextureObject(__ORO_FORCE_CAST(CU4ORO::hipTextureObject_t *,pTexObject), __ORO_FORCE_CAST(const CU4ORO::hipResourceDesc *,pResDesc), __ORO_FORCE_CAST(const CU4ORO::hipTextureDesc *,pTexDesc), __ORO_FORCE_CAST(const CU4ORO::hipResourceViewDesc *,pResViewDesc)),
+		CU4ORO::hipCreateTextureObject_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipTextureObject_t *,pTexObject), __ORO_FORCE_CAST(const CU4ORO::hipResourceDesc *,pResDesc), __ORO_FORCE_CAST(const CU4ORO::hipTextureDesc *,pTexDesc), __ORO_FORCE_CAST(const CU4ORO::hipResourceViewDesc *,pResViewDesc)),
 		hipCreateTextureObject(pTexObject, pResDesc, pTexDesc, pResViewDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxDisablePeerAccess(oroCtx_t peerCtx)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxDisablePeerAccess(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,peerCtx)),
+		CU4ORO::hipCtxDisablePeerAccess_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,peerCtx)),
 		hipCtxDisablePeerAccess(peerCtx)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxEnablePeerAccess(oroCtx_t peerCtx, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxEnablePeerAccess(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,peerCtx), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipCtxEnablePeerAccess_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,peerCtx), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipCtxEnablePeerAccess(peerCtx, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxGetCacheConfig(oroFuncCache_t * cacheConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxGetCacheConfig(__ORO_FORCE_CAST(CU4ORO::hipFuncCache *,cacheConfig)),
+		CU4ORO::hipCtxGetCacheConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFuncCache *,cacheConfig)),
 		hipCtxGetCacheConfig(cacheConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxGetDevice(oroDevice_t * device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxGetDevice(__ORO_FORCE_CAST(CU4ORO::hipDevice_t *,device)),
+		CU4ORO::hipCtxGetDevice_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDevice_t *,device)),
 		hipCtxGetDevice(device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxGetFlags(unsigned int * flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxGetFlags(__ORO_FORCE_CAST(unsigned int *,flags)),
+		CU4ORO::hipCtxGetFlags_cu4oro(__ORO_FORCE_CAST(unsigned int *,flags)),
 		hipCtxGetFlags(flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxGetSharedMemConfig(oroSharedMemConfig * pConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxGetSharedMemConfig(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig *,pConfig)),
+		CU4ORO::hipCtxGetSharedMemConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig *,pConfig)),
 		hipCtxGetSharedMemConfig(pConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxPopCurrent(oroCtx_t * ctx)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxPopCurrent(__ORO_FORCE_CAST(CU4ORO::hipCtx_t *,ctx)),
+		CU4ORO::hipCtxPopCurrent_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipCtx_t *,ctx)),
 		hipCtxPopCurrent(ctx)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxPushCurrent(oroCtx_t ctx)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxPushCurrent(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,ctx)),
+		CU4ORO::hipCtxPushCurrent_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipCtx_t,ctx)),
 		hipCtxPushCurrent(ctx)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxSetCacheConfig(oroFuncCache_t cacheConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxSetCacheConfig(__ORO_FORCE_CAST(CU4ORO::hipFuncCache,cacheConfig)),
+		CU4ORO::hipCtxSetCacheConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFuncCache,cacheConfig)),
 		hipCtxSetCacheConfig(cacheConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxSetSharedMemConfig(oroSharedMemConfig config)
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxSetSharedMemConfig(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
+		CU4ORO::hipCtxSetSharedMemConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
 		hipCtxSetSharedMemConfig(config)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroCtxSynchronize()
 {
 	__ORO_FUNC(
-		CU4ORO::hipCtxSynchronize(),
+		CU4ORO::hipCtxSynchronize_cu4oro(),
 		hipCtxSynchronize()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDestroyExternalMemory(oroExternalMemory_t extMem)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDestroyExternalMemory(__ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem)),
+		CU4ORO::hipDestroyExternalMemory_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem)),
 		hipDestroyExternalMemory(extMem)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDestroyExternalSemaphore(oroExternalSemaphore_t extSem)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDestroyExternalSemaphore(__ORO_FORCE_CAST(CU4ORO::hipExternalSemaphore_t,extSem)),
+		CU4ORO::hipDestroyExternalSemaphore_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipExternalSemaphore_t,extSem)),
 		hipDestroyExternalSemaphore(extSem)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDestroySurfaceObject(oroSurfaceObject_t surfaceObject)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDestroySurfaceObject(__ORO_FORCE_CAST(CU4ORO::hipSurfaceObject_t,surfaceObject)),
+		CU4ORO::hipDestroySurfaceObject_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSurfaceObject_t,surfaceObject)),
 		hipDestroySurfaceObject(surfaceObject)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDestroyTextureObject(oroTextureObject_t textureObject)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDestroyTextureObject(__ORO_FORCE_CAST(CU4ORO::hipTextureObject_t,textureObject)),
+		CU4ORO::hipDestroyTextureObject_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipTextureObject_t,textureObject)),
 		hipDestroyTextureObject(textureObject)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceCanAccessPeer(int * canAccessPeer, int deviceId, int peerDeviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceCanAccessPeer(__ORO_FORCE_CAST(int *,canAccessPeer), __ORO_FORCE_CAST(int,deviceId), __ORO_FORCE_CAST(int,peerDeviceId)),
+		CU4ORO::hipDeviceCanAccessPeer_cu4oro(__ORO_FORCE_CAST(int *,canAccessPeer), __ORO_FORCE_CAST(int,deviceId), __ORO_FORCE_CAST(int,peerDeviceId)),
 		hipDeviceCanAccessPeer(canAccessPeer, deviceId, peerDeviceId)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceComputeCapability(int * major, int * minor, oroDevice_t device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceComputeCapability(__ORO_FORCE_CAST(int *,major), __ORO_FORCE_CAST(int *,minor), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
+		CU4ORO::hipDeviceComputeCapability_cu4oro(__ORO_FORCE_CAST(int *,major), __ORO_FORCE_CAST(int *,minor), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
 		hipDeviceComputeCapability(major, minor, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceDisablePeerAccess(int peerDeviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceDisablePeerAccess(__ORO_FORCE_CAST(int,peerDeviceId)),
+		CU4ORO::hipDeviceDisablePeerAccess_cu4oro(__ORO_FORCE_CAST(int,peerDeviceId)),
 		hipDeviceDisablePeerAccess(peerDeviceId)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceEnablePeerAccess(int peerDeviceId, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceEnablePeerAccess(__ORO_FORCE_CAST(int,peerDeviceId), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipDeviceEnablePeerAccess_cu4oro(__ORO_FORCE_CAST(int,peerDeviceId), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipDeviceEnablePeerAccess(peerDeviceId, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetByPCIBusId(int * device, const char * pciBusId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetByPCIBusId(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const char *,pciBusId)),
+		CU4ORO::hipDeviceGetByPCIBusId_cu4oro(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const char *,pciBusId)),
 		hipDeviceGetByPCIBusId(device, pciBusId)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetCacheConfig(oroFuncCache_t * cacheConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetCacheConfig(__ORO_FORCE_CAST(CU4ORO::hipFuncCache_t *,cacheConfig)),
+		CU4ORO::hipDeviceGetCacheConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFuncCache_t *,cacheConfig)),
 		hipDeviceGetCacheConfig(cacheConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetDefaultMemPool(oroMemPool_t * mem_pool, int device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetDefaultMemPool(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(int,device)),
+		CU4ORO::hipDeviceGetDefaultMemPool_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(int,device)),
 		hipDeviceGetDefaultMemPool(mem_pool, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetLimit(size_t * pValue,  oroLimit_t limit)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetLimit(__ORO_FORCE_CAST(size_t *,pValue), __ORO_FORCE_CAST(CU4ORO::hipLimit_t,limit)),
+		CU4ORO::hipDeviceGetLimit_cu4oro(__ORO_FORCE_CAST(size_t *,pValue), __ORO_FORCE_CAST(CU4ORO::hipLimit_t,limit)),
 		hipDeviceGetLimit(pValue, limit)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetMemPool(oroMemPool_t * mem_pool, int device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetMemPool(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(int,device)),
+		CU4ORO::hipDeviceGetMemPool_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(int,device)),
 		hipDeviceGetMemPool(mem_pool, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetP2PAttribute(int * value, oroDeviceP2PAttr attr, int srcDevice, int dstDevice)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetP2PAttribute(__ORO_FORCE_CAST(int *,value), __ORO_FORCE_CAST(CU4ORO::hipDeviceP2PAttr,attr), __ORO_FORCE_CAST(int,srcDevice), __ORO_FORCE_CAST(int,dstDevice)),
+		CU4ORO::hipDeviceGetP2PAttribute_cu4oro(__ORO_FORCE_CAST(int *,value), __ORO_FORCE_CAST(CU4ORO::hipDeviceP2PAttr,attr), __ORO_FORCE_CAST(int,srcDevice), __ORO_FORCE_CAST(int,dstDevice)),
 		hipDeviceGetP2PAttribute(value, attr, srcDevice, dstDevice)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetPCIBusId(char * pciBusId, int len, int device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetPCIBusId(__ORO_FORCE_CAST(char *,pciBusId), __ORO_FORCE_CAST(int,len), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
+		CU4ORO::hipDeviceGetPCIBusId_cu4oro(__ORO_FORCE_CAST(char *,pciBusId), __ORO_FORCE_CAST(int,len), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
 		hipDeviceGetPCIBusId(pciBusId, len, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetSharedMemConfig(oroSharedMemConfig * pConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetSharedMemConfig(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig *,pConfig)),
+		CU4ORO::hipDeviceGetSharedMemConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig *,pConfig)),
 		hipDeviceGetSharedMemConfig(pConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetStreamPriorityRange(int * leastPriority, int * greatestPriority)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetStreamPriorityRange(__ORO_FORCE_CAST(int *,leastPriority), __ORO_FORCE_CAST(int *,greatestPriority)),
+		CU4ORO::hipDeviceGetStreamPriorityRange_cu4oro(__ORO_FORCE_CAST(int *,leastPriority), __ORO_FORCE_CAST(int *,greatestPriority)),
 		hipDeviceGetStreamPriorityRange(leastPriority, greatestPriority)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceGetUuid(oroUUID * uuid, oroDevice_t device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceGetUuid(__ORO_FORCE_CAST(CU4ORO::hipUUID *,uuid), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
+		CU4ORO::hipDeviceGetUuid_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipUUID *,uuid), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
 		hipDeviceGetUuid(uuid, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDevicePrimaryCtxGetState(oroDevice_t dev, unsigned int * flags, int * active)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDevicePrimaryCtxGetState(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev), __ORO_FORCE_CAST(unsigned int *,flags), __ORO_FORCE_CAST(int *,active)),
+		CU4ORO::hipDevicePrimaryCtxGetState_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev), __ORO_FORCE_CAST(unsigned int *,flags), __ORO_FORCE_CAST(int *,active)),
 		hipDevicePrimaryCtxGetState(dev, flags, active)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDevicePrimaryCtxRelease(oroDevice_t dev)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDevicePrimaryCtxRelease(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
+		CU4ORO::hipDevicePrimaryCtxRelease_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
 		hipDevicePrimaryCtxRelease(dev)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDevicePrimaryCtxReset(oroDevice_t dev)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDevicePrimaryCtxReset(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
+		CU4ORO::hipDevicePrimaryCtxReset_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
 		hipDevicePrimaryCtxReset(dev)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDevicePrimaryCtxRetain(oroCtx_t * pctx, oroDevice_t dev)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDevicePrimaryCtxRetain(__ORO_FORCE_CAST(CU4ORO::hipCtx_t *,pctx), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
+		CU4ORO::hipDevicePrimaryCtxRetain_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipCtx_t *,pctx), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev)),
 		hipDevicePrimaryCtxRetain(pctx, dev)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDevicePrimaryCtxSetFlags(oroDevice_t dev, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDevicePrimaryCtxSetFlags(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipDevicePrimaryCtxSetFlags_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDevice_t,dev), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipDevicePrimaryCtxSetFlags(dev, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceReset()
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceReset(),
+		CU4ORO::hipDeviceReset_cu4oro(),
 		hipDeviceReset()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceSetCacheConfig(oroFuncCache_t cacheConfig)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceSetCacheConfig(__ORO_FORCE_CAST(CU4ORO::hipFuncCache_t,cacheConfig)),
+		CU4ORO::hipDeviceSetCacheConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFuncCache_t,cacheConfig)),
 		hipDeviceSetCacheConfig(cacheConfig)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceSetLimit( oroLimit_t limit, size_t value)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceSetLimit(__ORO_FORCE_CAST(CU4ORO::hipLimit_t,limit), __ORO_FORCE_CAST(size_t,value)),
+		CU4ORO::hipDeviceSetLimit_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipLimit_t,limit), __ORO_FORCE_CAST(size_t,value)),
 		hipDeviceSetLimit(limit, value)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceSetMemPool(int device, oroMemPool_t mem_pool)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceSetMemPool(__ORO_FORCE_CAST(int,device), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool)),
+		CU4ORO::hipDeviceSetMemPool_cu4oro(__ORO_FORCE_CAST(int,device), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool)),
 		hipDeviceSetMemPool(device, mem_pool)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceSetSharedMemConfig(oroSharedMemConfig config)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceSetSharedMemConfig(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
+		CU4ORO::hipDeviceSetSharedMemConfig_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
 		hipDeviceSetSharedMemConfig(config)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceSynchronize()
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceSynchronize(),
+		CU4ORO::hipDeviceSynchronize_cu4oro(),
 		hipDeviceSynchronize()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDeviceTotalMem(size_t * bytes, oroDevice_t device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDeviceTotalMem(__ORO_FORCE_CAST(size_t *,bytes), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
+		CU4ORO::hipDeviceTotalMem_cu4oro(__ORO_FORCE_CAST(size_t *,bytes), __ORO_FORCE_CAST(CU4ORO::hipDevice_t,device)),
 		hipDeviceTotalMem(bytes, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDriverGetVersion(int * driverVersion)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDriverGetVersion(__ORO_FORCE_CAST(int *,driverVersion)),
+		CU4ORO::hipDriverGetVersion_cu4oro(__ORO_FORCE_CAST(int *,driverVersion)),
 		hipDriverGetVersion(driverVersion)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDrvGetErrorName(oroError_t hipError, const char ** errorString)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDrvGetErrorName(__ORO_FORCE_CAST(CU4ORO::hipError_t,hipError), __ORO_FORCE_CAST(const char **,errorString)),
+		CU4ORO::hipDrvGetErrorName_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipError_t,hipError), __ORO_FORCE_CAST(const char **,errorString)),
 		hipDrvGetErrorName(hipError, errorString)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDrvGetErrorString(oroError_t hipError, const char ** errorString)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDrvGetErrorString(__ORO_FORCE_CAST(CU4ORO::hipError_t,hipError), __ORO_FORCE_CAST(const char **,errorString)),
+		CU4ORO::hipDrvGetErrorString_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipError_t,hipError), __ORO_FORCE_CAST(const char **,errorString)),
 		hipDrvGetErrorString(hipError, errorString)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDrvMemcpy3D(const ORO_MEMCPY3D * pCopy)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDrvMemcpy3D(__ORO_FORCE_CAST(const CU4ORO::HIP_MEMCPY3D *,pCopy)),
+		CU4ORO::hipDrvMemcpy3D_cu4oro(__ORO_FORCE_CAST(const CU4ORO::HIP_MEMCPY3D *,pCopy)),
 		hipDrvMemcpy3D(pCopy)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDrvMemcpy3DAsync(const ORO_MEMCPY3D * pCopy, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDrvMemcpy3DAsync(__ORO_FORCE_CAST(const CU4ORO::HIP_MEMCPY3D *,pCopy), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipDrvMemcpy3DAsync_cu4oro(__ORO_FORCE_CAST(const CU4ORO::HIP_MEMCPY3D *,pCopy), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipDrvMemcpy3DAsync(pCopy, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroDrvPointerGetAttributes(unsigned int numAttributes, oroPointer_attribute * attributes, void ** data, oroDeviceptr_t ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipDrvPointerGetAttributes(__ORO_FORCE_CAST(unsigned int,numAttributes), __ORO_FORCE_CAST(CU4ORO::CUpointer_attribute *,attributes), __ORO_FORCE_CAST(void **,data), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
+		CU4ORO::hipDrvPointerGetAttributes_cu4oro(__ORO_FORCE_CAST(unsigned int,numAttributes), __ORO_FORCE_CAST(CU4ORO::CUpointer_attribute *,attributes), __ORO_FORCE_CAST(void **,data), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
 		hipDrvPointerGetAttributes(numAttributes, attributes, data, ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventCreate(oroEvent_t * event)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventCreate(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event)),
+		CU4ORO::hipEventCreate_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event)),
 		hipEventCreate(event)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventCreateWithFlags(oroEvent_t * event, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventCreateWithFlags(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipEventCreateWithFlags_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipEventCreateWithFlags(event, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventDestroy(oroEvent_t event)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventDestroy(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
+		CU4ORO::hipEventDestroy_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
 		hipEventDestroy(event)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventElapsedTime(float * ms, oroEvent_t start, oroEvent_t stop)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventElapsedTime(__ORO_FORCE_CAST(float *,ms), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,start), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,stop)),
+		CU4ORO::hipEventElapsedTime_cu4oro(__ORO_FORCE_CAST(float *,ms), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,start), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,stop)),
 		hipEventElapsedTime(ms, start, stop)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventQuery(oroEvent_t event)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventQuery(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
+		CU4ORO::hipEventQuery_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
 		hipEventQuery(event)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventRecord(oroEvent_t event, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventRecord(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipEventRecord_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipEventRecord(event, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventSynchronize(oroEvent_t event)
 {
 	__ORO_FUNC(
-		CU4ORO::hipEventSynchronize(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
+		CU4ORO::hipEventSynchronize_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
 		hipEventSynchronize(event)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroExternalMemoryGetMappedBuffer(void ** devPtr, oroExternalMemory_t extMem, const oroExternalMemoryBufferDesc * bufferDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipExternalMemoryGetMappedBuffer(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryBufferDesc *,bufferDesc)),
+		CU4ORO::hipExternalMemoryGetMappedBuffer_cu4oro(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryBufferDesc *,bufferDesc)),
 		hipExternalMemoryGetMappedBuffer(devPtr, extMem, bufferDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroExternalMemoryGetMappedMipmappedArray(oroMipmappedArray_t * mipmap, oroExternalMemory_t extMem, const oroExternalMemoryMipmappedArrayDesc * mipmapDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipExternalMemoryGetMappedMipmappedArray(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t *,mipmap), __ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryMipmappedArrayDesc *,mipmapDesc)),
+		CU4ORO::hipExternalMemoryGetMappedMipmappedArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t *,mipmap), __ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t,extMem), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryMipmappedArrayDesc *,mipmapDesc)),
 		hipExternalMemoryGetMappedMipmappedArray(mipmap, extMem, mipmapDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFree(void * ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFree(__ORO_FORCE_CAST(void *,ptr)),
+		CU4ORO::hipFree_cu4oro(__ORO_FORCE_CAST(void *,ptr)),
 		hipFree(ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFreeArray(oroArray_t array)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFreeArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t,array)),
+		CU4ORO::hipFreeArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t,array)),
 		hipFreeArray(array)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFreeAsync(void * dev_ptr, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFreeAsync(__ORO_FORCE_CAST(void *,dev_ptr), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipFreeAsync_cu4oro(__ORO_FORCE_CAST(void *,dev_ptr), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipFreeAsync(dev_ptr, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFreeHost(void * ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFreeHost(__ORO_FORCE_CAST(void *,ptr)),
+		CU4ORO::hipFreeHost_cu4oro(__ORO_FORCE_CAST(void *,ptr)),
 		hipFreeHost(ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFreeMipmappedArray(oroMipmappedArray_t mipmappedArray)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFreeMipmappedArray(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t,mipmappedArray)),
+		CU4ORO::hipFreeMipmappedArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t,mipmappedArray)),
 		hipFreeMipmappedArray(mipmappedArray)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFuncGetAttribute(int * value, oroFunction_attribute attrib, oroFunction_t hfunc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFuncGetAttribute(__ORO_FORCE_CAST(int *,value), __ORO_FORCE_CAST(CU4ORO::CUfunction_attribute,attrib), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,hfunc)),
+		CU4ORO::hipFuncGetAttribute_cu4oro(__ORO_FORCE_CAST(int *,value), __ORO_FORCE_CAST(CU4ORO::CUfunction_attribute,attrib), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,hfunc)),
 		hipFuncGetAttribute(value, attrib, hfunc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFuncGetAttributes( oroFuncAttributes * attr, const void * func)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFuncGetAttributes(__ORO_FORCE_CAST(CU4ORO::hipFuncAttributes *,attr), __ORO_FORCE_CAST(const void *,func)),
+		CU4ORO::hipFuncGetAttributes_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFuncAttributes *,attr), __ORO_FORCE_CAST(const void *,func)),
 		hipFuncGetAttributes(attr, func)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFuncSetAttribute(const void * func, oroFuncAttribute attr, int value)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFuncSetAttribute(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipFuncAttribute,attr), __ORO_FORCE_CAST(int,value)),
+		CU4ORO::hipFuncSetAttribute_cu4oro(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipFuncAttribute,attr), __ORO_FORCE_CAST(int,value)),
 		hipFuncSetAttribute(func, attr, value)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFuncSetCacheConfig(const void * func, oroFuncCache_t config)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFuncSetCacheConfig(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipFuncCache_t,config)),
+		CU4ORO::hipFuncSetCacheConfig_cu4oro(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipFuncCache_t,config)),
 		hipFuncSetCacheConfig(func, config)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroFuncSetSharedMemConfig(const void * func, oroSharedMemConfig config)
 {
 	__ORO_FUNC(
-		CU4ORO::hipFuncSetSharedMemConfig(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
+		CU4ORO::hipFuncSetSharedMemConfig_cu4oro(__ORO_FORCE_CAST(const void *,func), __ORO_FORCE_CAST(CU4ORO::hipSharedMemConfig,config)),
 		hipFuncSetSharedMemConfig(func, config)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetChannelDesc(oroChannelFormatDesc * desc, oroArray_const_t array)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetChannelDesc(__ORO_FORCE_CAST(CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipArray_const_t,array)),
+		CU4ORO::hipGetChannelDesc_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipArray_const_t,array)),
 		hipGetChannelDesc(desc, array)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetDevice(int * deviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetDevice(__ORO_FORCE_CAST(int *,deviceId)),
+		CU4ORO::hipGetDevice_cu4oro(__ORO_FORCE_CAST(int *,deviceId)),
 		hipGetDevice(deviceId)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetDeviceFlags(unsigned int * flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetDeviceFlags(__ORO_FORCE_CAST(unsigned int *,flags)),
+		CU4ORO::hipGetDeviceFlags_cu4oro(__ORO_FORCE_CAST(unsigned int *,flags)),
 		hipGetDeviceFlags(flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetDevicePropertiesR0600(oroDeviceProp_tR0600 * prop, int deviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetDevicePropertiesR0600(__ORO_FORCE_CAST(CU4ORO::hipDeviceProp_t *,prop), __ORO_FORCE_CAST(int,deviceId)),
+		CU4ORO::hipGetDevicePropertiesR0600_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceProp_t *,prop), __ORO_FORCE_CAST(int,deviceId)),
 		hipGetDevicePropertiesR0600(prop, deviceId)     );
 	return oroErrorUnknown;
 }
 const char * OROAPI oroGetErrorName(oroError_t hip_error)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetErrorName(__ORO_FORCE_CAST(CU4ORO::hipError_t,hip_error)),
+		CU4ORO::hipGetErrorName_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipError_t,hip_error)),
 		hipGetErrorName(hip_error)     );
 	return nullptr;
 }
 oroError_t OROAPI oroGetLastError()
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetLastError(),
+		CU4ORO::hipGetLastError_cu4oro(),
 		hipGetLastError()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetMipmappedArrayLevel(oroArray_t * levelArray, oroMipmappedArray_const_t mipmappedArray, unsigned int level)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetMipmappedArrayLevel(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,levelArray), __ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t,mipmappedArray), __ORO_FORCE_CAST(unsigned int,level)),
+		CU4ORO::hipGetMipmappedArrayLevel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,levelArray), __ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t,mipmappedArray), __ORO_FORCE_CAST(unsigned int,level)),
 		hipGetMipmappedArrayLevel(levelArray, mipmappedArray, level)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetSymbolAddress(void ** devPtr, const void * symbol)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetSymbolAddress(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(const void *,symbol)),
+		CU4ORO::hipGetSymbolAddress_cu4oro(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(const void *,symbol)),
 		hipGetSymbolAddress(devPtr, symbol)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetSymbolSize(size_t * size, const void * symbol)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetSymbolSize(__ORO_FORCE_CAST(size_t *,size), __ORO_FORCE_CAST(const void *,symbol)),
+		CU4ORO::hipGetSymbolSize_cu4oro(__ORO_FORCE_CAST(size_t *,size), __ORO_FORCE_CAST(const void *,symbol)),
 		hipGetSymbolSize(size, symbol)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetTextureObjectResourceDesc(oroResourceDesc * pResDesc, oroTextureObject_t textureObject)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetTextureObjectResourceDesc(__ORO_FORCE_CAST(CU4ORO::hipResourceDesc *,pResDesc), __ORO_FORCE_CAST(CU4ORO::hipTextureObject_t,textureObject)),
+		CU4ORO::hipGetTextureObjectResourceDesc_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipResourceDesc *,pResDesc), __ORO_FORCE_CAST(CU4ORO::hipTextureObject_t,textureObject)),
 		hipGetTextureObjectResourceDesc(pResDesc, textureObject)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsMapResources(int count, oroGraphicsResource_t * resources, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGraphicsMapResources(__ORO_FORCE_CAST(int,count), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t *,resources), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipGraphicsMapResources_cu4oro(__ORO_FORCE_CAST(int,count), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t *,resources), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipGraphicsMapResources(count, resources, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsResourceGetMappedPointer(void ** devPtr, size_t * size, oroGraphicsResource_t resource)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGraphicsResourceGetMappedPointer(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(size_t *,size), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource)),
+		CU4ORO::hipGraphicsResourceGetMappedPointer_cu4oro(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(size_t *,size), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource)),
 		hipGraphicsResourceGetMappedPointer(devPtr, size, resource)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsSubResourceGetMappedArray(oroArray_t * array, oroGraphicsResource_t resource, unsigned int arrayIndex, unsigned int mipLevel)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGraphicsSubResourceGetMappedArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource), __ORO_FORCE_CAST(unsigned int,arrayIndex), __ORO_FORCE_CAST(unsigned int,mipLevel)),
+		CU4ORO::hipGraphicsSubResourceGetMappedArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource), __ORO_FORCE_CAST(unsigned int,arrayIndex), __ORO_FORCE_CAST(unsigned int,mipLevel)),
 		hipGraphicsSubResourceGetMappedArray(array, resource, arrayIndex, mipLevel)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsUnmapResources(int count, oroGraphicsResource_t * resources, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGraphicsUnmapResources(__ORO_FORCE_CAST(int,count), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t *,resources), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipGraphicsUnmapResources_cu4oro(__ORO_FORCE_CAST(int,count), __ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t *,resources), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipGraphicsUnmapResources(count, resources, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsUnregisterResource(oroGraphicsResource_t resource)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGraphicsUnregisterResource(__ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource)),
+		CU4ORO::hipGraphicsUnregisterResource_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t,resource)),
 		hipGraphicsUnregisterResource(resource)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostAlloc(void ** ptr, size_t size, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostAlloc(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipHostAlloc_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipHostAlloc(ptr, size, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostFree(void * ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostFree(__ORO_FORCE_CAST(void *,ptr)),
+		CU4ORO::hipHostFree_cu4oro(__ORO_FORCE_CAST(void *,ptr)),
 		hipHostFree(ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostGetDevicePointer(void ** devPtr, void * hstPtr, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostGetDevicePointer(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(void *,hstPtr), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipHostGetDevicePointer_cu4oro(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(void *,hstPtr), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipHostGetDevicePointer(devPtr, hstPtr, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostGetFlags(unsigned int * flagsPtr, void * hostPtr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostGetFlags(__ORO_FORCE_CAST(unsigned int *,flagsPtr), __ORO_FORCE_CAST(void *,hostPtr)),
+		CU4ORO::hipHostGetFlags_cu4oro(__ORO_FORCE_CAST(unsigned int *,flagsPtr), __ORO_FORCE_CAST(void *,hostPtr)),
 		hipHostGetFlags(flagsPtr, hostPtr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostMalloc(void ** ptr, size_t size, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostMalloc(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipHostMalloc_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipHostMalloc(ptr, size, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostRegister(void * hostPtr, size_t sizeBytes, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostRegister(__ORO_FORCE_CAST(void *,hostPtr), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipHostRegister_cu4oro(__ORO_FORCE_CAST(void *,hostPtr), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipHostRegister(hostPtr, sizeBytes, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroHostUnregister(void * hostPtr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipHostUnregister(__ORO_FORCE_CAST(void *,hostPtr)),
+		CU4ORO::hipHostUnregister_cu4oro(__ORO_FORCE_CAST(void *,hostPtr)),
 		hipHostUnregister(hostPtr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroImportExternalMemory(oroExternalMemory_t * extMem_out, const oroExternalMemoryHandleDesc * memHandleDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipImportExternalMemory(__ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t *,extMem_out), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryHandleDesc *,memHandleDesc)),
+		CU4ORO::hipImportExternalMemory_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipExternalMemory_t *,extMem_out), __ORO_FORCE_CAST(const CU4ORO::hipExternalMemoryHandleDesc *,memHandleDesc)),
 		hipImportExternalMemory(extMem_out, memHandleDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroImportExternalSemaphore(oroExternalSemaphore_t * extSem_out, const oroExternalSemaphoreHandleDesc * semHandleDesc)
 {
 	__ORO_FUNC(
-		CU4ORO::hipImportExternalSemaphore(__ORO_FORCE_CAST(CU4ORO::hipExternalSemaphore_t *,extSem_out), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreHandleDesc *,semHandleDesc)),
+		CU4ORO::hipImportExternalSemaphore_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipExternalSemaphore_t *,extSem_out), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreHandleDesc *,semHandleDesc)),
 		hipImportExternalSemaphore(extSem_out, semHandleDesc)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroIpcCloseMemHandle(void * devPtr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipIpcCloseMemHandle(__ORO_FORCE_CAST(void *,devPtr)),
+		CU4ORO::hipIpcCloseMemHandle_cu4oro(__ORO_FORCE_CAST(void *,devPtr)),
 		hipIpcCloseMemHandle(devPtr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroIpcGetEventHandle(oroIpcEventHandle_t * handle, oroEvent_t event)
 {
 	__ORO_FUNC(
-		CU4ORO::hipIpcGetEventHandle(__ORO_FORCE_CAST(CU4ORO::hipIpcEventHandle_t *,handle), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
+		CU4ORO::hipIpcGetEventHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipIpcEventHandle_t *,handle), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,event)),
 		hipIpcGetEventHandle(handle, event)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroIpcGetMemHandle(oroIpcMemHandle_t * handle, void * devPtr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipIpcGetMemHandle(__ORO_FORCE_CAST(CU4ORO::hipIpcMemHandle_t *,handle), __ORO_FORCE_CAST(void *,devPtr)),
+		CU4ORO::hipIpcGetMemHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipIpcMemHandle_t *,handle), __ORO_FORCE_CAST(void *,devPtr)),
 		hipIpcGetMemHandle(handle, devPtr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroIpcOpenEventHandle(oroEvent_t * event, oroIpcEventHandle_t handle)
 {
 	__ORO_FUNC(
-		CU4ORO::hipIpcOpenEventHandle(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event), __ORO_FORCE_CAST(CU4ORO::hipIpcEventHandle_t,handle)),
+		CU4ORO::hipIpcOpenEventHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t *,event), __ORO_FORCE_CAST(CU4ORO::hipIpcEventHandle_t,handle)),
 		hipIpcOpenEventHandle(event, handle)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroIpcOpenMemHandle(void ** devPtr, oroIpcMemHandle_t handle, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipIpcOpenMemHandle(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(CU4ORO::hipIpcMemHandle_t,handle), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipIpcOpenMemHandle_cu4oro(__ORO_FORCE_CAST(void **,devPtr), __ORO_FORCE_CAST(CU4ORO::hipIpcMemHandle_t,handle), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipIpcOpenMemHandle(devPtr, handle, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroLaunchCooperativeKernel(const void * f, dim3 gridDim, dim3 blockDimX, void ** kernelParams, unsigned int sharedMemBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipLaunchCooperativeKernel(__ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(CU4ORO::dim3,gridDim), __ORO_FORCE_CAST(CU4ORO::dim3,blockDimX), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipLaunchCooperativeKernel_cu4oro(__ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(CU4ORO::dim3,gridDim), __ORO_FORCE_CAST(CU4ORO::dim3,blockDimX), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipLaunchCooperativeKernel(f, gridDim, blockDimX, kernelParams, sharedMemBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroLaunchCooperativeKernelMultiDevice(oroLaunchParams * launchParamsList, int numDevices, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipLaunchCooperativeKernelMultiDevice(__ORO_FORCE_CAST(CU4ORO::hipLaunchParams *,launchParamsList), __ORO_FORCE_CAST(int,numDevices), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipLaunchCooperativeKernelMultiDevice_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipLaunchParams *,launchParamsList), __ORO_FORCE_CAST(int,numDevices), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroLaunchKernel(const void * function_address, dim3 numBlocks, dim3 dimBlocks, void ** args, size_t sharedMemBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipLaunchKernel(__ORO_FORCE_CAST(const void *,function_address), __ORO_FORCE_CAST(CU4ORO::dim3,numBlocks), __ORO_FORCE_CAST(CU4ORO::dim3,dimBlocks), __ORO_FORCE_CAST(void **,args), __ORO_FORCE_CAST(size_t,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipLaunchKernel_cu4oro(__ORO_FORCE_CAST(const void *,function_address), __ORO_FORCE_CAST(CU4ORO::dim3,numBlocks), __ORO_FORCE_CAST(CU4ORO::dim3,dimBlocks), __ORO_FORCE_CAST(void **,args), __ORO_FORCE_CAST(size_t,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipLaunchKernel(function_address, numBlocks, dimBlocks, args, sharedMemBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMalloc(void ** ptr, size_t size)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMalloc(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
+		CU4ORO::hipMalloc_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
 		hipMalloc(ptr, size)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMalloc3D(oroPitchedPtr * pitchedDevPtr, oroExtent extent)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMalloc3D(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr *,pitchedDevPtr), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent)),
+		CU4ORO::hipMalloc3D_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr *,pitchedDevPtr), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent)),
 		hipMalloc3D(pitchedDevPtr, extent)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMalloc3DArray(oroArray_t * array, const  oroChannelFormatDesc * desc,  oroExtent extent, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMalloc3DArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMalloc3DArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMalloc3DArray(array, desc, extent, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocArray(oroArray_t * array, const oroChannelFormatDesc * desc, size_t width, size_t height, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMallocArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,array), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMallocArray(array, desc, width, height, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocAsync(void ** dev_ptr, size_t size, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocAsync(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMallocAsync_cu4oro(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMallocAsync(dev_ptr, size, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocFromPoolAsync(void ** dev_ptr, size_t size, oroMemPool_t mem_pool, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocFromPoolAsync(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMallocFromPoolAsync_cu4oro(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMallocFromPoolAsync(dev_ptr, size, mem_pool, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocHost(void ** ptr, size_t size)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocHost(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
+		CU4ORO::hipMallocHost_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
 		hipMallocHost(ptr, size)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocManaged(void ** dev_ptr, size_t size, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocManaged(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMallocManaged_cu4oro(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMallocManaged(dev_ptr, size, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocMipmappedArray(oroMipmappedArray_t * mipmappedArray, const  oroChannelFormatDesc * desc,  oroExtent extent, unsigned int numLevels, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocMipmappedArray(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t *,mipmappedArray), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(unsigned int,numLevels), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMallocMipmappedArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t *,mipmappedArray), __ORO_FORCE_CAST(const CU4ORO::hipChannelFormatDesc *,desc), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(unsigned int,numLevels), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMallocMipmappedArray(mipmappedArray, desc, extent, numLevels, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMallocPitch(void ** ptr, size_t * pitch, size_t width, size_t height)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMallocPitch(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t *,pitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height)),
+		CU4ORO::hipMallocPitch_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t *,pitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height)),
 		hipMallocPitch(ptr, pitch, width, height)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemAddressFree(void * devPtr, size_t size)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemAddressFree(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,devPtr), __ORO_FORCE_CAST(size_t,size)),
+		CU4ORO::hipMemAddressFree_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,devPtr), __ORO_FORCE_CAST(size_t,size)),
 		hipMemAddressFree(devPtr, size)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemAddressReserve(void ** ptr, size_t size, size_t alignment, void * addr, unsigned long long flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemAddressReserve(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(size_t,alignment), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,addr), __ORO_FORCE_CAST(unsigned long long,flags)),
+		CU4ORO::hipMemAddressReserve_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(size_t,alignment), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,addr), __ORO_FORCE_CAST(unsigned long long,flags)),
 		hipMemAddressReserve(ptr, size, alignment, addr, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemAdvise(const void * dev_ptr, size_t count, oroMemoryAdvise advice, int device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemAdvise(__ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemoryAdvise,advice), __ORO_FORCE_CAST(int,device)),
+		CU4ORO::hipMemAdvise_cu4oro(__ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemoryAdvise,advice), __ORO_FORCE_CAST(int,device)),
 		hipMemAdvise(dev_ptr, count, advice, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemAllocHost(void ** ptr, size_t size)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemAllocHost(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
+		CU4ORO::hipMemAllocHost_cu4oro(__ORO_FORCE_CAST(void **,ptr), __ORO_FORCE_CAST(size_t,size)),
 		hipMemAllocHost(ptr, size)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemAllocPitch(oroDeviceptr_t * dptr, size_t * pitch, size_t widthInBytes, size_t height, unsigned int elementSizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemAllocPitch(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dptr), __ORO_FORCE_CAST(size_t *,pitch), __ORO_FORCE_CAST(size_t,widthInBytes), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(unsigned int,elementSizeBytes)),
+		CU4ORO::hipMemAllocPitch_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dptr), __ORO_FORCE_CAST(size_t *,pitch), __ORO_FORCE_CAST(size_t,widthInBytes), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(unsigned int,elementSizeBytes)),
 		hipMemAllocPitch(dptr, pitch, widthInBytes, height, elementSizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemCreate(oroMemGenericAllocationHandle_t * handle, size_t size, const oroMemAllocationProp * prop, unsigned long long flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemCreate(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(const CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(unsigned long long,flags)),
+		CU4ORO::hipMemCreate_cu4oro(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(const CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(unsigned long long,flags)),
 		hipMemCreate(handle, size, prop, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemExportToShareableHandle(void * shareableHandle, oroMemGenericAllocationHandle_t handle, oroMemAllocationHandleType handleType, unsigned long long flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemExportToShareableHandle(__ORO_FORCE_CAST(void *,shareableHandle), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handleType), __ORO_FORCE_CAST(unsigned long long,flags)),
+		CU4ORO::hipMemExportToShareableHandle_cu4oro(__ORO_FORCE_CAST(void *,shareableHandle), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handleType), __ORO_FORCE_CAST(unsigned long long,flags)),
 		hipMemExportToShareableHandle(shareableHandle, handle, handleType, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemGetAccess(unsigned long long * flags, const oroMemLocation * location, void * ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemGetAccess(__ORO_FORCE_CAST(unsigned long long *,flags), __ORO_FORCE_CAST(const CU4ORO::hipMemLocation *,location), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
+		CU4ORO::hipMemGetAccess_cu4oro(__ORO_FORCE_CAST(unsigned long long *,flags), __ORO_FORCE_CAST(const CU4ORO::hipMemLocation *,location), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
 		hipMemGetAccess(flags, location, ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemGetAddressRange(oroDeviceptr_t * pbase, size_t * psize, oroDeviceptr_t dptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemGetAddressRange(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,pbase), __ORO_FORCE_CAST(size_t *,psize), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dptr)),
+		CU4ORO::hipMemGetAddressRange_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,pbase), __ORO_FORCE_CAST(size_t *,psize), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dptr)),
 		hipMemGetAddressRange(pbase, psize, dptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemGetAllocationGranularity(size_t * granularity, const oroMemAllocationProp * prop, oroMemAllocationGranularity_flags option)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemGetAllocationGranularity(__ORO_FORCE_CAST(size_t *,granularity), __ORO_FORCE_CAST(const CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationGranularity_flags,option)),
+		CU4ORO::hipMemGetAllocationGranularity_cu4oro(__ORO_FORCE_CAST(size_t *,granularity), __ORO_FORCE_CAST(const CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationGranularity_flags,option)),
 		hipMemGetAllocationGranularity(granularity, prop, option)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemGetAllocationPropertiesFromHandle(oroMemAllocationProp * prop, oroMemGenericAllocationHandle_t handle)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemGetAllocationPropertiesFromHandle(__ORO_FORCE_CAST(CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle)),
+		CU4ORO::hipMemGetAllocationPropertiesFromHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemAllocationProp *,prop), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle)),
 		hipMemGetAllocationPropertiesFromHandle(prop, handle)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemGetInfo(size_t * free, size_t * total)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemGetInfo(__ORO_FORCE_CAST(size_t *,free), __ORO_FORCE_CAST(size_t *,total)),
+		CU4ORO::hipMemGetInfo_cu4oro(__ORO_FORCE_CAST(size_t *,free), __ORO_FORCE_CAST(size_t *,total)),
 		hipMemGetInfo(free, total)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemImportFromShareableHandle(oroMemGenericAllocationHandle_t * handle, void * osHandle, oroMemAllocationHandleType shHandleType)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemImportFromShareableHandle(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(void *,osHandle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,shHandleType)),
+		CU4ORO::hipMemImportFromShareableHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(void *,osHandle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,shHandleType)),
 		hipMemImportFromShareableHandle(handle, osHandle, shHandleType)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemMap(void * ptr, size_t size, size_t offset, oroMemGenericAllocationHandle_t handle, unsigned long long flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemMap(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle), __ORO_FORCE_CAST(unsigned long long,flags)),
+		CU4ORO::hipMemMap_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle), __ORO_FORCE_CAST(unsigned long long,flags)),
 		hipMemMap(ptr, size, offset, handle, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemMapArrayAsync(oroArrayMapInfo * mapInfoList, unsigned int count, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemMapArrayAsync(__ORO_FORCE_CAST(CU4ORO::hipArrayMapInfo *,mapInfoList), __ORO_FORCE_CAST(unsigned int,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemMapArrayAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArrayMapInfo *,mapInfoList), __ORO_FORCE_CAST(unsigned int,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemMapArrayAsync(mapInfoList, count, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolCreate(oroMemPool_t * mem_pool, const oroMemPoolProps * pool_props)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolCreate(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(const CU4ORO::hipMemPoolProps *,pool_props)),
+		CU4ORO::hipMemPoolCreate_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(const CU4ORO::hipMemPoolProps *,pool_props)),
 		hipMemPoolCreate(mem_pool, pool_props)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolDestroy(oroMemPool_t mem_pool)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolDestroy(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool)),
+		CU4ORO::hipMemPoolDestroy_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool)),
 		hipMemPoolDestroy(mem_pool)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolExportPointer(oroMemPoolPtrExportData * export_data, void * dev_ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolExportPointer(__ORO_FORCE_CAST(CU4ORO::hipMemPoolPtrExportData *,export_data), __ORO_FORCE_CAST(void *,dev_ptr)),
+		CU4ORO::hipMemPoolExportPointer_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPoolPtrExportData *,export_data), __ORO_FORCE_CAST(void *,dev_ptr)),
 		hipMemPoolExportPointer(export_data, dev_ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolExportToShareableHandle(void * shared_handle, oroMemPool_t mem_pool, oroMemAllocationHandleType handle_type, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolExportToShareableHandle(__ORO_FORCE_CAST(void *,shared_handle), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handle_type), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMemPoolExportToShareableHandle_cu4oro(__ORO_FORCE_CAST(void *,shared_handle), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handle_type), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMemPoolExportToShareableHandle(shared_handle, mem_pool, handle_type, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolGetAccess(oroMemAccessFlags * flags, oroMemPool_t mem_pool, oroMemLocation * location)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolGetAccess(__ORO_FORCE_CAST(CU4ORO::hipMemAccessFlags *,flags), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemLocation *,location)),
+		CU4ORO::hipMemPoolGetAccess_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemAccessFlags *,flags), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemLocation *,location)),
 		hipMemPoolGetAccess(flags, mem_pool, location)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolGetAttribute(oroMemPool_t mem_pool, oroMemPoolAttr attr, void * value)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolGetAttribute(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolAttr,attr), __ORO_FORCE_CAST(void *,value)),
+		CU4ORO::hipMemPoolGetAttribute_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolAttr,attr), __ORO_FORCE_CAST(void *,value)),
 		hipMemPoolGetAttribute(mem_pool, attr, value)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolImportFromShareableHandle(oroMemPool_t * mem_pool, void * shared_handle, oroMemAllocationHandleType handle_type, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolImportFromShareableHandle(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(void *,shared_handle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handle_type), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipMemPoolImportFromShareableHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t *,mem_pool), __ORO_FORCE_CAST(void *,shared_handle), __ORO_FORCE_CAST(CU4ORO::hipMemAllocationHandleType,handle_type), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipMemPoolImportFromShareableHandle(mem_pool, shared_handle, handle_type, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolImportPointer(void ** dev_ptr, oroMemPool_t mem_pool, oroMemPoolPtrExportData * export_data)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolImportPointer(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolPtrExportData *,export_data)),
+		CU4ORO::hipMemPoolImportPointer_cu4oro(__ORO_FORCE_CAST(void **,dev_ptr), __ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolPtrExportData *,export_data)),
 		hipMemPoolImportPointer(dev_ptr, mem_pool, export_data)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolSetAccess(oroMemPool_t mem_pool, const oroMemAccessDesc * desc_list, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolSetAccess(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(const CU4ORO::hipMemAccessDesc *,desc_list), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemPoolSetAccess_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(const CU4ORO::hipMemAccessDesc *,desc_list), __ORO_FORCE_CAST(size_t,count)),
 		hipMemPoolSetAccess(mem_pool, desc_list, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolSetAttribute(oroMemPool_t mem_pool, oroMemPoolAttr attr, void * value)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolSetAttribute(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolAttr,attr), __ORO_FORCE_CAST(void *,value)),
+		CU4ORO::hipMemPoolSetAttribute_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(CU4ORO::hipMemPoolAttr,attr), __ORO_FORCE_CAST(void *,value)),
 		hipMemPoolSetAttribute(mem_pool, attr, value)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPoolTrimTo(oroMemPool_t mem_pool, size_t min_bytes_to_hold)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPoolTrimTo(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(size_t,min_bytes_to_hold)),
+		CU4ORO::hipMemPoolTrimTo_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipMemPool_t,mem_pool), __ORO_FORCE_CAST(size_t,min_bytes_to_hold)),
 		hipMemPoolTrimTo(mem_pool, min_bytes_to_hold)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemPrefetchAsync(const void * dev_ptr, size_t count, int device, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemPrefetchAsync(__ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(int,device), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemPrefetchAsync_cu4oro(__ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(int,device), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemPrefetchAsync(dev_ptr, count, device, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemRangeGetAttribute(void * data, size_t data_size, oroMemRangeAttribute attribute, const void * dev_ptr, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemRangeGetAttribute(__ORO_FORCE_CAST(void *,data), __ORO_FORCE_CAST(size_t,data_size), __ORO_FORCE_CAST(CU4ORO::hipMemRangeAttribute,attribute), __ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemRangeGetAttribute_cu4oro(__ORO_FORCE_CAST(void *,data), __ORO_FORCE_CAST(size_t,data_size), __ORO_FORCE_CAST(CU4ORO::hipMemRangeAttribute,attribute), __ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count)),
 		hipMemRangeGetAttribute(data, data_size, attribute, dev_ptr, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemRangeGetAttributes(void ** data, size_t * data_sizes, oroMemRangeAttribute * attributes, size_t num_attributes, const void * dev_ptr, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemRangeGetAttributes(__ORO_FORCE_CAST(void **,data), __ORO_FORCE_CAST(size_t *,data_sizes), __ORO_FORCE_CAST(CU4ORO::hipMemRangeAttribute *,attributes), __ORO_FORCE_CAST(size_t,num_attributes), __ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemRangeGetAttributes_cu4oro(__ORO_FORCE_CAST(void **,data), __ORO_FORCE_CAST(size_t *,data_sizes), __ORO_FORCE_CAST(CU4ORO::hipMemRangeAttribute *,attributes), __ORO_FORCE_CAST(size_t,num_attributes), __ORO_FORCE_CAST(const void *,dev_ptr), __ORO_FORCE_CAST(size_t,count)),
 		hipMemRangeGetAttributes(data, data_sizes, attributes, num_attributes, dev_ptr, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemRelease(oroMemGenericAllocationHandle_t handle)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemRelease(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle)),
+		CU4ORO::hipMemRelease_cu4oro(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle,handle)),
 		hipMemRelease(handle)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemRetainAllocationHandle(oroMemGenericAllocationHandle_t * handle, void * addr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemRetainAllocationHandle(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(void *,addr)),
+		CU4ORO::hipMemRetainAllocationHandle_cu4oro(__ORO_FORCE_CAST(CU4ORO::CUmemGenericAllocationHandle *,handle), __ORO_FORCE_CAST(void *,addr)),
 		hipMemRetainAllocationHandle(handle, addr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemSetAccess(void * ptr, size_t size, const oroMemAccessDesc * desc, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemSetAccess(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(const CU4ORO::hipMemAccessDesc *,desc), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemSetAccess_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size), __ORO_FORCE_CAST(const CU4ORO::hipMemAccessDesc *,desc), __ORO_FORCE_CAST(size_t,count)),
 		hipMemSetAccess(ptr, size, desc, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemUnmap(void * ptr, size_t size)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemUnmap(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size)),
+		CU4ORO::hipMemUnmap_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr), __ORO_FORCE_CAST(size_t,size)),
 		hipMemUnmap(ptr, size)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy(void * dst, const void * src, size_t sizeBytes, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpy_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpy(dst, src, sizeBytes, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2D(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2D(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpy2D_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpy2D(dst, dpitch, src, spitch, width, height, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2DAsync(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2DAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpy2DAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpy2DAsync(dst, dpitch, src, spitch, width, height, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2DFromArray(void * dst, size_t dpitch, oroArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2DFromArray(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(CU4ORO::hipArray_t,src), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpy2DFromArray_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(CU4ORO::hipArray_t,src), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpy2DFromArray(dst, dpitch, src, wOffset, hOffset, width, height, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2DFromArrayAsync(void * dst, size_t dpitch, oroArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2DFromArrayAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(CU4ORO::hipArray_t,src), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpy2DFromArrayAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,dpitch), __ORO_FORCE_CAST(CU4ORO::hipArray_t,src), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpy2DFromArrayAsync(dst, dpitch, src, wOffset, hOffset, width, height, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2DToArray(oroArray_t dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2DToArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpy2DToArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpy2DToArray(dst, wOffset, hOffset, src, spitch, width, height, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy2DToArrayAsync(oroArray_t dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy2DToArrayAsync(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpy2DToArrayAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,spitch), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpy2DToArrayAsync(dst, wOffset, hOffset, src, spitch, width, height, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy3D(const  oroMemcpy3DParms * p)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy3D(__ORO_FORCE_CAST(const struct CU4ORO::cudaMemcpy3DParms *,p)),
+		CU4ORO::hipMemcpy3D_cu4oro(__ORO_FORCE_CAST(const struct CU4ORO::cudaMemcpy3DParms *,p)),
 		hipMemcpy3D(p)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpy3DAsync(const  oroMemcpy3DParms * p, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpy3DAsync(__ORO_FORCE_CAST(const struct CU4ORO::cudaMemcpy3DParms *,p), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpy3DAsync_cu4oro(__ORO_FORCE_CAST(const struct CU4ORO::cudaMemcpy3DParms *,p), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpy3DAsync(p, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyAsync(void * dst, const void * src, size_t sizeBytes, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyAsync(dst, src, sizeBytes, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyAtoH(void * dst, oroArray_t srcArray, size_t srcOffset, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyAtoH(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipArray_t,srcArray), __ORO_FORCE_CAST(size_t,srcOffset), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemcpyAtoH_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipArray_t,srcArray), __ORO_FORCE_CAST(size_t,srcOffset), __ORO_FORCE_CAST(size_t,count)),
 		hipMemcpyAtoH(dst, srcArray, srcOffset, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyDtoD(oroDeviceptr_t dst, oroDeviceptr_t src, size_t sizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyDtoD(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
+		CU4ORO::hipMemcpyDtoD_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemcpyDtoD(dst, src, sizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyDtoDAsync(oroDeviceptr_t dst, oroDeviceptr_t src, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyDtoDAsync(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyDtoDAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyDtoDAsync(dst, src, sizeBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyDtoH(void * dst, oroDeviceptr_t src, size_t sizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyDtoH(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
+		CU4ORO::hipMemcpyDtoH_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemcpyDtoH(dst, src, sizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyDtoHAsync(void * dst, oroDeviceptr_t src, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyDtoHAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyDtoHAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyDtoHAsync(dst, src, sizeBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyFromArray(void * dst, oroArray_const_t srcArray, size_t wOffset, size_t hOffset, size_t count, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyFromArray(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipArray_const_t,srcArray), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpyFromArray_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(CU4ORO::hipArray_const_t,srcArray), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpyFromArray(dst, srcArray, wOffset, hOffset, count, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyFromSymbol(void * dst, const void * symbol, size_t sizeBytes, size_t offset, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyFromSymbol(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpyFromSymbol_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpyFromSymbol(dst, symbol, sizeBytes, offset, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyFromSymbolAsync(void * dst, const void * symbol, size_t sizeBytes, size_t offset, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyFromSymbolAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyFromSymbolAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyFromSymbolAsync(dst, symbol, sizeBytes, offset, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyHtoA(oroArray_t dstArray, size_t dstOffset, const void * srcHost, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyHtoA(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dstArray), __ORO_FORCE_CAST(size_t,dstOffset), __ORO_FORCE_CAST(const void *,srcHost), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemcpyHtoA_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dstArray), __ORO_FORCE_CAST(size_t,dstOffset), __ORO_FORCE_CAST(const void *,srcHost), __ORO_FORCE_CAST(size_t,count)),
 		hipMemcpyHtoA(dstArray, dstOffset, srcHost, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyHtoD(oroDeviceptr_t dst, void * src, size_t sizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyHtoD(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
+		CU4ORO::hipMemcpyHtoD_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemcpyHtoD(dst, src, sizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyHtoDAsync(oroDeviceptr_t dst, void * src, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyHtoDAsync(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyHtoDAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyHtoDAsync(dst, src, sizeBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyParam2D(const oro_Memcpy2D * pCopy)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyParam2D(__ORO_FORCE_CAST(const CU4ORO::hip_Memcpy2D *,pCopy)),
+		CU4ORO::hipMemcpyParam2D_cu4oro(__ORO_FORCE_CAST(const CU4ORO::hip_Memcpy2D *,pCopy)),
 		hipMemcpyParam2D(pCopy)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyParam2DAsync(const oro_Memcpy2D * pCopy, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyParam2DAsync(__ORO_FORCE_CAST(const CU4ORO::hip_Memcpy2D *,pCopy), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyParam2DAsync_cu4oro(__ORO_FORCE_CAST(const CU4ORO::hip_Memcpy2D *,pCopy), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyParam2DAsync(pCopy, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyPeer(void * dst, int dstDeviceId, const void * src, int srcDeviceId, size_t sizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyPeer(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,dstDeviceId), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(int,srcDeviceId), __ORO_FORCE_CAST(size_t,sizeBytes)),
+		CU4ORO::hipMemcpyPeer_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,dstDeviceId), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(int,srcDeviceId), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemcpyPeer(dst, dstDeviceId, src, srcDeviceId, sizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyPeerAsync(void * dst, int dstDeviceId, const void * src, int srcDevice, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyPeerAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,dstDeviceId), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(int,srcDevice), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyPeerAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,dstDeviceId), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(int,srcDevice), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyPeerAsync(dst, dstDeviceId, src, srcDevice, sizeBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyToArray(oroArray_t dst, size_t wOffset, size_t hOffset, const void * src, size_t count, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyToArray(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpyToArray_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t,dst), __ORO_FORCE_CAST(size_t,wOffset), __ORO_FORCE_CAST(size_t,hOffset), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpyToArray(dst, wOffset, hOffset, src, count, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyToSymbol(const void * symbol, const void * src, size_t sizeBytes, size_t offset, oroMemcpyKind kind)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyToSymbol(__ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
+		CU4ORO::hipMemcpyToSymbol_cu4oro(__ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind)),
 		hipMemcpyToSymbol(symbol, src, sizeBytes, offset, kind)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyToSymbolAsync(const void * symbol, const void * src, size_t sizeBytes, size_t offset, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyToSymbolAsync(__ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyToSymbolAsync_cu4oro(__ORO_FORCE_CAST(const void *,symbol), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(size_t,offset), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyToSymbolAsync(symbol, src, sizeBytes, offset, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemcpyWithStream(void * dst, const void * src, size_t sizeBytes, oroMemcpyKind kind, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemcpyWithStream(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemcpyWithStream_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(const void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipMemcpyKind,kind), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemcpyWithStream(dst, src, sizeBytes, kind, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemset(void * dst, int value, size_t sizeBytes)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemset(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,sizeBytes)),
+		CU4ORO::hipMemset_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemset(dst, value, sizeBytes)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemset2D(void * dst, size_t pitch, int value, size_t width, size_t height)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemset2D(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,pitch), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height)),
+		CU4ORO::hipMemset2D_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,pitch), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height)),
 		hipMemset2D(dst, pitch, value, width, height)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemset2DAsync(void * dst, size_t pitch, int value, size_t width, size_t height, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemset2DAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,pitch), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemset2DAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(size_t,pitch), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,width), __ORO_FORCE_CAST(size_t,height), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemset2DAsync(dst, pitch, value, width, height, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemset3D(oroPitchedPtr pitchedDevPtr, int value, oroExtent extent)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemset3D(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr,pitchedDevPtr), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent)),
+		CU4ORO::hipMemset3D_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr,pitchedDevPtr), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent)),
 		hipMemset3D(pitchedDevPtr, value, extent)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemset3DAsync(oroPitchedPtr pitchedDevPtr, int value, oroExtent extent, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemset3DAsync(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr,pitchedDevPtr), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemset3DAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipPitchedPtr,pitchedDevPtr), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(CU4ORO::hipExtent,extent), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemset3DAsync(pitchedDevPtr, value, extent, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetAsync(void * dst, int value, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetAsync(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemsetAsync_cu4oro(__ORO_FORCE_CAST(void *,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemsetAsync(dst, value, sizeBytes, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD16(oroDeviceptr_t dest, unsigned short value, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD16(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned short,value), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemsetD16_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned short,value), __ORO_FORCE_CAST(size_t,count)),
 		hipMemsetD16(dest, value, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD16Async(oroDeviceptr_t dest, unsigned short value, size_t count, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD16Async(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned short,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemsetD16Async_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned short,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemsetD16Async(dest, value, count, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD32(oroDeviceptr_t dest, int value, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD32(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemsetD32_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,count)),
 		hipMemsetD32(dest, value, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD32Async(oroDeviceptr_t dst, int value, size_t count, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD32Async(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemsetD32Async_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(int,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemsetD32Async(dst, value, count, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD8(oroDeviceptr_t dest, unsigned char value, size_t count)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD8(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned char,value), __ORO_FORCE_CAST(size_t,count)),
+		CU4ORO::hipMemsetD8_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned char,value), __ORO_FORCE_CAST(size_t,count)),
 		hipMemsetD8(dest, value, count)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMemsetD8Async(oroDeviceptr_t dest, unsigned char value, size_t count, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMemsetD8Async(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned char,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipMemsetD8Async_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dest), __ORO_FORCE_CAST(unsigned char,value), __ORO_FORCE_CAST(size_t,count), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipMemsetD8Async(dest, value, count, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMipmappedArrayCreate(oroMipmappedArray_t * pHandle, ORO_ARRAY3D_DESCRIPTOR * pMipmappedArrayDesc, unsigned int numMipmapLevels)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMipmappedArrayCreate(__ORO_FORCE_CAST(CU4ORO::hipmipmappedArray *,pHandle), __ORO_FORCE_CAST(CU4ORO::CUDA_ARRAY3D_DESCRIPTOR *,pMipmappedArrayDesc), __ORO_FORCE_CAST(unsigned int,numMipmapLevels)),
+		CU4ORO::hipMipmappedArrayCreate_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipmipmappedArray *,pHandle), __ORO_FORCE_CAST(CU4ORO::CUDA_ARRAY3D_DESCRIPTOR *,pMipmappedArrayDesc), __ORO_FORCE_CAST(unsigned int,numMipmapLevels)),
 		hipMipmappedArrayCreate(pHandle, pMipmappedArrayDesc, numMipmapLevels)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMipmappedArrayDestroy(oroMipmappedArray_t hMipmappedArray)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMipmappedArrayDestroy(__ORO_FORCE_CAST(CU4ORO::hipmipmappedArray,hMipmappedArray)),
+		CU4ORO::hipMipmappedArrayDestroy_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipmipmappedArray,hMipmappedArray)),
 		hipMipmappedArrayDestroy(hMipmappedArray)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroMipmappedArrayGetLevel(oroArray_t * pLevelArray, oroMipmappedArray_t hMipMappedArray, unsigned int level)
 {
 	__ORO_FUNC(
-		CU4ORO::hipMipmappedArrayGetLevel(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,pLevelArray), __ORO_FORCE_CAST(CU4ORO::hipmipmappedArray,hMipMappedArray), __ORO_FORCE_CAST(unsigned int,level)),
+		CU4ORO::hipMipmappedArrayGetLevel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,pLevelArray), __ORO_FORCE_CAST(CU4ORO::hipmipmappedArray,hMipMappedArray), __ORO_FORCE_CAST(unsigned int,level)),
 		hipMipmappedArrayGetLevel(pLevelArray, hMipMappedArray, level)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleGetFunction(oroFunction_t * function, oroModule_t module, const char * kname)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleGetFunction(__ORO_FORCE_CAST(CU4ORO::hipFunction_t *,function), __ORO_FORCE_CAST(CU4ORO::hipModule_t,module), __ORO_FORCE_CAST(const char *,kname)),
+		CU4ORO::hipModuleGetFunction_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t *,function), __ORO_FORCE_CAST(CU4ORO::hipModule_t,module), __ORO_FORCE_CAST(const char *,kname)),
 		hipModuleGetFunction(function, module, kname)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleGetGlobal(oroDeviceptr_t * dptr, size_t * bytes, oroModule_t hmod, const char * name)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleGetGlobal(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dptr), __ORO_FORCE_CAST(size_t *,bytes), __ORO_FORCE_CAST(CU4ORO::hipModule_t,hmod), __ORO_FORCE_CAST(const char *,name)),
+		CU4ORO::hipModuleGetGlobal_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dptr), __ORO_FORCE_CAST(size_t *,bytes), __ORO_FORCE_CAST(CU4ORO::hipModule_t,hmod), __ORO_FORCE_CAST(const char *,name)),
 		hipModuleGetGlobal(dptr, bytes, hmod, name)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleGetTexRef(textureReference ** texRef, oroModule_t hmod, const char * name)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleGetTexRef(__ORO_FORCE_CAST(CU4ORO::CUtexref *,texRef), __ORO_FORCE_CAST(CU4ORO::hipModule_t,hmod), __ORO_FORCE_CAST(const char *,name)),
+		CU4ORO::hipModuleGetTexRef_cu4oro(__ORO_FORCE_CAST(CU4ORO::CUtexref *,texRef), __ORO_FORCE_CAST(CU4ORO::hipModule_t,hmod), __ORO_FORCE_CAST(const char *,name)),
 		hipModuleGetTexRef(texRef, hmod, name)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLaunchCooperativeKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLaunchCooperativeKernel(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams)),
+		CU4ORO::hipModuleLaunchCooperativeKernel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams)),
 		hipModuleLaunchCooperativeKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLaunchCooperativeKernelMultiDevice(oroFunctionLaunchParams * launchParamsList, unsigned int numDevices, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLaunchCooperativeKernelMultiDevice(__ORO_FORCE_CAST(CU4ORO::hipFunctionLaunchParams *,launchParamsList), __ORO_FORCE_CAST(unsigned int,numDevices), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipModuleLaunchCooperativeKernelMultiDevice_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunctionLaunchParams *,launchParamsList), __ORO_FORCE_CAST(unsigned int,numDevices), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipModuleLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams, void ** extra)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLaunchKernel(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(void **,extra)),
+		CU4ORO::hipModuleLaunchKernel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(void **,extra)),
 		hipModuleLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams, extra)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLoad(oroModule_t * module, const char * fname)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLoad(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const char *,fname)),
+		CU4ORO::hipModuleLoad_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const char *,fname)),
 		hipModuleLoad(module, fname)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLoadData(oroModule_t * module, const void * image)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLoadData(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const void *,image)),
+		CU4ORO::hipModuleLoadData_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const void *,image)),
 		hipModuleLoadData(module, image)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLoadDataEx(oroModule_t * module, const void * image, unsigned int numOptions, oroJitOption * options, void ** optionValues)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleLoadDataEx(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const void *,image), __ORO_FORCE_CAST(unsigned int,numOptions), __ORO_FORCE_CAST(CU4ORO::hipJitOption *,options), __ORO_FORCE_CAST(void **,optionValues)),
+		CU4ORO::hipModuleLoadDataEx_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipModule_t *,module), __ORO_FORCE_CAST(const void *,image), __ORO_FORCE_CAST(unsigned int,numOptions), __ORO_FORCE_CAST(CU4ORO::hipJitOption *,options), __ORO_FORCE_CAST(void **,optionValues)),
 		hipModuleLoadDataEx(module, image, numOptions, options, optionValues)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleOccupancyMaxActiveBlocksPerMultiprocessor(int * numBlocks, oroFunction_t f, int blockSize, size_t dynSharedMemPerBlk)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk)),
+		CU4ORO::hipModuleOccupancyMaxActiveBlocksPerMultiprocessor_cu4oro(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk)),
 		hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(numBlocks, f, blockSize, dynSharedMemPerBlk)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int * numBlocks, oroFunction_t f, int blockSize, size_t dynSharedMemPerBlk, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_cu4oro(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(numBlocks, f, blockSize, dynSharedMemPerBlk, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleOccupancyMaxPotentialBlockSize(int * gridSize, int * blockSize, oroFunction_t f, size_t dynSharedMemPerBlk, int blockSizeLimit)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleOccupancyMaxPotentialBlockSize(__ORO_FORCE_CAST(int *,gridSize), __ORO_FORCE_CAST(int *,blockSize), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(int,blockSizeLimit)),
+		CU4ORO::hipModuleOccupancyMaxPotentialBlockSize_cu4oro(__ORO_FORCE_CAST(int *,gridSize), __ORO_FORCE_CAST(int *,blockSize), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(int,blockSizeLimit)),
 		hipModuleOccupancyMaxPotentialBlockSize(gridSize, blockSize, f, dynSharedMemPerBlk, blockSizeLimit)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleOccupancyMaxPotentialBlockSizeWithFlags(int * gridSize, int * blockSize, oroFunction_t f, size_t dynSharedMemPerBlk, int blockSizeLimit, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleOccupancyMaxPotentialBlockSizeWithFlags(__ORO_FORCE_CAST(int *,gridSize), __ORO_FORCE_CAST(int *,blockSize), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(int,blockSizeLimit), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipModuleOccupancyMaxPotentialBlockSizeWithFlags_cu4oro(__ORO_FORCE_CAST(int *,gridSize), __ORO_FORCE_CAST(int *,blockSize), __ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(int,blockSizeLimit), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipModuleOccupancyMaxPotentialBlockSizeWithFlags(gridSize, blockSize, f, dynSharedMemPerBlk, blockSizeLimit, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleUnload(oroModule_t module)
 {
 	__ORO_FUNC(
-		CU4ORO::hipModuleUnload(__ORO_FORCE_CAST(CU4ORO::hipModule_t,module)),
+		CU4ORO::hipModuleUnload_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipModule_t,module)),
 		hipModuleUnload(module)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroOccupancyMaxActiveBlocksPerMultiprocessor(int * numBlocks, const void * f, int blockSize, size_t dynSharedMemPerBlk)
 {
 	__ORO_FUNC(
-		CU4ORO::hipOccupancyMaxActiveBlocksPerMultiprocessor(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk)),
+		CU4ORO::hipOccupancyMaxActiveBlocksPerMultiprocessor_cu4oro(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk)),
 		hipOccupancyMaxActiveBlocksPerMultiprocessor(numBlocks, f, blockSize, dynSharedMemPerBlk)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int * numBlocks, const void * f, int blockSize, size_t dynSharedMemPerBlk, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_cu4oro(__ORO_FORCE_CAST(int *,numBlocks), __ORO_FORCE_CAST(const void *,f), __ORO_FORCE_CAST(int,blockSize), __ORO_FORCE_CAST(size_t,dynSharedMemPerBlk), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(numBlocks, f, blockSize, dynSharedMemPerBlk, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroPeekAtLastError()
 {
 	__ORO_FUNC(
-		CU4ORO::hipPeekAtLastError(),
+		CU4ORO::hipPeekAtLastError_cu4oro(),
 		hipPeekAtLastError()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroPointerGetAttribute(void * data, oroPointer_attribute attribute, oroDeviceptr_t ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipPointerGetAttribute(__ORO_FORCE_CAST(void *,data), __ORO_FORCE_CAST(CU4ORO::CUpointer_attribute,attribute), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
+		CU4ORO::hipPointerGetAttribute_cu4oro(__ORO_FORCE_CAST(void *,data), __ORO_FORCE_CAST(CU4ORO::CUpointer_attribute,attribute), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,ptr)),
 		hipPointerGetAttribute(data, attribute, ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroPointerGetAttributes(oroPointerAttribute_t * attributes, const void * ptr)
 {
 	__ORO_FUNC(
-		CU4ORO::hipPointerGetAttributes(__ORO_FORCE_CAST(CU4ORO::hipPointerAttribute_t *,attributes), __ORO_FORCE_CAST(const void *,ptr)),
+		CU4ORO::hipPointerGetAttributes_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipPointerAttribute_t *,attributes), __ORO_FORCE_CAST(const void *,ptr)),
 		hipPointerGetAttributes(attributes, ptr)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroProfilerStart()
 {
 	__ORO_FUNC(
-		CU4ORO::hipProfilerStart(),
+		CU4ORO::hipProfilerStart_cu4oro(),
 		hipProfilerStart()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroProfilerStop()
 {
 	__ORO_FUNC(
-		CU4ORO::hipProfilerStop(),
+		CU4ORO::hipProfilerStop_cu4oro(),
 		hipProfilerStop()     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroRuntimeGetVersion(int * runtimeVersion)
 {
 	__ORO_FUNC(
-		CU4ORO::hipRuntimeGetVersion(__ORO_FORCE_CAST(int *,runtimeVersion)),
+		CU4ORO::hipRuntimeGetVersion_cu4oro(__ORO_FORCE_CAST(int *,runtimeVersion)),
 		hipRuntimeGetVersion(runtimeVersion)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroSetDevice(int deviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipSetDevice(__ORO_FORCE_CAST(int,deviceId)),
+		CU4ORO::hipSetDevice_cu4oro(__ORO_FORCE_CAST(int,deviceId)),
 		hipSetDevice(deviceId)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroSetDeviceFlags(unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipSetDeviceFlags(__ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipSetDeviceFlags_cu4oro(__ORO_FORCE_CAST(unsigned int,flags)),
 		hipSetDeviceFlags(flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroSignalExternalSemaphoresAsync(const oroExternalSemaphore_t * extSemArray, const oroExternalSemaphoreSignalParams * paramsArray, unsigned int numExtSems, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipSignalExternalSemaphoresAsync(__ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphore_t *,extSemArray), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreSignalParams *,paramsArray), __ORO_FORCE_CAST(unsigned int,numExtSems), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipSignalExternalSemaphoresAsync_cu4oro(__ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphore_t *,extSemArray), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreSignalParams *,paramsArray), __ORO_FORCE_CAST(unsigned int,numExtSems), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipSignalExternalSemaphoresAsync(extSemArray, paramsArray, numExtSems, stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamAddCallback(oroStream_t stream, oroStreamCallback_t callback, void * userData, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamAddCallback(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipStreamCallback_t,callback), __ORO_FORCE_CAST(void *,userData), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipStreamAddCallback_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipStreamCallback_t,callback), __ORO_FORCE_CAST(void *,userData), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipStreamAddCallback(stream, callback, userData, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamAttachMemAsync(oroStream_t stream, void * dev_ptr, size_t length, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamAttachMemAsync(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dev_ptr), __ORO_FORCE_CAST(size_t,length), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipStreamAttachMemAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t *,dev_ptr), __ORO_FORCE_CAST(size_t,length), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipStreamAttachMemAsync(stream, dev_ptr, length, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamCreate(oroStream_t * stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamCreate(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream)),
+		CU4ORO::hipStreamCreate_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream)),
 		hipStreamCreate(stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamCreateWithFlags(oroStream_t * stream, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamCreateWithFlags(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipStreamCreateWithFlags_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipStreamCreateWithFlags(stream, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamCreateWithPriority(oroStream_t * stream, unsigned int flags, int priority)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamCreateWithPriority(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream), __ORO_FORCE_CAST(unsigned int,flags), __ORO_FORCE_CAST(int,priority)),
+		CU4ORO::hipStreamCreateWithPriority_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t *,stream), __ORO_FORCE_CAST(unsigned int,flags), __ORO_FORCE_CAST(int,priority)),
 		hipStreamCreateWithPriority(stream, flags, priority)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamDestroy(oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamDestroy(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipStreamDestroy_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipStreamDestroy(stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamGetDevice(oroStream_t stream, oroDevice_t * device)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamGetDevice(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipDevice_t *,device)),
+		CU4ORO::hipStreamGetDevice_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipDevice_t *,device)),
 		hipStreamGetDevice(stream, device)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamGetFlags(oroStream_t stream, unsigned int * flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamGetFlags(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(unsigned int *,flags)),
+		CU4ORO::hipStreamGetFlags_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(unsigned int *,flags)),
 		hipStreamGetFlags(stream, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamGetPriority(oroStream_t stream, int * priority)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamGetPriority(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(int *,priority)),
+		CU4ORO::hipStreamGetPriority_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(int *,priority)),
 		hipStreamGetPriority(stream, priority)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamQuery(oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamQuery(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipStreamQuery_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipStreamQuery(stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamSynchronize(oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamSynchronize(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipStreamSynchronize_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipStreamSynchronize(stream)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamWaitEvent(oroStream_t stream, oroEvent_t event, unsigned int flags)
 {
 	__ORO_FUNC(
-		CU4ORO::hipStreamWaitEvent(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(unsigned int,flags)),
+		CU4ORO::hipStreamWaitEvent_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(unsigned int,flags)),
 		hipStreamWaitEvent(stream, event, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroWaitExternalSemaphoresAsync(const oroExternalSemaphore_t * extSemArray, const oroExternalSemaphoreWaitParams * paramsArray, unsigned int numExtSems, oroStream_t stream)
 {
 	__ORO_FUNC(
-		CU4ORO::hipWaitExternalSemaphoresAsync(__ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphore_t *,extSemArray), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreWaitParams *,paramsArray), __ORO_FORCE_CAST(unsigned int,numExtSems), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
+		CU4ORO::hipWaitExternalSemaphoresAsync_cu4oro(__ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphore_t *,extSemArray), __ORO_FORCE_CAST(const CU4ORO::hipExternalSemaphoreWaitParams *,paramsArray), __ORO_FORCE_CAST(unsigned int,numExtSems), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipWaitExternalSemaphoresAsync(extSemArray, paramsArray, numExtSems, stream)     );
 	return oroErrorUnknown;
 }
 orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char * name_expression)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcAddNameExpression(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(const char *,name_expression)),
+		CU4ORO::hiprtcAddNameExpression_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(const char *,name_expression)),
 		hiprtcAddNameExpression(prog, name_expression)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char ** options)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcCompileProgram(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(int,numOptions), __ORO_FORCE_CAST(const char **,options)),
+		CU4ORO::hiprtcCompileProgram_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(int,numOptions), __ORO_FORCE_CAST(const char **,options)),
 		hiprtcCompileProgram(prog, numOptions, options)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcCreateProgram(orortcProgram * prog, const char * src, const char * name, int numHeaders, const char ** headers, const char ** includeNames)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcCreateProgram(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram *,prog), __ORO_FORCE_CAST(const char *,src), __ORO_FORCE_CAST(const char *,name), __ORO_FORCE_CAST(int,numHeaders), __ORO_FORCE_CAST(const char **,headers), __ORO_FORCE_CAST(const char **,includeNames)),
+		CU4ORO::hiprtcCreateProgram_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram *,prog), __ORO_FORCE_CAST(const char *,src), __ORO_FORCE_CAST(const char *,name), __ORO_FORCE_CAST(int,numHeaders), __ORO_FORCE_CAST(const char **,headers), __ORO_FORCE_CAST(const char **,includeNames)),
 		hiprtcCreateProgram(prog, src, name, numHeaders, headers, includeNames)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcDestroyProgram(orortcProgram * prog)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcDestroyProgram(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram *,prog)),
+		CU4ORO::hiprtcDestroyProgram_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram *,prog)),
 		hiprtcDestroyProgram(prog)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcGetCode(orortcProgram prog, char * code)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetCode(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(char *,code)),
+		CU4ORO::hiprtcGetCode_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(char *,code)),
 		hiprtcGetCode(prog, code)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcGetCodeSize(orortcProgram prog, size_t * codeSizeRet)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetCodeSize(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(size_t *,codeSizeRet)),
+		CU4ORO::hiprtcGetCodeSize_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(size_t *,codeSizeRet)),
 		hiprtcGetCodeSize(prog, codeSizeRet)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 const char * OROAPI orortcGetErrorString(orortcResult result)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetErrorString(__ORO_FORCE_CAST(CU4ORO::hiprtcResult,result)),
+		CU4ORO::hiprtcGetErrorString_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcResult,result)),
 		hiprtcGetErrorString(result)     );
 	return nullptr;
 }
 orortcResult OROAPI orortcGetLoweredName(orortcProgram prog, const char * name_expression, const char ** lowered_name)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetLoweredName(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(const char *,name_expression), __ORO_FORCE_CAST(const char **,lowered_name)),
+		CU4ORO::hiprtcGetLoweredName_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(const char *,name_expression), __ORO_FORCE_CAST(const char **,lowered_name)),
 		hiprtcGetLoweredName(prog, name_expression, lowered_name)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcGetProgramLog(orortcProgram prog, char * log)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetProgramLog(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(char *,log)),
+		CU4ORO::hiprtcGetProgramLog_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(char *,log)),
 		hiprtcGetProgramLog(prog, log)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcGetProgramLogSize(orortcProgram prog, size_t * logSizeRet)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcGetProgramLogSize(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(size_t *,logSizeRet)),
+		CU4ORO::hiprtcGetProgramLogSize_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(size_t *,logSizeRet)),
 		hiprtcGetProgramLogSize(prog, logSizeRet)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
 orortcResult OROAPI orortcVersion(int * major, int * minor)
 {
 	__ORO_FUNC(
-		CU4ORO::hiprtcVersion(__ORO_FORCE_CAST(int *,major), __ORO_FORCE_CAST(int *,minor)),
+		CU4ORO::hiprtcVersion_cu4oro(__ORO_FORCE_CAST(int *,major), __ORO_FORCE_CAST(int *,minor)),
 		hiprtcVersion(major, minor)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }

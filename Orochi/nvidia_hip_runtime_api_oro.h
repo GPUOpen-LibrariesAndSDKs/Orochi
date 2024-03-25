@@ -1072,7 +1072,7 @@ typedef struct cudaPos hipPos;
 #define make_hipExtent make_cudaExtent
 #define make_hipPos make_cudaPos
 #define make_hipPitchedPtr make_cudaPitchedPtr
-// Flags that can be used with hipStreamCreateWithFlags
+// Flags that can be used with hipStreamCreateWithFlags_cu4oro
 #define hipStreamDefault cudaStreamDefault
 #define hipStreamNonBlocking cudaStreamNonBlocking
 
@@ -2075,74 +2075,74 @@ typedef struct hipMemAllocationProp {
  */
 #define HIPRT_CB CUDART_CB
 typedef void(HIPRT_CB* hipStreamCallback_t)(hipStream_t stream, hipError_t status, void* userData);
-inline static hipError_t hipInit(unsigned int flags) {
+inline static hipError_t hipInit_cu4oro(unsigned int flags) {
     return hipCUResultTohipError(cuInit(flags));
 }
 
-inline static hipError_t hipDeviceReset() { return hipCUDAErrorTohipError(cudaDeviceReset()); }
+inline static hipError_t hipDeviceReset_cu4oro() { return hipCUDAErrorTohipError(cudaDeviceReset()); }
 
-inline static hipError_t hipGetLastError() { return hipCUDAErrorTohipError(cudaGetLastError()); }
+inline static hipError_t hipGetLastError_cu4oro() { return hipCUDAErrorTohipError(cudaGetLastError()); }
 
-inline static hipError_t hipPeekAtLastError() {
+inline static hipError_t hipPeekAtLastError_cu4oro() {
     return hipCUDAErrorTohipError(cudaPeekAtLastError());
 }
 
-inline static hipError_t hipMalloc(void** ptr, size_t size) {
+inline static hipError_t hipMalloc_cu4oro(void** ptr, size_t size) {
     return hipCUDAErrorTohipError(cudaMalloc(ptr, size));
 }
 
-inline static hipError_t hipMallocPitch(void** ptr, size_t* pitch, size_t width, size_t height) {
+inline static hipError_t hipMallocPitch_cu4oro(void** ptr, size_t* pitch, size_t width, size_t height) {
     return hipCUDAErrorTohipError(cudaMallocPitch(ptr, pitch, width, height));
 }
 
-inline static hipError_t hipMemAllocPitch(hipDeviceptr_t* dptr,size_t* pitch,size_t widthInBytes,size_t height,unsigned int elementSizeBytes){
+inline static hipError_t hipMemAllocPitch_cu4oro(hipDeviceptr_t* dptr,size_t* pitch,size_t widthInBytes,size_t height,unsigned int elementSizeBytes){
     return hipCUResultTohipError(cuMemAllocPitch(dptr,pitch,widthInBytes,height,elementSizeBytes));
 }
 
-inline static hipError_t hipMalloc3D(hipPitchedPtr* pitchedDevPtr, hipExtent extent) {
+inline static hipError_t hipMalloc3D_cu4oro(hipPitchedPtr* pitchedDevPtr, hipExtent extent) {
     return hipCUDAErrorTohipError(cudaMalloc3D(pitchedDevPtr, extent));
 }
 
-inline static hipError_t hipFree(void* ptr) { return hipCUDAErrorTohipError(cudaFree(ptr)); }
+inline static hipError_t hipFree_cu4oro(void* ptr) { return hipCUDAErrorTohipError(cudaFree(ptr)); }
 
-__HIP_DEPRECATED_MSG("use hipHostMalloc instead")
-inline static hipError_t hipMallocHost(void** ptr, size_t size) {
+__HIP_DEPRECATED_MSG("use hipHostMalloc_cu4oro instead")
+inline static hipError_t hipMallocHost_cu4oro(void** ptr, size_t size) {
     return hipCUDAErrorTohipError(cudaMallocHost(ptr, size));
 }
 
-__HIP_DEPRECATED_MSG("use hipHostMalloc instead")
-inline static hipError_t hipMemAllocHost(void** ptr, size_t size) {
+__HIP_DEPRECATED_MSG("use hipHostMalloc_cu4oro instead")
+inline static hipError_t hipMemAllocHost_cu4oro(void** ptr, size_t size) {
     return hipCUResultTohipError(cuMemAllocHost(ptr, size));
 }
 
-__HIP_DEPRECATED_MSG("use hipHostMalloc instead")
-inline static hipError_t hipHostAlloc(void** ptr, size_t size, unsigned int flags) {
+__HIP_DEPRECATED_MSG("use hipHostMalloc_cu4oro instead")
+inline static hipError_t hipHostAlloc_cu4oro(void** ptr, size_t size, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaHostAlloc(ptr, size, flags));
 }
 
-inline static hipError_t hipHostMalloc(void** ptr, size_t size, unsigned int flags) {
+inline static hipError_t hipHostMalloc_cu4oro(void** ptr, size_t size, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaHostAlloc(ptr, size, flags));
 }
 
-inline static hipError_t hipMemAdvise(const void* dev_ptr, size_t count, hipMemoryAdvise advice,
+inline static hipError_t hipMemAdvise_cu4oro(const void* dev_ptr, size_t count, hipMemoryAdvise advice,
                                       int device) {
     return hipCUDAErrorTohipError(cudaMemAdvise(dev_ptr, count,
         hipMemoryAdviseTocudaMemoryAdvise(advice), device));
 }
 
-inline static hipError_t hipMemPrefetchAsync(const void* dev_ptr, size_t count, int device,
+inline static hipError_t hipMemPrefetchAsync_cu4oro(const void* dev_ptr, size_t count, int device,
                                              hipStream_t stream __dparm(0)) {
     return hipCUDAErrorTohipError(cudaMemPrefetchAsync(dev_ptr, count, device, stream));
 }
 
-inline static hipError_t hipMemRangeGetAttribute(void* data, size_t data_size,
+inline static hipError_t hipMemRangeGetAttribute_cu4oro(void* data, size_t data_size,
                                                  hipMemRangeAttribute attribute,
                                                  const void* dev_ptr, size_t count) {
     return hipCUDAErrorTohipError(cudaMemRangeGetAttribute(data, data_size,
         hipMemRangeAttributeToCudaMemRangeAttribute(attribute), dev_ptr, count));
 }
 
-inline static hipError_t hipMemRangeGetAttributes(void** data, size_t* data_sizes,
+inline static hipError_t hipMemRangeGetAttributes_cu4oro(void** data, size_t* data_sizes,
                                                   hipMemRangeAttribute* attributes,
                                                   size_t num_attributes, const void* dev_ptr,
                                                   size_t count) {
@@ -2150,93 +2150,93 @@ inline static hipError_t hipMemRangeGetAttributes(void** data, size_t* data_size
         num_attributes, dev_ptr, count));
 }
 
-inline static hipError_t hipStreamAttachMemAsync(hipStream_t stream, hipDeviceptr_t* dev_ptr,
+inline static hipError_t hipStreamAttachMemAsync_cu4oro(hipStream_t stream, hipDeviceptr_t* dev_ptr,
                                                  size_t length __dparm(0),
                                                  unsigned int flags __dparm(hipMemAttachSingle)) {
     return hipCUDAErrorTohipError(cudaStreamAttachMemAsync(stream, dev_ptr, length, flags));
 }
 
-inline static hipError_t hipMallocManaged(void** ptr, size_t size, unsigned int flags) {
+inline static hipError_t hipMallocManaged_cu4oro(void** ptr, size_t size, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaMallocManaged(ptr, size, flags));
 }
 
-inline static hipError_t hipMallocArray(hipArray_t* array, const hipChannelFormatDesc* desc,
+inline static hipError_t hipMallocArray_cu4oro(hipArray_t* array, const hipChannelFormatDesc* desc,
                                         size_t width, size_t height __dparm(0),
                                         unsigned int flags __dparm(hipArrayDefault)) {
     return hipCUDAErrorTohipError(cudaMallocArray(array, desc, width, height, flags));
 }
 
-inline static hipError_t hipMalloc3DArray(hipArray_t* array, const hipChannelFormatDesc* desc,
+inline static hipError_t hipMalloc3DArray_cu4oro(hipArray_t* array, const hipChannelFormatDesc* desc,
                              hipExtent extent, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaMalloc3DArray(array, desc, extent, flags));
 }
 
-inline static hipError_t hipFreeArray(hipArray_t array) {
+inline static hipError_t hipFreeArray_cu4oro(hipArray_t array) {
     return hipCUDAErrorTohipError(cudaFreeArray(array));
 }
 
-inline static hipError_t hipMipmappedArrayCreate(hipmipmappedArray* pHandle,
+inline static hipError_t hipMipmappedArrayCreate_cu4oro(hipmipmappedArray* pHandle,
                                                  HIP_ARRAY3D_DESCRIPTOR* pMipmappedArrayDesc,
                                                  unsigned int numMipmapLevels) {
     return hipCUResultTohipError(cuMipmappedArrayCreate(pHandle, pMipmappedArrayDesc, numMipmapLevels));
 }
 
-inline static hipError_t hipMipmappedArrayDestroy(hipmipmappedArray hMipmappedArray) {
+inline static hipError_t hipMipmappedArrayDestroy_cu4oro(hipmipmappedArray hMipmappedArray) {
     return hipCUResultTohipError(cuMipmappedArrayDestroy(hMipmappedArray));
 }
 
-inline static hipError_t hipMipmappedArrayGetLevel(hipArray_t* pLevelArray,
+inline static hipError_t hipMipmappedArrayGetLevel_cu4oro(hipArray_t* pLevelArray,
                                                    hipmipmappedArray hMipMappedArray,
                                                    unsigned int level) {
     return hipCUResultTohipError(cuMipmappedArrayGetLevel((CUarray*)pLevelArray, hMipMappedArray, level));
 }
 
-inline static hipError_t hipMallocMipmappedArray(hipMipmappedArray_t* pHandle,
+inline static hipError_t hipMallocMipmappedArray_cu4oro(hipMipmappedArray_t* pHandle,
                                                  const hipChannelFormatDesc* desc, hipExtent extent,
                                                  unsigned int numLevels, unsigned int flags __dparm(0)) {
     return hipCUDAErrorTohipError(cudaMallocMipmappedArray(pHandle, desc, extent, numLevels, flags));
 }
 
-inline static hipError_t hipFreeMipmappedArray(hipMipmappedArray_t hMipmappedArray) {
+inline static hipError_t hipFreeMipmappedArray_cu4oro(hipMipmappedArray_t hMipmappedArray) {
     return hipCUDAErrorTohipError(cudaFreeMipmappedArray(hMipmappedArray));
 }
 
-inline static hipError_t hipGetMipmappedArrayLevel(hipArray_t* pLevelArray,
+inline static hipError_t hipGetMipmappedArrayLevel_cu4oro(hipArray_t* pLevelArray,
                                                    hipMipmappedArray_t hMipMappedArray,
                                                    unsigned int level) {
     return hipCUDAErrorTohipError(cudaGetMipmappedArrayLevel(pLevelArray, hMipMappedArray, level));
 }
 
-inline static hipError_t hipHostGetDevicePointer(void** devPtr, void* hostPtr, unsigned int flags) {
+inline static hipError_t hipHostGetDevicePointer_cu4oro(void** devPtr, void* hostPtr, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaHostGetDevicePointer(devPtr, hostPtr, flags));
 }
 
-inline static hipError_t hipHostGetFlags(unsigned int* flagsPtr, void* hostPtr) {
+inline static hipError_t hipHostGetFlags_cu4oro(unsigned int* flagsPtr, void* hostPtr) {
     return hipCUDAErrorTohipError(cudaHostGetFlags(flagsPtr, hostPtr));
 }
 
-inline static hipError_t hipHostRegister(void* ptr, size_t size, unsigned int flags) {
+inline static hipError_t hipHostRegister_cu4oro(void* ptr, size_t size, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaHostRegister(ptr, size, flags));
 }
 
-inline static hipError_t hipHostUnregister(void* ptr) {
+inline static hipError_t hipHostUnregister_cu4oro(void* ptr) {
     return hipCUDAErrorTohipError(cudaHostUnregister(ptr));
 }
 
-__HIP_DEPRECATED_MSG("use hipHostFree instead")
-inline static hipError_t hipFreeHost(void* ptr) {
+__HIP_DEPRECATED_MSG("use hipHostFree_cu4oro instead")
+inline static hipError_t hipFreeHost_cu4oro(void* ptr) {
     return hipCUDAErrorTohipError(cudaFreeHost(ptr));
 }
 
-inline static hipError_t hipHostFree(void* ptr) {
+inline static hipError_t hipHostFree_cu4oro(void* ptr) {
     return hipCUDAErrorTohipError(cudaFreeHost(ptr));
 }
 
-inline static hipError_t hipSetDevice(int device) {
+inline static hipError_t hipSetDevice_cu4oro(int device) {
     return hipCUDAErrorTohipError(cudaSetDevice(device));
 }
 
-inline static hipError_t hipChooseDevice(int* device, const hipDeviceProp_t* prop) {
+inline static hipError_t hipChooseDeviceR0600_cu4oro(int* device, const hipDeviceProp_t* prop) {
 
     if (prop == NULL) {
       return hipErrorInvalidValue;
@@ -2263,41 +2263,41 @@ inline static hipError_t hipChooseDevice(int* device, const hipDeviceProp_t* pro
     return hipCUDAErrorTohipError(cudaChooseDevice(device, &cdprop));
 }
 
-inline static hipError_t hipMemcpyHtoD(hipDeviceptr_t dst, void* src, size_t size) {
+inline static hipError_t hipMemcpyHtoD_cu4oro(hipDeviceptr_t dst, void* src, size_t size) {
     return hipCUResultTohipError(cuMemcpyHtoD(dst, src, size));
 }
 
-inline static hipError_t hipMemcpyDtoH(void* dst, hipDeviceptr_t src, size_t size) {
+inline static hipError_t hipMemcpyDtoH_cu4oro(void* dst, hipDeviceptr_t src, size_t size) {
     return hipCUResultTohipError(cuMemcpyDtoH(dst, src, size));
 }
 
-inline static hipError_t hipMemcpyDtoD(hipDeviceptr_t dst, hipDeviceptr_t src, size_t size) {
+inline static hipError_t hipMemcpyDtoD_cu4oro(hipDeviceptr_t dst, hipDeviceptr_t src, size_t size) {
     return hipCUResultTohipError(cuMemcpyDtoD(dst, src, size));
 }
 
-inline static hipError_t hipMemcpyHtoDAsync(hipDeviceptr_t dst, void* src, size_t size,
+inline static hipError_t hipMemcpyHtoDAsync_cu4oro(hipDeviceptr_t dst, void* src, size_t size,
                                             hipStream_t stream) {
     return hipCUResultTohipError(cuMemcpyHtoDAsync(dst, src, size, stream));
 }
 
-inline static hipError_t hipMemcpyDtoHAsync(void* dst, hipDeviceptr_t src, size_t size,
+inline static hipError_t hipMemcpyDtoHAsync_cu4oro(void* dst, hipDeviceptr_t src, size_t size,
                                             hipStream_t stream) {
     return hipCUResultTohipError(cuMemcpyDtoHAsync(dst, src, size, stream));
 }
 
-inline static hipError_t hipMemcpyDtoDAsync(hipDeviceptr_t dst, hipDeviceptr_t src, size_t size,
+inline static hipError_t hipMemcpyDtoDAsync_cu4oro(hipDeviceptr_t dst, hipDeviceptr_t src, size_t size,
                                             hipStream_t stream) {
     return hipCUResultTohipError(cuMemcpyDtoDAsync(dst, src, size, stream));
 }
 
-inline static hipError_t hipMemcpy(void* dst, const void* src, size_t sizeBytes,
+inline static hipError_t hipMemcpy_cu4oro(void* dst, const void* src, size_t sizeBytes,
                                    hipMemcpyKind copyKind) {
     return hipCUDAErrorTohipError(
         cudaMemcpy(dst, src, sizeBytes, copyKind));
 }
 
 
-inline static hipError_t hipMemcpyWithStream(void* dst, const void* src, size_t sizeBytes,
+inline static hipError_t hipMemcpyWithStream_cu4oro(void* dst, const void* src, size_t sizeBytes,
                                              hipMemcpyKind copyKind, hipStream_t stream) {
     cudaError_t error = cudaMemcpyAsync(dst, src, sizeBytes, copyKind, stream);
 
@@ -2306,19 +2306,19 @@ inline static hipError_t hipMemcpyWithStream(void* dst, const void* src, size_t 
     return hipCUDAErrorTohipError(cudaStreamSynchronize(stream));
 }
 
-inline static hipError_t hipMemcpyAsync(void* dst, const void* src, size_t sizeBytes,
+inline static hipError_t hipMemcpyAsync_cu4oro(void* dst, const void* src, size_t sizeBytes,
                                         hipMemcpyKind copyKind, hipStream_t stream __dparm(0)) {
     return hipCUDAErrorTohipError(
         cudaMemcpyAsync(dst, src, sizeBytes, copyKind, stream));
 }
 
-inline static hipError_t hipMemcpyToSymbol(
+inline static hipError_t hipMemcpyToSymbol_cu4oro(
     const void* symbol, const void* src, size_t sizeBytes, size_t offset __dparm(0),
     hipMemcpyKind copyType __dparm(hipMemcpyKindToCudaMemcpyKind(hipMemcpyHostToDevice))) {
     return hipCUDAErrorTohipError(cudaMemcpyToSymbol(symbol, src, sizeBytes, offset, copyType));
 }
 
-inline static hipError_t hipMemcpyToSymbolAsync(const void* symbol, const void* src,
+inline static hipError_t hipMemcpyToSymbolAsync_cu4oro(const void* symbol, const void* src,
                                                 size_t sizeBytes, size_t offset,
                                                 hipMemcpyKind copyType,
                                                 hipStream_t stream __dparm(0)) {
@@ -2326,13 +2326,13 @@ inline static hipError_t hipMemcpyToSymbolAsync(const void* symbol, const void* 
         symbol, src, sizeBytes, offset, copyType, stream));
 }
 
-inline static hipError_t hipMemcpyFromSymbol(
+inline static hipError_t hipMemcpyFromSymbol_cu4oro(
     void* dst, const void* symbolName, size_t sizeBytes, size_t offset __dparm(0),
     hipMemcpyKind kind __dparm(hipMemcpyKindToCudaMemcpyKind(hipMemcpyDeviceToHost))) {
     return hipCUDAErrorTohipError(cudaMemcpyFromSymbol(dst, symbolName, sizeBytes, offset, kind));
 }
 
-inline static hipError_t hipMemcpyFromSymbolAsync(void* dst, const void* symbolName,
+inline static hipError_t hipMemcpyFromSymbolAsync_cu4oro(void* dst, const void* symbolName,
                                                   size_t sizeBytes, size_t offset,
                                                   hipMemcpyKind kind,
                                                   hipStream_t stream __dparm(0)) {
@@ -2340,15 +2340,15 @@ inline static hipError_t hipMemcpyFromSymbolAsync(void* dst, const void* symbolN
         dst, symbolName, sizeBytes, offset, kind, stream));
 }
 
-inline static hipError_t hipGetSymbolAddress(void** devPtr, const void* symbolName) {
+inline static hipError_t hipGetSymbolAddress_cu4oro(void** devPtr, const void* symbolName) {
     return hipCUDAErrorTohipError(cudaGetSymbolAddress(devPtr, symbolName));
 }
 
-inline static hipError_t hipGetSymbolSize(size_t* size, const void* symbolName) {
+inline static hipError_t hipGetSymbolSize_cu4oro(size_t* size, const void* symbolName) {
     return hipCUDAErrorTohipError(cudaGetSymbolSize(size, symbolName));
 }
 
-inline static hipError_t hipMemcpy2D(void* dst, size_t dpitch, const void* src, size_t spitch,
+inline static hipError_t hipMemcpy2D_cu4oro(void* dst, size_t dpitch, const void* src, size_t spitch,
                                      size_t width, size_t height, hipMemcpyKind kind) {
     return hipCUDAErrorTohipError(
         cudaMemcpy2D(dst, dpitch, src, spitch, width, height, kind));
@@ -2368,7 +2368,7 @@ inline static hipMemoryType getHipMemoryType(CUmemorytype type) {
     return hipMemoryTypeHost;
 }
 
-inline static hipError_t hipMemcpyParam2D(const hip_Memcpy2D* pCopy) {
+inline static hipError_t hipMemcpyParam2D_cu4oro(const hip_Memcpy2D* pCopy) {
   if(pCopy == NULL) {
     return hipCUResultTohipError(cuMemcpy2D(NULL));
   } else {
@@ -2378,7 +2378,7 @@ inline static hipError_t hipMemcpyParam2D(const hip_Memcpy2D* pCopy) {
   }
 }
 
-inline static hipError_t hipMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t stream __dparm(0)) {
+inline static hipError_t hipMemcpyParam2DAsync_cu4oro(const hip_Memcpy2D* pCopy, hipStream_t stream __dparm(0)) {
   if(pCopy == NULL) {
     return hipCUResultTohipError(cuMemcpy2DAsync(NULL, stream));
   } else {
@@ -2388,15 +2388,15 @@ inline static hipError_t hipMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStr
   }
 }
 
-inline static hipError_t hipMemcpy3D(const struct hipMemcpy3DParms *p) {
+inline static hipError_t hipMemcpy3D_cu4oro(const struct hipMemcpy3DParms *p) {
     return hipCUDAErrorTohipError(cudaMemcpy3D(p));
 }
 
-inline static hipError_t hipMemcpy3DAsync(const struct hipMemcpy3DParms *p, hipStream_t stream) {
+inline static hipError_t hipMemcpy3DAsync_cu4oro(const struct hipMemcpy3DParms *p, hipStream_t stream) {
     return hipCUDAErrorTohipError(cudaMemcpy3DAsync(p, stream));
 }
 
-inline static hipError_t hipDrvMemcpy3D(const HIP_MEMCPY3D* pcopy) {
+inline static hipError_t hipDrvMemcpy3D_cu4oro(const HIP_MEMCPY3D* pcopy) {
     if(pcopy == NULL) {
       return hipCUResultTohipError(cuMemcpy3D(NULL));
     } else {
@@ -2406,7 +2406,7 @@ inline static hipError_t hipDrvMemcpy3D(const HIP_MEMCPY3D* pcopy) {
     }
 }
 
-inline static hipError_t hipDrvMemcpy3DAsync(const HIP_MEMCPY3D *pcopy, hipStream_t stream) {
+inline static hipError_t hipDrvMemcpy3DAsync_cu4oro(const HIP_MEMCPY3D *pcopy, hipStream_t stream) {
     if(pcopy == NULL) {
       return hipCUResultTohipError(cuMemcpy3DAsync(NULL, stream));
     } else {
@@ -2416,14 +2416,14 @@ inline static hipError_t hipDrvMemcpy3DAsync(const HIP_MEMCPY3D *pcopy, hipStrea
     }
 }
 
-inline static hipError_t hipMemcpy2DAsync(void* dst, size_t dpitch, const void* src, size_t spitch,
+inline static hipError_t hipMemcpy2DAsync_cu4oro(void* dst, size_t dpitch, const void* src, size_t spitch,
                                           size_t width, size_t height, hipMemcpyKind kind,
                                           hipStream_t stream) {
     return hipCUDAErrorTohipError(cudaMemcpy2DAsync(dst, dpitch, src, spitch, width, height,
                                                     kind, stream));
 }
 
-inline static hipError_t hipMemcpy2DFromArray(void* dst, size_t dpitch, hipArray_t src,
+inline static hipError_t hipMemcpy2DFromArray_cu4oro(void* dst, size_t dpitch, hipArray_t src,
                                               size_t wOffset, size_t hOffset, size_t width,
                                               size_t height, hipMemcpyKind kind) {
     return hipCUDAErrorTohipError(cudaMemcpy2DFromArray(dst, dpitch, src, wOffset, hOffset, width,
@@ -2431,7 +2431,7 @@ inline static hipError_t hipMemcpy2DFromArray(void* dst, size_t dpitch, hipArray
                                                         kind));
 }
 
-inline static hipError_t hipMemcpy2DFromArrayAsync(void* dst, size_t dpitch, hipArray_t src,
+inline static hipError_t hipMemcpy2DFromArrayAsync_cu4oro(void* dst, size_t dpitch, hipArray_t src,
                                                    size_t wOffset, size_t hOffset, size_t width,
                                                    size_t height, hipMemcpyKind kind,
                                                    hipStream_t stream) {
@@ -2441,14 +2441,14 @@ inline static hipError_t hipMemcpy2DFromArrayAsync(void* dst, size_t dpitch, hip
                                                              stream));
 }
 
-inline static hipError_t hipMemcpy2DToArray(hipArray_t dst, size_t wOffset, size_t hOffset,
+inline static hipError_t hipMemcpy2DToArray_cu4oro(hipArray_t dst, size_t wOffset, size_t hOffset,
                                             const void* src, size_t spitch, size_t width,
                                             size_t height, hipMemcpyKind kind) {
     return hipCUDAErrorTohipError(cudaMemcpy2DToArray(dst, wOffset, hOffset, src, spitch, width,
                                                       height, kind));
 }
 
-inline static hipError_t hipMemcpy2DToArrayAsync(hipArray_t dst, size_t wOffset, size_t hOffset,
+inline static hipError_t hipMemcpy2DToArrayAsync_cu4oro(hipArray_t dst, size_t wOffset, size_t hOffset,
                                                  const void* src, size_t spitch, size_t width,
                                                  size_t height, hipMemcpyKind kind,
                                                  hipStream_t stream) {
@@ -2458,59 +2458,59 @@ inline static hipError_t hipMemcpy2DToArrayAsync(hipArray_t dst, size_t wOffset,
                                                            stream));
 }
 
-__HIP_DEPRECATED inline static hipError_t hipMemcpyToArray(hipArray_t dst, size_t wOffset,
+__HIP_DEPRECATED inline static hipError_t hipMemcpyToArray_cu4oro(hipArray_t dst, size_t wOffset,
                                                            size_t hOffset, const void* src,
                                                            size_t count, hipMemcpyKind kind) {
     return hipCUDAErrorTohipError(
         cudaMemcpyToArray(dst, wOffset, hOffset, src, count, kind));
 }
 
-__HIP_DEPRECATED inline static hipError_t hipMemcpyFromArray(void* dst, hipArray_const_t srcArray,
+__HIP_DEPRECATED inline static hipError_t hipMemcpyFromArray_cu4oro(void* dst, hipArray_const_t srcArray,
                                                              size_t wOffset, size_t hOffset,
                                                              size_t count, hipMemcpyKind kind) {
     return hipCUDAErrorTohipError(cudaMemcpyFromArray(dst, srcArray, wOffset, hOffset, count,
                                                       kind));
 }
 
-inline static hipError_t hipMemcpyAtoH(void* dst, hipArray_t srcArray, size_t srcOffset,
+inline static hipError_t hipMemcpyAtoH_cu4oro(void* dst, hipArray_t srcArray, size_t srcOffset,
                                        size_t count) {
     return hipCUResultTohipError(cuMemcpyAtoH(dst, (CUarray)srcArray, srcOffset, count));
 }
 
-inline static hipError_t hipMemcpyHtoA(hipArray_t dstArray, size_t dstOffset, const void* srcHost,
+inline static hipError_t hipMemcpyHtoA_cu4oro(hipArray_t dstArray, size_t dstOffset, const void* srcHost,
                                        size_t count) {
     return hipCUResultTohipError(cuMemcpyHtoA((CUarray)dstArray, dstOffset, srcHost, count));
 }
 
-inline static hipError_t hipDeviceSynchronize() {
+inline static hipError_t hipDeviceSynchronize_cu4oro() {
     return hipCUDAErrorTohipError(cudaDeviceSynchronize());
 }
 
-inline static hipError_t hipDeviceGetCacheConfig(hipFuncCache_t* pCacheConfig) {
+inline static hipError_t hipDeviceGetCacheConfig_cu4oro(hipFuncCache_t* pCacheConfig) {
     return hipCUDAErrorTohipError(cudaDeviceGetCacheConfig(pCacheConfig));
 }
 
-inline static hipError_t hipFuncSetAttribute(const void* func, hipFuncAttribute attr, int value) {
+inline static hipError_t hipFuncSetAttribute_cu4oro(const void* func, hipFuncAttribute attr, int value) {
     return hipCUDAErrorTohipError(cudaFuncSetAttribute(func, attr, value));
 }
 
-inline static hipError_t hipDeviceSetCacheConfig(hipFuncCache_t cacheConfig) {
+inline static hipError_t hipDeviceSetCacheConfig_cu4oro(hipFuncCache_t cacheConfig) {
     return hipCUDAErrorTohipError(cudaDeviceSetCacheConfig(cacheConfig));
 }
 
-inline static hipError_t hipFuncSetSharedMemConfig(const void* func, hipSharedMemConfig config) {
+inline static hipError_t hipFuncSetSharedMemConfig_cu4oro(const void* func, hipSharedMemConfig config) {
     return hipCUDAErrorTohipError(cudaFuncSetSharedMemConfig(func, config));
 }
 
-inline static const char* hipGetErrorString(hipError_t error) {
+inline static const char* hipGetErrorString_cu4oro(hipError_t error) {
     return cudaGetErrorString(hipErrorToCudaError(error));
 }
 
-inline static const char* hipGetErrorName(hipError_t error) {
+inline static const char* hipGetErrorName_cu4oro(hipError_t error) {
     return cudaGetErrorName(hipErrorToCudaError(error));
 }
 
-inline static hipError_t hipDrvGetErrorString(hipError_t error, const char** errorString) {
+inline static hipError_t hipDrvGetErrorString_cu4oro(hipError_t error, const char** errorString) {
     CUresult err = hipErrorToCUResult(error);
     if( err == CUDA_ERROR_UNKNOWN ) {
        return hipCUResultTohipError(cuGetErrorString((CUresult)error, errorString));
@@ -2519,7 +2519,7 @@ inline static hipError_t hipDrvGetErrorString(hipError_t error, const char** err
     }
 }
 
-inline static hipError_t hipDrvGetErrorName(hipError_t error, const char** errorString) {
+inline static hipError_t hipDrvGetErrorName_cu4oro(hipError_t error, const char** errorString) {
     CUresult err = hipErrorToCUResult(error);
     if( err == CUDA_ERROR_UNKNOWN ) {
        return hipCUResultTohipError(cuGetErrorName((CUresult)error, errorString));
@@ -2528,88 +2528,88 @@ inline static hipError_t hipDrvGetErrorName(hipError_t error, const char** error
     }
 }
 
-inline static hipError_t hipGetDeviceCount(int* count) {
+inline static hipError_t hipGetDeviceCount_cu4oro(int* count) {
     return hipCUDAErrorTohipError(cudaGetDeviceCount(count));
 }
 
-inline static hipError_t hipGetDevice(int* device) {
+inline static hipError_t hipGetDevice_cu4oro(int* device) {
     return hipCUDAErrorTohipError(cudaGetDevice(device));
 }
 
-inline static hipError_t hipIpcCloseMemHandle(void* devPtr) {
+inline static hipError_t hipIpcCloseMemHandle_cu4oro(void* devPtr) {
     return hipCUDAErrorTohipError(cudaIpcCloseMemHandle(devPtr));
 }
 
-inline static hipError_t hipIpcGetEventHandle(hipIpcEventHandle_t* handle, hipEvent_t event) {
+inline static hipError_t hipIpcGetEventHandle_cu4oro(hipIpcEventHandle_t* handle, hipEvent_t event) {
     return hipCUDAErrorTohipError(cudaIpcGetEventHandle(handle, event));
 }
 
-inline static hipError_t hipIpcGetMemHandle(hipIpcMemHandle_t* handle, void* devPtr) {
+inline static hipError_t hipIpcGetMemHandle_cu4oro(hipIpcMemHandle_t* handle, void* devPtr) {
     return hipCUDAErrorTohipError(cudaIpcGetMemHandle(handle, devPtr));
 }
 
-inline static hipError_t hipIpcOpenEventHandle(hipEvent_t* event, hipIpcEventHandle_t handle) {
+inline static hipError_t hipIpcOpenEventHandle_cu4oro(hipEvent_t* event, hipIpcEventHandle_t handle) {
     return hipCUDAErrorTohipError(cudaIpcOpenEventHandle(event, handle));
 }
 
-inline static hipError_t hipIpcOpenMemHandle(void** devPtr, hipIpcMemHandle_t handle,
+inline static hipError_t hipIpcOpenMemHandle_cu4oro(void** devPtr, hipIpcMemHandle_t handle,
                                              unsigned int flags) {
     return hipCUDAErrorTohipError(cudaIpcOpenMemHandle(devPtr, handle, flags));
 }
 
-inline static hipError_t hipMemset(void* devPtr, int value, size_t count) {
+inline static hipError_t hipMemset_cu4oro(void* devPtr, int value, size_t count) {
     return hipCUDAErrorTohipError(cudaMemset(devPtr, value, count));
 }
 
-inline static hipError_t hipMemsetD32(hipDeviceptr_t devPtr, int value, size_t count) {
+inline static hipError_t hipMemsetD32_cu4oro(hipDeviceptr_t devPtr, int value, size_t count) {
     return hipCUResultTohipError(cuMemsetD32(devPtr, value, count));
 }
 
-inline static hipError_t hipMemsetAsync(void* devPtr, int value, size_t count,
+inline static hipError_t hipMemsetAsync_cu4oro(void* devPtr, int value, size_t count,
                                         hipStream_t stream __dparm(0)) {
     return hipCUDAErrorTohipError(cudaMemsetAsync(devPtr, value, count, stream));
 }
 
-inline static hipError_t hipMemsetD32Async(hipDeviceptr_t devPtr, int value, size_t count,
+inline static hipError_t hipMemsetD32Async_cu4oro(hipDeviceptr_t devPtr, int value, size_t count,
                                            hipStream_t stream __dparm(0)) {
     return hipCUResultTohipError(cuMemsetD32Async(devPtr, value, count, stream));
 }
 
-inline static hipError_t hipMemsetD8(hipDeviceptr_t dest, unsigned char value, size_t sizeBytes) {
+inline static hipError_t hipMemsetD8_cu4oro(hipDeviceptr_t dest, unsigned char value, size_t sizeBytes) {
     return hipCUResultTohipError(cuMemsetD8(dest, value, sizeBytes));
 }
 
-inline static hipError_t hipMemsetD8Async(hipDeviceptr_t dest, unsigned char value, size_t sizeBytes,
+inline static hipError_t hipMemsetD8Async_cu4oro(hipDeviceptr_t dest, unsigned char value, size_t sizeBytes,
                                           hipStream_t stream __dparm(0)) {
     return hipCUResultTohipError(cuMemsetD8Async(dest, value, sizeBytes, stream));
 }
 
-inline static hipError_t hipMemsetD16(hipDeviceptr_t dest, unsigned short value, size_t sizeBytes) {
+inline static hipError_t hipMemsetD16_cu4oro(hipDeviceptr_t dest, unsigned short value, size_t sizeBytes) {
     return hipCUResultTohipError(cuMemsetD16(dest, value, sizeBytes));
 }
 
-inline static hipError_t hipMemsetD16Async(hipDeviceptr_t dest, unsigned short value, size_t sizeBytes,
+inline static hipError_t hipMemsetD16Async_cu4oro(hipDeviceptr_t dest, unsigned short value, size_t sizeBytes,
                                            hipStream_t stream __dparm(0)) {
     return hipCUResultTohipError(cuMemsetD16Async(dest, value, sizeBytes, stream));
 }
 
-inline static hipError_t hipMemset2D(void* dst, size_t pitch, int value, size_t width, size_t height) {
+inline static hipError_t hipMemset2D_cu4oro(void* dst, size_t pitch, int value, size_t width, size_t height) {
     return hipCUDAErrorTohipError(cudaMemset2D(dst, pitch, value, width, height));
 }
 
-inline static hipError_t hipMemset2DAsync(void* dst, size_t pitch, int value, size_t width, size_t height, hipStream_t stream __dparm(0)) {
+inline static hipError_t hipMemset2DAsync_cu4oro(void* dst, size_t pitch, int value, size_t width, size_t height, hipStream_t stream __dparm(0)) {
     return hipCUDAErrorTohipError(cudaMemset2DAsync(dst, pitch, value, width, height, stream));
 }
 
-inline static hipError_t hipMemset3D(hipPitchedPtr pitchedDevPtr, int  value, hipExtent extent ){
+inline static hipError_t hipMemset3D_cu4oro(hipPitchedPtr pitchedDevPtr, int  value, hipExtent extent ){
     return hipCUDAErrorTohipError(cudaMemset3D(pitchedDevPtr, value, extent));
 }
 
-inline static hipError_t hipMemset3DAsync(hipPitchedPtr pitchedDevPtr, int  value, hipExtent extent, hipStream_t stream __dparm(0) ){
+inline static hipError_t hipMemset3DAsync_cu4oro(hipPitchedPtr pitchedDevPtr, int  value, hipExtent extent, hipStream_t stream __dparm(0) ){
     return hipCUDAErrorTohipError(cudaMemset3DAsync(pitchedDevPtr, value, extent, stream));
 }
 
-inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int device) {
+inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_prop, int device) {
     if (p_prop == NULL) {
        return hipErrorInvalidValue;
     }
@@ -2749,7 +2749,7 @@ inline static hipError_t hipGetDeviceProperties(hipDeviceProp_t* p_prop, int dev
     return error;
 }
 
-inline static hipError_t hipDeviceGetAttribute(int* pi, hipDeviceAttribute_t attr, int device) {
+inline static hipError_t hipDeviceGetAttribute_cu4oro(int* pi, hipDeviceAttribute_t attr, int device) {
     enum cudaDeviceAttr cdattr;
     cudaError_t cerror;
 
@@ -2979,80 +2979,80 @@ inline static CUmemAccessDesc hipMemAccessDescToCUmemAccessDesc(const hipMemAcce
     cuDesc.location.type = (CUmemLocationType)((desc->location).type);
     return cuDesc;
 }
-inline static hipError_t hipMemGetAllocationGranularity(size_t* granularity,
+inline static hipError_t hipMemGetAllocationGranularity_cu4oro(size_t* granularity,
                                                         const hipMemAllocationProp* prop,
                                                         hipMemAllocationGranularity_flags option) {
     CUmemAllocationProp cuProp = hipMemAllocationPropToCUmemAllocationProp(prop);
     return hipCUResultTohipError(cuMemGetAllocationGranularity(granularity, &cuProp, option));
 }
-inline static hipError_t hipMemCreate(hipMemGenericAllocationHandle_t* handle,
+inline static hipError_t hipMemCreate_cu4oro(hipMemGenericAllocationHandle_t* handle,
                                       size_t size,
                                       const hipMemAllocationProp* prop,
                                       unsigned long long flags) {
     CUmemAllocationProp cuProp = hipMemAllocationPropToCUmemAllocationProp(prop);
     return hipCUResultTohipError(cuMemCreate(handle, size, &cuProp, flags));
 }
-inline static hipError_t hipMemRelease(hipMemGenericAllocationHandle_t handle) {
+inline static hipError_t hipMemRelease_cu4oro(hipMemGenericAllocationHandle_t handle) {
     return hipCUResultTohipError(cuMemRelease(handle));
 }
-inline static hipError_t hipMemAddressFree(hipDeviceptr_t ptr, size_t size) {
+inline static hipError_t hipMemAddressFree_cu4oro(hipDeviceptr_t ptr, size_t size) {
     return hipCUResultTohipError(cuMemAddressFree(ptr, size));
 }
-inline static hipError_t hipMemAddressReserve(hipDeviceptr_t* ptr,
+inline static hipError_t hipMemAddressReserve_cu4oro(hipDeviceptr_t* ptr,
                                               size_t size,
                                               size_t alignment,
                                               hipDeviceptr_t addr,
                                               unsigned long long flags) {
     return hipCUResultTohipError(cuMemAddressReserve(ptr, size, alignment, addr, flags));
 }
-inline static hipError_t hipMemExportToShareableHandle(void* shareableHandle,
+inline static hipError_t hipMemExportToShareableHandle_cu4oro(void* shareableHandle,
                                                        hipMemGenericAllocationHandle_t handle,
                                                        hipMemAllocationHandleType handleType,
                                                        unsigned long long flags) {
     return hipCUResultTohipError(cuMemExportToShareableHandle(shareableHandle, handle, (CUmemAllocationHandleType)handleType, flags));
 }
-inline static hipError_t hipMemGetAccess(unsigned long long* flags,
+inline static hipError_t hipMemGetAccess_cu4oro(unsigned long long* flags,
                                          const hipMemLocation* location,
                                          hipDeviceptr_t ptr) {
     CUmemLocation loc = hipMemLocationToCUmemLocation(location);
     return hipCUResultTohipError(cuMemGetAccess(flags, &loc, ptr));
 }
-inline static hipError_t hipMemGetAllocationPropertiesFromHandle(hipMemAllocationProp* prop,
+inline static hipError_t hipMemGetAllocationPropertiesFromHandle_cu4oro(hipMemAllocationProp* prop,
                                                                  hipMemGenericAllocationHandle_t handle) {
     CUmemAllocationProp cuProp = hipMemAllocationPropToCUmemAllocationProp(prop);
     return hipCUResultTohipError(cuMemGetAllocationPropertiesFromHandle(&cuProp, handle));
 }
-inline static hipError_t hipMemImportFromShareableHandle(hipMemGenericAllocationHandle_t* handle,
+inline static hipError_t hipMemImportFromShareableHandle_cu4oro(hipMemGenericAllocationHandle_t* handle,
                                                          void* osHandle,
                                                          hipMemAllocationHandleType shHandleType) {
     return hipCUResultTohipError(cuMemImportFromShareableHandle(handle, osHandle, (CUmemAllocationHandleType)shHandleType));
 }
-inline static hipError_t hipMemMap(hipDeviceptr_t ptr, size_t size, size_t offset,
+inline static hipError_t hipMemMap_cu4oro(hipDeviceptr_t ptr, size_t size, size_t offset,
                                    hipMemGenericAllocationHandle_t handle,
                                    unsigned long long flags) {
     return hipCUResultTohipError(cuMemMap(ptr, size, offset, handle, flags));
 }
-inline static hipError_t hipMemMapArrayAsync(hipArrayMapInfo* mapInfoList,
+inline static hipError_t hipMemMapArrayAsync_cu4oro(hipArrayMapInfo* mapInfoList,
                                              unsigned int  count,
                                              hipStream_t stream) {
     return hipCUResultTohipError(cuMemMapArrayAsync(mapInfoList, count, stream));
 }
-inline static hipError_t hipMemRetainAllocationHandle(hipMemGenericAllocationHandle_t* handle,
+inline static hipError_t hipMemRetainAllocationHandle_cu4oro(hipMemGenericAllocationHandle_t* handle,
                                                       void* addr) {
     return hipCUResultTohipError(cuMemRetainAllocationHandle(handle, addr));
 }
-inline static hipError_t hipMemSetAccess(hipDeviceptr_t ptr, size_t size,
+inline static hipError_t hipMemSetAccess_cu4oro(hipDeviceptr_t ptr, size_t size,
                                          const hipMemAccessDesc* desc,
                                          size_t count) {
     CUmemAccessDesc cuDesc = hipMemAccessDescToCUmemAccessDesc(desc);
     return hipCUResultTohipError(cuMemSetAccess(ptr, size, &cuDesc, count));
 }
-inline static hipError_t hipMemUnmap(hipDeviceptr_t ptr, size_t size) {
+inline static hipError_t hipMemUnmap_cu4oro(hipDeviceptr_t ptr, size_t size) {
     return hipCUResultTohipError(cuMemUnmap(ptr, size));
 }
 #endif // CUDA_VERSION >= CUDA_10020
 
-inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks,
+inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessor_cu4oro(int* numBlocks,
                                                                       const void* func,
                                                                       int blockSize,
                                                                       size_t dynamicSMemSize) {
@@ -3060,7 +3060,7 @@ inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessor(int* numBl
                                                               blockSize, dynamicSMemSize));
 }
 
-inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks,
+inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_cu4oro(int* numBlocks,
                                                                       const void* func,
                                                                       int blockSize,
                                                                       size_t dynamicSMemSize,
@@ -3069,7 +3069,7 @@ inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(i
                                                       blockSize, dynamicSMemSize, flags));
 }
 
-inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks,
+inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessor_cu4oro(int* numBlocks,
                                                                  hipFunction_t f,
                                                                  int  blockSize,
                                                                  size_t dynamicSMemSize ){
@@ -3077,7 +3077,7 @@ inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessor(int*
                                                                    blockSize, dynamicSMemSize));
 }
 
-inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks,
+inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_cu4oro(int* numBlocks,
                                                                           hipFunction_t f,
                                                                           int  blockSize,
                                                                           size_t dynamicSMemSize,
@@ -3087,7 +3087,7 @@ inline static hipError_t hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithF
 }
 
 //TODO - Match CUoccupancyB2DSize
-inline static hipError_t hipModuleOccupancyMaxPotentialBlockSize(int* gridSize, int* blockSize,
+inline static hipError_t hipModuleOccupancyMaxPotentialBlockSize_cu4oro(int* gridSize, int* blockSize,
                                              hipFunction_t f, size_t dynSharedMemPerBlk,
                                              int blockSizeLimit){
     return hipCUResultTohipError(cuOccupancyMaxPotentialBlockSize(gridSize, blockSize, f, NULL,
@@ -3095,14 +3095,14 @@ inline static hipError_t hipModuleOccupancyMaxPotentialBlockSize(int* gridSize, 
 }
 
 //TODO - Match CUoccupancyB2DSize
-inline static hipError_t hipModuleOccupancyMaxPotentialBlockSizeWithFlags(int* gridSize, int* blockSize,
+inline static hipError_t hipModuleOccupancyMaxPotentialBlockSizeWithFlags_cu4oro(int* gridSize, int* blockSize,
                                              hipFunction_t f, size_t dynSharedMemPerBlk,
                                              int blockSizeLimit, unsigned int  flags){
     return hipCUResultTohipError(cuOccupancyMaxPotentialBlockSizeWithFlags(gridSize, blockSize, f, NULL,
                                  dynSharedMemPerBlk, blockSizeLimit, flags));
 }
 
-inline static hipError_t hipPointerGetAttributes(hipPointerAttribute_t* attributes, const void* ptr) {
+inline static hipError_t hipPointerGetAttributes_cu4oro(hipPointerAttribute_t* attributes, const void* ptr) {
     struct cudaPointerAttributes cPA;
     hipError_t err = hipCUDAErrorTohipError(cudaPointerGetAttributes(&cPA, ptr));
     if (err == hipSuccess) {
@@ -3133,7 +3133,7 @@ inline static hipError_t hipPointerGetAttributes(hipPointerAttribute_t* attribut
     return err;
 }
 
-inline static hipError_t hipPointerGetAttribute(void* data, hipPointer_attribute attribute,
+inline static hipError_t hipPointerGetAttribute_cu4oro(void* data, hipPointer_attribute attribute,
                                                 hipDeviceptr_t ptr) {
     hipError_t err = hipCUResultTohipError(cuPointerGetAttribute(data, attribute, ptr));
     if (err == hipSuccess &&
@@ -3144,7 +3144,7 @@ inline static hipError_t hipPointerGetAttribute(void* data, hipPointer_attribute
     return err;
 }
 
-inline static hipError_t hipDrvPointerGetAttributes(unsigned int numAttributes,
+inline static hipError_t hipDrvPointerGetAttributes_cu4oro(unsigned int numAttributes,
                                                     hipPointer_attribute* attributes,
                                                     void** data, hipDeviceptr_t ptr) {
     hipError_t err = hipCUResultTohipError(cuPointerGetAttributes(numAttributes, attributes, data, ptr));
@@ -3159,78 +3159,78 @@ inline static hipError_t hipDrvPointerGetAttributes(unsigned int numAttributes,
     return err;
 }
 
-inline static hipError_t hipMemGetInfo(size_t* free, size_t* total) {
+inline static hipError_t hipMemGetInfo_cu4oro(size_t* free, size_t* total) {
     return hipCUDAErrorTohipError(cudaMemGetInfo(free, total));
 }
 
-inline static hipError_t hipEventCreate(hipEvent_t* event) {
+inline static hipError_t hipEventCreate_cu4oro(hipEvent_t* event) {
     return hipCUDAErrorTohipError(cudaEventCreate(event));
 }
 
-inline static hipError_t hipEventRecord(hipEvent_t event, hipStream_t stream __dparm(NULL)) {
+inline static hipError_t hipEventRecord_cu4oro(hipEvent_t event, hipStream_t stream __dparm(NULL)) {
     return hipCUDAErrorTohipError(cudaEventRecord(event, stream));
 }
 
-inline static hipError_t hipEventSynchronize(hipEvent_t event) {
+inline static hipError_t hipEventSynchronize_cu4oro(hipEvent_t event) {
     return hipCUDAErrorTohipError(cudaEventSynchronize(event));
 }
 
-inline static hipError_t hipEventElapsedTime(float* ms, hipEvent_t start, hipEvent_t stop) {
+inline static hipError_t hipEventElapsedTime_cu4oro(float* ms, hipEvent_t start, hipEvent_t stop) {
     return hipCUDAErrorTohipError(cudaEventElapsedTime(ms, start, stop));
 }
 
-inline static hipError_t hipEventDestroy(hipEvent_t event) {
+inline static hipError_t hipEventDestroy_cu4oro(hipEvent_t event) {
     return hipCUDAErrorTohipError(cudaEventDestroy(event));
 }
 
-inline static hipError_t hipStreamCreateWithFlags(hipStream_t* stream, unsigned int flags) {
+inline static hipError_t hipStreamCreateWithFlags_cu4oro(hipStream_t* stream, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaStreamCreateWithFlags(stream, flags));
 }
 
-inline static hipError_t hipStreamCreateWithPriority(hipStream_t* stream, unsigned int flags, int priority) {
+inline static hipError_t hipStreamCreateWithPriority_cu4oro(hipStream_t* stream, unsigned int flags, int priority) {
     return hipCUDAErrorTohipError(cudaStreamCreateWithPriority(stream, flags, priority));
 }
 
-inline static hipError_t hipDeviceGetStreamPriorityRange(int* leastPriority, int* greatestPriority) {
+inline static hipError_t hipDeviceGetStreamPriorityRange_cu4oro(int* leastPriority, int* greatestPriority) {
     return hipCUDAErrorTohipError(cudaDeviceGetStreamPriorityRange(leastPriority, greatestPriority));
 }
 
-inline static hipError_t hipStreamCreate(hipStream_t* stream) {
+inline static hipError_t hipStreamCreate_cu4oro(hipStream_t* stream) {
     return hipCUDAErrorTohipError(cudaStreamCreate(stream));
 }
 
-inline static hipError_t hipStreamSynchronize(hipStream_t stream) {
+inline static hipError_t hipStreamSynchronize_cu4oro(hipStream_t stream) {
     return hipCUDAErrorTohipError(cudaStreamSynchronize(stream));
 }
 
-inline static hipError_t hipStreamDestroy(hipStream_t stream) {
+inline static hipError_t hipStreamDestroy_cu4oro(hipStream_t stream) {
     return hipCUDAErrorTohipError(cudaStreamDestroy(stream));
 }
 
-inline static hipError_t hipStreamGetFlags(hipStream_t stream, unsigned int *flags) {
+inline static hipError_t hipStreamGetFlags_cu4oro(hipStream_t stream, unsigned int *flags) {
     return hipCUDAErrorTohipError(cudaStreamGetFlags(stream, flags));
 }
 
-inline static hipError_t hipStreamGetPriority(hipStream_t stream, int *priority) {
+inline static hipError_t hipStreamGetPriority_cu4oro(hipStream_t stream, int *priority) {
     return hipCUDAErrorTohipError(cudaStreamGetPriority(stream, priority));
 }
 
-inline static hipError_t hipStreamWaitEvent(hipStream_t stream, hipEvent_t event,
+inline static hipError_t hipStreamWaitEvent_cu4oro(hipStream_t stream, hipEvent_t event,
                                             unsigned int flags) {
     return hipCUDAErrorTohipError(cudaStreamWaitEvent(stream, event, flags));
 }
 
-inline static hipError_t hipStreamQuery(hipStream_t stream) {
+inline static hipError_t hipStreamQuery_cu4oro(hipStream_t stream) {
     return hipCUDAErrorTohipError(cudaStreamQuery(stream));
 }
 
-inline static hipError_t hipStreamAddCallback(hipStream_t stream, hipStreamCallback_t callback,
+inline static hipError_t hipStreamAddCallback_cu4oro(hipStream_t stream, hipStreamCallback_t callback,
                                               void* userData, unsigned int flags) {
     return hipCUDAErrorTohipError(
         cudaStreamAddCallback(stream, (cudaStreamCallback_t)callback, userData, flags));
 }
 
-inline static hipError_t hipStreamGetDevice(hipStream_t stream, hipDevice_t* device) {
+inline static hipError_t hipStreamGetDevice_cu4oro(hipStream_t stream, hipDevice_t* device) {
     hipCtx_t context;
     hipError_t err = hipCUResultTohipError(cuStreamGetCtx(stream, &context));
     if (err != hipSuccess) return err;
@@ -3244,66 +3244,66 @@ inline static hipError_t hipStreamGetDevice(hipStream_t stream, hipDevice_t* dev
     return hipCUResultTohipError(cuCtxPopCurrent(&context));
 }
 
-inline static hipError_t hipDriverGetVersion(int* driverVersion) {
+inline static hipError_t hipDriverGetVersion_cu4oro(int* driverVersion) {
     return hipCUDAErrorTohipError(cudaDriverGetVersion(driverVersion));
 }
 
-inline static hipError_t hipRuntimeGetVersion(int* runtimeVersion) {
+inline static hipError_t hipRuntimeGetVersion_cu4oro(int* runtimeVersion) {
     return hipCUDAErrorTohipError(cudaRuntimeGetVersion(runtimeVersion));
 }
 
-inline static hipError_t hipDeviceCanAccessPeer(int* canAccessPeer, int device, int peerDevice) {
+inline static hipError_t hipDeviceCanAccessPeer_cu4oro(int* canAccessPeer, int device, int peerDevice) {
     return hipCUDAErrorTohipError(cudaDeviceCanAccessPeer(canAccessPeer, device, peerDevice));
 }
 
-inline static hipError_t hipDeviceDisablePeerAccess(int peerDevice) {
+inline static hipError_t hipDeviceDisablePeerAccess_cu4oro(int peerDevice) {
     return hipCUDAErrorTohipError(cudaDeviceDisablePeerAccess(peerDevice));
 }
 
-inline static hipError_t hipDeviceEnablePeerAccess(int peerDevice, unsigned int flags) {
+inline static hipError_t hipDeviceEnablePeerAccess_cu4oro(int peerDevice, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaDeviceEnablePeerAccess(peerDevice, flags));
 }
 
-inline static hipError_t hipCtxDisablePeerAccess(hipCtx_t peerCtx) {
+inline static hipError_t hipCtxDisablePeerAccess_cu4oro(hipCtx_t peerCtx) {
     return hipCUResultTohipError(cuCtxDisablePeerAccess(peerCtx));
 }
 
-inline static hipError_t hipCtxEnablePeerAccess(hipCtx_t peerCtx, unsigned int flags) {
+inline static hipError_t hipCtxEnablePeerAccess_cu4oro(hipCtx_t peerCtx, unsigned int flags) {
     return hipCUResultTohipError(cuCtxEnablePeerAccess(peerCtx, flags));
 }
 
-inline static hipError_t hipDevicePrimaryCtxGetState(hipDevice_t dev, unsigned int* flags,
+inline static hipError_t hipDevicePrimaryCtxGetState_cu4oro(hipDevice_t dev, unsigned int* flags,
                                                      int* active) {
     return hipCUResultTohipError(cuDevicePrimaryCtxGetState(dev, flags, active));
 }
 
-inline static hipError_t hipDevicePrimaryCtxRelease(hipDevice_t dev) {
+inline static hipError_t hipDevicePrimaryCtxRelease_cu4oro(hipDevice_t dev) {
     return hipCUResultTohipError(cuDevicePrimaryCtxRelease(dev));
 }
 
-inline static hipError_t hipDevicePrimaryCtxRetain(hipCtx_t* pctx, hipDevice_t dev) {
+inline static hipError_t hipDevicePrimaryCtxRetain_cu4oro(hipCtx_t* pctx, hipDevice_t dev) {
     return hipCUResultTohipError(cuDevicePrimaryCtxRetain(pctx, dev));
 }
 
-inline static hipError_t hipDevicePrimaryCtxReset(hipDevice_t dev) {
+inline static hipError_t hipDevicePrimaryCtxReset_cu4oro(hipDevice_t dev) {
     return hipCUResultTohipError(cuDevicePrimaryCtxReset(dev));
 }
 
-inline static hipError_t hipDevicePrimaryCtxSetFlags(hipDevice_t dev, unsigned int flags) {
+inline static hipError_t hipDevicePrimaryCtxSetFlags_cu4oro(hipDevice_t dev, unsigned int flags) {
     return hipCUResultTohipError(cuDevicePrimaryCtxSetFlags(dev, flags));
 }
 
-inline static hipError_t hipMemGetAddressRange(hipDeviceptr_t* pbase, size_t* psize,
+inline static hipError_t hipMemGetAddressRange_cu4oro(hipDeviceptr_t* pbase, size_t* psize,
                                                hipDeviceptr_t dptr) {
     return hipCUResultTohipError(cuMemGetAddressRange(pbase, psize, dptr));
 }
 
-inline static hipError_t hipMemcpyPeer(void* dst, int dstDevice, const void* src, int srcDevice,
+inline static hipError_t hipMemcpyPeer_cu4oro(void* dst, int dstDevice, const void* src, int srcDevice,
                                        size_t count) {
     return hipCUDAErrorTohipError(cudaMemcpyPeer(dst, dstDevice, src, srcDevice, count));
 }
 
-inline static hipError_t hipMemcpyPeerAsync(void* dst, int dstDevice, const void* src,
+inline static hipError_t hipMemcpyPeerAsync_cu4oro(void* dst, int dstDevice, const void* src,
                                             int srcDevice, size_t count,
                                             hipStream_t stream __dparm(0)) {
     return hipCUDAErrorTohipError(
@@ -3311,79 +3311,79 @@ inline static hipError_t hipMemcpyPeerAsync(void* dst, int dstDevice, const void
 }
 
 // Profile APIs:
-inline static hipError_t hipProfilerStart() { return hipCUDAErrorTohipError(cudaProfilerStart()); }
+inline static hipError_t hipProfilerStart_cu4oro() { return hipCUDAErrorTohipError(cudaProfilerStart()); }
 
-inline static hipError_t hipProfilerStop() { return hipCUDAErrorTohipError(cudaProfilerStop()); }
+inline static hipError_t hipProfilerStop_cu4oro() { return hipCUDAErrorTohipError(cudaProfilerStop()); }
 
-inline static hipError_t hipGetDeviceFlags(unsigned int* flags) {
+inline static hipError_t hipGetDeviceFlags_cu4oro(unsigned int* flags) {
     return hipCUDAErrorTohipError(cudaGetDeviceFlags(flags));
 }
 
-inline static hipError_t hipSetDeviceFlags(unsigned int flags) {
+inline static hipError_t hipSetDeviceFlags_cu4oro(unsigned int flags) {
     return hipCUDAErrorTohipError(cudaSetDeviceFlags(flags));
 }
 
-inline static hipError_t hipEventCreateWithFlags(hipEvent_t* event, unsigned int flags) {
+inline static hipError_t hipEventCreateWithFlags_cu4oro(hipEvent_t* event, unsigned int flags) {
     return hipCUDAErrorTohipError(cudaEventCreateWithFlags(event, flags));
 }
 
-inline static hipError_t hipEventQuery(hipEvent_t event) {
+inline static hipError_t hipEventQuery_cu4oro(hipEvent_t event) {
     return hipCUDAErrorTohipError(cudaEventQuery(event));
 }
 
-inline static hipError_t hipCtxCreate(hipCtx_t* ctx, unsigned int flags, hipDevice_t device) {
+inline static hipError_t hipCtxCreate_cu4oro(hipCtx_t* ctx, unsigned int flags, hipDevice_t device) {
     return hipCUResultTohipError(cuCtxCreate(ctx, flags, device));
 }
 
-inline static hipError_t hipCtxDestroy(hipCtx_t ctx) {
+inline static hipError_t hipCtxDestroy_cu4oro(hipCtx_t ctx) {
     return hipCUResultTohipError(cuCtxDestroy(ctx));
 }
 
-inline static hipError_t hipCtxPopCurrent(hipCtx_t* ctx) {
+inline static hipError_t hipCtxPopCurrent_cu4oro(hipCtx_t* ctx) {
     return hipCUResultTohipError(cuCtxPopCurrent(ctx));
 }
 
-inline static hipError_t hipCtxPushCurrent(hipCtx_t ctx) {
+inline static hipError_t hipCtxPushCurrent_cu4oro(hipCtx_t ctx) {
     return hipCUResultTohipError(cuCtxPushCurrent(ctx));
 }
 
-inline static hipError_t hipCtxSetCurrent(hipCtx_t ctx) {
+inline static hipError_t hipCtxSetCurrent_cu4oro(hipCtx_t ctx) {
     return hipCUResultTohipError(cuCtxSetCurrent(ctx));
 }
 
-inline static hipError_t hipCtxGetCurrent(hipCtx_t* ctx) {
+inline static hipError_t hipCtxGetCurrent_cu4oro(hipCtx_t* ctx) {
     return hipCUResultTohipError(cuCtxGetCurrent(ctx));
 }
 
-inline static hipError_t hipCtxGetDevice(hipDevice_t* device) {
+inline static hipError_t hipCtxGetDevice_cu4oro(hipDevice_t* device) {
     return hipCUResultTohipError(cuCtxGetDevice(device));
 }
 
-inline static hipError_t hipCtxGetApiVersion(hipCtx_t ctx, int* apiVersion) {
+inline static hipError_t hipCtxGetApiVersion_cu4oro(hipCtx_t ctx, int* apiVersion) {
     return hipCUResultTohipError(cuCtxGetApiVersion(ctx, (unsigned int*)apiVersion));
 }
 
-inline static hipError_t hipCtxGetCacheConfig(hipFuncCache* cacheConfig) {
+inline static hipError_t hipCtxGetCacheConfig_cu4oro(hipFuncCache* cacheConfig) {
     return hipCUResultTohipError(cuCtxGetCacheConfig(cacheConfig));
 }
 
-inline static hipError_t hipCtxSetCacheConfig(hipFuncCache cacheConfig) {
+inline static hipError_t hipCtxSetCacheConfig_cu4oro(hipFuncCache cacheConfig) {
     return hipCUResultTohipError(cuCtxSetCacheConfig(cacheConfig));
 }
 
-inline static hipError_t hipCtxSetSharedMemConfig(hipSharedMemConfig config) {
+inline static hipError_t hipCtxSetSharedMemConfig_cu4oro(hipSharedMemConfig config) {
     return hipCUResultTohipError(cuCtxSetSharedMemConfig((CUsharedconfig)config));
 }
 
-inline static hipError_t hipCtxGetSharedMemConfig(hipSharedMemConfig* pConfig) {
+inline static hipError_t hipCtxGetSharedMemConfig_cu4oro(hipSharedMemConfig* pConfig) {
     return hipCUResultTohipError(cuCtxGetSharedMemConfig((CUsharedconfig*)pConfig));
 }
 
-inline static hipError_t hipCtxSynchronize(void) {
+inline static hipError_t hipCtxSynchronize_cu4oro(void) {
     return hipCUResultTohipError(cuCtxSynchronize());
 }
 
-inline static hipError_t hipCtxGetFlags(unsigned int* flags) {
+inline static hipError_t hipCtxGetFlags_cu4oro(unsigned int* flags) {
     return hipCUResultTohipError(cuCtxGetFlags(flags));
 }
 
@@ -3391,19 +3391,19 @@ inline static hipError_t hipCtxDetach(hipCtx_t ctx) {
     return hipCUResultTohipError(cuCtxDetach(ctx));
 }
 
-inline static hipError_t hipDeviceGet(hipDevice_t* device, int ordinal) {
+inline static hipError_t hipDeviceGet_cu4oro(hipDevice_t* device, int ordinal) {
     return hipCUResultTohipError(cuDeviceGet(device, ordinal));
 }
 
-inline static hipError_t hipDeviceComputeCapability(int* major, int* minor, hipDevice_t device) {
+inline static hipError_t hipDeviceComputeCapability_cu4oro(int* major, int* minor, hipDevice_t device) {
     return hipCUResultTohipError(cuDeviceComputeCapability(major, minor, device));
 }
 
-inline static hipError_t hipDeviceGetName(char* name, int len, hipDevice_t device) {
+inline static hipError_t hipDeviceGetName_cu4oro(char* name, int len, hipDevice_t device) {
     return hipCUResultTohipError(cuDeviceGetName(name, len, device));
 }
 
-inline static hipError_t hipDeviceGetUuid(hipUUID* uuid, hipDevice_t device) {
+inline static hipError_t hipDeviceGetUuid_cu4oro(hipUUID* uuid, hipDevice_t device) {
     if (uuid == NULL) {
       return hipErrorInvalidValue;
     }
@@ -3415,88 +3415,88 @@ inline static hipError_t hipDeviceGetUuid(hipUUID* uuid, hipDevice_t device) {
     return err;
 }
 
-inline static hipError_t hipDeviceGetP2PAttribute(int* value, hipDeviceP2PAttr attr,
+inline static hipError_t hipDeviceGetP2PAttribute_cu4oro(int* value, hipDeviceP2PAttr attr,
                                                   int srcDevice, int dstDevice) {
     return hipCUDAErrorTohipError(cudaDeviceGetP2PAttribute(value, attr, srcDevice, dstDevice));
 }
 
-inline static hipError_t hipDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t device) {
+inline static hipError_t hipDeviceGetPCIBusId_cu4oro(char* pciBusId, int len, hipDevice_t device) {
     return hipCUDAErrorTohipError(cudaDeviceGetPCIBusId(pciBusId, len, device));
 }
 
-inline static hipError_t hipDeviceGetByPCIBusId(int* device, const char* pciBusId) {
+inline static hipError_t hipDeviceGetByPCIBusId_cu4oro(int* device, const char* pciBusId) {
     return hipCUDAErrorTohipError(cudaDeviceGetByPCIBusId(device, pciBusId));
 }
 
-inline static hipError_t hipDeviceGetSharedMemConfig(hipSharedMemConfig* config) {
+inline static hipError_t hipDeviceGetSharedMemConfig_cu4oro(hipSharedMemConfig* config) {
     return hipCUDAErrorTohipError(cudaDeviceGetSharedMemConfig(config));
 }
 
-inline static hipError_t hipDeviceSetSharedMemConfig(hipSharedMemConfig config) {
+inline static hipError_t hipDeviceSetSharedMemConfig_cu4oro(hipSharedMemConfig config) {
     return hipCUDAErrorTohipError(cudaDeviceSetSharedMemConfig(config));
 }
 
-inline static hipError_t hipDeviceGetLimit(size_t* pValue, hipLimit_t limit) {
+inline static hipError_t hipDeviceGetLimit_cu4oro(size_t* pValue, hipLimit_t limit) {
     return hipCUDAErrorTohipError(cudaDeviceGetLimit(pValue, limit));
 }
 
-inline static hipError_t hipDeviceSetLimit(hipLimit_t limit, size_t value) {
+inline static hipError_t hipDeviceSetLimit_cu4oro(hipLimit_t limit, size_t value) {
     return hipCUDAErrorTohipError(cudaDeviceSetLimit(limit, value));
 }
 
-inline static hipError_t hipDeviceTotalMem(size_t* bytes, hipDevice_t device) {
+inline static hipError_t hipDeviceTotalMem_cu4oro(size_t* bytes, hipDevice_t device) {
     return hipCUResultTohipError(cuDeviceTotalMem(bytes, device));
 }
 
-inline static hipError_t hipModuleLoad(hipModule_t* module, const char* fname) {
+inline static hipError_t hipModuleLoad_cu4oro(hipModule_t* module, const char* fname) {
     return hipCUResultTohipError(cuModuleLoad(module, fname));
 }
 
-inline static hipError_t hipModuleUnload(hipModule_t hmod) {
+inline static hipError_t hipModuleUnload_cu4oro(hipModule_t hmod) {
     return hipCUResultTohipError(cuModuleUnload(hmod));
 }
 
-inline static hipError_t hipModuleGetFunction(hipFunction_t* function, hipModule_t module,
+inline static hipError_t hipModuleGetFunction_cu4oro(hipFunction_t* function, hipModule_t module,
                                               const char* kname) {
     return hipCUResultTohipError(cuModuleGetFunction(function, module, kname));
 }
 
-inline static hipError_t hipModuleGetTexRef(hipTexRef* pTexRef, hipModule_t hmod, const char* name){
+inline static hipError_t hipModuleGetTexRef_cu4oro(hipTexRef* pTexRef, hipModule_t hmod, const char* name){
     return hipCUResultTohipError(cuModuleGetTexRef(pTexRef, hmod, name));
 }
 
-inline static hipError_t hipFuncGetAttributes(hipFuncAttributes* attr, const void* func) {
+inline static hipError_t hipFuncGetAttributes_cu4oro(hipFuncAttributes* attr, const void* func) {
     return hipCUDAErrorTohipError(cudaFuncGetAttributes(attr, func));
 }
 
-inline static hipError_t hipFuncGetAttribute (int* value, hipFunction_attribute attrib, hipFunction_t hfunc) {
+inline static hipError_t hipFuncGetAttribute_cu4oro (int* value, hipFunction_attribute attrib, hipFunction_t hfunc) {
     return hipCUResultTohipError(cuFuncGetAttribute(value, attrib, hfunc));
 }
 
-inline static hipError_t hipModuleGetGlobal(hipDeviceptr_t* dptr, size_t* bytes, hipModule_t hmod,
+inline static hipError_t hipModuleGetGlobal_cu4oro(hipDeviceptr_t* dptr, size_t* bytes, hipModule_t hmod,
                                             const char* name) {
     return hipCUResultTohipError(cuModuleGetGlobal(dptr, bytes, hmod, name));
 }
 
-inline static hipError_t hipModuleLoadData(hipModule_t* module, const void* image) {
+inline static hipError_t hipModuleLoadData_cu4oro(hipModule_t* module, const void* image) {
     return hipCUResultTohipError(cuModuleLoadData(module, image));
 }
 
-inline static hipError_t hipModuleLoadDataEx(hipModule_t* module, const void* image,
+inline static hipError_t hipModuleLoadDataEx_cu4oro(hipModule_t* module, const void* image,
                                              unsigned int numOptions, hipJitOption* options,
                                              void** optionValues) {
     return hipCUResultTohipError(
         cuModuleLoadDataEx(module, image, numOptions, options, optionValues));
 }
 
-inline static hipError_t hipLaunchKernel(const void* function_address, dim3 numBlocks,
+inline static hipError_t hipLaunchKernel_cu4oro(const void* function_address, dim3 numBlocks,
                                          dim3 dimBlocks, void** args, size_t sharedMemBytes,
                                          hipStream_t stream) {
     return hipCUDAErrorTohipError(
         cudaLaunchKernel(function_address, numBlocks, dimBlocks, args, sharedMemBytes, stream));
 }
 
-inline static hipError_t hipModuleLaunchKernel(hipFunction_t f, unsigned int gridDimX,
+inline static hipError_t hipModuleLaunchKernel_cu4oro(hipFunction_t f, unsigned int gridDimX,
                                                unsigned int gridDimY, unsigned int gridDimZ,
                                                unsigned int blockDimX, unsigned int blockDimY,
                                                unsigned int blockDimZ, unsigned int sharedMemBytes,
@@ -3507,7 +3507,7 @@ inline static hipError_t hipModuleLaunchKernel(hipFunction_t f, unsigned int gri
                                                 kernelParams, extra));
 }
 
-inline static hipError_t hipFuncSetCacheConfig(const void* func, hipFuncCache_t cacheConfig) {
+inline static hipError_t hipFuncSetCacheConfig_cu4oro(const void* func, hipFuncCache_t cacheConfig) {
     return hipCUDAErrorTohipError(cudaFuncSetCacheConfig(func, cacheConfig));
 }
 
@@ -3528,7 +3528,7 @@ __HIP_DEPRECATED inline static hipError_t hipBindTexture2D(
 #endif // CUDA_VERSION < CUDA_12000
 
 
-inline static hipChannelFormatDesc hipCreateChannelDesc(int x, int y, int z, int w,
+inline static hipChannelFormatDesc hipCreateChannelDesc_cu4oro(int x, int y, int z, int w,
                                                         hipChannelFormatKind f) {
     return cudaCreateChannelDesc(x, y, z, w, hipChannelFormatKindToCudaChannelFormatKind(f));
 }
@@ -3553,7 +3553,7 @@ inline static hipChannelFormatDesc hipCreateChannelDescHalf4() {
     return cudaCreateChannelDesc(e, e, e, e, cudaChannelFormatKindFloat);
 }
 
-inline static hipError_t hipCreateTextureObject(hipTextureObject_t* pTexObject,
+inline static hipError_t hipCreateTextureObject_cu4oro(hipTextureObject_t* pTexObject,
                                                 const hipResourceDesc* pResDesc,
                                                 const hipTextureDesc* pTexDesc,
                                                 const hipResourceViewDesc* pResViewDesc) {
@@ -3561,20 +3561,20 @@ inline static hipError_t hipCreateTextureObject(hipTextureObject_t* pTexObject,
         cudaCreateTextureObject(pTexObject, pResDesc, pTexDesc, pResViewDesc));
 }
 
-inline static hipError_t hipDestroyTextureObject(hipTextureObject_t textureObject) {
+inline static hipError_t hipDestroyTextureObject_cu4oro(hipTextureObject_t textureObject) {
     return hipCUDAErrorTohipError(cudaDestroyTextureObject(textureObject));
 }
 
-inline static hipError_t hipCreateSurfaceObject(hipSurfaceObject_t* pSurfObject,
+inline static hipError_t hipCreateSurfaceObject_cu4oro(hipSurfaceObject_t* pSurfObject,
                                                 const hipResourceDesc* pResDesc) {
     return hipCUDAErrorTohipError(cudaCreateSurfaceObject(pSurfObject, pResDesc));
 }
 
-inline static hipError_t hipDestroySurfaceObject(hipSurfaceObject_t surfaceObject) {
+inline static hipError_t hipDestroySurfaceObject_cu4oro(hipSurfaceObject_t surfaceObject) {
     return hipCUDAErrorTohipError(cudaDestroySurfaceObject(surfaceObject));
 }
 
-inline static hipError_t hipGetTextureObjectResourceDesc(hipResourceDesc* pResDesc,
+inline static hipError_t hipGetTextureObjectResourceDesc_cu4oro(hipResourceDesc* pResDesc,
                                            hipTextureObject_t textureObject) {
     return hipCUDAErrorTohipError(cudaGetTextureObjectResourceDesc( pResDesc, textureObject));
 }
@@ -3586,19 +3586,19 @@ __HIP_DEPRECATED inline static hipError_t hipGetTextureAlignmentOffset(
 }
 #endif
 
-inline static hipError_t hipGetChannelDesc(hipChannelFormatDesc* desc, hipArray_const_t array)
+inline static hipError_t hipGetChannelDesc_cu4oro(hipChannelFormatDesc* desc, hipArray_const_t array)
 {
     return hipCUDAErrorTohipError(cudaGetChannelDesc(desc,array));
 }
 
-inline static hipError_t hipLaunchCooperativeKernel(const void* f, dim3 gridDim, dim3 blockDim,
+inline static hipError_t hipLaunchCooperativeKernel_cu4oro(const void* f, dim3 gridDim, dim3 blockDim,
                                       void** kernelParams, unsigned int sharedMemBytes,
                                       hipStream_t stream) {
     return hipCUDAErrorTohipError(
             cudaLaunchCooperativeKernel(f, gridDim, blockDim, kernelParams, sharedMemBytes, stream));
 }
 
-inline static hipError_t hipModuleLaunchCooperativeKernel(hipFunction_t f, unsigned int gridDimX,
+inline static hipError_t hipModuleLaunchCooperativeKernel_cu4oro(hipFunction_t f, unsigned int gridDimX,
                                             unsigned int gridDimY, unsigned int gridDimZ,
                                             unsigned int blockDimX, unsigned int blockDimY,
                                             unsigned int blockDimZ, unsigned int sharedMemBytes,
@@ -3608,12 +3608,12 @@ inline static hipError_t hipModuleLaunchCooperativeKernel(hipFunction_t f, unsig
                                                            sharedMemBytes, stream,kernelParams));
 }
 
-inline static hipError_t hipLaunchCooperativeKernelMultiDevice(hipLaunchParams* launchParamsList,
+inline static hipError_t hipLaunchCooperativeKernelMultiDevice_cu4oro(hipLaunchParams* launchParamsList,
                                                  int  numDevices, unsigned int  flags) {
     return hipCUDAErrorTohipError(cudaLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags));
 }
 
-inline static hipError_t hipModuleLaunchCooperativeKernelMultiDevice(
+inline static hipError_t hipModuleLaunchCooperativeKernelMultiDevice_cu4oro(
                                                        hipFunctionLaunchParams* launchParamsList,
                                                        unsigned int  numDevices,
                                                        unsigned int  flags) {
@@ -3621,35 +3621,35 @@ inline static hipError_t hipModuleLaunchCooperativeKernelMultiDevice(
                                                                       numDevices, flags));
 }
 
-inline static hipError_t hipImportExternalSemaphore(hipExternalSemaphore_t* extSem_out,
+inline static hipError_t hipImportExternalSemaphore_cu4oro(hipExternalSemaphore_t* extSem_out,
                                       const hipExternalSemaphoreHandleDesc* semHandleDesc) {
   return hipCUDAErrorTohipError(cudaImportExternalSemaphore(extSem_out,(const struct cudaExternalSemaphoreHandleDesc*)semHandleDesc));
 }
 
-inline static hipError_t hipSignalExternalSemaphoresAsync(const hipExternalSemaphore_t* extSemArray,
+inline static hipError_t hipSignalExternalSemaphoresAsync_cu4oro(const hipExternalSemaphore_t* extSemArray,
                                             const hipExternalSemaphoreSignalParams* paramsArray,
                                             unsigned int numExtSems, hipStream_t stream) {
   return hipCUDAErrorTohipError(cudaSignalExternalSemaphoresAsync(extSemArray, (const struct cudaExternalSemaphoreSignalParams*)paramsArray, numExtSems, stream));
 }
-inline static hipError_t hipWaitExternalSemaphoresAsync(const hipExternalSemaphore_t* extSemArray,
+inline static hipError_t hipWaitExternalSemaphoresAsync_cu4oro(const hipExternalSemaphore_t* extSemArray,
                                               const hipExternalSemaphoreWaitParams* paramsArray,
                                               unsigned int numExtSems, hipStream_t stream) {
   return hipCUDAErrorTohipError(cudaWaitExternalSemaphoresAsync(extSemArray, (const struct cudaExternalSemaphoreWaitParams*)paramsArray, numExtSems, stream));
 }
 
-inline static hipError_t hipDestroyExternalSemaphore(hipExternalSemaphore_t extSem) {
+inline static hipError_t hipDestroyExternalSemaphore_cu4oro(hipExternalSemaphore_t extSem) {
   return hipCUDAErrorTohipError(cudaDestroyExternalSemaphore(extSem));
 }
 
-inline static hipError_t hipImportExternalMemory(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc) {
+inline static hipError_t hipImportExternalMemory_cu4oro(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc) {
   return hipCUDAErrorTohipError(cudaImportExternalMemory(extMem_out, (const struct cudaExternalMemoryHandleDesc*)memHandleDesc));
 }
 
-inline static hipError_t hipExternalMemoryGetMappedBuffer(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc) {
+inline static hipError_t hipExternalMemoryGetMappedBuffer_cu4oro(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc) {
   return hipCUDAErrorTohipError(cudaExternalMemoryGetMappedBuffer(devPtr, extMem, (const struct cudaExternalMemoryBufferDesc*)bufferDesc));
 }
 
-inline static hipError_t hipExternalMemoryGetMappedMipmappedArray(
+inline static hipError_t hipExternalMemoryGetMappedMipmappedArray_cu4oro(
     hipMipmappedArray_t* mipmap, hipExternalMemory_t extMem,
     const hipExternalMemoryMipmappedArrayDesc* mipmapDesc) {
   return hipCUDAErrorTohipError(cudaExternalMemoryGetMappedMipmappedArray(
@@ -3657,88 +3657,88 @@ inline static hipError_t hipExternalMemoryGetMappedMipmappedArray(
       (const struct cudaExternalMemoryMipmappedArrayDesc*)mipmapDesc));
 }
 
-inline static hipError_t hipDestroyExternalMemory(hipExternalMemory_t extMem) {
+inline static hipError_t hipDestroyExternalMemory_cu4oro(hipExternalMemory_t extMem) {
   return hipCUDAErrorTohipError(cudaDestroyExternalMemory(extMem));
 }
 
-inline static hipError_t hipGraphicsMapResources(int count, hipGraphicsResource_t* resources, hipStream_t stream  __dparm(0)) {
+inline static hipError_t hipGraphicsMapResources_cu4oro(int count, hipGraphicsResource_t* resources, hipStream_t stream  __dparm(0)) {
   return hipCUDAErrorTohipError(cudaGraphicsMapResources(count, resources, stream));
 }
 
-inline static hipError_t hipGraphicsSubResourceGetMappedArray(hipArray_t* array, hipGraphicsResource_t resource, unsigned int arrayIndex,
+inline static hipError_t hipGraphicsSubResourceGetMappedArray_cu4oro(hipArray_t* array, hipGraphicsResource_t resource, unsigned int arrayIndex,
                                                               unsigned int mipLevel) {
   return hipCUDAErrorTohipError(cudaGraphicsSubResourceGetMappedArray(array, resource, arrayIndex, mipLevel));
 }
 
-inline static hipError_t hipGraphicsResourceGetMappedPointer(void** devPtr, size_t* size, hipGraphicsResource_t resource) {
+inline static hipError_t hipGraphicsResourceGetMappedPointer_cu4oro(void** devPtr, size_t* size, hipGraphicsResource_t resource) {
   return hipCUDAErrorTohipError(cudaGraphicsResourceGetMappedPointer(devPtr, size, resource));
 }
 
-inline static hipError_t hipGraphicsUnmapResources(int count, hipGraphicsResource_t* resources, hipStream_t stream  __dparm(0)) {
+inline static hipError_t hipGraphicsUnmapResources_cu4oro(int count, hipGraphicsResource_t* resources, hipStream_t stream  __dparm(0)) {
   return hipCUDAErrorTohipError(cudaGraphicsUnmapResources(count, resources, stream));
 }
 
-inline static hipError_t hipGraphicsUnregisterResource(hipGraphicsResource_t resource) {
+inline static hipError_t hipGraphicsUnregisterResource_cu4oro(hipGraphicsResource_t resource) {
   return hipCUDAErrorTohipError(cudaGraphicsUnregisterResource(resource));
 }
 
 #if CUDA_VERSION >= CUDA_11020
 // ========================== HIP Stream Ordered Memory Allocator =================================
-inline static hipError_t hipDeviceGetDefaultMemPool(hipMemPool_t* mem_pool, int device) {
+inline static hipError_t hipDeviceGetDefaultMemPool_cu4oro(hipMemPool_t* mem_pool, int device) {
   return hipCUDAErrorTohipError(cudaDeviceGetDefaultMemPool(mem_pool, device));
 }
 
-inline static hipError_t hipDeviceSetMemPool(int device, hipMemPool_t mem_pool) {
+inline static hipError_t hipDeviceSetMemPool_cu4oro(int device, hipMemPool_t mem_pool) {
   return hipCUDAErrorTohipError(cudaDeviceSetMemPool(device, mem_pool));
 }
 
-inline static hipError_t hipDeviceGetMemPool(hipMemPool_t* mem_pool, int device) {
+inline static hipError_t hipDeviceGetMemPool_cu4oro(hipMemPool_t* mem_pool, int device) {
   return hipCUDAErrorTohipError(cudaDeviceGetMemPool(mem_pool, device));
 }
 
-inline static hipError_t hipMallocAsync(void** dev_ptr, size_t size, hipStream_t stream) {
+inline static hipError_t hipMallocAsync_cu4oro(void** dev_ptr, size_t size, hipStream_t stream) {
   return hipCUDAErrorTohipError(cudaMallocAsync(dev_ptr, size, stream));
 }
 
-inline static hipError_t hipFreeAsync(void* dev_ptr, hipStream_t stream) {
+inline static hipError_t hipFreeAsync_cu4oro(void* dev_ptr, hipStream_t stream) {
   return hipCUDAErrorTohipError(cudaFreeAsync(dev_ptr, stream));
 }
 
-inline static hipError_t hipMemPoolTrimTo(hipMemPool_t mem_pool, size_t min_bytes_to_hold) {
+inline static hipError_t hipMemPoolTrimTo_cu4oro(hipMemPool_t mem_pool, size_t min_bytes_to_hold) {
   return hipCUDAErrorTohipError(cudaMemPoolTrimTo(mem_pool, min_bytes_to_hold));
 }
 
-inline static hipError_t hipMemPoolSetAttribute(hipMemPool_t mem_pool, hipMemPoolAttr attr, void* value) {
+inline static hipError_t hipMemPoolSetAttribute_cu4oro(hipMemPool_t mem_pool, hipMemPoolAttr attr, void* value) {
   return hipCUDAErrorTohipError(cudaMemPoolSetAttribute(mem_pool, attr, value));
 }
 
-inline static hipError_t hipMemPoolGetAttribute(hipMemPool_t mem_pool, hipMemPoolAttr attr, void* value) {
+inline static hipError_t hipMemPoolGetAttribute_cu4oro(hipMemPool_t mem_pool, hipMemPoolAttr attr, void* value) {
   return hipCUDAErrorTohipError(cudaMemPoolGetAttribute(mem_pool, attr, value));
 }
 
-inline static hipError_t hipMemPoolSetAccess(
+inline static hipError_t hipMemPoolSetAccess_cu4oro(
     hipMemPool_t mem_pool,
     const hipMemAccessDesc* desc_list,
     size_t count) {
   return hipCUDAErrorTohipError(cudaMemPoolSetAccess(mem_pool, desc_list, count));
 }
 
-inline static hipError_t hipMemPoolGetAccess(
+inline static hipError_t hipMemPoolGetAccess_cu4oro(
     hipMemAccessFlags* flags,
     hipMemPool_t mem_pool,
     hipMemLocation* location) {
   return hipCUDAErrorTohipError(cudaMemPoolGetAccess(flags, mem_pool, location));
 }
 
-inline static hipError_t hipMemPoolCreate(hipMemPool_t* mem_pool, const hipMemPoolProps* pool_props) {
+inline static hipError_t hipMemPoolCreate_cu4oro(hipMemPool_t* mem_pool, const hipMemPoolProps* pool_props) {
   return hipCUDAErrorTohipError(cudaMemPoolCreate(mem_pool, pool_props));
 }
 
-inline static hipError_t hipMemPoolDestroy(hipMemPool_t mem_pool) {
+inline static hipError_t hipMemPoolDestroy_cu4oro(hipMemPool_t mem_pool) {
   return hipCUDAErrorTohipError(cudaMemPoolDestroy(mem_pool));
 }
 
-inline static hipError_t hipMallocFromPoolAsync(
+inline static hipError_t hipMallocFromPoolAsync_cu4oro(
     void** dev_ptr,
     size_t size,
     hipMemPool_t mem_pool,
@@ -3746,7 +3746,7 @@ inline static hipError_t hipMallocFromPoolAsync(
   return hipCUDAErrorTohipError(cudaMallocFromPoolAsync(dev_ptr, size, mem_pool, stream));
 }
 
-inline static hipError_t hipMemPoolExportToShareableHandle(
+inline static hipError_t hipMemPoolExportToShareableHandle_cu4oro(
     void*                      shared_handle,
     hipMemPool_t               mem_pool,
     hipMemAllocationHandleType handle_type,
@@ -3755,7 +3755,7 @@ inline static hipError_t hipMemPoolExportToShareableHandle(
             shared_handle, mem_pool, handle_type, flags));
 }
 
-inline static hipError_t hipMemPoolImportFromShareableHandle(
+inline static hipError_t hipMemPoolImportFromShareableHandle_cu4oro(
     hipMemPool_t*              mem_pool,
     void*                      shared_handle,
     hipMemAllocationHandleType handle_type,
@@ -3764,11 +3764,11 @@ inline static hipError_t hipMemPoolImportFromShareableHandle(
             mem_pool, shared_handle, handle_type, flags));
 }
 
-inline static hipError_t hipMemPoolExportPointer(hipMemPoolPtrExportData* export_data, void* ptr) {
+inline static hipError_t hipMemPoolExportPointer_cu4oro(hipMemPoolPtrExportData* export_data, void* ptr) {
   return hipCUDAErrorTohipError(cudaMemPoolExportPointer(export_data, ptr));
 }
 
-inline static hipError_t hipMemPoolImportPointer(
+inline static hipError_t hipMemPoolImportPointer_cu4oro(
     void**                   ptr,
     hipMemPool_t             mem_pool,
     hipMemPoolPtrExportData* export_data) {
@@ -3783,7 +3783,7 @@ inline static hipError_t hipMemPoolImportPointer(
 #ifdef __CUDACC__
 
 template<class T>
-inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks,
+inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessor_cu4oro(int* numBlocks,
                                                                       T func,
                                                                       int blockSize,
                                                                       size_t dynamicSMemSize) {
@@ -3819,7 +3819,7 @@ inline static hipError_t hipOccupancyMaxPotentialBlockSizeWithFlags(int* minGrid
 }
 
 template <class T>
-inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags( int* numBlocks, T func,
+inline static hipError_t hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_cu4oro( int* numBlocks, T func,
                                               int  blockSize, size_t dynamicSMemSize,unsigned int flags) {
     return hipCUDAErrorTohipError(cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(numBlocks, func,
                                                                  blockSize, dynamicSMemSize, flags));
@@ -3871,12 +3871,12 @@ __HIP_DEPRECATED inline static hipError_t hipBindTextureToArray(
 #endif   // CUDA_VERSION < CUDA_12000
 
 template <class T>
-inline static hipChannelFormatDesc hipCreateChannelDesc() {
+inline static hipChannelFormatDesc hipCreateChannelDesc_cu4oro() {
     return cudaCreateChannelDesc<T>();
 }
 
 template <class T>
-inline static hipError_t hipLaunchCooperativeKernel(T f, dim3 gridDim, dim3 blockDim,
+inline static hipError_t hipLaunchCooperativeKernel_cu4oro(T f, dim3 gridDim, dim3 blockDim,
                                              void** kernelParams, unsigned int sharedMemBytes, hipStream_t stream) {
     return hipCUDAErrorTohipError(
             cudaLaunchCooperativeKernel(reinterpret_cast<const void*>(f), gridDim, blockDim, kernelParams, sharedMemBytes, stream));
