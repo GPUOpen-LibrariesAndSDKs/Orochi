@@ -116,8 +116,19 @@ workspace "YamatanoOrochi"
 
 
 
-	-- Enable CUEW if CUDA is forced or if we find the CUDA SDK folder
+	-- search if CUDA PATH en inside a classic env var
 	cuda_path = os.getenv("CUDA_PATH")
+
+	-- if the CUDA PATH is not in the env var, search in the classic folder
+	if (not os.istarget("windows")) and ( cuda_path == nil or cuda_path == '' ) then
+		potentialUnixCudaPath = "/usr/local/cuda";
+		if ( os.isdir(potentialUnixCudaPath) ) then
+			cuda_path = potentialUnixCudaPath
+		end
+	end
+
+
+	-- Enable CUEW if CUDA is forced or if we find the CUDA SDK folder
 	if ( _OPTIONS["forceCuda"] or   ( cuda_path ~= nil and cuda_path ~= '' )  ) then
 		print("CUEW is enabled.")
 		defines {"OROCHI_ENABLE_CUEW"}
@@ -131,7 +142,7 @@ workspace "YamatanoOrochi"
 			print("WARNING: CUEW is automatically disabled because CUDA SDK folder ( CUDA_PATH ) not found. You can force CUEW with the --forceCuda argument.")
 		end
 	else
-		print("CUDA SDK install folder found.")
+		print("CUDA SDK install folder found: " .. cuda_path)
 		includedirs {  joinPaths(cuda_path,"include") }
 	end
 
