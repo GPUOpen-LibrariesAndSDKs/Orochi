@@ -37,7 +37,6 @@
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include <cuda_profiler_api.h>
-#include <cuda_fp16.h>
 #include <nvrtc.h>
 
 

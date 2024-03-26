@@ -854,7 +854,7 @@ static int cuewCudaInit(void)
   const char *cudart_paths[] = { NULL}; // TODO
 #else
   const char *cuda_paths[] = {"libcuda.so", "libcuda.so.1", NULL};
-  const char *cudart_paths[] = { NULL}; // TODO
+  const char *cudart_paths[] = { "libcudart.so", NULL }; 
 #endif
   static int initialized = 0;
   static int result = 0;
