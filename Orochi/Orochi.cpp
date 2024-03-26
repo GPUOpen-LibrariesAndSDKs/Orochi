@@ -781,6 +781,13 @@ static oroU32 s_loadedApis = 0;
 struct ioroCtx_t
 {
 public:
+
+	ioroCtx_t()
+	{
+		m_ptr = nullptr;
+		m_storage = 0;
+	}
+
 	void* m_ptr;
 private:
 	oroU32 m_storage;

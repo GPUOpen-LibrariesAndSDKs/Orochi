@@ -75,6 +75,7 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ) );
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
+	o.unloadKernelCache();
 }
 
 TEST_F( OroTestBase, GpuMemoryTest )
@@ -112,6 +113,7 @@ TEST_F( OroTestBase, GpuMemoryTest )
 	{
 		OROASSERT( out == test_value );
 	}
+	o.unloadKernelCache();
 }
 
 TEST_F( OroTestBase, Event )
@@ -137,6 +139,7 @@ TEST_F( OroTestBase, Event )
 
 	float ms = sw.getMs();
 	printf( "kernelExec: %3.2fms\n", ms );
+	o.unloadKernelCache();
 }
 
 // Load a Binary file and put content to std::vector
@@ -778,6 +781,7 @@ TEST_F( OroTestBase, funcPointer )
 	ORORTCCHECK( oroModuleUnload( module ) );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.free( deviceBuffer );
+	o.unloadKernelCache();
 }
 
 TEST_F( OroTestBase, ManagedMemory )
@@ -909,7 +913,7 @@ TEST_F( OroTestBase, ManagedMemory )
 		output = nullptr;
 		
 	}
-
+	o.unloadKernelCache();
 }
 
 

@@ -63,6 +63,10 @@ class OrochiUtils
     OrochiUtils& operator=(OrochiUtils&&) = delete;
 	~OrochiUtils();
 
+	// unload all the modules internally created during functions like getFunctionFromPrecompiledBinary/getFunction
+	// good practice to call it just before oroCtxDestroy, just to avoid any potential memory leak.
+	void unloadKernelCache();
+
 	oroFunction getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName );
 
 	oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );

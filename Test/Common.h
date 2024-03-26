@@ -9,7 +9,9 @@
 inline
 oroApi getApiType( int argc, char** argv )
 {
-	oroApi api = ORO_API_HIP;
+	// By default, the 2 API are enabled, and will be automatically selected by Orochi depending on the devices.
+	oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP ); 
+
 	if( argc >= 2 )
 	{
 		if( strcmp( argv[1], "hip" ) == 0 )

@@ -413,16 +413,23 @@ struct OrochiUtilsImpl
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
 };
 
-
-
-OrochiUtils::~OrochiUtils() {
-	
+void OrochiUtils::unloadKernelCache() 
+{
 	for ( auto& instance : m_kernelMap ) 
 	{
 		oroError e = oroModuleUnload( instance.second.module );
 		OROASSERT( e == oroSuccess, 0 );
 	}
+	m_kernelMap.clear();
+	return;
+}
 
+OrochiUtils::~OrochiUtils() 
+{
+	// it's safer to not call unloadKernelCache automatically in the destructor ( better to have a leak than manipulating bad pointers )
+	// Just inform the developer.
+	if ( m_kernelMap.size() > 0 )
+		printf("Warning: OrochiUtils::unloadKernelCache should be called for good practice.");
 }
 
 

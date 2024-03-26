@@ -256,6 +256,7 @@ int main()
 	ERROR_CHECK( oroStreamDestroy( stream ) );
 	ERROR_CHECK( oroDestroySurfaceObject(surfObj)) ;  surfObj=nullptr;
 	ERROR_CHECK( oroArrayDestroy(oroArray)) ;  oroArray=nullptr;
+	o.unloadKernelCache();
 	ERROR_CHECK( oroCtxDestroy( ctx ) );
 
 	if ( testErrorFlag )

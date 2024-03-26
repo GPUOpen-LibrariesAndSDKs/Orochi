@@ -36,7 +36,8 @@ int main( int argc, char** argv )
 	OrochiUtils o;
 
 	// Initialize Orochi
-	if ( oroInitialize( ( oroApi )( ORO_API_HIP ), 0 ) != 0 )
+	// only ORO_API_HIP because this Demo currently only works on HIP
+	if ( oroInitialize( ( oroApi )( ORO_API_HIP ), 0 ) != 0 ) 
 	{ 
 		printf( "Unable to initialize Orochi. Please check your HIP installation or create an issue at our github for assistance.\n" );
 		return OROCHI_TEST_RETCODE__ERROR;
