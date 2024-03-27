@@ -534,57 +534,9 @@ thiprtcLinkComplete *hiprtcLinkComplete = nullptr;
 thiprtcLinkCreate *hiprtcLinkCreate = nullptr;
 thiprtcLinkDestroy *hiprtcLinkDestroy = nullptr;
 thiprtcVersion *hiprtcVersion = nullptr;
-tmake_char1 *make_char1 = nullptr;
-tmake_char2 *make_char2 = nullptr;
-tmake_char3 *make_char3 = nullptr;
-tmake_char4 *make_char4 = nullptr;
-tmake_double1 *make_double1 = nullptr;
-tmake_double2 *make_double2 = nullptr;
-tmake_double3 *make_double3 = nullptr;
-tmake_double4 *make_double4 = nullptr;
-tmake_float1 *make_float1 = nullptr;
-tmake_float2 *make_float2 = nullptr;
-tmake_float3 *make_float3 = nullptr;
-tmake_float4 *make_float4 = nullptr;
 tmake_hipExtent *make_hipExtent = nullptr;
 tmake_hipPitchedPtr *make_hipPitchedPtr = nullptr;
 tmake_hipPos *make_hipPos = nullptr;
-tmake_int1 *make_int1 = nullptr;
-tmake_int2 *make_int2 = nullptr;
-tmake_int3 *make_int3 = nullptr;
-tmake_int4 *make_int4 = nullptr;
-tmake_long1 *make_long1 = nullptr;
-tmake_long2 *make_long2 = nullptr;
-tmake_long3 *make_long3 = nullptr;
-tmake_long4 *make_long4 = nullptr;
-tmake_longlong1 *make_longlong1 = nullptr;
-tmake_longlong2 *make_longlong2 = nullptr;
-tmake_longlong3 *make_longlong3 = nullptr;
-tmake_longlong4 *make_longlong4 = nullptr;
-tmake_short1 *make_short1 = nullptr;
-tmake_short2 *make_short2 = nullptr;
-tmake_short3 *make_short3 = nullptr;
-tmake_short4 *make_short4 = nullptr;
-tmake_uchar1 *make_uchar1 = nullptr;
-tmake_uchar2 *make_uchar2 = nullptr;
-tmake_uchar3 *make_uchar3 = nullptr;
-tmake_uchar4 *make_uchar4 = nullptr;
-tmake_uint1 *make_uint1 = nullptr;
-tmake_uint2 *make_uint2 = nullptr;
-tmake_uint3 *make_uint3 = nullptr;
-tmake_uint4 *make_uint4 = nullptr;
-tmake_ulong1 *make_ulong1 = nullptr;
-tmake_ulong2 *make_ulong2 = nullptr;
-tmake_ulong3 *make_ulong3 = nullptr;
-tmake_ulong4 *make_ulong4 = nullptr;
-tmake_ulonglong1 *make_ulonglong1 = nullptr;
-tmake_ulonglong2 *make_ulonglong2 = nullptr;
-tmake_ulonglong3 *make_ulonglong3 = nullptr;
-tmake_ulonglong4 *make_ulonglong4 = nullptr;
-tmake_ushort1 *make_ushort1 = nullptr;
-tmake_ushort2 *make_ushort2 = nullptr;
-tmake_ushort3 *make_ushort3 = nullptr;
-tmake_ushort4 *make_ushort4 = nullptr;
 
 
 
@@ -616,6 +568,11 @@ static void hipewHipExit(void) {
 
 #ifdef _WIN32
 static int hipewHasOldDriver(const char *hip_path) {
+    //
+    //
+    // we shoudn't need this complicated check anymore, and just rely on the "hipRuntimeGetVersion" check done during the hipewInit.
+    // As this check doesn't seem to hurt, let's keep it for now...
+    //
   DWORD verHandle = 0;
   DWORD verSize = GetFileVersionInfoSizeA(hip_path, &verHandle);
   int old_driver = 0;
@@ -1214,6 +1171,35 @@ _LIBRARY_FIND( rtcLib, hiprtcVersion );
 	s_resultRtc = HIPEW_ERROR_OPEN_FAILED;
 	*resultRtc = s_resultRtc;
   }
+
+
+
+#ifndef HIPEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if ( hipRuntimeGetVersion )
+    {
+      int runtimeVersion = 0;
+      hipRuntimeGetVersion(&runtimeVersion);
+      int runtimeVersion_major = runtimeVersion / (int)10000000;
+      if ( (int)HIP_VERSION_MAJOR > runtimeVersion_major )
+      {
+        *resultDriver = HIPEW_ERROR_OLD_DRIVER;
+        *resultRtc = HIPEW_ERROR_OLD_DRIVER; // as currently hiprtcVersion is not used, set the same result than resultDriver
+      }
+    }
+
+    if (hiprtcVersion) 
+    {
+      int major, minor = 0;
+      hiprtcVersion(&major, &minor);
+      // we currently can't compare this version with API as this version is decoupled from HIP_VERSION
+    }
+
+#endif
+
+
+
+
+
 }
 
 const char *hipewErrorString(hipError_t result) {

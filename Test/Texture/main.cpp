@@ -31,7 +31,17 @@
 #include "../../UnitTest/demoErrorCodes.h"
 
 
-void writeImageToPNG(const uchar4 *image, int width, int height, const char *filename) 
+
+struct IMG_PIXEL_UCHAR4 
+{
+	unsigned char x;
+	unsigned char y;
+	unsigned char z;
+	unsigned char w;
+};
+
+
+void writeImageToPNG(const IMG_PIXEL_UCHAR4* image, int width, int height, const char* filename) 
 {
 	// Prepare an array for the RGB data
 	unsigned char *rgbImage = (unsigned char *)malloc(width * height * 3);
@@ -211,7 +221,7 @@ int main()
 	ERROR_CHECK( oroDeviceSynchronize() );
 
 
-	uchar4* hostImage = (uchar4*)malloc(width * height * sizeof(uchar4));
+	IMG_PIXEL_UCHAR4* hostImage = (IMG_PIXEL_UCHAR4*)malloc(width * height * sizeof(IMG_PIXEL_UCHAR4));
 	if (hostImage == nullptr) 
 	{
 		std::cerr << "Failed to allocate host image memory" << std::endl;
@@ -219,8 +229,8 @@ int main()
 	}
 
 
-	size_t dpitch = width * sizeof(uchar4); // Destination pitch
-	status = oroMemcpy2DFromArray(hostImage, dpitch, oroArray, 0, 0, width * sizeof(uchar4), height, oroMemcpyDeviceToHost);
+	size_t dpitch = width * sizeof(IMG_PIXEL_UCHAR4); // Destination pitch
+	status = oroMemcpy2DFromArray(hostImage, dpitch, oroArray, 0, 0, width * sizeof(IMG_PIXEL_UCHAR4), height, oroMemcpyDeviceToHost);
 	if (status != ORO_SUCCESS) 
 	{
 		std::cerr << "Failed to copy data from array to host" << std::endl;

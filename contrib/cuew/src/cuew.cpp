@@ -1717,7 +1717,7 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
       int runtimeVersion_major = runtimeVersion / (int)1000;
       if ( includeVersion_major > runtimeVersion_major )
       {
-        *resultDriver = CUEW_BAD_VERSION;
+        *resultDriver = CUEW_ERROR_OLD_DRIVER;
       }
     }
 #endif
@@ -1735,7 +1735,7 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
       nvrtcVersion_oro(&major, &minor);
       if ( includeVersion_major > major )
       {
-        *resultRtc = CUEW_BAD_VERSION;
+        *resultRtc = CUEW_ERROR_OLD_DRIVER;
       }
     }
 #endif
