@@ -1703,12 +1703,45 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
   *resultDriver = CUEW_NOT_INITIALIZED;
   *resultRtc = CUEW_NOT_INITIALIZED;
 
-  if (flags & CUEW_INIT_CUDA) {
+  const int includeVersion_major = (int)CUDA_VERSION / (int)1000;
+
+  if (flags & CUEW_INIT_CUDA) 
+  {
     *resultDriver = cuewCudaInit();
+
+#ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if ( cudaRuntimeGetVersion_oro )
+    {
+      int runtimeVersion = 0;
+      cudaRuntimeGetVersion_oro(&runtimeVersion);
+      int runtimeVersion_major = runtimeVersion / (int)1000;
+      if ( includeVersion_major > runtimeVersion_major )
+      {
+        *resultDriver = CUEW_BAD_VERSION;
+      }
+    }
+#endif
+
+
   }
-  if (flags & CUEW_INIT_NVRTC) {
+  if (flags & CUEW_INIT_NVRTC) 
+  {
     *resultRtc = cuewNvrtcInit();
+
+#ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if (nvrtcVersion_oro) 
+    {
+      int major, minor = 0;
+      nvrtcVersion_oro(&major, &minor);
+      if ( includeVersion_major > major )
+      {
+        *resultRtc = CUEW_BAD_VERSION;
+      }
+    }
+#endif
+
   }
+
 }
 
 const char *cuewErrorString(CUresult result)

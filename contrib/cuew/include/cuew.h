@@ -1502,6 +1502,10 @@ enum {
   CUEW_ERROR_OPEN_FAILED = -1,
   CUEW_ERROR_ATEXIT_FAILED = -2,
   CUEW_NOT_INITIALIZED = -3,
+
+  // error code if the major version of the API used to compiled is more recent than the one of the driver
+  // It doesn't seem a good idea to use an API that is unkonwn by the driver.
+  CUEW_BAD_VERSION = -4, 
 };
 
 enum { CUEW_INIT_CUDA = 1, CUEW_INIT_NVRTC = 2 };
