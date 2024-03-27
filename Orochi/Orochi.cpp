@@ -822,6 +822,9 @@ oroApi getRawDeviceIndex( int& deviceId )
 	oroGetDeviceCount( &n[0], ORO_API_HIP );
 	oroGetDeviceCount( &n[1], ORO_API_CUDADRIVER );
 
+	if ( n[0] == 0 && n[1] == 0 )
+		return (oroApi)0;
+
 	oroApi api = (deviceId < n[0]) ? (ORO_API_HIP) : (ORO_API_CUDADRIVER);
 	if( api & ORO_API_CUDADRIVER )
 		deviceId -= n[0];
