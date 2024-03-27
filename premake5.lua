@@ -19,17 +19,6 @@ newoption {
 }
 
 
-function joinPaths(basePath, additionalPath)
-	-- Detect the path separator based on the operating system
-	local pathSeparator = package.config:sub(1,1)
-	-- Check if the basePath already ends with a path separator
-	if basePath:sub(-1) ~= pathSeparator then
-		basePath = basePath .. pathSeparator
-	end
-	return basePath .. additionalPath
-end
-
-
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
 	if not os.isdir(src_dir) then
 		printError("'%s' is not an existing directory!", src_dir)
@@ -115,36 +104,8 @@ workspace "YamatanoOrochi"
 	end
 
 
-
-	-- search if CUDA PATH en inside a classic env var
-	cuda_path = os.getenv("CUDA_PATH")
-
-	-- if the CUDA PATH is not in the env var, search in the classic folder
-	if (not os.istarget("windows")) and ( cuda_path == nil or cuda_path == '' ) then
-		potentialUnixCudaPath = "/usr/local/cuda";
-		if ( os.isdir(potentialUnixCudaPath) ) then
-			cuda_path = potentialUnixCudaPath
-		end
-	end
-
-
-	-- Enable CUEW if CUDA is forced or if we find the CUDA SDK folder
-	if ( _OPTIONS["forceCuda"] or   ( cuda_path ~= nil and cuda_path ~= '' )  ) then
-		print("CUEW is enabled.")
-		defines {"OROCHI_ENABLE_CUEW"}
-	end
-
-	-- If we find the CUDA SDK folder, add it to the include dir
-	if cuda_path == nil or cuda_path == '' then
-		if _OPTIONS["forceCuda"] then
-			print("WARNING: CUEW is enabled but it may not compile because CUDA SDK folder ( CUDA_PATH ) not found. You should install the CUDA SDK, or set CUDA_PATH.")
-		else
-			print("WARNING: CUEW is automatically disabled because CUDA SDK folder ( CUDA_PATH ) not found. You can force CUEW with the --forceCuda argument.")
-		end
-	else
-		print("CUDA SDK install folder found: " .. cuda_path)
-		includedirs {  joinPaths(cuda_path,"include") }
-	end
+	-- try to enable CUDA if possible.
+	include "./Orochi/enable_cuew"
 
 
 
