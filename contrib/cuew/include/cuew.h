@@ -62,7 +62,6 @@ extern "C" {
 
 
 
-
 #pragma region OROCHI_SUMMONER_REGION_cuew_h
 
 /////
@@ -70,8 +69,12 @@ extern "C" {
 ///// Manual modification of this region is not recommended.
 /////
 
+
+// CUDA version used to make this Orochi:
+// (check the github of Orochi if you want it based on a different version)
 // CUDART_VERSION = 12020
 // CUDA_VERSION = 12020
+
 
 typedef CUresult CUDAAPI tcuArray3DCreate_v2(CUarray * pHandle, const CUDA_ARRAY3D_DESCRIPTOR * pAllocateArray);
 typedef CUresult CUDAAPI tcuArray3DGetDescriptor_v2(CUDA_ARRAY3D_DESCRIPTOR * pArrayDescriptor, CUarray hArray);
