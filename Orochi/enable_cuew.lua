@@ -68,7 +68,7 @@ if (not oropremake_PathOK(cuda_path)) then
 end
 
 if (not oropremake_PathOK(cuda_path)) then
-	print("CUDA not found in the requiered version for this Orochi: " .. best_cuda_version_name .. ". It's advised that you install this version.")
+	print("The requiered version of CUDA for this Orochi is not found: " .. best_cuda_version_name .. ". It's advised that you install this version.")
 end
 
 --
