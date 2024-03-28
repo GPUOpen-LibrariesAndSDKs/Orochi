@@ -28,6 +28,17 @@ TEST_F( OroTestBase, init )
 
 }
 
+TEST_F( OroTestBase, checkCUEW )
+{
+	// this unit test is just to inform if CUEW is disabled.
+	// if it fails, this means that you should install the CUDA SDK, add its include path to this project, and enable OROCHI_ENABLE_CUEW.
+	// ( if the CUDA SDK is installed, the premake script should automatically enable CUEW )
+	#ifndef OROCHI_ENABLE_CUEW
+	printf("This build of Orochi is not able to run on CUDA.\n");
+	ASSERT_TRUE( false );
+	#endif
+}
+
 TEST_F( OroTestBase, deviceprops )
 {
 	{
