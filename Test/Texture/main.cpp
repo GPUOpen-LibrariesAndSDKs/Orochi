@@ -26,8 +26,8 @@
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
 #include <iostream>
-#include "contrib/stb/stb_image_write.h"
-#include "contrib/stb/stb_image.h"
+#include "../../UnitTest/contrib/stb/stb_image_write.h"
+#include "../../UnitTest/contrib/stb/stb_image.h"
 #include "../../UnitTest/demoErrorCodes.h"
 
 
@@ -106,7 +106,7 @@ int main()
 	int stbi_dimX = 0;
 	int stbi_dimY = 0;
 	int stbi_comp = 0;
-	stbi_uc* imgInStbi = stbi_load("../Test/resources/nature.png", &stbi_dimX, &stbi_dimY, &stbi_comp, 0);
+	stbi_uc* imgInStbi = OROCHI_STBI::stbi_load("../Test/resources/nature.png", &stbi_dimX, &stbi_dimY, &stbi_comp, 0);
 
 	if ( !imgInStbi )
 	{
@@ -262,7 +262,7 @@ int main()
 	std::cout<< "file " + outFile + " has been created.\n";
 
 
-	stbi_image_free(imgInStbi); imgInStbi=nullptr;
+	OROCHI_STBI::stbi_image_free(imgInStbi); imgInStbi=nullptr;
 	ERROR_CHECK( oroStreamDestroy( stream ) );
 	ERROR_CHECK( oroDestroySurfaceObject(surfObj)) ;  surfObj=nullptr;
 	ERROR_CHECK( oroArrayDestroy(oroArray)) ;  oroArray=nullptr;

@@ -386,17 +386,30 @@ enum
 typedef unsigned char stbi_uc;
 typedef unsigned short stbi_us;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-#ifndef STBIDEF
-#ifdef STB_IMAGE_STATIC
-#define STBIDEF static
-#else
-#define STBIDEF extern
-#endif
-#endif
+
+
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
+//
+//
+//#ifndef STBIDEF
+//#ifdef STB_IMAGE_STATIC
+//#define STBIDEF static
+//#else
+//#define STBIDEF extern
+//#endif
+//#endif
+//
+//
+// MODIFICATION FOR THE OROCHI PROJECT:
+// encapsulate stb_image library to avoid potential conflicts in projects Orochi is used.
+#define STBIDEF
+namespace OROCHI_STBI 
+{
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -534,9 +547,12 @@ STBIDEF char *stbi_zlib_decode_noheader_malloc(const char *buffer, int len, int 
 STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const char *ibuffer, int ilen);
 
 
-#ifdef __cplusplus
-}
-#endif
+
+//#ifdef __cplusplus
+//}
+//#endif
+} // end namespace OROCHI_STBI
+
 
 //
 //
@@ -798,6 +814,11 @@ static int stbi__sse2_available(void)
 ///////////////////////////////////////////////
 //
 //  stbi__context struct and start_xxx functions
+
+
+namespace OROCHI_STBI 
+{
+
 
 // stbi__context structure is our basic context used by all images, so it
 // contains all the IO context, plus some basic image information
@@ -7755,6 +7776,10 @@ STBIDEF int stbi_is_16_bit_from_callbacks(stbi_io_callbacks const *c, void *user
    stbi__start_callbacks(&s, (stbi_io_callbacks *) c, user);
    return stbi__is_16_main(&s);
 }
+
+
+} // end namespace OROCHI_STBI
+
 
 #endif // STB_IMAGE_IMPLEMENTATION
 
