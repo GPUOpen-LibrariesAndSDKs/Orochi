@@ -1,3 +1,25 @@
+//
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+
 #include <Orochi/OrochiUtils.h>
 #include <codecvt>
 #include <fstream>
@@ -197,7 +219,8 @@ struct OrochiUtilsImpl
 
 		oroDeviceProp props;
 		oroGetDeviceProperties( &props, device );
-		int v;
+
+		int v = 0;
 		oroDriverGetVersion( &v );
 		std::string deviceName = props.name;
 		std::string driverVersion = std::to_string( v );
@@ -220,6 +243,7 @@ struct OrochiUtilsImpl
 
 		deviceName = deviceName.substr( 0, deviceName.find( ":" ) );
 		binFileName = cacheDirectory + "/"s + moduleHash + "-"s + optionHash + ".v."s + deviceName + "."s + driverVersion + "_"s + std::to_string( 8 * sizeof( void* ) ) + ".bin"s;
+		return;
 	}
 	static bool isFileUpToDate( const char* binaryFileName, const char* srcFileName )
 	{
@@ -371,26 +395,129 @@ struct OrochiUtilsImpl
 		return 0;
 	}
 
+	static std::string getCacheName( const std::string& path, const std::string& kernelname, std::vector<const char*>* opts ) noexcept
+	{
+		std::string tmp_name = path + kernelname;
+
+		if (opts == nullptr)
+			return tmp_name;
+
+		for( std::string s : *opts )
+		{
+			if( s.size() > 1 && s[0] == '-' && s[1] == 'I' ) continue;
+			tmp_name += s;
+		}
+		return tmp_name;
+	}
+
 	static std::string getCacheName( const std::string& path, const std::string& kernelname ) noexcept { return path + kernelname; }
 };
 
-bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) { return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); }
+void OrochiUtils::unloadKernelCache() 
+{
+	for ( auto& instance : m_kernelMap ) 
+	{
+		oroError e = oroModuleUnload( instance.second.module );
+		OROASSERT( e == oroSuccess, 0 );
+	}
+	m_kernelMap.clear();
+	return;
+}
+
+OrochiUtils::~OrochiUtils() 
+{
+	// it's safer to not call unloadKernelCache automatically in the destructor ( better to have a leak than manipulating bad pointers )
+	// Just inform the developer.
+	if ( m_kernelMap.size() > 0 )
+		printf("Warning: OrochiUtils::unloadKernelCache should be called for good practice.\n");
+}
+
+// setup a base option list used in OrochiUtils 
+void SetupCompileOptions(
+	oroDevice device, 
+	const std::vector<const char*>* optsIn, 
+	std::string* optionalArchitectureTarget, // if this string is given, it must stay alive until it's used into orortcCompileProgram. ( otherwise its "c_str()" becomes an invalid pointer )
+	std::vector<const char*>& opts
+	)
+{
+	opts.push_back( "-std=c++17" );
+
+	if( optionalArchitectureTarget && oroGetCurAPI( 0 ) == ORO_API_HIP )
+	{
+		oroDeviceProp props;
+		::memset(&props,0,sizeof(props));
+		oroGetDeviceProperties( &props, device );
+		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
+		{
+			*optionalArchitectureTarget = "--gpu-architecture=";
+			*optionalArchitectureTarget += props.gcnArchName;
+			opts.push_back( optionalArchitectureTarget->c_str() );
+		}
+	}
+
+	if( optsIn )
+	{
+		for( int i = 0; i < optsIn->size(); i++ )
+			opts.push_back( ( *optsIn )[i] );
+	}
+}
+
+// base program compilation, used in several components of OrochiUtils
+void CreateAndCompileProgram(const char* code, const char* programName, std::vector<const char*>& opts, const char* nameExpression, 
+							int numHeaders, const char** headers, const char** includeNames,
+							orortcProgram* prog)
+{
+	orortcResult e;
+	e = orortcCreateProgram( prog, code, programName, numHeaders, headers, includeNames );
+
+	if ( nameExpression )
+		e = orortcAddNameExpression( *prog, nameExpression );
+
+	e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
+	if( e != ORORTC_SUCCESS )
+	{
+		std::cout << "ERROR: orortcCompileProgram failed with log:\n";
+		size_t logSize = 0;
+		orortcGetProgramLogSize( *prog, &logSize );
+		if( logSize )
+		{
+			std::string log( logSize, '\0' );
+			orortcGetProgramLog( *prog, &log[0] );
+			std::cout << log << '\n';
+		}
+		else
+		{
+			std::cout << "<NO LOG>\n";
+		}
+	}
+}
+
+bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) 
+{
+	return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); 
+}
 
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
-	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName, optsIn );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
 
 	std::string source;
-	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) return 0;
+	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) 
+		return 0;
 
-	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn );
-	m_kernelMap[cacheName] = f;
+	oroModule module;
+
+	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn, 0, nullptr, nullptr, &module );
+
+	m_kernelMap[cacheName].function = f;
+	m_kernelMap[cacheName].module = module;
+
 	return f;
 }
 
@@ -398,13 +525,19 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
-	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName, optsIn );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
-	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames );
-	m_kernelMap[cacheName] = f;
+
+	oroModule module;
+
+	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames, &module );
+
+	m_kernelMap[cacheName].function = f;
+	m_kernelMap[cacheName].module = module;
+	
 	return f;
 }
 
@@ -415,7 +548,7 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	const std::string cacheName = OrochiUtilsImpl::getCacheName( path, funcName );
 	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
 	{
-		return m_kernelMap[cacheName];
+		return m_kernelMap[cacheName].function;
 	}
 
 	std::ifstream instream( path, std::ios::in | std::ios::binary );
@@ -424,29 +557,28 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	oroModule module;
 	oroFunction functionOut{};
 	oroError e = oroModuleLoadData( &module, binary.data() );
+	if ( e != oroSuccess )
+	{
+		// add some verbose info to help debugging missing file
+		printf("oroModuleLoadData FAILED (error = %d) loading file: %s\n", e, path.c_str());
+	}
 	OROASSERT( e == oroSuccess, 0 );
 
 	e = oroModuleGetFunction( &functionOut, module, funcName.c_str() );
 	OROASSERT( e == oroSuccess, 0 );
 
-	m_kernelMap[cacheName] = functionOut;
+	m_kernelMap[cacheName].function = functionOut;
+	m_kernelMap[cacheName].module = module;
+
 	return functionOut;
 }
 
-oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames )
+oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames, oroModule* loadedModule)
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
+	SetupCompileOptions(device, optsIn, nullptr, opts);
 
 	oroFunction function;
 	std::vector<char> codec;
@@ -466,23 +598,10 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	else
 	{
 		orortcProgram prog;
-		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, numHeaders, headers, includeNames );
-		OROASSERT( e == ORORTC_SUCCESS, 0 );
+		CreateAndCompileProgram(code, funcName, opts, nullptr, numHeaders, headers, includeNames, &prog);
 
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			size_t logSize;
-			orortcGetProgramLogSize( prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( prog, &log[0] );
-				std::cout << log << '\n';
-			};
-		}
 		size_t codeSize;
+		orortcResult e;
 		e = orortcGetCodeSize( prog, &codeSize );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
@@ -502,102 +621,37 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	ee = oroModuleGetFunction( &function, module, funcName );
 	OROASSERT( ee == oroSuccess, 0 );
 
+	if ( loadedModule ) 
+	{
+		*loadedModule = module;
+	}
+
 	return function;
 }
 
 void OrochiUtils::getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, std::vector<char>& dst )
 {
-	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
+	orortcProgram prog = nullptr;
+	getProgram( device, code, path, optsIn, nullptr, &prog );
 
-	std::string tmp = "--gpu-architecture=";
+	orortcResult e;
+	size_t codeSize = 0;
+	e = orortcGetBitcodeSize( prog, &codeSize );
 
-	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
-	{
-		oroDeviceProp props;
-		oroGetDeviceProperties( &props, device );
-		tmp += props.gcnArchName;
-		opts.push_back( tmp.c_str() );
-	}
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
-
-	oroFunction function;
 	std::vector<char>& codec = dst;
-	{
-		orortcProgram prog;
-		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
-
-		e = orortcCompileProgram( prog, opts.size(), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			size_t logSize;
-			orortcGetProgramLogSize( prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( prog, &log[0] );
-				std::cout << log << '\n';
-			};
-		}
-		size_t codeSize;
-		e = orortcGetBitcodeSize( prog, &codeSize );
-
-		codec.resize( codeSize );
-		e = orortcGetBitcode( prog, codec.data() );
-		e = orortcDestroyProgram( &prog );
-	}
+	codec.resize( codeSize );
+	e = orortcGetBitcode( prog, codec.data() );
+	e = orortcDestroyProgram( &prog );
+	
 	return;
 }
 
 void OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram* prog )
 {
 	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
-
-	std::string tmp = "--gpu-architecture=";
-
-	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
-	{
-		oroDeviceProp props;
-		oroGetDeviceProperties( &props, device );
-		tmp += props.gcnArchName;
-		opts.push_back( tmp.c_str() );
-	}
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
-	//	if( oroGetCurAPI(0) == ORO_API_CUDA )
-	//		opts.push_back( "-G" );
-
-	{
-		orortcResult e;
-		e = orortcCreateProgram( prog, code, path, 0, 0, 0 );
-		e = orortcAddNameExpression( *prog, funcName );
-
-		e = orortcCompileProgram( *prog, opts.size(), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			size_t logSize;
-			orortcGetProgramLogSize( *prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( *prog, &log[0] );
-				std::cout << log << '\n';
-			};
-		}
-	}
+	std::string architectureTarget;
+	SetupCompileOptions(device, optsIn, &architectureTarget, opts);
+	CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
 	return;
 }
 
@@ -634,6 +688,7 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 {
 	int4 tpb = { wgSizeX, wgSizeY, 0 };
 	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
-	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, 0, (void**)args, 0 );
+	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
+

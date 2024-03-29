@@ -1,3 +1,25 @@
+//
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+
 #pragma once
 
 #include <Orochi/OrochiUtils.h>
@@ -91,8 +113,34 @@ class GpuMemory final
 		*this = std::move( tmp );
 	}
 
+	/// @brief Asynchronous version of 'resize' using a given Orochi stream.
+	/// @param new_size The new memory size after the function is called.
+	/// @param copy If true, the function will copy the data to the newly created memory space as well.
+	/// @param stream The Orochi stream used for the underlying operations.
+	void resizeAsync( const size_t new_size, const bool copy = false, oroStream stream = 0 ) noexcept
+	{
+		if( new_size <= m_capacity )
+		{
+			m_size = new_size;
+			return;
+		}
+
+		GpuMemory tmp( new_size );
+
+		if( copy )
+		{
+			OrochiUtils::copyDtoDAsync( tmp.m_data, m_data, m_size, stream );
+		}
+
+		*this = std::move( tmp );
+	}
+
 	/// @brief Reset the memory space so that all bits inside are cleared to zero.
 	void reset() noexcept { OrochiUtils::memset( m_data, 0, m_size * sizeof( T ) ); }
+
+	/// @brief Asynchronous version of 'reset' using a given Orochi stream.
+	/// @param stream The Orochi stream used for the underlying operations.
+	void resetAsync( oroStream stream = 0 ) noexcept { OrochiUtils::memsetAsync( m_data, 0, m_size * sizeof( T ), stream ); }
 
 	/// @brief Copy the data from device memory to host.
 	/// @param host_ptr The host pointer.

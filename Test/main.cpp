@@ -22,35 +22,35 @@
 
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
-
+#include "../UnitTest/demoErrorCodes.h"
 
 int main(int argc, char** argv )
 {
+	bool testErrorFlag = false;
 	oroApi api = getApiType( argc, argv );
 
 	int a = oroInitialize( api, 0 );
 	if( a != 0 )
 	{
 		printf("initialization failed\n");
-		return 0;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 	printf( ">> executing on %s\n", ( api == ORO_API_HIP )? "hip":"cuda" );
 
 	printf(">> testing initialization\n");
-	oroError e;
-	e = oroInit( 0 );
-	oroDevice device;
-	e = oroDeviceGet( &device, 0 );
-	oroCtx ctx;
-	e = oroCtxCreate( &ctx, 0, device );
+	ERROR_CHECK(oroInit( 0 ));
+	oroDevice device = 0;
+	ERROR_CHECK(oroDeviceGet( &device, 0 ));
+	oroCtx ctx = nullptr;
+	ERROR_CHECK(oroCtxCreate( &ctx, 0, device ));
 
 	printf(">> testing device props\n");
 	{
 		oroDeviceProp props;
-		oroGetDeviceProperties( &props, device );
+		ERROR_CHECK(oroGetDeviceProperties( &props, device ));
 		printf("executing on %s (%s)\n", props.name, props.gcnArchName );
-		int v;
-		oroDriverGetVersion( &v );
+		int v = 0;
+		ERROR_CHECK(oroDriverGetVersion( &v ));
 		printf("running on driver: %d\n", v);
 	}
 	printf(">> testing kernel execution\n");
@@ -63,65 +63,75 @@ int main(int argc, char** argv )
 				"atomicAdd( a, tid );"
 			"}";
 			const char* funcName = "testKernel";
-			orortcProgram prog;
-			orortcResult e;
-			e = orortcCreateProgram( &prog, code, funcName, 0, 0, 0 );
+			orortcProgram prog = nullptr;
+			
+			ERROR_CHECK(orortcCreateProgram( &prog, code, funcName, 0, 0, 0 ));
 			std::vector<const char*> opts; 
 			opts.push_back( "-I ../" );
 
-			e = orortcCompileProgram( prog, opts.size(), opts.data() );
+			orortcResult e = orortcCompileProgram( prog, opts.size(), opts.data() );
 			if( e != ORORTC_SUCCESS )
 			{
-				size_t logSize;
+				std::cout << "orortcCompileProgram FAILED, log:\n";
+
+				size_t logSize = 0;
 				orortcGetProgramLogSize(prog, &logSize);
 				if (logSize) 
 				{
 					std::string log(logSize, '\0');
 					orortcGetProgramLog(prog, &log[0]);
 					std::cout << log << '\n';
-				};
+				}
+				else
+				{
+					std::cout << "<NO LOG GENERATED>\n";
+				}
+				return OROCHI_TEST_RETCODE__ERROR;
 			}
-			size_t codeSize;
-			e = orortcGetCodeSize(prog, &codeSize);
+			size_t codeSize = 0;
+			ERROR_CHECK(orortcGetCodeSize(prog, &codeSize));
 
 			std::vector<char> codec(codeSize);
-			e = orortcGetCode(prog, codec.data());
-			e = orortcDestroyProgram(&prog);
+			ERROR_CHECK(orortcGetCode(prog, codec.data()));
+			ERROR_CHECK(orortcDestroyProgram(&prog));
 			oroModule module;
-			oroError ee = oroModuleLoadData(&module, codec.data());
-			ee = oroModuleGetFunction(&function, module, funcName);		
+			ERROR_CHECK(oroModuleLoadData(&module, codec.data()));
+			ERROR_CHECK(oroModuleGetFunction(&function, module, funcName));		
 		}
 
 		oroStream stream;
-		oroStreamCreate( &stream );
+		ERROR_CHECK(oroStreamCreate( &stream ));
 		
 		oroEvent start, stop;
-		oroEventCreateWithFlags( &start, 0 );
-		oroEventCreateWithFlags( &stop, 0 );
-		oroEventRecord( start, stream );
+		ERROR_CHECK(oroEventCreateWithFlags( &start, 0 ));
+		ERROR_CHECK(oroEventCreateWithFlags( &stop, 0 ));
+		ERROR_CHECK(oroEventRecord( start, stream ));
 
 		int a_host = -1;
 		int* a_device = nullptr;
-		oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) );
-		oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) );
+		ERROR_CHECK(oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ));
+		ERROR_CHECK(oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ));
 		const void* args[] = { &a_device };
-		oroError e = oroModuleLaunchKernel( function, 1,1,1, 64,1,1, 0, stream, (void**)args, 0 );
+		ERROR_CHECK(oroModuleLaunchKernel( function, 1,1,1, 64,1,1, 0, stream, (void**)args, 0 ));
 
-		oroEventRecord( stop, stream );
+		ERROR_CHECK(oroEventRecord( stop, stream ));
 
-		oroDeviceSynchronize();
+		ERROR_CHECK(oroDeviceSynchronize());
 
-		oroStreamDestroy( stream );
-		oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) );
+		ERROR_CHECK(oroStreamDestroy( stream ));
+		ERROR_CHECK(oroMemcpyDtoH( &a_host, (oroDeviceptr)a_device, sizeof( int ) ));
 		printf("a_host (expected 2016): %d\n", a_host);
-		oroFree( (oroDeviceptr)a_device );
+		ERROR_CHECK(oroFree( (oroDeviceptr)a_device ));
 
 		float milliseconds = 0.0f;
-		oroEventElapsedTime( &milliseconds, start, stop );
+		ERROR_CHECK(oroEventElapsedTime( &milliseconds, start, stop ));
 		printf( ">> kernel - %.5f ms\n", milliseconds );
-		oroEventDestroy( start );
-		oroEventDestroy( stop );
+		ERROR_CHECK(oroEventDestroy( start ));
+		ERROR_CHECK(oroEventDestroy( stop ));
 	}
 	printf(">> done\n");
-	return 0;
+
+	if ( testErrorFlag )
+		return OROCHI_TEST_RETCODE__ERROR;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }

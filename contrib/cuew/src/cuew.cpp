@@ -12,7 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License
+ *
+ * Modifications made by Advanced Micro Devices, Inc.:
+ * Copyright(C) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * The modifications include updates to maintain an up-to-date API,
+ * enhancing compatibility in response to evolving technical standards.
+ * These changes are designed to augment the original work by the Blender Foundation,
+ * ensuring the software remains relevant and efficient for its intended applications.
+ *
+ * The modified software is provided under the Apache License, Version 2.0.
+ * For more details, see the License above.
  */
+
 
 #ifdef _MSC_VER
 #  if _MSC_VER < 1900
@@ -31,12 +43,15 @@
 #include <string.h>
 #include <sys/stat.h>
 
+
+#ifdef OROCHI_ENABLE_CUEW
+
+
 #ifdef _WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  define VC_EXTRALEAN
 #  include <windows.h>
 
-/* Utility macros. */
 
 typedef HMODULE DynamicLibrary;
 
@@ -53,266 +68,765 @@ typedef void *DynamicLibrary;
 #  define dynamic_library_find(lib, symbol) dlsym(lib, symbol)
 #endif
 
+
 #define _LIBRARY_FIND_CHECKED(lib, name) \
-  name = (t##name *)dynamic_library_find(lib, #name); \
-  assert(name);
+        name##_oro = (t##name *)dynamic_library_find(lib, #name); \
+        assert(name);
 
-#define _LIBRARY_FIND(lib, name) name = (t##name *)dynamic_library_find(lib, #name);
+#define _LIBRARY_FIND(lib, name)  name##_oro = (t##name *)dynamic_library_find(lib, #name);
 
-#define CUDA_LIBRARY_FIND_CHECKED(name) _LIBRARY_FIND_CHECKED(cuda_lib, name)
-#define CUDA_LIBRARY_FIND(name) _LIBRARY_FIND(cuda_lib, name)
 
-#define NVRTC_LIBRARY_FIND_CHECKED(name) _LIBRARY_FIND_CHECKED(nvrtc_lib, name)
-#define NVRTC_LIBRARY_FIND(name) _LIBRARY_FIND(nvrtc_lib, name)
+static DynamicLibrary cuda_lib = NULL;
+static DynamicLibrary cudart_lib = NULL;
+static DynamicLibrary nvrtc_lib = NULL;
 
-static DynamicLibrary cuda_lib;
-static DynamicLibrary nvrtc_lib;
 
-/* Function definitions. */
-tcuGetErrorString *cuGetErrorString;
-tcuGetErrorName *cuGetErrorName;
-tcuInit *cuInit;
-tcuDriverGetVersion *cuDriverGetVersion;
-tcuDeviceGet *cuDeviceGet;
-tcuDeviceGetCount *cuDeviceGetCount;
-tcuDeviceGetName *cuDeviceGetName;
-tcuDeviceGetUuid *cuDeviceGetUuid;
-tcuDeviceTotalMem_v2 *cuDeviceTotalMem_v2;
-tcuDeviceGetAttribute *cuDeviceGetAttribute;
-tcuDeviceGetProperties *cuDeviceGetProperties;
-tcuDeviceComputeCapability *cuDeviceComputeCapability;
-tcuDevicePrimaryCtxRetain *cuDevicePrimaryCtxRetain;
-tcuDevicePrimaryCtxRelease *cuDevicePrimaryCtxRelease;
-tcuDevicePrimaryCtxSetFlags *cuDevicePrimaryCtxSetFlags;
-tcuDevicePrimaryCtxGetState *cuDevicePrimaryCtxGetState;
-tcuDevicePrimaryCtxReset *cuDevicePrimaryCtxReset;
-tcuCtxCreate_v2 *cuCtxCreate_v2;
-tcuCtxDestroy_v2 *cuCtxDestroy_v2;
-tcuCtxPushCurrent_v2 *cuCtxPushCurrent_v2;
-tcuCtxPopCurrent_v2 *cuCtxPopCurrent_v2;
-tcuCtxSetCurrent *cuCtxSetCurrent;
-tcuCtxGetCurrent *cuCtxGetCurrent;
-tcuCtxGetDevice *cuCtxGetDevice;
-tcuCtxGetFlags *cuCtxGetFlags;
-tcuCtxSynchronize *cuCtxSynchronize;
-tcuCtxSetLimit *cuCtxSetLimit;
-tcuCtxGetLimit *cuCtxGetLimit;
-tcuCtxGetCacheConfig *cuCtxGetCacheConfig;
-tcuCtxSetCacheConfig *cuCtxSetCacheConfig;
-tcuCtxGetSharedMemConfig *cuCtxGetSharedMemConfig;
-tcuCtxSetSharedMemConfig *cuCtxSetSharedMemConfig;
-tcuCtxGetApiVersion *cuCtxGetApiVersion;
-tcuCtxGetStreamPriorityRange *cuCtxGetStreamPriorityRange;
-tcuCtxAttach *cuCtxAttach;
-tcuCtxDetach *cuCtxDetach;
-tcuModuleLoad *cuModuleLoad;
-tcuModuleLoadData *cuModuleLoadData;
-tcuModuleLoadDataEx *cuModuleLoadDataEx;
-tcuModuleLoadFatBinary *cuModuleLoadFatBinary;
-tcuModuleUnload *cuModuleUnload;
-tcuModuleGetFunction *cuModuleGetFunction;
-tcuModuleGetGlobal_v2 *cuModuleGetGlobal_v2;
-tcuModuleGetTexRef *cuModuleGetTexRef;
-tcuModuleGetSurfRef *cuModuleGetSurfRef;
-tcuLinkCreate_v2 *cuLinkCreate_v2;
-tcuLinkAddData_v2 *cuLinkAddData_v2;
-tcuLinkAddFile_v2 *cuLinkAddFile_v2;
-tcuLinkComplete *cuLinkComplete;
-tcuLinkDestroy *cuLinkDestroy;
-tcuMemGetInfo_v2 *cuMemGetInfo_v2;
-tcuMemAlloc_v2 *cuMemAlloc_v2;
-tcuMemAllocPitch_v2 *cuMemAllocPitch_v2;
-tcuMemFree_v2 *cuMemFree_v2;
-tcuMemGetAddressRange_v2 *cuMemGetAddressRange_v2;
-tcuMemAllocHost_v2 *cuMemAllocHost_v2;
-tcuMemFreeHost *cuMemFreeHost;
-tcuMemHostAlloc *cuMemHostAlloc;
-tcuMemHostGetDevicePointer_v2 *cuMemHostGetDevicePointer_v2;
-tcuMemHostGetFlags *cuMemHostGetFlags;
-tcuMemAllocManaged *cuMemAllocManaged;
-tcuDeviceGetByPCIBusId *cuDeviceGetByPCIBusId;
-tcuDeviceGetPCIBusId *cuDeviceGetPCIBusId;
-tcuIpcGetEventHandle *cuIpcGetEventHandle;
-tcuIpcOpenEventHandle *cuIpcOpenEventHandle;
-tcuIpcGetMemHandle *cuIpcGetMemHandle;
-tcuIpcOpenMemHandle *cuIpcOpenMemHandle;
-tcuIpcCloseMemHandle *cuIpcCloseMemHandle;
-tcuMemHostRegister_v2 *cuMemHostRegister_v2;
-tcuMemHostUnregister *cuMemHostUnregister;
-tcuMemcpy *cuMemcpy;
-tcuMemcpyPeer *cuMemcpyPeer;
-tcuMemcpyHtoD_v2 *cuMemcpyHtoD_v2;
-tcuMemcpyDtoH_v2 *cuMemcpyDtoH_v2;
-tcuMemcpyDtoD_v2 *cuMemcpyDtoD_v2;
-tcuMemcpyDtoA_v2 *cuMemcpyDtoA_v2;
-tcuMemcpyAtoD_v2 *cuMemcpyAtoD_v2;
-tcuMemcpyHtoA_v2 *cuMemcpyHtoA_v2;
-tcuMemcpyAtoH_v2 *cuMemcpyAtoH_v2;
-tcuMemcpyAtoA_v2 *cuMemcpyAtoA_v2;
-tcuMemcpy2D_v2 *cuMemcpy2D_v2;
-tcuMemcpy2DUnaligned_v2 *cuMemcpy2DUnaligned_v2;
-tcuMemcpy3D_v2 *cuMemcpy3D_v2;
-tcuMemcpy3DPeer *cuMemcpy3DPeer;
-tcuMemcpyAsync *cuMemcpyAsync;
-tcuMemcpyPeerAsync *cuMemcpyPeerAsync;
-tcuMemcpyHtoDAsync_v2 *cuMemcpyHtoDAsync_v2;
-tcuMemcpyDtoHAsync_v2 *cuMemcpyDtoHAsync_v2;
-tcuMemcpyDtoDAsync_v2 *cuMemcpyDtoDAsync_v2;
-tcuMemcpyHtoAAsync_v2 *cuMemcpyHtoAAsync_v2;
-tcuMemcpyAtoHAsync_v2 *cuMemcpyAtoHAsync_v2;
-tcuMemcpy2DAsync_v2 *cuMemcpy2DAsync_v2;
-tcuMemcpy3DAsync_v2 *cuMemcpy3DAsync_v2;
-tcuMemcpy3DPeerAsync *cuMemcpy3DPeerAsync;
-tcuMemsetD8_v2 *cuMemsetD8_v2;
-tcuMemsetD16_v2 *cuMemsetD16_v2;
-tcuMemsetD32_v2 *cuMemsetD32_v2;
-tcuMemsetD2D8_v2 *cuMemsetD2D8_v2;
-tcuMemsetD2D16_v2 *cuMemsetD2D16_v2;
-tcuMemsetD2D32_v2 *cuMemsetD2D32_v2;
-tcuMemsetD8Async *cuMemsetD8Async;
-tcuMemsetD16Async *cuMemsetD16Async;
-tcuMemsetD32Async *cuMemsetD32Async;
-tcuMemsetD2D8Async *cuMemsetD2D8Async;
-tcuMemsetD2D16Async *cuMemsetD2D16Async;
-tcuMemsetD2D32Async *cuMemsetD2D32Async;
-tcuArrayCreate_v2 *cuArrayCreate_v2;
-tcuArrayGetDescriptor_v2 *cuArrayGetDescriptor_v2;
-tcuArrayDestroy *cuArrayDestroy;
-tcuArray3DCreate_v2 *cuArray3DCreate_v2;
-tcuArray3DGetDescriptor_v2 *cuArray3DGetDescriptor_v2;
-tcuMipmappedArrayCreate *cuMipmappedArrayCreate;
-tcuMipmappedArrayGetLevel *cuMipmappedArrayGetLevel;
-tcuMipmappedArrayDestroy *cuMipmappedArrayDestroy;
-tcuPointerGetAttribute *cuPointerGetAttribute;
-tcuMemPrefetchAsync *cuMemPrefetchAsync;
-tcuMemAdvise *cuMemAdvise;
-tcuMemRangeGetAttribute *cuMemRangeGetAttribute;
-tcuMemRangeGetAttributes *cuMemRangeGetAttributes;
-tcuPointerSetAttribute *cuPointerSetAttribute;
-tcuPointerGetAttributes *cuPointerGetAttributes;
-tcuStreamCreate *cuStreamCreate;
-tcuStreamCreateWithPriority *cuStreamCreateWithPriority;
-tcuStreamGetPriority *cuStreamGetPriority;
-tcuStreamGetFlags *cuStreamGetFlags;
-tcuStreamGetCtx *cuStreamGetCtx;
-tcuStreamWaitEvent *cuStreamWaitEvent;
-tcuStreamAddCallback *cuStreamAddCallback;
-tcuStreamAttachMemAsync *cuStreamAttachMemAsync;
-tcuStreamQuery *cuStreamQuery;
-tcuStreamSynchronize *cuStreamSynchronize;
-tcuStreamDestroy_v2 *cuStreamDestroy_v2;
-tcuEventCreate *cuEventCreate;
-tcuEventRecord *cuEventRecord;
-tcuEventQuery *cuEventQuery;
-tcuEventSynchronize *cuEventSynchronize;
-tcuEventDestroy_v2 *cuEventDestroy_v2;
-tcuEventElapsedTime *cuEventElapsedTime;
-tcuImportExternalMemory *cuImportExternalMemory;
-tcuExternalMemoryGetMappedBuffer *cuExternalMemoryGetMappedBuffer;
-tcuDestroyExternalMemory *cuDestroyExternalMemory;
-tcuStreamWaitValue32 *cuStreamWaitValue32;
-tcuStreamWaitValue64 *cuStreamWaitValue64;
-tcuStreamWriteValue32 *cuStreamWriteValue32;
-tcuStreamWriteValue64 *cuStreamWriteValue64;
-tcuStreamBatchMemOp *cuStreamBatchMemOp;
-tcuFuncGetAttribute *cuFuncGetAttribute;
-tcuFuncSetAttribute *cuFuncSetAttribute;
-tcuFuncSetCacheConfig *cuFuncSetCacheConfig;
-tcuFuncSetSharedMemConfig *cuFuncSetSharedMemConfig;
-tcuLaunchKernel *cuLaunchKernel;
-tcuLaunchCooperativeKernel *cuLaunchCooperativeKernel;
-tcuLaunchCooperativeKernelMultiDevice *cuLaunchCooperativeKernelMultiDevice;
-tcuFuncSetBlockShape *cuFuncSetBlockShape;
-tcuFuncSetSharedSize *cuFuncSetSharedSize;
-tcuParamSetSize *cuParamSetSize;
-tcuParamSeti *cuParamSeti;
-tcuParamSetf *cuParamSetf;
-tcuParamSetv *cuParamSetv;
-tcuLaunch *cuLaunch;
-tcuLaunchGrid *cuLaunchGrid;
-tcuLaunchGridAsync *cuLaunchGridAsync;
-tcuParamSetTexRef *cuParamSetTexRef;
-tcuOccupancyMaxActiveBlocksPerMultiprocessor *cuOccupancyMaxActiveBlocksPerMultiprocessor;
-tcuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
-    *cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
-tcuOccupancyMaxPotentialBlockSize *cuOccupancyMaxPotentialBlockSize;
-tcuOccupancyMaxPotentialBlockSizeWithFlags *cuOccupancyMaxPotentialBlockSizeWithFlags;
-tcuTexRefSetArray *cuTexRefSetArray;
-tcuTexRefSetMipmappedArray *cuTexRefSetMipmappedArray;
-tcuTexRefSetAddress_v2 *cuTexRefSetAddress_v2;
-tcuTexRefSetAddress2D_v3 *cuTexRefSetAddress2D_v3;
-tcuTexRefSetFormat *cuTexRefSetFormat;
-tcuTexRefSetAddressMode *cuTexRefSetAddressMode;
-tcuTexRefSetFilterMode *cuTexRefSetFilterMode;
-tcuTexRefSetMipmapFilterMode *cuTexRefSetMipmapFilterMode;
-tcuTexRefSetMipmapLevelBias *cuTexRefSetMipmapLevelBias;
-tcuTexRefSetMipmapLevelClamp *cuTexRefSetMipmapLevelClamp;
-tcuTexRefSetMaxAnisotropy *cuTexRefSetMaxAnisotropy;
-tcuTexRefSetBorderColor *cuTexRefSetBorderColor;
-tcuTexRefSetFlags *cuTexRefSetFlags;
-tcuTexRefGetAddress_v2 *cuTexRefGetAddress_v2;
-tcuTexRefGetArray *cuTexRefGetArray;
-tcuTexRefGetMipmappedArray *cuTexRefGetMipmappedArray;
-tcuTexRefGetAddressMode *cuTexRefGetAddressMode;
-tcuTexRefGetFilterMode *cuTexRefGetFilterMode;
-tcuTexRefGetFormat *cuTexRefGetFormat;
-tcuTexRefGetMipmapFilterMode *cuTexRefGetMipmapFilterMode;
-tcuTexRefGetMipmapLevelBias *cuTexRefGetMipmapLevelBias;
-tcuTexRefGetMipmapLevelClamp *cuTexRefGetMipmapLevelClamp;
-tcuTexRefGetMaxAnisotropy *cuTexRefGetMaxAnisotropy;
-tcuTexRefGetBorderColor *cuTexRefGetBorderColor;
-tcuTexRefGetFlags *cuTexRefGetFlags;
-tcuTexRefCreate *cuTexRefCreate;
-tcuTexRefDestroy *cuTexRefDestroy;
-tcuSurfRefSetArray *cuSurfRefSetArray;
-tcuSurfRefGetArray *cuSurfRefGetArray;
-tcuTexObjectCreate *cuTexObjectCreate;
-tcuTexObjectDestroy *cuTexObjectDestroy;
-tcuTexObjectGetResourceDesc *cuTexObjectGetResourceDesc;
-tcuTexObjectGetTextureDesc *cuTexObjectGetTextureDesc;
-tcuTexObjectGetResourceViewDesc *cuTexObjectGetResourceViewDesc;
-tcuSurfObjectCreate *cuSurfObjectCreate;
-tcuSurfObjectDestroy *cuSurfObjectDestroy;
-tcuSurfObjectGetResourceDesc *cuSurfObjectGetResourceDesc;
-tcuDeviceCanAccessPeer *cuDeviceCanAccessPeer;
-tcuCtxEnablePeerAccess *cuCtxEnablePeerAccess;
-tcuCtxDisablePeerAccess *cuCtxDisablePeerAccess;
-tcuDeviceGetP2PAttribute *cuDeviceGetP2PAttribute;
-tcuGraphicsUnregisterResource *cuGraphicsUnregisterResource;
-tcuGraphicsSubResourceGetMappedArray *cuGraphicsSubResourceGetMappedArray;
-tcuGraphicsResourceGetMappedMipmappedArray *cuGraphicsResourceGetMappedMipmappedArray;
-tcuGraphicsResourceGetMappedPointer_v2 *cuGraphicsResourceGetMappedPointer_v2;
-tcuGraphicsResourceSetMapFlags_v2 *cuGraphicsResourceSetMapFlags_v2;
-tcuGraphicsMapResources *cuGraphicsMapResources;
-tcuGraphicsUnmapResources *cuGraphicsUnmapResources;
-tcuGetExportTable *cuGetExportTable;
 
-tcuGraphicsGLRegisterBuffer *cuGraphicsGLRegisterBuffer;
-tcuGraphicsGLRegisterImage *cuGraphicsGLRegisterImage;
-tcuGLGetDevices_v2 *cuGLGetDevices_v2;
-tcuGLCtxCreate_v2 *cuGLCtxCreate_v2;
-tcuGLInit *cuGLInit;
-tcuGLRegisterBufferObject *cuGLRegisterBufferObject;
-tcuGLMapBufferObject_v2 *cuGLMapBufferObject_v2;
-tcuGLUnmapBufferObject *cuGLUnmapBufferObject;
-tcuGLUnregisterBufferObject *cuGLUnregisterBufferObject;
-tcuGLSetBufferObjectMapFlags *cuGLSetBufferObjectMapFlags;
-tcuGLMapBufferObjectAsync_v2 *cuGLMapBufferObjectAsync_v2;
-tcuGLUnmapBufferObjectAsync *cuGLUnmapBufferObjectAsync;
+#pragma region OROCHI_SUMMONER_REGION_cuew_cpp_1
 
-tnvrtcGetErrorString *nvrtcGetErrorString;
-tnvrtcVersion *nvrtcVersion;
-tnvrtcCreateProgram *nvrtcCreateProgram;
-tnvrtcDestroyProgram *nvrtcDestroyProgram;
-tnvrtcCompileProgram *nvrtcCompileProgram;
-tnvrtcGetCUBINSize *nvrtcGetCUBINSize;
-tnvrtcGetCUBIN *nvrtcGetCUBIN;
-tnvrtcGetPTXSize *nvrtcGetPTXSize;
-tnvrtcGetPTX *nvrtcGetPTX;
-tnvrtcGetProgramLogSize *nvrtcGetProgramLogSize;
-tnvrtcGetProgramLog *nvrtcGetProgramLog;
-tnvrtcAddNameExpression *nvrtcAddNameExpression;
-tnvrtcGetLoweredName *nvrtcGetLoweredName;
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+
+
+
+#ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+// The CUDA version used by Orochi Summoner is: 
+// CUDA_VERSION = 12020
+// CUDART_VERSION = 12020
+// It's recommanded to use similar versions in the #include of CUDA SDK.
+// If this assert is wrong, it's advised either to install a CUDA SDK closed to version 12020 or search on the Orochi github a branch matching the CUDA SDK you are using.
+// checking the major-version number only:
+static_assert(  ((int)CUDA_VERSION / (int)1000) ==  ((int)12020/ (int)1000)  );
+static_assert(  ((int)CUDART_VERSION / (int)1000) ==  ((int)12020/ (int)1000)  );
+#endif
+
+
+
+tcuArray3DCreate_v2 *cuArray3DCreate_v2_oro = nullptr;
+tcuArray3DGetDescriptor_v2 *cuArray3DGetDescriptor_v2_oro = nullptr;
+tcuArrayCreate_v2 *cuArrayCreate_v2_oro = nullptr;
+tcuArrayDestroy *cuArrayDestroy_oro = nullptr;
+tcuArrayGetDescriptor_v2 *cuArrayGetDescriptor_v2_oro = nullptr;
+tcuArrayGetMemoryRequirements *cuArrayGetMemoryRequirements_oro = nullptr;
+tcuArrayGetPlane *cuArrayGetPlane_oro = nullptr;
+tcuArrayGetSparseProperties *cuArrayGetSparseProperties_oro = nullptr;
+tcuCoredumpGetAttribute *cuCoredumpGetAttribute_oro = nullptr;
+tcuCoredumpGetAttributeGlobal *cuCoredumpGetAttributeGlobal_oro = nullptr;
+tcuCoredumpSetAttribute *cuCoredumpSetAttribute_oro = nullptr;
+tcuCoredumpSetAttributeGlobal *cuCoredumpSetAttributeGlobal_oro = nullptr;
+tcuCtxAttach *cuCtxAttach_oro = nullptr;
+tcuCtxCreate_v2 *cuCtxCreate_v2_oro = nullptr;
+tcuCtxCreate_v3 *cuCtxCreate_v3_oro = nullptr;
+tcuCtxDestroy_v2 *cuCtxDestroy_v2_oro = nullptr;
+tcuCtxDetach *cuCtxDetach_oro = nullptr;
+tcuCtxDisablePeerAccess *cuCtxDisablePeerAccess_oro = nullptr;
+tcuCtxEnablePeerAccess *cuCtxEnablePeerAccess_oro = nullptr;
+tcuCtxGetApiVersion *cuCtxGetApiVersion_oro = nullptr;
+tcuCtxGetCacheConfig *cuCtxGetCacheConfig_oro = nullptr;
+tcuCtxGetCurrent *cuCtxGetCurrent_oro = nullptr;
+tcuCtxGetDevice *cuCtxGetDevice_oro = nullptr;
+tcuCtxGetExecAffinity *cuCtxGetExecAffinity_oro = nullptr;
+tcuCtxGetFlags *cuCtxGetFlags_oro = nullptr;
+tcuCtxGetId *cuCtxGetId_oro = nullptr;
+tcuCtxGetLimit *cuCtxGetLimit_oro = nullptr;
+tcuCtxGetSharedMemConfig *cuCtxGetSharedMemConfig_oro = nullptr;
+tcuCtxGetStreamPriorityRange *cuCtxGetStreamPriorityRange_oro = nullptr;
+tcuCtxPopCurrent_v2 *cuCtxPopCurrent_v2_oro = nullptr;
+tcuCtxPushCurrent_v2 *cuCtxPushCurrent_v2_oro = nullptr;
+tcuCtxResetPersistingL2Cache *cuCtxResetPersistingL2Cache_oro = nullptr;
+tcuCtxSetCacheConfig *cuCtxSetCacheConfig_oro = nullptr;
+tcuCtxSetCurrent *cuCtxSetCurrent_oro = nullptr;
+tcuCtxSetFlags *cuCtxSetFlags_oro = nullptr;
+tcuCtxSetLimit *cuCtxSetLimit_oro = nullptr;
+tcuCtxSetSharedMemConfig *cuCtxSetSharedMemConfig_oro = nullptr;
+tcuCtxSynchronize *cuCtxSynchronize_oro = nullptr;
+tcuDestroyExternalMemory *cuDestroyExternalMemory_oro = nullptr;
+tcuDestroyExternalSemaphore *cuDestroyExternalSemaphore_oro = nullptr;
+tcuDeviceCanAccessPeer *cuDeviceCanAccessPeer_oro = nullptr;
+tcuDeviceComputeCapability *cuDeviceComputeCapability_oro = nullptr;
+tcuDeviceGet *cuDeviceGet_oro = nullptr;
+tcuDeviceGetAttribute *cuDeviceGetAttribute_oro = nullptr;
+tcuDeviceGetByPCIBusId *cuDeviceGetByPCIBusId_oro = nullptr;
+tcuDeviceGetCount *cuDeviceGetCount_oro = nullptr;
+tcuDeviceGetDefaultMemPool *cuDeviceGetDefaultMemPool_oro = nullptr;
+tcuDeviceGetExecAffinitySupport *cuDeviceGetExecAffinitySupport_oro = nullptr;
+tcuDeviceGetGraphMemAttribute *cuDeviceGetGraphMemAttribute_oro = nullptr;
+tcuDeviceGetLuid *cuDeviceGetLuid_oro = nullptr;
+tcuDeviceGetMemPool *cuDeviceGetMemPool_oro = nullptr;
+tcuDeviceGetName *cuDeviceGetName_oro = nullptr;
+tcuDeviceGetNvSciSyncAttributes *cuDeviceGetNvSciSyncAttributes_oro = nullptr;
+tcuDeviceGetP2PAttribute *cuDeviceGetP2PAttribute_oro = nullptr;
+tcuDeviceGetPCIBusId *cuDeviceGetPCIBusId_oro = nullptr;
+tcuDeviceGetProperties *cuDeviceGetProperties_oro = nullptr;
+tcuDeviceGetTexture1DLinearMaxWidth *cuDeviceGetTexture1DLinearMaxWidth_oro = nullptr;
+tcuDeviceGetUuid *cuDeviceGetUuid_oro = nullptr;
+tcuDeviceGetUuid_v2 *cuDeviceGetUuid_v2_oro = nullptr;
+tcuDeviceGraphMemTrim *cuDeviceGraphMemTrim_oro = nullptr;
+tcuDevicePrimaryCtxGetState *cuDevicePrimaryCtxGetState_oro = nullptr;
+tcuDevicePrimaryCtxRelease_v2 *cuDevicePrimaryCtxRelease_v2_oro = nullptr;
+tcuDevicePrimaryCtxReset_v2 *cuDevicePrimaryCtxReset_v2_oro = nullptr;
+tcuDevicePrimaryCtxRetain *cuDevicePrimaryCtxRetain_oro = nullptr;
+tcuDevicePrimaryCtxSetFlags_v2 *cuDevicePrimaryCtxSetFlags_v2_oro = nullptr;
+tcuDeviceSetGraphMemAttribute *cuDeviceSetGraphMemAttribute_oro = nullptr;
+tcuDeviceSetMemPool *cuDeviceSetMemPool_oro = nullptr;
+tcuDeviceTotalMem_v2 *cuDeviceTotalMem_v2_oro = nullptr;
+tcuDriverGetVersion *cuDriverGetVersion_oro = nullptr;
+tcuEventCreate *cuEventCreate_oro = nullptr;
+tcuEventDestroy_v2 *cuEventDestroy_v2_oro = nullptr;
+tcuEventElapsedTime *cuEventElapsedTime_oro = nullptr;
+tcuEventQuery *cuEventQuery_oro = nullptr;
+tcuEventRecord *cuEventRecord_oro = nullptr;
+tcuEventRecordWithFlags *cuEventRecordWithFlags_oro = nullptr;
+tcuEventSynchronize *cuEventSynchronize_oro = nullptr;
+tcuExternalMemoryGetMappedBuffer *cuExternalMemoryGetMappedBuffer_oro = nullptr;
+tcuExternalMemoryGetMappedMipmappedArray *cuExternalMemoryGetMappedMipmappedArray_oro = nullptr;
+tcuFlushGPUDirectRDMAWrites *cuFlushGPUDirectRDMAWrites_oro = nullptr;
+tcuFuncGetAttribute *cuFuncGetAttribute_oro = nullptr;
+tcuFuncGetModule *cuFuncGetModule_oro = nullptr;
+tcuFuncSetAttribute *cuFuncSetAttribute_oro = nullptr;
+tcuFuncSetBlockShape *cuFuncSetBlockShape_oro = nullptr;
+tcuFuncSetCacheConfig *cuFuncSetCacheConfig_oro = nullptr;
+tcuFuncSetSharedMemConfig *cuFuncSetSharedMemConfig_oro = nullptr;
+tcuFuncSetSharedSize *cuFuncSetSharedSize_oro = nullptr;
+tcuGetErrorName *cuGetErrorName_oro = nullptr;
+tcuGetErrorString *cuGetErrorString_oro = nullptr;
+tcuGetExportTable *cuGetExportTable_oro = nullptr;
+tcuGetProcAddress_v2 *cuGetProcAddress_v2_oro = nullptr;
+tcuGraphAddBatchMemOpNode *cuGraphAddBatchMemOpNode_oro = nullptr;
+tcuGraphAddChildGraphNode *cuGraphAddChildGraphNode_oro = nullptr;
+tcuGraphAddDependencies *cuGraphAddDependencies_oro = nullptr;
+tcuGraphAddEmptyNode *cuGraphAddEmptyNode_oro = nullptr;
+tcuGraphAddEventRecordNode *cuGraphAddEventRecordNode_oro = nullptr;
+tcuGraphAddEventWaitNode *cuGraphAddEventWaitNode_oro = nullptr;
+tcuGraphAddExternalSemaphoresSignalNode *cuGraphAddExternalSemaphoresSignalNode_oro = nullptr;
+tcuGraphAddExternalSemaphoresWaitNode *cuGraphAddExternalSemaphoresWaitNode_oro = nullptr;
+tcuGraphAddHostNode *cuGraphAddHostNode_oro = nullptr;
+tcuGraphAddKernelNode_v2 *cuGraphAddKernelNode_v2_oro = nullptr;
+tcuGraphAddMemAllocNode *cuGraphAddMemAllocNode_oro = nullptr;
+tcuGraphAddMemFreeNode *cuGraphAddMemFreeNode_oro = nullptr;
+tcuGraphAddMemcpyNode *cuGraphAddMemcpyNode_oro = nullptr;
+tcuGraphAddMemsetNode *cuGraphAddMemsetNode_oro = nullptr;
+tcuGraphAddNode *cuGraphAddNode_oro = nullptr;
+tcuGraphBatchMemOpNodeGetParams *cuGraphBatchMemOpNodeGetParams_oro = nullptr;
+tcuGraphBatchMemOpNodeSetParams *cuGraphBatchMemOpNodeSetParams_oro = nullptr;
+tcuGraphChildGraphNodeGetGraph *cuGraphChildGraphNodeGetGraph_oro = nullptr;
+tcuGraphClone *cuGraphClone_oro = nullptr;
+tcuGraphCreate *cuGraphCreate_oro = nullptr;
+tcuGraphDebugDotPrint *cuGraphDebugDotPrint_oro = nullptr;
+tcuGraphDestroy *cuGraphDestroy_oro = nullptr;
+tcuGraphDestroyNode *cuGraphDestroyNode_oro = nullptr;
+tcuGraphEventRecordNodeGetEvent *cuGraphEventRecordNodeGetEvent_oro = nullptr;
+tcuGraphEventRecordNodeSetEvent *cuGraphEventRecordNodeSetEvent_oro = nullptr;
+tcuGraphEventWaitNodeGetEvent *cuGraphEventWaitNodeGetEvent_oro = nullptr;
+tcuGraphEventWaitNodeSetEvent *cuGraphEventWaitNodeSetEvent_oro = nullptr;
+tcuGraphExecBatchMemOpNodeSetParams *cuGraphExecBatchMemOpNodeSetParams_oro = nullptr;
+tcuGraphExecChildGraphNodeSetParams *cuGraphExecChildGraphNodeSetParams_oro = nullptr;
+tcuGraphExecDestroy *cuGraphExecDestroy_oro = nullptr;
+tcuGraphExecEventRecordNodeSetEvent *cuGraphExecEventRecordNodeSetEvent_oro = nullptr;
+tcuGraphExecEventWaitNodeSetEvent *cuGraphExecEventWaitNodeSetEvent_oro = nullptr;
+tcuGraphExecExternalSemaphoresSignalNodeSetParams *cuGraphExecExternalSemaphoresSignalNodeSetParams_oro = nullptr;
+tcuGraphExecExternalSemaphoresWaitNodeSetParams *cuGraphExecExternalSemaphoresWaitNodeSetParams_oro = nullptr;
+tcuGraphExecGetFlags *cuGraphExecGetFlags_oro = nullptr;
+tcuGraphExecHostNodeSetParams *cuGraphExecHostNodeSetParams_oro = nullptr;
+tcuGraphExecKernelNodeSetParams_v2 *cuGraphExecKernelNodeSetParams_v2_oro = nullptr;
+tcuGraphExecMemcpyNodeSetParams *cuGraphExecMemcpyNodeSetParams_oro = nullptr;
+tcuGraphExecMemsetNodeSetParams *cuGraphExecMemsetNodeSetParams_oro = nullptr;
+tcuGraphExecNodeSetParams *cuGraphExecNodeSetParams_oro = nullptr;
+tcuGraphExecUpdate_v2 *cuGraphExecUpdate_v2_oro = nullptr;
+tcuGraphExternalSemaphoresSignalNodeGetParams *cuGraphExternalSemaphoresSignalNodeGetParams_oro = nullptr;
+tcuGraphExternalSemaphoresSignalNodeSetParams *cuGraphExternalSemaphoresSignalNodeSetParams_oro = nullptr;
+tcuGraphExternalSemaphoresWaitNodeGetParams *cuGraphExternalSemaphoresWaitNodeGetParams_oro = nullptr;
+tcuGraphExternalSemaphoresWaitNodeSetParams *cuGraphExternalSemaphoresWaitNodeSetParams_oro = nullptr;
+tcuGraphGetEdges *cuGraphGetEdges_oro = nullptr;
+tcuGraphGetNodes *cuGraphGetNodes_oro = nullptr;
+tcuGraphGetRootNodes *cuGraphGetRootNodes_oro = nullptr;
+tcuGraphHostNodeGetParams *cuGraphHostNodeGetParams_oro = nullptr;
+tcuGraphHostNodeSetParams *cuGraphHostNodeSetParams_oro = nullptr;
+tcuGraphInstantiateWithFlags *cuGraphInstantiateWithFlags_oro = nullptr;
+tcuGraphInstantiateWithParams *cuGraphInstantiateWithParams_oro = nullptr;
+tcuGraphKernelNodeCopyAttributes *cuGraphKernelNodeCopyAttributes_oro = nullptr;
+tcuGraphKernelNodeGetAttribute *cuGraphKernelNodeGetAttribute_oro = nullptr;
+tcuGraphKernelNodeGetParams_v2 *cuGraphKernelNodeGetParams_v2_oro = nullptr;
+tcuGraphKernelNodeSetAttribute *cuGraphKernelNodeSetAttribute_oro = nullptr;
+tcuGraphKernelNodeSetParams_v2 *cuGraphKernelNodeSetParams_v2_oro = nullptr;
+tcuGraphLaunch *cuGraphLaunch_oro = nullptr;
+tcuGraphMemAllocNodeGetParams *cuGraphMemAllocNodeGetParams_oro = nullptr;
+tcuGraphMemFreeNodeGetParams *cuGraphMemFreeNodeGetParams_oro = nullptr;
+tcuGraphMemcpyNodeGetParams *cuGraphMemcpyNodeGetParams_oro = nullptr;
+tcuGraphMemcpyNodeSetParams *cuGraphMemcpyNodeSetParams_oro = nullptr;
+tcuGraphMemsetNodeGetParams *cuGraphMemsetNodeGetParams_oro = nullptr;
+tcuGraphMemsetNodeSetParams *cuGraphMemsetNodeSetParams_oro = nullptr;
+tcuGraphNodeFindInClone *cuGraphNodeFindInClone_oro = nullptr;
+tcuGraphNodeGetDependencies *cuGraphNodeGetDependencies_oro = nullptr;
+tcuGraphNodeGetDependentNodes *cuGraphNodeGetDependentNodes_oro = nullptr;
+tcuGraphNodeGetEnabled *cuGraphNodeGetEnabled_oro = nullptr;
+tcuGraphNodeGetType *cuGraphNodeGetType_oro = nullptr;
+tcuGraphNodeSetEnabled *cuGraphNodeSetEnabled_oro = nullptr;
+tcuGraphNodeSetParams *cuGraphNodeSetParams_oro = nullptr;
+tcuGraphReleaseUserObject *cuGraphReleaseUserObject_oro = nullptr;
+tcuGraphRemoveDependencies *cuGraphRemoveDependencies_oro = nullptr;
+tcuGraphRetainUserObject *cuGraphRetainUserObject_oro = nullptr;
+tcuGraphUpload *cuGraphUpload_oro = nullptr;
+tcuGraphicsMapResources *cuGraphicsMapResources_oro = nullptr;
+tcuGraphicsResourceGetMappedMipmappedArray *cuGraphicsResourceGetMappedMipmappedArray_oro = nullptr;
+tcuGraphicsResourceGetMappedPointer_v2 *cuGraphicsResourceGetMappedPointer_v2_oro = nullptr;
+tcuGraphicsResourceSetMapFlags_v2 *cuGraphicsResourceSetMapFlags_v2_oro = nullptr;
+tcuGraphicsSubResourceGetMappedArray *cuGraphicsSubResourceGetMappedArray_oro = nullptr;
+tcuGraphicsUnmapResources *cuGraphicsUnmapResources_oro = nullptr;
+tcuGraphicsUnregisterResource *cuGraphicsUnregisterResource_oro = nullptr;
+tcuImportExternalMemory *cuImportExternalMemory_oro = nullptr;
+tcuImportExternalSemaphore *cuImportExternalSemaphore_oro = nullptr;
+tcuInit *cuInit_oro = nullptr;
+tcuIpcCloseMemHandle *cuIpcCloseMemHandle_oro = nullptr;
+tcuIpcGetEventHandle *cuIpcGetEventHandle_oro = nullptr;
+tcuIpcGetMemHandle *cuIpcGetMemHandle_oro = nullptr;
+tcuIpcOpenEventHandle *cuIpcOpenEventHandle_oro = nullptr;
+tcuIpcOpenMemHandle_v2 *cuIpcOpenMemHandle_v2_oro = nullptr;
+tcuKernelGetAttribute *cuKernelGetAttribute_oro = nullptr;
+tcuKernelGetFunction *cuKernelGetFunction_oro = nullptr;
+tcuKernelSetAttribute *cuKernelSetAttribute_oro = nullptr;
+tcuKernelSetCacheConfig *cuKernelSetCacheConfig_oro = nullptr;
+tcuLaunch *cuLaunch_oro = nullptr;
+tcuLaunchCooperativeKernel *cuLaunchCooperativeKernel_oro = nullptr;
+tcuLaunchCooperativeKernelMultiDevice *cuLaunchCooperativeKernelMultiDevice_oro = nullptr;
+tcuLaunchGrid *cuLaunchGrid_oro = nullptr;
+tcuLaunchGridAsync *cuLaunchGridAsync_oro = nullptr;
+tcuLaunchHostFunc *cuLaunchHostFunc_oro = nullptr;
+tcuLaunchKernel *cuLaunchKernel_oro = nullptr;
+tcuLaunchKernelEx *cuLaunchKernelEx_oro = nullptr;
+tcuLibraryGetGlobal *cuLibraryGetGlobal_oro = nullptr;
+tcuLibraryGetKernel *cuLibraryGetKernel_oro = nullptr;
+tcuLibraryGetManaged *cuLibraryGetManaged_oro = nullptr;
+tcuLibraryGetModule *cuLibraryGetModule_oro = nullptr;
+tcuLibraryGetUnifiedFunction *cuLibraryGetUnifiedFunction_oro = nullptr;
+tcuLibraryLoadData *cuLibraryLoadData_oro = nullptr;
+tcuLibraryLoadFromFile *cuLibraryLoadFromFile_oro = nullptr;
+tcuLibraryUnload *cuLibraryUnload_oro = nullptr;
+tcuLinkAddData_v2 *cuLinkAddData_v2_oro = nullptr;
+tcuLinkAddFile_v2 *cuLinkAddFile_v2_oro = nullptr;
+tcuLinkComplete *cuLinkComplete_oro = nullptr;
+tcuLinkCreate_v2 *cuLinkCreate_v2_oro = nullptr;
+tcuLinkDestroy *cuLinkDestroy_oro = nullptr;
+tcuMemAddressFree *cuMemAddressFree_oro = nullptr;
+tcuMemAddressReserve *cuMemAddressReserve_oro = nullptr;
+tcuMemAdvise *cuMemAdvise_oro = nullptr;
+tcuMemAdvise_v2 *cuMemAdvise_v2_oro = nullptr;
+tcuMemAllocAsync *cuMemAllocAsync_oro = nullptr;
+tcuMemAllocFromPoolAsync *cuMemAllocFromPoolAsync_oro = nullptr;
+tcuMemAllocHost_v2 *cuMemAllocHost_v2_oro = nullptr;
+tcuMemAllocManaged *cuMemAllocManaged_oro = nullptr;
+tcuMemAllocPitch_v2 *cuMemAllocPitch_v2_oro = nullptr;
+tcuMemAlloc_v2 *cuMemAlloc_v2_oro = nullptr;
+tcuMemCreate *cuMemCreate_oro = nullptr;
+tcuMemExportToShareableHandle *cuMemExportToShareableHandle_oro = nullptr;
+tcuMemFreeAsync *cuMemFreeAsync_oro = nullptr;
+tcuMemFreeHost *cuMemFreeHost_oro = nullptr;
+tcuMemFree_v2 *cuMemFree_v2_oro = nullptr;
+tcuMemGetAccess *cuMemGetAccess_oro = nullptr;
+tcuMemGetAddressRange_v2 *cuMemGetAddressRange_v2_oro = nullptr;
+tcuMemGetAllocationGranularity *cuMemGetAllocationGranularity_oro = nullptr;
+tcuMemGetAllocationPropertiesFromHandle *cuMemGetAllocationPropertiesFromHandle_oro = nullptr;
+tcuMemGetHandleForAddressRange *cuMemGetHandleForAddressRange_oro = nullptr;
+tcuMemGetInfo_v2 *cuMemGetInfo_v2_oro = nullptr;
+tcuMemHostAlloc *cuMemHostAlloc_oro = nullptr;
+tcuMemHostGetDevicePointer_v2 *cuMemHostGetDevicePointer_v2_oro = nullptr;
+tcuMemHostGetFlags *cuMemHostGetFlags_oro = nullptr;
+tcuMemHostRegister_v2 *cuMemHostRegister_v2_oro = nullptr;
+tcuMemHostUnregister *cuMemHostUnregister_oro = nullptr;
+tcuMemImportFromShareableHandle *cuMemImportFromShareableHandle_oro = nullptr;
+tcuMemMap *cuMemMap_oro = nullptr;
+tcuMemMapArrayAsync *cuMemMapArrayAsync_oro = nullptr;
+tcuMemPoolCreate *cuMemPoolCreate_oro = nullptr;
+tcuMemPoolDestroy *cuMemPoolDestroy_oro = nullptr;
+tcuMemPoolExportPointer *cuMemPoolExportPointer_oro = nullptr;
+tcuMemPoolExportToShareableHandle *cuMemPoolExportToShareableHandle_oro = nullptr;
+tcuMemPoolGetAccess *cuMemPoolGetAccess_oro = nullptr;
+tcuMemPoolGetAttribute *cuMemPoolGetAttribute_oro = nullptr;
+tcuMemPoolImportFromShareableHandle *cuMemPoolImportFromShareableHandle_oro = nullptr;
+tcuMemPoolImportPointer *cuMemPoolImportPointer_oro = nullptr;
+tcuMemPoolSetAccess *cuMemPoolSetAccess_oro = nullptr;
+tcuMemPoolSetAttribute *cuMemPoolSetAttribute_oro = nullptr;
+tcuMemPoolTrimTo *cuMemPoolTrimTo_oro = nullptr;
+tcuMemPrefetchAsync *cuMemPrefetchAsync_oro = nullptr;
+tcuMemPrefetchAsync_v2 *cuMemPrefetchAsync_v2_oro = nullptr;
+tcuMemRangeGetAttribute *cuMemRangeGetAttribute_oro = nullptr;
+tcuMemRangeGetAttributes *cuMemRangeGetAttributes_oro = nullptr;
+tcuMemRelease *cuMemRelease_oro = nullptr;
+tcuMemRetainAllocationHandle *cuMemRetainAllocationHandle_oro = nullptr;
+tcuMemSetAccess *cuMemSetAccess_oro = nullptr;
+tcuMemUnmap *cuMemUnmap_oro = nullptr;
+tcuMemcpy *cuMemcpy_oro = nullptr;
+tcuMemcpy2DAsync_v2 *cuMemcpy2DAsync_v2_oro = nullptr;
+tcuMemcpy2DUnaligned_v2 *cuMemcpy2DUnaligned_v2_oro = nullptr;
+tcuMemcpy2D_v2 *cuMemcpy2D_v2_oro = nullptr;
+tcuMemcpy3DAsync_v2 *cuMemcpy3DAsync_v2_oro = nullptr;
+tcuMemcpy3DPeer *cuMemcpy3DPeer_oro = nullptr;
+tcuMemcpy3DPeerAsync *cuMemcpy3DPeerAsync_oro = nullptr;
+tcuMemcpy3D_v2 *cuMemcpy3D_v2_oro = nullptr;
+tcuMemcpyAsync *cuMemcpyAsync_oro = nullptr;
+tcuMemcpyAtoA_v2 *cuMemcpyAtoA_v2_oro = nullptr;
+tcuMemcpyAtoD_v2 *cuMemcpyAtoD_v2_oro = nullptr;
+tcuMemcpyAtoHAsync_v2 *cuMemcpyAtoHAsync_v2_oro = nullptr;
+tcuMemcpyAtoH_v2 *cuMemcpyAtoH_v2_oro = nullptr;
+tcuMemcpyDtoA_v2 *cuMemcpyDtoA_v2_oro = nullptr;
+tcuMemcpyDtoDAsync_v2 *cuMemcpyDtoDAsync_v2_oro = nullptr;
+tcuMemcpyDtoD_v2 *cuMemcpyDtoD_v2_oro = nullptr;
+tcuMemcpyDtoHAsync_v2 *cuMemcpyDtoHAsync_v2_oro = nullptr;
+tcuMemcpyDtoH_v2 *cuMemcpyDtoH_v2_oro = nullptr;
+tcuMemcpyHtoAAsync_v2 *cuMemcpyHtoAAsync_v2_oro = nullptr;
+tcuMemcpyHtoA_v2 *cuMemcpyHtoA_v2_oro = nullptr;
+tcuMemcpyHtoDAsync_v2 *cuMemcpyHtoDAsync_v2_oro = nullptr;
+tcuMemcpyHtoD_v2 *cuMemcpyHtoD_v2_oro = nullptr;
+tcuMemcpyPeer *cuMemcpyPeer_oro = nullptr;
+tcuMemcpyPeerAsync *cuMemcpyPeerAsync_oro = nullptr;
+tcuMemsetD16Async *cuMemsetD16Async_oro = nullptr;
+tcuMemsetD16_v2 *cuMemsetD16_v2_oro = nullptr;
+tcuMemsetD2D16Async *cuMemsetD2D16Async_oro = nullptr;
+tcuMemsetD2D16_v2 *cuMemsetD2D16_v2_oro = nullptr;
+tcuMemsetD2D32Async *cuMemsetD2D32Async_oro = nullptr;
+tcuMemsetD2D32_v2 *cuMemsetD2D32_v2_oro = nullptr;
+tcuMemsetD2D8Async *cuMemsetD2D8Async_oro = nullptr;
+tcuMemsetD2D8_v2 *cuMemsetD2D8_v2_oro = nullptr;
+tcuMemsetD32Async *cuMemsetD32Async_oro = nullptr;
+tcuMemsetD32_v2 *cuMemsetD32_v2_oro = nullptr;
+tcuMemsetD8Async *cuMemsetD8Async_oro = nullptr;
+tcuMemsetD8_v2 *cuMemsetD8_v2_oro = nullptr;
+tcuMipmappedArrayCreate *cuMipmappedArrayCreate_oro = nullptr;
+tcuMipmappedArrayDestroy *cuMipmappedArrayDestroy_oro = nullptr;
+tcuMipmappedArrayGetLevel *cuMipmappedArrayGetLevel_oro = nullptr;
+tcuMipmappedArrayGetMemoryRequirements *cuMipmappedArrayGetMemoryRequirements_oro = nullptr;
+tcuMipmappedArrayGetSparseProperties *cuMipmappedArrayGetSparseProperties_oro = nullptr;
+tcuModuleGetFunction *cuModuleGetFunction_oro = nullptr;
+tcuModuleGetGlobal_v2 *cuModuleGetGlobal_v2_oro = nullptr;
+tcuModuleGetLoadingMode *cuModuleGetLoadingMode_oro = nullptr;
+tcuModuleGetSurfRef *cuModuleGetSurfRef_oro = nullptr;
+tcuModuleGetTexRef *cuModuleGetTexRef_oro = nullptr;
+tcuModuleLoad *cuModuleLoad_oro = nullptr;
+tcuModuleLoadData *cuModuleLoadData_oro = nullptr;
+tcuModuleLoadDataEx *cuModuleLoadDataEx_oro = nullptr;
+tcuModuleLoadFatBinary *cuModuleLoadFatBinary_oro = nullptr;
+tcuModuleUnload *cuModuleUnload_oro = nullptr;
+tcuMulticastAddDevice *cuMulticastAddDevice_oro = nullptr;
+tcuMulticastBindAddr *cuMulticastBindAddr_oro = nullptr;
+tcuMulticastBindMem *cuMulticastBindMem_oro = nullptr;
+tcuMulticastCreate *cuMulticastCreate_oro = nullptr;
+tcuMulticastGetGranularity *cuMulticastGetGranularity_oro = nullptr;
+tcuMulticastUnbind *cuMulticastUnbind_oro = nullptr;
+tcuOccupancyAvailableDynamicSMemPerBlock *cuOccupancyAvailableDynamicSMemPerBlock_oro = nullptr;
+tcuOccupancyMaxActiveBlocksPerMultiprocessor *cuOccupancyMaxActiveBlocksPerMultiprocessor_oro = nullptr;
+tcuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_oro = nullptr;
+tcuOccupancyMaxActiveClusters *cuOccupancyMaxActiveClusters_oro = nullptr;
+tcuOccupancyMaxPotentialBlockSize *cuOccupancyMaxPotentialBlockSize_oro = nullptr;
+tcuOccupancyMaxPotentialBlockSizeWithFlags *cuOccupancyMaxPotentialBlockSizeWithFlags_oro = nullptr;
+tcuOccupancyMaxPotentialClusterSize *cuOccupancyMaxPotentialClusterSize_oro = nullptr;
+tcuParamSetSize *cuParamSetSize_oro = nullptr;
+tcuParamSetTexRef *cuParamSetTexRef_oro = nullptr;
+tcuParamSetf *cuParamSetf_oro = nullptr;
+tcuParamSeti *cuParamSeti_oro = nullptr;
+tcuParamSetv *cuParamSetv_oro = nullptr;
+tcuPointerGetAttribute *cuPointerGetAttribute_oro = nullptr;
+tcuPointerGetAttributes *cuPointerGetAttributes_oro = nullptr;
+tcuPointerSetAttribute *cuPointerSetAttribute_oro = nullptr;
+tcuSignalExternalSemaphoresAsync *cuSignalExternalSemaphoresAsync_oro = nullptr;
+tcuStreamAddCallback *cuStreamAddCallback_oro = nullptr;
+tcuStreamAttachMemAsync *cuStreamAttachMemAsync_oro = nullptr;
+tcuStreamBatchMemOp_v2 *cuStreamBatchMemOp_v2_oro = nullptr;
+tcuStreamBeginCapture_v2 *cuStreamBeginCapture_v2_oro = nullptr;
+tcuStreamCopyAttributes *cuStreamCopyAttributes_oro = nullptr;
+tcuStreamCreate *cuStreamCreate_oro = nullptr;
+tcuStreamCreateWithPriority *cuStreamCreateWithPriority_oro = nullptr;
+tcuStreamDestroy_v2 *cuStreamDestroy_v2_oro = nullptr;
+tcuStreamEndCapture *cuStreamEndCapture_oro = nullptr;
+tcuStreamGetAttribute *cuStreamGetAttribute_oro = nullptr;
+tcuStreamGetCaptureInfo_v2 *cuStreamGetCaptureInfo_v2_oro = nullptr;
+tcuStreamGetCtx *cuStreamGetCtx_oro = nullptr;
+tcuStreamGetFlags *cuStreamGetFlags_oro = nullptr;
+tcuStreamGetId *cuStreamGetId_oro = nullptr;
+tcuStreamGetPriority *cuStreamGetPriority_oro = nullptr;
+tcuStreamIsCapturing *cuStreamIsCapturing_oro = nullptr;
+tcuStreamQuery *cuStreamQuery_oro = nullptr;
+tcuStreamSetAttribute *cuStreamSetAttribute_oro = nullptr;
+tcuStreamSynchronize *cuStreamSynchronize_oro = nullptr;
+tcuStreamUpdateCaptureDependencies *cuStreamUpdateCaptureDependencies_oro = nullptr;
+tcuStreamWaitEvent *cuStreamWaitEvent_oro = nullptr;
+tcuStreamWaitValue32_v2 *cuStreamWaitValue32_v2_oro = nullptr;
+tcuStreamWaitValue64_v2 *cuStreamWaitValue64_v2_oro = nullptr;
+tcuStreamWriteValue32_v2 *cuStreamWriteValue32_v2_oro = nullptr;
+tcuStreamWriteValue64_v2 *cuStreamWriteValue64_v2_oro = nullptr;
+tcuSurfObjectCreate *cuSurfObjectCreate_oro = nullptr;
+tcuSurfObjectDestroy *cuSurfObjectDestroy_oro = nullptr;
+tcuSurfObjectGetResourceDesc *cuSurfObjectGetResourceDesc_oro = nullptr;
+tcuSurfRefGetArray *cuSurfRefGetArray_oro = nullptr;
+tcuSurfRefSetArray *cuSurfRefSetArray_oro = nullptr;
+tcuTensorMapEncodeIm2col *cuTensorMapEncodeIm2col_oro = nullptr;
+tcuTensorMapEncodeTiled *cuTensorMapEncodeTiled_oro = nullptr;
+tcuTensorMapReplaceAddress *cuTensorMapReplaceAddress_oro = nullptr;
+tcuTexObjectCreate *cuTexObjectCreate_oro = nullptr;
+tcuTexObjectDestroy *cuTexObjectDestroy_oro = nullptr;
+tcuTexObjectGetResourceDesc *cuTexObjectGetResourceDesc_oro = nullptr;
+tcuTexObjectGetResourceViewDesc *cuTexObjectGetResourceViewDesc_oro = nullptr;
+tcuTexObjectGetTextureDesc *cuTexObjectGetTextureDesc_oro = nullptr;
+tcuTexRefCreate *cuTexRefCreate_oro = nullptr;
+tcuTexRefDestroy *cuTexRefDestroy_oro = nullptr;
+tcuTexRefGetAddressMode *cuTexRefGetAddressMode_oro = nullptr;
+tcuTexRefGetAddress_v2 *cuTexRefGetAddress_v2_oro = nullptr;
+tcuTexRefGetArray *cuTexRefGetArray_oro = nullptr;
+tcuTexRefGetBorderColor *cuTexRefGetBorderColor_oro = nullptr;
+tcuTexRefGetFilterMode *cuTexRefGetFilterMode_oro = nullptr;
+tcuTexRefGetFlags *cuTexRefGetFlags_oro = nullptr;
+tcuTexRefGetFormat *cuTexRefGetFormat_oro = nullptr;
+tcuTexRefGetMaxAnisotropy *cuTexRefGetMaxAnisotropy_oro = nullptr;
+tcuTexRefGetMipmapFilterMode *cuTexRefGetMipmapFilterMode_oro = nullptr;
+tcuTexRefGetMipmapLevelBias *cuTexRefGetMipmapLevelBias_oro = nullptr;
+tcuTexRefGetMipmapLevelClamp *cuTexRefGetMipmapLevelClamp_oro = nullptr;
+tcuTexRefGetMipmappedArray *cuTexRefGetMipmappedArray_oro = nullptr;
+tcuTexRefSetAddress2D_v3 *cuTexRefSetAddress2D_v3_oro = nullptr;
+tcuTexRefSetAddressMode *cuTexRefSetAddressMode_oro = nullptr;
+tcuTexRefSetAddress_v2 *cuTexRefSetAddress_v2_oro = nullptr;
+tcuTexRefSetArray *cuTexRefSetArray_oro = nullptr;
+tcuTexRefSetBorderColor *cuTexRefSetBorderColor_oro = nullptr;
+tcuTexRefSetFilterMode *cuTexRefSetFilterMode_oro = nullptr;
+tcuTexRefSetFlags *cuTexRefSetFlags_oro = nullptr;
+tcuTexRefSetFormat *cuTexRefSetFormat_oro = nullptr;
+tcuTexRefSetMaxAnisotropy *cuTexRefSetMaxAnisotropy_oro = nullptr;
+tcuTexRefSetMipmapFilterMode *cuTexRefSetMipmapFilterMode_oro = nullptr;
+tcuTexRefSetMipmapLevelBias *cuTexRefSetMipmapLevelBias_oro = nullptr;
+tcuTexRefSetMipmapLevelClamp *cuTexRefSetMipmapLevelClamp_oro = nullptr;
+tcuTexRefSetMipmappedArray *cuTexRefSetMipmappedArray_oro = nullptr;
+tcuThreadExchangeStreamCaptureMode *cuThreadExchangeStreamCaptureMode_oro = nullptr;
+tcuUserObjectCreate *cuUserObjectCreate_oro = nullptr;
+tcuUserObjectRelease *cuUserObjectRelease_oro = nullptr;
+tcuUserObjectRetain *cuUserObjectRetain_oro = nullptr;
+tcuWaitExternalSemaphoresAsync *cuWaitExternalSemaphoresAsync_oro = nullptr;
+tcudaArrayGetInfo *cudaArrayGetInfo_oro = nullptr;
+tcudaArrayGetMemoryRequirements *cudaArrayGetMemoryRequirements_oro = nullptr;
+tcudaArrayGetPlane *cudaArrayGetPlane_oro = nullptr;
+tcudaArrayGetSparseProperties *cudaArrayGetSparseProperties_oro = nullptr;
+tcudaChooseDevice *cudaChooseDevice_oro = nullptr;
+tcudaCreateChannelDesc *cudaCreateChannelDesc_oro = nullptr;
+tcudaCreateSurfaceObject *cudaCreateSurfaceObject_oro = nullptr;
+tcudaCreateTextureObject *cudaCreateTextureObject_oro = nullptr;
+tcudaCtxResetPersistingL2Cache *cudaCtxResetPersistingL2Cache_oro = nullptr;
+tcudaDestroyExternalMemory *cudaDestroyExternalMemory_oro = nullptr;
+tcudaDestroyExternalSemaphore *cudaDestroyExternalSemaphore_oro = nullptr;
+tcudaDestroySurfaceObject *cudaDestroySurfaceObject_oro = nullptr;
+tcudaDestroyTextureObject *cudaDestroyTextureObject_oro = nullptr;
+tcudaDeviceCanAccessPeer *cudaDeviceCanAccessPeer_oro = nullptr;
+tcudaDeviceDisablePeerAccess *cudaDeviceDisablePeerAccess_oro = nullptr;
+tcudaDeviceEnablePeerAccess *cudaDeviceEnablePeerAccess_oro = nullptr;
+tcudaDeviceFlushGPUDirectRDMAWrites *cudaDeviceFlushGPUDirectRDMAWrites_oro = nullptr;
+tcudaDeviceGetAttribute *cudaDeviceGetAttribute_oro = nullptr;
+tcudaDeviceGetByPCIBusId *cudaDeviceGetByPCIBusId_oro = nullptr;
+tcudaDeviceGetCacheConfig *cudaDeviceGetCacheConfig_oro = nullptr;
+tcudaDeviceGetDefaultMemPool *cudaDeviceGetDefaultMemPool_oro = nullptr;
+tcudaDeviceGetGraphMemAttribute *cudaDeviceGetGraphMemAttribute_oro = nullptr;
+tcudaDeviceGetLimit *cudaDeviceGetLimit_oro = nullptr;
+tcudaDeviceGetMemPool *cudaDeviceGetMemPool_oro = nullptr;
+tcudaDeviceGetNvSciSyncAttributes *cudaDeviceGetNvSciSyncAttributes_oro = nullptr;
+tcudaDeviceGetP2PAttribute *cudaDeviceGetP2PAttribute_oro = nullptr;
+tcudaDeviceGetPCIBusId *cudaDeviceGetPCIBusId_oro = nullptr;
+tcudaDeviceGetSharedMemConfig *cudaDeviceGetSharedMemConfig_oro = nullptr;
+tcudaDeviceGetStreamPriorityRange *cudaDeviceGetStreamPriorityRange_oro = nullptr;
+tcudaDeviceGetTexture1DLinearMaxWidth *cudaDeviceGetTexture1DLinearMaxWidth_oro = nullptr;
+tcudaDeviceGraphMemTrim *cudaDeviceGraphMemTrim_oro = nullptr;
+tcudaDeviceReset *cudaDeviceReset_oro = nullptr;
+tcudaDeviceSetCacheConfig *cudaDeviceSetCacheConfig_oro = nullptr;
+tcudaDeviceSetGraphMemAttribute *cudaDeviceSetGraphMemAttribute_oro = nullptr;
+tcudaDeviceSetLimit *cudaDeviceSetLimit_oro = nullptr;
+tcudaDeviceSetMemPool *cudaDeviceSetMemPool_oro = nullptr;
+tcudaDeviceSetSharedMemConfig *cudaDeviceSetSharedMemConfig_oro = nullptr;
+tcudaDeviceSynchronize *cudaDeviceSynchronize_oro = nullptr;
+tcudaDriverGetVersion *cudaDriverGetVersion_oro = nullptr;
+tcudaEventCreate *cudaEventCreate_oro = nullptr;
+tcudaEventCreateWithFlags *cudaEventCreateWithFlags_oro = nullptr;
+tcudaEventDestroy *cudaEventDestroy_oro = nullptr;
+tcudaEventElapsedTime *cudaEventElapsedTime_oro = nullptr;
+tcudaEventQuery *cudaEventQuery_oro = nullptr;
+tcudaEventRecord *cudaEventRecord_oro = nullptr;
+tcudaEventRecordWithFlags *cudaEventRecordWithFlags_oro = nullptr;
+tcudaEventSynchronize *cudaEventSynchronize_oro = nullptr;
+tcudaExternalMemoryGetMappedBuffer *cudaExternalMemoryGetMappedBuffer_oro = nullptr;
+tcudaExternalMemoryGetMappedMipmappedArray *cudaExternalMemoryGetMappedMipmappedArray_oro = nullptr;
+tcudaFree *cudaFree_oro = nullptr;
+tcudaFreeArray *cudaFreeArray_oro = nullptr;
+tcudaFreeAsync *cudaFreeAsync_oro = nullptr;
+tcudaFreeHost *cudaFreeHost_oro = nullptr;
+tcudaFreeMipmappedArray *cudaFreeMipmappedArray_oro = nullptr;
+tcudaFuncGetAttributes *cudaFuncGetAttributes_oro = nullptr;
+tcudaFuncSetAttribute *cudaFuncSetAttribute_oro = nullptr;
+tcudaFuncSetCacheConfig *cudaFuncSetCacheConfig_oro = nullptr;
+tcudaFuncSetSharedMemConfig *cudaFuncSetSharedMemConfig_oro = nullptr;
+tcudaGetChannelDesc *cudaGetChannelDesc_oro = nullptr;
+tcudaGetDevice *cudaGetDevice_oro = nullptr;
+tcudaGetDeviceCount *cudaGetDeviceCount_oro = nullptr;
+tcudaGetDeviceFlags *cudaGetDeviceFlags_oro = nullptr;
+tcudaGetDeviceProperties_v2 *cudaGetDeviceProperties_v2_oro = nullptr;
+tcudaGetDriverEntryPoint *cudaGetDriverEntryPoint_oro = nullptr;
+tcudaGetErrorName *cudaGetErrorName_oro = nullptr;
+tcudaGetErrorString *cudaGetErrorString_oro = nullptr;
+tcudaGetExportTable *cudaGetExportTable_oro = nullptr;
+tcudaGetFuncBySymbol *cudaGetFuncBySymbol_oro = nullptr;
+tcudaGetKernel *cudaGetKernel_oro = nullptr;
+tcudaGetLastError *cudaGetLastError_oro = nullptr;
+tcudaGetMipmappedArrayLevel *cudaGetMipmappedArrayLevel_oro = nullptr;
+tcudaGetSurfaceObjectResourceDesc *cudaGetSurfaceObjectResourceDesc_oro = nullptr;
+tcudaGetSymbolAddress *cudaGetSymbolAddress_oro = nullptr;
+tcudaGetSymbolSize *cudaGetSymbolSize_oro = nullptr;
+tcudaGetTextureObjectResourceDesc *cudaGetTextureObjectResourceDesc_oro = nullptr;
+tcudaGetTextureObjectResourceViewDesc *cudaGetTextureObjectResourceViewDesc_oro = nullptr;
+tcudaGetTextureObjectTextureDesc *cudaGetTextureObjectTextureDesc_oro = nullptr;
+tcudaGraphAddChildGraphNode *cudaGraphAddChildGraphNode_oro = nullptr;
+tcudaGraphAddDependencies *cudaGraphAddDependencies_oro = nullptr;
+tcudaGraphAddEmptyNode *cudaGraphAddEmptyNode_oro = nullptr;
+tcudaGraphAddEventRecordNode *cudaGraphAddEventRecordNode_oro = nullptr;
+tcudaGraphAddEventWaitNode *cudaGraphAddEventWaitNode_oro = nullptr;
+tcudaGraphAddExternalSemaphoresSignalNode *cudaGraphAddExternalSemaphoresSignalNode_oro = nullptr;
+tcudaGraphAddExternalSemaphoresWaitNode *cudaGraphAddExternalSemaphoresWaitNode_oro = nullptr;
+tcudaGraphAddHostNode *cudaGraphAddHostNode_oro = nullptr;
+tcudaGraphAddKernelNode *cudaGraphAddKernelNode_oro = nullptr;
+tcudaGraphAddMemAllocNode *cudaGraphAddMemAllocNode_oro = nullptr;
+tcudaGraphAddMemFreeNode *cudaGraphAddMemFreeNode_oro = nullptr;
+tcudaGraphAddMemcpyNode *cudaGraphAddMemcpyNode_oro = nullptr;
+tcudaGraphAddMemcpyNode1D *cudaGraphAddMemcpyNode1D_oro = nullptr;
+tcudaGraphAddMemcpyNodeFromSymbol *cudaGraphAddMemcpyNodeFromSymbol_oro = nullptr;
+tcudaGraphAddMemcpyNodeToSymbol *cudaGraphAddMemcpyNodeToSymbol_oro = nullptr;
+tcudaGraphAddMemsetNode *cudaGraphAddMemsetNode_oro = nullptr;
+tcudaGraphAddNode *cudaGraphAddNode_oro = nullptr;
+tcudaGraphChildGraphNodeGetGraph *cudaGraphChildGraphNodeGetGraph_oro = nullptr;
+tcudaGraphClone *cudaGraphClone_oro = nullptr;
+tcudaGraphCreate *cudaGraphCreate_oro = nullptr;
+tcudaGraphDebugDotPrint *cudaGraphDebugDotPrint_oro = nullptr;
+tcudaGraphDestroy *cudaGraphDestroy_oro = nullptr;
+tcudaGraphDestroyNode *cudaGraphDestroyNode_oro = nullptr;
+tcudaGraphEventRecordNodeGetEvent *cudaGraphEventRecordNodeGetEvent_oro = nullptr;
+tcudaGraphEventRecordNodeSetEvent *cudaGraphEventRecordNodeSetEvent_oro = nullptr;
+tcudaGraphEventWaitNodeGetEvent *cudaGraphEventWaitNodeGetEvent_oro = nullptr;
+tcudaGraphEventWaitNodeSetEvent *cudaGraphEventWaitNodeSetEvent_oro = nullptr;
+tcudaGraphExecChildGraphNodeSetParams *cudaGraphExecChildGraphNodeSetParams_oro = nullptr;
+tcudaGraphExecDestroy *cudaGraphExecDestroy_oro = nullptr;
+tcudaGraphExecEventRecordNodeSetEvent *cudaGraphExecEventRecordNodeSetEvent_oro = nullptr;
+tcudaGraphExecEventWaitNodeSetEvent *cudaGraphExecEventWaitNodeSetEvent_oro = nullptr;
+tcudaGraphExecExternalSemaphoresSignalNodeSetParams *cudaGraphExecExternalSemaphoresSignalNodeSetParams_oro = nullptr;
+tcudaGraphExecExternalSemaphoresWaitNodeSetParams *cudaGraphExecExternalSemaphoresWaitNodeSetParams_oro = nullptr;
+tcudaGraphExecGetFlags *cudaGraphExecGetFlags_oro = nullptr;
+tcudaGraphExecHostNodeSetParams *cudaGraphExecHostNodeSetParams_oro = nullptr;
+tcudaGraphExecKernelNodeSetParams *cudaGraphExecKernelNodeSetParams_oro = nullptr;
+tcudaGraphExecMemcpyNodeSetParams *cudaGraphExecMemcpyNodeSetParams_oro = nullptr;
+tcudaGraphExecMemcpyNodeSetParams1D *cudaGraphExecMemcpyNodeSetParams1D_oro = nullptr;
+tcudaGraphExecMemcpyNodeSetParamsFromSymbol *cudaGraphExecMemcpyNodeSetParamsFromSymbol_oro = nullptr;
+tcudaGraphExecMemcpyNodeSetParamsToSymbol *cudaGraphExecMemcpyNodeSetParamsToSymbol_oro = nullptr;
+tcudaGraphExecMemsetNodeSetParams *cudaGraphExecMemsetNodeSetParams_oro = nullptr;
+tcudaGraphExecNodeSetParams *cudaGraphExecNodeSetParams_oro = nullptr;
+tcudaGraphExecUpdate *cudaGraphExecUpdate_oro = nullptr;
+tcudaGraphExternalSemaphoresSignalNodeGetParams *cudaGraphExternalSemaphoresSignalNodeGetParams_oro = nullptr;
+tcudaGraphExternalSemaphoresSignalNodeSetParams *cudaGraphExternalSemaphoresSignalNodeSetParams_oro = nullptr;
+tcudaGraphExternalSemaphoresWaitNodeGetParams *cudaGraphExternalSemaphoresWaitNodeGetParams_oro = nullptr;
+tcudaGraphExternalSemaphoresWaitNodeSetParams *cudaGraphExternalSemaphoresWaitNodeSetParams_oro = nullptr;
+tcudaGraphGetEdges *cudaGraphGetEdges_oro = nullptr;
+tcudaGraphGetNodes *cudaGraphGetNodes_oro = nullptr;
+tcudaGraphGetRootNodes *cudaGraphGetRootNodes_oro = nullptr;
+tcudaGraphHostNodeGetParams *cudaGraphHostNodeGetParams_oro = nullptr;
+tcudaGraphHostNodeSetParams *cudaGraphHostNodeSetParams_oro = nullptr;
+tcudaGraphInstantiate *cudaGraphInstantiate_oro = nullptr;
+tcudaGraphInstantiateWithFlags *cudaGraphInstantiateWithFlags_oro = nullptr;
+tcudaGraphInstantiateWithParams *cudaGraphInstantiateWithParams_oro = nullptr;
+tcudaGraphKernelNodeCopyAttributes *cudaGraphKernelNodeCopyAttributes_oro = nullptr;
+tcudaGraphKernelNodeGetAttribute *cudaGraphKernelNodeGetAttribute_oro = nullptr;
+tcudaGraphKernelNodeGetParams *cudaGraphKernelNodeGetParams_oro = nullptr;
+tcudaGraphKernelNodeSetAttribute *cudaGraphKernelNodeSetAttribute_oro = nullptr;
+tcudaGraphKernelNodeSetParams *cudaGraphKernelNodeSetParams_oro = nullptr;
+tcudaGraphLaunch *cudaGraphLaunch_oro = nullptr;
+tcudaGraphMemAllocNodeGetParams *cudaGraphMemAllocNodeGetParams_oro = nullptr;
+tcudaGraphMemFreeNodeGetParams *cudaGraphMemFreeNodeGetParams_oro = nullptr;
+tcudaGraphMemcpyNodeGetParams *cudaGraphMemcpyNodeGetParams_oro = nullptr;
+tcudaGraphMemcpyNodeSetParams *cudaGraphMemcpyNodeSetParams_oro = nullptr;
+tcudaGraphMemcpyNodeSetParams1D *cudaGraphMemcpyNodeSetParams1D_oro = nullptr;
+tcudaGraphMemcpyNodeSetParamsFromSymbol *cudaGraphMemcpyNodeSetParamsFromSymbol_oro = nullptr;
+tcudaGraphMemcpyNodeSetParamsToSymbol *cudaGraphMemcpyNodeSetParamsToSymbol_oro = nullptr;
+tcudaGraphMemsetNodeGetParams *cudaGraphMemsetNodeGetParams_oro = nullptr;
+tcudaGraphMemsetNodeSetParams *cudaGraphMemsetNodeSetParams_oro = nullptr;
+tcudaGraphNodeFindInClone *cudaGraphNodeFindInClone_oro = nullptr;
+tcudaGraphNodeGetDependencies *cudaGraphNodeGetDependencies_oro = nullptr;
+tcudaGraphNodeGetDependentNodes *cudaGraphNodeGetDependentNodes_oro = nullptr;
+tcudaGraphNodeGetEnabled *cudaGraphNodeGetEnabled_oro = nullptr;
+tcudaGraphNodeGetType *cudaGraphNodeGetType_oro = nullptr;
+tcudaGraphNodeSetEnabled *cudaGraphNodeSetEnabled_oro = nullptr;
+tcudaGraphNodeSetParams *cudaGraphNodeSetParams_oro = nullptr;
+tcudaGraphReleaseUserObject *cudaGraphReleaseUserObject_oro = nullptr;
+tcudaGraphRemoveDependencies *cudaGraphRemoveDependencies_oro = nullptr;
+tcudaGraphRetainUserObject *cudaGraphRetainUserObject_oro = nullptr;
+tcudaGraphUpload *cudaGraphUpload_oro = nullptr;
+tcudaGraphicsMapResources *cudaGraphicsMapResources_oro = nullptr;
+tcudaGraphicsResourceGetMappedMipmappedArray *cudaGraphicsResourceGetMappedMipmappedArray_oro = nullptr;
+tcudaGraphicsResourceGetMappedPointer *cudaGraphicsResourceGetMappedPointer_oro = nullptr;
+tcudaGraphicsResourceSetMapFlags *cudaGraphicsResourceSetMapFlags_oro = nullptr;
+tcudaGraphicsSubResourceGetMappedArray *cudaGraphicsSubResourceGetMappedArray_oro = nullptr;
+tcudaGraphicsUnmapResources *cudaGraphicsUnmapResources_oro = nullptr;
+tcudaGraphicsUnregisterResource *cudaGraphicsUnregisterResource_oro = nullptr;
+tcudaHostAlloc *cudaHostAlloc_oro = nullptr;
+tcudaHostGetDevicePointer *cudaHostGetDevicePointer_oro = nullptr;
+tcudaHostGetFlags *cudaHostGetFlags_oro = nullptr;
+tcudaHostRegister *cudaHostRegister_oro = nullptr;
+tcudaHostUnregister *cudaHostUnregister_oro = nullptr;
+tcudaImportExternalMemory *cudaImportExternalMemory_oro = nullptr;
+tcudaImportExternalSemaphore *cudaImportExternalSemaphore_oro = nullptr;
+tcudaInitDevice *cudaInitDevice_oro = nullptr;
+tcudaIpcCloseMemHandle *cudaIpcCloseMemHandle_oro = nullptr;
+tcudaIpcGetEventHandle *cudaIpcGetEventHandle_oro = nullptr;
+tcudaIpcGetMemHandle *cudaIpcGetMemHandle_oro = nullptr;
+tcudaIpcOpenEventHandle *cudaIpcOpenEventHandle_oro = nullptr;
+tcudaIpcOpenMemHandle *cudaIpcOpenMemHandle_oro = nullptr;
+tcudaLaunchCooperativeKernel *cudaLaunchCooperativeKernel_oro = nullptr;
+tcudaLaunchCooperativeKernelMultiDevice *cudaLaunchCooperativeKernelMultiDevice_oro = nullptr;
+tcudaLaunchHostFunc *cudaLaunchHostFunc_oro = nullptr;
+tcudaLaunchKernel *cudaLaunchKernel_oro = nullptr;
+tcudaLaunchKernelExC *cudaLaunchKernelExC_oro = nullptr;
+tcudaMalloc *cudaMalloc_oro = nullptr;
+tcudaMalloc3D *cudaMalloc3D_oro = nullptr;
+tcudaMalloc3DArray *cudaMalloc3DArray_oro = nullptr;
+tcudaMallocArray *cudaMallocArray_oro = nullptr;
+tcudaMallocAsync *cudaMallocAsync_oro = nullptr;
+tcudaMallocFromPoolAsync *cudaMallocFromPoolAsync_oro = nullptr;
+tcudaMallocHost *cudaMallocHost_oro = nullptr;
+tcudaMallocManaged *cudaMallocManaged_oro = nullptr;
+tcudaMallocMipmappedArray *cudaMallocMipmappedArray_oro = nullptr;
+tcudaMallocPitch *cudaMallocPitch_oro = nullptr;
+tcudaMemAdvise *cudaMemAdvise_oro = nullptr;
+tcudaMemAdvise_v2 *cudaMemAdvise_v2_oro = nullptr;
+tcudaMemGetInfo *cudaMemGetInfo_oro = nullptr;
+tcudaMemPoolCreate *cudaMemPoolCreate_oro = nullptr;
+tcudaMemPoolDestroy *cudaMemPoolDestroy_oro = nullptr;
+tcudaMemPoolExportPointer *cudaMemPoolExportPointer_oro = nullptr;
+tcudaMemPoolExportToShareableHandle *cudaMemPoolExportToShareableHandle_oro = nullptr;
+tcudaMemPoolGetAccess *cudaMemPoolGetAccess_oro = nullptr;
+tcudaMemPoolGetAttribute *cudaMemPoolGetAttribute_oro = nullptr;
+tcudaMemPoolImportFromShareableHandle *cudaMemPoolImportFromShareableHandle_oro = nullptr;
+tcudaMemPoolImportPointer *cudaMemPoolImportPointer_oro = nullptr;
+tcudaMemPoolSetAccess *cudaMemPoolSetAccess_oro = nullptr;
+tcudaMemPoolSetAttribute *cudaMemPoolSetAttribute_oro = nullptr;
+tcudaMemPoolTrimTo *cudaMemPoolTrimTo_oro = nullptr;
+tcudaMemPrefetchAsync *cudaMemPrefetchAsync_oro = nullptr;
+tcudaMemPrefetchAsync_v2 *cudaMemPrefetchAsync_v2_oro = nullptr;
+tcudaMemRangeGetAttribute *cudaMemRangeGetAttribute_oro = nullptr;
+tcudaMemRangeGetAttributes *cudaMemRangeGetAttributes_oro = nullptr;
+tcudaMemcpy *cudaMemcpy_oro = nullptr;
+tcudaMemcpy2D *cudaMemcpy2D_oro = nullptr;
+tcudaMemcpy2DArrayToArray *cudaMemcpy2DArrayToArray_oro = nullptr;
+tcudaMemcpy2DAsync *cudaMemcpy2DAsync_oro = nullptr;
+tcudaMemcpy2DFromArray *cudaMemcpy2DFromArray_oro = nullptr;
+tcudaMemcpy2DFromArrayAsync *cudaMemcpy2DFromArrayAsync_oro = nullptr;
+tcudaMemcpy2DToArray *cudaMemcpy2DToArray_oro = nullptr;
+tcudaMemcpy2DToArrayAsync *cudaMemcpy2DToArrayAsync_oro = nullptr;
+tcudaMemcpy3D *cudaMemcpy3D_oro = nullptr;
+tcudaMemcpy3DAsync *cudaMemcpy3DAsync_oro = nullptr;
+tcudaMemcpy3DPeer *cudaMemcpy3DPeer_oro = nullptr;
+tcudaMemcpy3DPeerAsync *cudaMemcpy3DPeerAsync_oro = nullptr;
+tcudaMemcpyArrayToArray *cudaMemcpyArrayToArray_oro = nullptr;
+tcudaMemcpyAsync *cudaMemcpyAsync_oro = nullptr;
+tcudaMemcpyFromArray *cudaMemcpyFromArray_oro = nullptr;
+tcudaMemcpyFromArrayAsync *cudaMemcpyFromArrayAsync_oro = nullptr;
+tcudaMemcpyFromSymbol *cudaMemcpyFromSymbol_oro = nullptr;
+tcudaMemcpyFromSymbolAsync *cudaMemcpyFromSymbolAsync_oro = nullptr;
+tcudaMemcpyPeer *cudaMemcpyPeer_oro = nullptr;
+tcudaMemcpyPeerAsync *cudaMemcpyPeerAsync_oro = nullptr;
+tcudaMemcpyToArray *cudaMemcpyToArray_oro = nullptr;
+tcudaMemcpyToArrayAsync *cudaMemcpyToArrayAsync_oro = nullptr;
+tcudaMemcpyToSymbol *cudaMemcpyToSymbol_oro = nullptr;
+tcudaMemcpyToSymbolAsync *cudaMemcpyToSymbolAsync_oro = nullptr;
+tcudaMemset *cudaMemset_oro = nullptr;
+tcudaMemset2D *cudaMemset2D_oro = nullptr;
+tcudaMemset2DAsync *cudaMemset2DAsync_oro = nullptr;
+tcudaMemset3D *cudaMemset3D_oro = nullptr;
+tcudaMemset3DAsync *cudaMemset3DAsync_oro = nullptr;
+tcudaMemsetAsync *cudaMemsetAsync_oro = nullptr;
+tcudaMipmappedArrayGetMemoryRequirements *cudaMipmappedArrayGetMemoryRequirements_oro = nullptr;
+tcudaMipmappedArrayGetSparseProperties *cudaMipmappedArrayGetSparseProperties_oro = nullptr;
+tcudaOccupancyAvailableDynamicSMemPerBlock *cudaOccupancyAvailableDynamicSMemPerBlock_oro = nullptr;
+tcudaOccupancyMaxActiveBlocksPerMultiprocessor *cudaOccupancyMaxActiveBlocksPerMultiprocessor_oro = nullptr;
+tcudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags_oro = nullptr;
+tcudaOccupancyMaxActiveClusters *cudaOccupancyMaxActiveClusters_oro = nullptr;
+tcudaOccupancyMaxPotentialClusterSize *cudaOccupancyMaxPotentialClusterSize_oro = nullptr;
+tcudaPeekAtLastError *cudaPeekAtLastError_oro = nullptr;
+tcudaPointerGetAttributes *cudaPointerGetAttributes_oro = nullptr;
+tcudaProfilerStart *cudaProfilerStart_oro = nullptr;
+tcudaProfilerStop *cudaProfilerStop_oro = nullptr;
+tcudaRuntimeGetVersion *cudaRuntimeGetVersion_oro = nullptr;
+tcudaSetDevice *cudaSetDevice_oro = nullptr;
+tcudaSetDeviceFlags *cudaSetDeviceFlags_oro = nullptr;
+tcudaSetDoubleForDevice *cudaSetDoubleForDevice_oro = nullptr;
+tcudaSetDoubleForHost *cudaSetDoubleForHost_oro = nullptr;
+tcudaSetValidDevices *cudaSetValidDevices_oro = nullptr;
+tcudaSignalExternalSemaphoresAsync_v2 *cudaSignalExternalSemaphoresAsync_v2_oro = nullptr;
+tcudaStreamAddCallback *cudaStreamAddCallback_oro = nullptr;
+tcudaStreamAttachMemAsync *cudaStreamAttachMemAsync_oro = nullptr;
+tcudaStreamBeginCapture *cudaStreamBeginCapture_oro = nullptr;
+tcudaStreamCopyAttributes *cudaStreamCopyAttributes_oro = nullptr;
+tcudaStreamCreate *cudaStreamCreate_oro = nullptr;
+tcudaStreamCreateWithFlags *cudaStreamCreateWithFlags_oro = nullptr;
+tcudaStreamCreateWithPriority *cudaStreamCreateWithPriority_oro = nullptr;
+tcudaStreamDestroy *cudaStreamDestroy_oro = nullptr;
+tcudaStreamEndCapture *cudaStreamEndCapture_oro = nullptr;
+tcudaStreamGetAttribute *cudaStreamGetAttribute_oro = nullptr;
+tcudaStreamGetCaptureInfo_v2 *cudaStreamGetCaptureInfo_v2_oro = nullptr;
+tcudaStreamGetFlags *cudaStreamGetFlags_oro = nullptr;
+tcudaStreamGetId *cudaStreamGetId_oro = nullptr;
+tcudaStreamGetPriority *cudaStreamGetPriority_oro = nullptr;
+tcudaStreamIsCapturing *cudaStreamIsCapturing_oro = nullptr;
+tcudaStreamQuery *cudaStreamQuery_oro = nullptr;
+tcudaStreamSetAttribute *cudaStreamSetAttribute_oro = nullptr;
+tcudaStreamSynchronize *cudaStreamSynchronize_oro = nullptr;
+tcudaStreamUpdateCaptureDependencies *cudaStreamUpdateCaptureDependencies_oro = nullptr;
+tcudaStreamWaitEvent *cudaStreamWaitEvent_oro = nullptr;
+tcudaThreadExchangeStreamCaptureMode *cudaThreadExchangeStreamCaptureMode_oro = nullptr;
+tcudaThreadExit *cudaThreadExit_oro = nullptr;
+tcudaThreadGetCacheConfig *cudaThreadGetCacheConfig_oro = nullptr;
+tcudaThreadGetLimit *cudaThreadGetLimit_oro = nullptr;
+tcudaThreadSetCacheConfig *cudaThreadSetCacheConfig_oro = nullptr;
+tcudaThreadSetLimit *cudaThreadSetLimit_oro = nullptr;
+tcudaThreadSynchronize *cudaThreadSynchronize_oro = nullptr;
+tcudaUserObjectCreate *cudaUserObjectCreate_oro = nullptr;
+tcudaUserObjectRelease *cudaUserObjectRelease_oro = nullptr;
+tcudaUserObjectRetain *cudaUserObjectRetain_oro = nullptr;
+tcudaWaitExternalSemaphoresAsync_v2 *cudaWaitExternalSemaphoresAsync_v2_oro = nullptr;
+tnvrtcAddNameExpression *nvrtcAddNameExpression_oro = nullptr;
+tnvrtcCompileProgram *nvrtcCompileProgram_oro = nullptr;
+tnvrtcCreateProgram *nvrtcCreateProgram_oro = nullptr;
+tnvrtcDestroyProgram *nvrtcDestroyProgram_oro = nullptr;
+tnvrtcGetCUBIN *nvrtcGetCUBIN_oro = nullptr;
+tnvrtcGetCUBINSize *nvrtcGetCUBINSize_oro = nullptr;
+tnvrtcGetErrorString *nvrtcGetErrorString_oro = nullptr;
+tnvrtcGetLTOIR *nvrtcGetLTOIR_oro = nullptr;
+tnvrtcGetLTOIRSize *nvrtcGetLTOIRSize_oro = nullptr;
+tnvrtcGetLoweredName *nvrtcGetLoweredName_oro = nullptr;
+tnvrtcGetNVVM *nvrtcGetNVVM_oro = nullptr;
+tnvrtcGetNVVMSize *nvrtcGetNVVMSize_oro = nullptr;
+tnvrtcGetNumSupportedArchs *nvrtcGetNumSupportedArchs_oro = nullptr;
+tnvrtcGetOptiXIR *nvrtcGetOptiXIR_oro = nullptr;
+tnvrtcGetOptiXIRSize *nvrtcGetOptiXIRSize_oro = nullptr;
+tnvrtcGetPTX *nvrtcGetPTX_oro = nullptr;
+tnvrtcGetPTXSize *nvrtcGetPTXSize_oro = nullptr;
+tnvrtcGetProgramLog *nvrtcGetProgramLog_oro = nullptr;
+tnvrtcGetProgramLogSize *nvrtcGetProgramLogSize_oro = nullptr;
+tnvrtcGetSupportedArchs *nvrtcGetSupportedArchs_oro = nullptr;
+tnvrtcVersion *nvrtcVersion_oro = nullptr;
+
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_cuew_cpp_1
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
+
+
+
+
+
+
+
+
 
 static DynamicLibrary dynamic_library_open_find(const char **paths)
 {
@@ -327,11 +841,16 @@ static DynamicLibrary dynamic_library_open_find(const char **paths)
   return NULL;
 }
 
-/* Implementation function. */
+// Implementation function.
 static void cuewCudaExit(void)
 {
+
+  if (cudart_lib != NULL) {
+    dynamic_library_close(cudart_lib);
+    cudart_lib = NULL;
+  }
+
   if (cuda_lib != NULL) {
-    /*  Ignore errors. */
     dynamic_library_close(cuda_lib);
     cuda_lib = NULL;
   }
@@ -339,15 +858,18 @@ static void cuewCudaExit(void)
 
 static int cuewCudaInit(void)
 {
-  /* Library paths. */
+  // Library paths.
 #ifdef _WIN32
-  /* Expected in c:/windows/system or similar, no path needed. */
+  // Expected in c:/windows/system or similar, no path needed.
   const char *cuda_paths[] = {"nvcuda.dll", NULL};
+  const char *cudart_paths[] = {"cudart64_12.dll", NULL};
 #elif defined(__APPLE__)
-  /* Default installation path. */
+  // Default installation path.
   const char *cuda_paths[] = {"/usr/local/cuda/lib/libcuda.dylib", NULL};
+  const char *cudart_paths[] = { NULL}; // TODO
 #else
   const char *cuda_paths[] = {"libcuda.so", "libcuda.so.1", NULL};
+  const char *cudart_paths[] = { "libcudart.so", NULL }; 
 #endif
   static int initialized = 0;
   static int result = 0;
@@ -365,7 +887,7 @@ static int cuewCudaInit(void)
     return result;
   }
 
-  /* Load library. */
+  // Load library.
   cuda_lib = dynamic_library_open_find(cuda_paths);
 
   if (cuda_lib == NULL) {
@@ -373,12 +895,24 @@ static int cuewCudaInit(void)
     return result;
   }
 
+
+
+  // Load library.
+  cudart_lib = dynamic_library_open_find(cudart_paths);
+
+  if (cudart_lib == NULL) {
+      // maybe better to not fail for this DLL, which is not included in driver ? 
+  }
+
+
   /* Detect driver version. */
   driver_version = 1000;
 
-  CUDA_LIBRARY_FIND_CHECKED(cuDriverGetVersion);
-  if (cuDriverGetVersion) {
-    cuDriverGetVersion(&driver_version);
+  //_LIBRARY_FIND(cuda_lib, cuDriverGetVersion)
+  cuDriverGetVersion_oro = reinterpret_cast<decltype(&cuDriverGetVersion)>(   dynamic_library_find(cuda_lib, "cuDriverGetVersion" )  );
+
+  if (cuDriverGetVersion_oro) {
+    cuDriverGetVersion_oro(&driver_version);
   }
 
   /* We require version 4.0. */
@@ -386,236 +920,696 @@ static int cuewCudaInit(void)
     result = CUEW_ERROR_OPEN_FAILED;
     return result;
   }
-  /* Fetch all function pointers. */
-  CUDA_LIBRARY_FIND(cuGetErrorString);
-  CUDA_LIBRARY_FIND(cuGetErrorName);
-  CUDA_LIBRARY_FIND(cuInit);
-  CUDA_LIBRARY_FIND(cuDriverGetVersion);
-  CUDA_LIBRARY_FIND(cuDeviceGet);
-  CUDA_LIBRARY_FIND(cuDeviceGetCount);
-  CUDA_LIBRARY_FIND(cuDeviceGetName);
-  CUDA_LIBRARY_FIND(cuDeviceGetUuid);
-  CUDA_LIBRARY_FIND(cuDeviceTotalMem_v2);
-  CUDA_LIBRARY_FIND(cuDeviceGetAttribute);
-  CUDA_LIBRARY_FIND(cuDeviceGetProperties);
-  CUDA_LIBRARY_FIND(cuDeviceComputeCapability);
-  CUDA_LIBRARY_FIND(cuDevicePrimaryCtxRetain);
-  CUDA_LIBRARY_FIND(cuDevicePrimaryCtxRelease);
-  CUDA_LIBRARY_FIND(cuDevicePrimaryCtxSetFlags);
-  CUDA_LIBRARY_FIND(cuDevicePrimaryCtxGetState);
-  CUDA_LIBRARY_FIND(cuDevicePrimaryCtxReset);
-  CUDA_LIBRARY_FIND(cuCtxCreate_v2);
-  CUDA_LIBRARY_FIND(cuCtxDestroy_v2);
-  CUDA_LIBRARY_FIND(cuCtxPushCurrent_v2);
-  CUDA_LIBRARY_FIND(cuCtxPopCurrent_v2);
-  CUDA_LIBRARY_FIND(cuCtxSetCurrent);
-  CUDA_LIBRARY_FIND(cuCtxGetCurrent);
-  CUDA_LIBRARY_FIND(cuCtxGetDevice);
-  CUDA_LIBRARY_FIND(cuCtxGetFlags);
-  CUDA_LIBRARY_FIND(cuCtxSynchronize);
-  CUDA_LIBRARY_FIND(cuCtxSetLimit);
-  CUDA_LIBRARY_FIND(cuCtxGetLimit);
-  CUDA_LIBRARY_FIND(cuCtxGetCacheConfig);
-  CUDA_LIBRARY_FIND(cuCtxSetCacheConfig);
-  CUDA_LIBRARY_FIND(cuCtxGetSharedMemConfig);
-  CUDA_LIBRARY_FIND(cuCtxSetSharedMemConfig);
-  CUDA_LIBRARY_FIND(cuCtxGetApiVersion);
-  CUDA_LIBRARY_FIND(cuCtxGetStreamPriorityRange);
-  CUDA_LIBRARY_FIND(cuCtxAttach);
-  CUDA_LIBRARY_FIND(cuCtxDetach);
-  CUDA_LIBRARY_FIND(cuModuleLoad);
-  CUDA_LIBRARY_FIND(cuModuleLoadData);
-  CUDA_LIBRARY_FIND(cuModuleLoadDataEx);
-  CUDA_LIBRARY_FIND(cuModuleLoadFatBinary);
-  CUDA_LIBRARY_FIND(cuModuleUnload);
-  CUDA_LIBRARY_FIND(cuModuleGetFunction);
-  CUDA_LIBRARY_FIND(cuModuleGetGlobal_v2);
-  CUDA_LIBRARY_FIND(cuModuleGetTexRef);
-  CUDA_LIBRARY_FIND(cuModuleGetSurfRef);
-  CUDA_LIBRARY_FIND(cuLinkCreate_v2);
-  CUDA_LIBRARY_FIND(cuLinkAddData_v2);
-  CUDA_LIBRARY_FIND(cuLinkAddFile_v2);
-  CUDA_LIBRARY_FIND(cuLinkComplete);
-  CUDA_LIBRARY_FIND(cuLinkDestroy);
-  CUDA_LIBRARY_FIND(cuMemGetInfo_v2);
-  CUDA_LIBRARY_FIND(cuMemAlloc_v2);
-  CUDA_LIBRARY_FIND(cuMemAllocPitch_v2);
-  CUDA_LIBRARY_FIND(cuMemFree_v2);
-  CUDA_LIBRARY_FIND(cuMemGetAddressRange_v2);
-  CUDA_LIBRARY_FIND(cuMemAllocHost_v2);
-  CUDA_LIBRARY_FIND(cuMemFreeHost);
-  CUDA_LIBRARY_FIND(cuMemHostAlloc);
-  CUDA_LIBRARY_FIND(cuMemHostGetDevicePointer_v2);
-  CUDA_LIBRARY_FIND(cuMemHostGetFlags);
-  CUDA_LIBRARY_FIND(cuMemAllocManaged);
-  CUDA_LIBRARY_FIND(cuDeviceGetByPCIBusId);
-  CUDA_LIBRARY_FIND(cuDeviceGetPCIBusId);
-  CUDA_LIBRARY_FIND(cuIpcGetEventHandle);
-  CUDA_LIBRARY_FIND(cuIpcOpenEventHandle);
-  CUDA_LIBRARY_FIND(cuIpcGetMemHandle);
-  CUDA_LIBRARY_FIND(cuIpcOpenMemHandle);
-  CUDA_LIBRARY_FIND(cuIpcCloseMemHandle);
-  CUDA_LIBRARY_FIND(cuMemHostRegister_v2);
-  CUDA_LIBRARY_FIND(cuMemHostUnregister);
-  CUDA_LIBRARY_FIND(cuMemcpy);
-  CUDA_LIBRARY_FIND(cuMemcpyPeer);
-  CUDA_LIBRARY_FIND(cuMemcpyHtoD_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyDtoH_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyDtoD_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyDtoA_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyAtoD_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyHtoA_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyAtoH_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyAtoA_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy2D_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy2DUnaligned_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy3D_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy3DPeer);
-  CUDA_LIBRARY_FIND(cuMemcpyAsync);
-  CUDA_LIBRARY_FIND(cuMemcpyPeerAsync);
-  CUDA_LIBRARY_FIND(cuMemcpyHtoDAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyDtoHAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyDtoDAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyHtoAAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpyAtoHAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy2DAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy3DAsync_v2);
-  CUDA_LIBRARY_FIND(cuMemcpy3DPeerAsync);
-  CUDA_LIBRARY_FIND(cuMemsetD8_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD16_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD32_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD2D8_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD2D16_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD2D32_v2);
-  CUDA_LIBRARY_FIND(cuMemsetD8Async);
-  CUDA_LIBRARY_FIND(cuMemsetD16Async);
-  CUDA_LIBRARY_FIND(cuMemsetD32Async);
-  CUDA_LIBRARY_FIND(cuMemsetD2D8Async);
-  CUDA_LIBRARY_FIND(cuMemsetD2D16Async);
-  CUDA_LIBRARY_FIND(cuMemsetD2D32Async);
-  CUDA_LIBRARY_FIND(cuArrayCreate_v2);
-  CUDA_LIBRARY_FIND(cuArrayGetDescriptor_v2);
-  CUDA_LIBRARY_FIND(cuArrayDestroy);
-  CUDA_LIBRARY_FIND(cuArray3DCreate_v2);
-  CUDA_LIBRARY_FIND(cuArray3DGetDescriptor_v2);
-  CUDA_LIBRARY_FIND(cuMipmappedArrayCreate);
-  CUDA_LIBRARY_FIND(cuMipmappedArrayGetLevel);
-  CUDA_LIBRARY_FIND(cuMipmappedArrayDestroy);
-  CUDA_LIBRARY_FIND(cuPointerGetAttribute);
-  CUDA_LIBRARY_FIND(cuMemPrefetchAsync);
-  CUDA_LIBRARY_FIND(cuMemAdvise);
-  CUDA_LIBRARY_FIND(cuMemRangeGetAttribute);
-  CUDA_LIBRARY_FIND(cuMemRangeGetAttributes);
-  CUDA_LIBRARY_FIND(cuPointerSetAttribute);
-  CUDA_LIBRARY_FIND(cuPointerGetAttributes);
-  CUDA_LIBRARY_FIND(cuStreamCreate);
-  CUDA_LIBRARY_FIND(cuStreamCreateWithPriority);
-  CUDA_LIBRARY_FIND(cuStreamGetPriority);
-  CUDA_LIBRARY_FIND(cuStreamGetFlags);
-  CUDA_LIBRARY_FIND(cuStreamGetCtx);
-  CUDA_LIBRARY_FIND(cuStreamWaitEvent);
-  CUDA_LIBRARY_FIND(cuStreamAddCallback);
-  CUDA_LIBRARY_FIND(cuStreamAttachMemAsync);
-  CUDA_LIBRARY_FIND(cuStreamQuery);
-  CUDA_LIBRARY_FIND(cuStreamSynchronize);
-  CUDA_LIBRARY_FIND(cuStreamDestroy_v2);
-  CUDA_LIBRARY_FIND(cuEventCreate);
-  CUDA_LIBRARY_FIND(cuEventRecord);
-  CUDA_LIBRARY_FIND(cuEventQuery);
-  CUDA_LIBRARY_FIND(cuEventSynchronize);
-  CUDA_LIBRARY_FIND(cuEventDestroy_v2);
-  CUDA_LIBRARY_FIND(cuEventElapsedTime);
-  CUDA_LIBRARY_FIND(cuImportExternalMemory);
-  CUDA_LIBRARY_FIND(cuExternalMemoryGetMappedBuffer);
-  CUDA_LIBRARY_FIND(cuDestroyExternalMemory);
-  CUDA_LIBRARY_FIND(cuStreamWaitValue32);
-  CUDA_LIBRARY_FIND(cuStreamWaitValue64);
-  CUDA_LIBRARY_FIND(cuStreamWriteValue32);
-  CUDA_LIBRARY_FIND(cuStreamWriteValue64);
-  CUDA_LIBRARY_FIND(cuStreamBatchMemOp);
-  CUDA_LIBRARY_FIND(cuFuncGetAttribute);
-  CUDA_LIBRARY_FIND(cuFuncSetAttribute);
-  CUDA_LIBRARY_FIND(cuFuncSetCacheConfig);
-  CUDA_LIBRARY_FIND(cuFuncSetSharedMemConfig);
-  CUDA_LIBRARY_FIND(cuLaunchKernel);
-  CUDA_LIBRARY_FIND(cuLaunchCooperativeKernel);
-  CUDA_LIBRARY_FIND(cuLaunchCooperativeKernelMultiDevice);
-  CUDA_LIBRARY_FIND(cuFuncSetBlockShape);
-  CUDA_LIBRARY_FIND(cuFuncSetSharedSize);
-  CUDA_LIBRARY_FIND(cuParamSetSize);
-  CUDA_LIBRARY_FIND(cuParamSeti);
-  CUDA_LIBRARY_FIND(cuParamSetf);
-  CUDA_LIBRARY_FIND(cuParamSetv);
-  CUDA_LIBRARY_FIND(cuLaunch);
-  CUDA_LIBRARY_FIND(cuLaunchGrid);
-  CUDA_LIBRARY_FIND(cuLaunchGridAsync);
-  CUDA_LIBRARY_FIND(cuParamSetTexRef);
-  CUDA_LIBRARY_FIND(cuOccupancyMaxActiveBlocksPerMultiprocessor);
-  CUDA_LIBRARY_FIND(cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags);
-  CUDA_LIBRARY_FIND(cuOccupancyMaxPotentialBlockSize);
-  CUDA_LIBRARY_FIND(cuOccupancyMaxPotentialBlockSizeWithFlags);
-  CUDA_LIBRARY_FIND(cuTexRefSetArray);
-  CUDA_LIBRARY_FIND(cuTexRefSetMipmappedArray);
-  CUDA_LIBRARY_FIND(cuTexRefSetAddress_v2);
-  CUDA_LIBRARY_FIND(cuTexRefSetAddress2D_v3);
-  CUDA_LIBRARY_FIND(cuTexRefSetFormat);
-  CUDA_LIBRARY_FIND(cuTexRefSetAddressMode);
-  CUDA_LIBRARY_FIND(cuTexRefSetFilterMode);
-  CUDA_LIBRARY_FIND(cuTexRefSetMipmapFilterMode);
-  CUDA_LIBRARY_FIND(cuTexRefSetMipmapLevelBias);
-  CUDA_LIBRARY_FIND(cuTexRefSetMipmapLevelClamp);
-  CUDA_LIBRARY_FIND(cuTexRefSetMaxAnisotropy);
-  CUDA_LIBRARY_FIND(cuTexRefSetBorderColor);
-  CUDA_LIBRARY_FIND(cuTexRefSetFlags);
-  CUDA_LIBRARY_FIND(cuTexRefGetAddress_v2);
-  CUDA_LIBRARY_FIND(cuTexRefGetArray);
-  CUDA_LIBRARY_FIND(cuTexRefGetMipmappedArray);
-  CUDA_LIBRARY_FIND(cuTexRefGetAddressMode);
-  CUDA_LIBRARY_FIND(cuTexRefGetFilterMode);
-  CUDA_LIBRARY_FIND(cuTexRefGetFormat);
-  CUDA_LIBRARY_FIND(cuTexRefGetMipmapFilterMode);
-  CUDA_LIBRARY_FIND(cuTexRefGetMipmapLevelBias);
-  CUDA_LIBRARY_FIND(cuTexRefGetMipmapLevelClamp);
-  CUDA_LIBRARY_FIND(cuTexRefGetMaxAnisotropy);
-  CUDA_LIBRARY_FIND(cuTexRefGetBorderColor);
-  CUDA_LIBRARY_FIND(cuTexRefGetFlags);
-  CUDA_LIBRARY_FIND(cuTexRefCreate);
-  CUDA_LIBRARY_FIND(cuTexRefDestroy);
-  CUDA_LIBRARY_FIND(cuSurfRefSetArray);
-  CUDA_LIBRARY_FIND(cuSurfRefGetArray);
-  CUDA_LIBRARY_FIND(cuTexObjectCreate);
-  CUDA_LIBRARY_FIND(cuTexObjectDestroy);
-  CUDA_LIBRARY_FIND(cuTexObjectGetResourceDesc);
-  CUDA_LIBRARY_FIND(cuTexObjectGetTextureDesc);
-  CUDA_LIBRARY_FIND(cuTexObjectGetResourceViewDesc);
-  CUDA_LIBRARY_FIND(cuSurfObjectCreate);
-  CUDA_LIBRARY_FIND(cuSurfObjectDestroy);
-  CUDA_LIBRARY_FIND(cuSurfObjectGetResourceDesc);
-  CUDA_LIBRARY_FIND(cuDeviceCanAccessPeer);
-  CUDA_LIBRARY_FIND(cuCtxEnablePeerAccess);
-  CUDA_LIBRARY_FIND(cuCtxDisablePeerAccess);
-  CUDA_LIBRARY_FIND(cuDeviceGetP2PAttribute);
-  CUDA_LIBRARY_FIND(cuGraphicsUnregisterResource);
-  CUDA_LIBRARY_FIND(cuGraphicsSubResourceGetMappedArray);
-  CUDA_LIBRARY_FIND(cuGraphicsResourceGetMappedMipmappedArray);
-  CUDA_LIBRARY_FIND(cuGraphicsResourceGetMappedPointer_v2);
-  CUDA_LIBRARY_FIND(cuGraphicsResourceSetMapFlags_v2);
-  CUDA_LIBRARY_FIND(cuGraphicsMapResources);
-  CUDA_LIBRARY_FIND(cuGraphicsUnmapResources);
-  CUDA_LIBRARY_FIND(cuGetExportTable);
+  
 
-  CUDA_LIBRARY_FIND(cuGraphicsGLRegisterBuffer);
-  CUDA_LIBRARY_FIND(cuGraphicsGLRegisterImage);
-  CUDA_LIBRARY_FIND(cuGLGetDevices_v2);
-  CUDA_LIBRARY_FIND(cuGLCtxCreate_v2);
-  CUDA_LIBRARY_FIND(cuGLInit);
-  CUDA_LIBRARY_FIND(cuGLRegisterBufferObject);
-  CUDA_LIBRARY_FIND(cuGLMapBufferObject_v2);
-  CUDA_LIBRARY_FIND(cuGLUnmapBufferObject);
-  CUDA_LIBRARY_FIND(cuGLUnregisterBufferObject);
-  CUDA_LIBRARY_FIND(cuGLSetBufferObjectMapFlags);
-  CUDA_LIBRARY_FIND(cuGLMapBufferObjectAsync_v2);
-  CUDA_LIBRARY_FIND(cuGLUnmapBufferObjectAsync);
+#pragma region OROCHI_SUMMONER_REGION_cuew_cpp_2
+
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+_LIBRARY_FIND( cuda_lib, cuArray3DCreate_v2 );
+_LIBRARY_FIND( cuda_lib, cuArray3DGetDescriptor_v2 );
+_LIBRARY_FIND( cuda_lib, cuArrayCreate_v2 );
+_LIBRARY_FIND( cuda_lib, cuArrayDestroy );
+_LIBRARY_FIND( cuda_lib, cuArrayGetDescriptor_v2 );
+_LIBRARY_FIND( cuda_lib, cuArrayGetMemoryRequirements );
+_LIBRARY_FIND( cuda_lib, cuArrayGetPlane );
+_LIBRARY_FIND( cuda_lib, cuArrayGetSparseProperties );
+_LIBRARY_FIND( cuda_lib, cuCtxAttach );
+_LIBRARY_FIND( cuda_lib, cuCtxCreate_v2 );
+_LIBRARY_FIND( cuda_lib, cuCtxCreate_v3 );
+_LIBRARY_FIND( cuda_lib, cuCtxDestroy_v2 );
+_LIBRARY_FIND( cuda_lib, cuCtxDetach );
+_LIBRARY_FIND( cuda_lib, cuCtxDisablePeerAccess );
+_LIBRARY_FIND( cuda_lib, cuCtxEnablePeerAccess );
+_LIBRARY_FIND( cuda_lib, cuCtxGetApiVersion );
+_LIBRARY_FIND( cuda_lib, cuCtxGetCacheConfig );
+_LIBRARY_FIND( cuda_lib, cuCtxGetCurrent );
+_LIBRARY_FIND( cuda_lib, cuCtxGetDevice );
+_LIBRARY_FIND( cuda_lib, cuCtxGetExecAffinity );
+_LIBRARY_FIND( cuda_lib, cuCtxGetFlags );
+_LIBRARY_FIND( cuda_lib, cuCtxGetId );
+_LIBRARY_FIND( cuda_lib, cuCtxGetLimit );
+_LIBRARY_FIND( cuda_lib, cuCtxGetSharedMemConfig );
+_LIBRARY_FIND( cuda_lib, cuCtxGetStreamPriorityRange );
+_LIBRARY_FIND( cuda_lib, cuCtxPopCurrent_v2 );
+_LIBRARY_FIND( cuda_lib, cuCtxPushCurrent_v2 );
+_LIBRARY_FIND( cuda_lib, cuCtxResetPersistingL2Cache );
+_LIBRARY_FIND( cuda_lib, cuCtxSetCacheConfig );
+_LIBRARY_FIND( cuda_lib, cuCtxSetCurrent );
+_LIBRARY_FIND( cuda_lib, cuCtxSetLimit );
+_LIBRARY_FIND( cuda_lib, cuCtxSetSharedMemConfig );
+_LIBRARY_FIND( cuda_lib, cuCtxSynchronize );
+_LIBRARY_FIND( cuda_lib, cuDestroyExternalMemory );
+_LIBRARY_FIND( cuda_lib, cuDestroyExternalSemaphore );
+_LIBRARY_FIND( cuda_lib, cuDeviceCanAccessPeer );
+_LIBRARY_FIND( cuda_lib, cuDeviceComputeCapability );
+_LIBRARY_FIND( cuda_lib, cuDeviceGet );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetByPCIBusId );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetCount );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetDefaultMemPool );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetExecAffinitySupport );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetGraphMemAttribute );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetLuid );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetMemPool );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetName );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetP2PAttribute );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetPCIBusId );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetProperties );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetTexture1DLinearMaxWidth );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetUuid );
+_LIBRARY_FIND( cuda_lib, cuDeviceGetUuid_v2 );
+_LIBRARY_FIND( cuda_lib, cuDeviceGraphMemTrim );
+_LIBRARY_FIND( cuda_lib, cuDevicePrimaryCtxGetState );
+_LIBRARY_FIND( cuda_lib, cuDevicePrimaryCtxRelease_v2 );
+_LIBRARY_FIND( cuda_lib, cuDevicePrimaryCtxReset_v2 );
+_LIBRARY_FIND( cuda_lib, cuDevicePrimaryCtxRetain );
+_LIBRARY_FIND( cuda_lib, cuDevicePrimaryCtxSetFlags_v2 );
+_LIBRARY_FIND( cuda_lib, cuDeviceSetGraphMemAttribute );
+_LIBRARY_FIND( cuda_lib, cuDeviceSetMemPool );
+_LIBRARY_FIND( cuda_lib, cuDeviceTotalMem_v2 );
+_LIBRARY_FIND( cuda_lib, cuDriverGetVersion );
+_LIBRARY_FIND( cuda_lib, cuEventCreate );
+_LIBRARY_FIND( cuda_lib, cuEventDestroy_v2 );
+_LIBRARY_FIND( cuda_lib, cuEventElapsedTime );
+_LIBRARY_FIND( cuda_lib, cuEventQuery );
+_LIBRARY_FIND( cuda_lib, cuEventRecord );
+_LIBRARY_FIND( cuda_lib, cuEventRecordWithFlags );
+_LIBRARY_FIND( cuda_lib, cuEventSynchronize );
+_LIBRARY_FIND( cuda_lib, cuExternalMemoryGetMappedBuffer );
+_LIBRARY_FIND( cuda_lib, cuExternalMemoryGetMappedMipmappedArray );
+_LIBRARY_FIND( cuda_lib, cuFlushGPUDirectRDMAWrites );
+_LIBRARY_FIND( cuda_lib, cuFuncGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuFuncGetModule );
+_LIBRARY_FIND( cuda_lib, cuFuncSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuFuncSetBlockShape );
+_LIBRARY_FIND( cuda_lib, cuFuncSetCacheConfig );
+_LIBRARY_FIND( cuda_lib, cuFuncSetSharedMemConfig );
+_LIBRARY_FIND( cuda_lib, cuFuncSetSharedSize );
+_LIBRARY_FIND( cuda_lib, cuGetErrorName );
+_LIBRARY_FIND( cuda_lib, cuGetErrorString );
+_LIBRARY_FIND( cuda_lib, cuGetExportTable );
+_LIBRARY_FIND( cuda_lib, cuGetProcAddress_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphAddBatchMemOpNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddChildGraphNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddDependencies );
+_LIBRARY_FIND( cuda_lib, cuGraphAddEmptyNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddEventRecordNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddEventWaitNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddExternalSemaphoresSignalNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddExternalSemaphoresWaitNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddHostNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddKernelNode_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphAddMemAllocNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddMemFreeNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddMemcpyNode );
+_LIBRARY_FIND( cuda_lib, cuGraphAddMemsetNode );
+_LIBRARY_FIND( cuda_lib, cuGraphBatchMemOpNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphBatchMemOpNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphChildGraphNodeGetGraph );
+_LIBRARY_FIND( cuda_lib, cuGraphClone );
+_LIBRARY_FIND( cuda_lib, cuGraphCreate );
+_LIBRARY_FIND( cuda_lib, cuGraphDebugDotPrint );
+_LIBRARY_FIND( cuda_lib, cuGraphDestroy );
+_LIBRARY_FIND( cuda_lib, cuGraphDestroyNode );
+_LIBRARY_FIND( cuda_lib, cuGraphEventRecordNodeGetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphEventRecordNodeSetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphEventWaitNodeGetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphEventWaitNodeSetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphExecBatchMemOpNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecChildGraphNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecDestroy );
+_LIBRARY_FIND( cuda_lib, cuGraphExecEventRecordNodeSetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphExecEventWaitNodeSetEvent );
+_LIBRARY_FIND( cuda_lib, cuGraphExecExternalSemaphoresSignalNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecExternalSemaphoresWaitNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecGetFlags );
+_LIBRARY_FIND( cuda_lib, cuGraphExecHostNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecKernelNodeSetParams_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphExecMemcpyNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecMemsetNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExecUpdate_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphExternalSemaphoresSignalNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExternalSemaphoresSignalNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExternalSemaphoresWaitNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphExternalSemaphoresWaitNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphGetEdges );
+_LIBRARY_FIND( cuda_lib, cuGraphGetNodes );
+_LIBRARY_FIND( cuda_lib, cuGraphGetRootNodes );
+_LIBRARY_FIND( cuda_lib, cuGraphHostNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphHostNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphInstantiateWithFlags );
+_LIBRARY_FIND( cuda_lib, cuGraphInstantiateWithParams );
+_LIBRARY_FIND( cuda_lib, cuGraphKernelNodeCopyAttributes );
+_LIBRARY_FIND( cuda_lib, cuGraphKernelNodeGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuGraphKernelNodeGetParams_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphKernelNodeSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuGraphKernelNodeSetParams_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphLaunch );
+_LIBRARY_FIND( cuda_lib, cuGraphMemAllocNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphMemFreeNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphMemcpyNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphMemcpyNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphMemsetNodeGetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphMemsetNodeSetParams );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeFindInClone );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeGetDependencies );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeGetDependentNodes );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeGetEnabled );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeGetType );
+_LIBRARY_FIND( cuda_lib, cuGraphNodeSetEnabled );
+_LIBRARY_FIND( cuda_lib, cuGraphReleaseUserObject );
+_LIBRARY_FIND( cuda_lib, cuGraphRemoveDependencies );
+_LIBRARY_FIND( cuda_lib, cuGraphRetainUserObject );
+_LIBRARY_FIND( cuda_lib, cuGraphUpload );
+_LIBRARY_FIND( cuda_lib, cuGraphicsMapResources );
+_LIBRARY_FIND( cuda_lib, cuGraphicsResourceGetMappedMipmappedArray );
+_LIBRARY_FIND( cuda_lib, cuGraphicsResourceGetMappedPointer_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphicsResourceSetMapFlags_v2 );
+_LIBRARY_FIND( cuda_lib, cuGraphicsSubResourceGetMappedArray );
+_LIBRARY_FIND( cuda_lib, cuGraphicsUnmapResources );
+_LIBRARY_FIND( cuda_lib, cuGraphicsUnregisterResource );
+_LIBRARY_FIND( cuda_lib, cuImportExternalMemory );
+_LIBRARY_FIND( cuda_lib, cuImportExternalSemaphore );
+_LIBRARY_FIND( cuda_lib, cuInit );
+_LIBRARY_FIND( cuda_lib, cuIpcCloseMemHandle );
+_LIBRARY_FIND( cuda_lib, cuIpcGetEventHandle );
+_LIBRARY_FIND( cuda_lib, cuIpcGetMemHandle );
+_LIBRARY_FIND( cuda_lib, cuIpcOpenEventHandle );
+_LIBRARY_FIND( cuda_lib, cuIpcOpenMemHandle_v2 );
+_LIBRARY_FIND( cuda_lib, cuKernelGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuKernelGetFunction );
+_LIBRARY_FIND( cuda_lib, cuKernelSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuKernelSetCacheConfig );
+_LIBRARY_FIND( cuda_lib, cuLaunch );
+_LIBRARY_FIND( cuda_lib, cuLaunchCooperativeKernel );
+_LIBRARY_FIND( cuda_lib, cuLaunchCooperativeKernelMultiDevice );
+_LIBRARY_FIND( cuda_lib, cuLaunchGrid );
+_LIBRARY_FIND( cuda_lib, cuLaunchGridAsync );
+_LIBRARY_FIND( cuda_lib, cuLaunchHostFunc );
+_LIBRARY_FIND( cuda_lib, cuLaunchKernel );
+_LIBRARY_FIND( cuda_lib, cuLaunchKernelEx );
+_LIBRARY_FIND( cuda_lib, cuLibraryGetGlobal );
+_LIBRARY_FIND( cuda_lib, cuLibraryGetKernel );
+_LIBRARY_FIND( cuda_lib, cuLibraryGetManaged );
+_LIBRARY_FIND( cuda_lib, cuLibraryGetModule );
+_LIBRARY_FIND( cuda_lib, cuLibraryGetUnifiedFunction );
+_LIBRARY_FIND( cuda_lib, cuLibraryLoadData );
+_LIBRARY_FIND( cuda_lib, cuLibraryLoadFromFile );
+_LIBRARY_FIND( cuda_lib, cuLibraryUnload );
+_LIBRARY_FIND( cuda_lib, cuLinkAddData_v2 );
+_LIBRARY_FIND( cuda_lib, cuLinkAddFile_v2 );
+_LIBRARY_FIND( cuda_lib, cuLinkComplete );
+_LIBRARY_FIND( cuda_lib, cuLinkCreate_v2 );
+_LIBRARY_FIND( cuda_lib, cuLinkDestroy );
+_LIBRARY_FIND( cuda_lib, cuMemAddressFree );
+_LIBRARY_FIND( cuda_lib, cuMemAddressReserve );
+_LIBRARY_FIND( cuda_lib, cuMemAdvise );
+_LIBRARY_FIND( cuda_lib, cuMemAllocAsync );
+_LIBRARY_FIND( cuda_lib, cuMemAllocFromPoolAsync );
+_LIBRARY_FIND( cuda_lib, cuMemAllocHost_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemAllocManaged );
+_LIBRARY_FIND( cuda_lib, cuMemAllocPitch_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemAlloc_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemCreate );
+_LIBRARY_FIND( cuda_lib, cuMemExportToShareableHandle );
+_LIBRARY_FIND( cuda_lib, cuMemFreeAsync );
+_LIBRARY_FIND( cuda_lib, cuMemFreeHost );
+_LIBRARY_FIND( cuda_lib, cuMemFree_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemGetAccess );
+_LIBRARY_FIND( cuda_lib, cuMemGetAddressRange_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemGetAllocationGranularity );
+_LIBRARY_FIND( cuda_lib, cuMemGetAllocationPropertiesFromHandle );
+_LIBRARY_FIND( cuda_lib, cuMemGetHandleForAddressRange );
+_LIBRARY_FIND( cuda_lib, cuMemGetInfo_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemHostAlloc );
+_LIBRARY_FIND( cuda_lib, cuMemHostGetDevicePointer_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemHostGetFlags );
+_LIBRARY_FIND( cuda_lib, cuMemHostRegister_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemHostUnregister );
+_LIBRARY_FIND( cuda_lib, cuMemImportFromShareableHandle );
+_LIBRARY_FIND( cuda_lib, cuMemMap );
+_LIBRARY_FIND( cuda_lib, cuMemMapArrayAsync );
+_LIBRARY_FIND( cuda_lib, cuMemPoolCreate );
+_LIBRARY_FIND( cuda_lib, cuMemPoolDestroy );
+_LIBRARY_FIND( cuda_lib, cuMemPoolExportPointer );
+_LIBRARY_FIND( cuda_lib, cuMemPoolExportToShareableHandle );
+_LIBRARY_FIND( cuda_lib, cuMemPoolGetAccess );
+_LIBRARY_FIND( cuda_lib, cuMemPoolGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuMemPoolImportFromShareableHandle );
+_LIBRARY_FIND( cuda_lib, cuMemPoolImportPointer );
+_LIBRARY_FIND( cuda_lib, cuMemPoolSetAccess );
+_LIBRARY_FIND( cuda_lib, cuMemPoolSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuMemPoolTrimTo );
+_LIBRARY_FIND( cuda_lib, cuMemPrefetchAsync );
+_LIBRARY_FIND( cuda_lib, cuMemRangeGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuMemRangeGetAttributes );
+_LIBRARY_FIND( cuda_lib, cuMemRelease );
+_LIBRARY_FIND( cuda_lib, cuMemRetainAllocationHandle );
+_LIBRARY_FIND( cuda_lib, cuMemSetAccess );
+_LIBRARY_FIND( cuda_lib, cuMemUnmap );
+_LIBRARY_FIND( cuda_lib, cuMemcpy );
+_LIBRARY_FIND( cuda_lib, cuMemcpy2DAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpy2DUnaligned_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpy2D_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpy3DAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpy3DPeer );
+_LIBRARY_FIND( cuda_lib, cuMemcpy3DPeerAsync );
+_LIBRARY_FIND( cuda_lib, cuMemcpy3D_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyAsync );
+_LIBRARY_FIND( cuda_lib, cuMemcpyAtoA_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyAtoD_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyAtoHAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyAtoH_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyDtoA_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyDtoDAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyDtoD_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyDtoHAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyDtoH_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyHtoAAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyHtoA_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyHtoDAsync_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyHtoD_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemcpyPeer );
+_LIBRARY_FIND( cuda_lib, cuMemcpyPeerAsync );
+_LIBRARY_FIND( cuda_lib, cuMemsetD16Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD16_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D16Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D16_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D32Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D32_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D8Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD2D8_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemsetD32Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD32_v2 );
+_LIBRARY_FIND( cuda_lib, cuMemsetD8Async );
+_LIBRARY_FIND( cuda_lib, cuMemsetD8_v2 );
+_LIBRARY_FIND( cuda_lib, cuMipmappedArrayCreate );
+_LIBRARY_FIND( cuda_lib, cuMipmappedArrayDestroy );
+_LIBRARY_FIND( cuda_lib, cuMipmappedArrayGetLevel );
+_LIBRARY_FIND( cuda_lib, cuMipmappedArrayGetMemoryRequirements );
+_LIBRARY_FIND( cuda_lib, cuMipmappedArrayGetSparseProperties );
+_LIBRARY_FIND( cuda_lib, cuModuleGetFunction );
+_LIBRARY_FIND( cuda_lib, cuModuleGetGlobal_v2 );
+_LIBRARY_FIND( cuda_lib, cuModuleGetLoadingMode );
+_LIBRARY_FIND( cuda_lib, cuModuleGetSurfRef );
+_LIBRARY_FIND( cuda_lib, cuModuleGetTexRef );
+_LIBRARY_FIND( cuda_lib, cuModuleLoad );
+_LIBRARY_FIND( cuda_lib, cuModuleLoadData );
+_LIBRARY_FIND( cuda_lib, cuModuleLoadDataEx );
+_LIBRARY_FIND( cuda_lib, cuModuleLoadFatBinary );
+_LIBRARY_FIND( cuda_lib, cuModuleUnload );
+_LIBRARY_FIND( cuda_lib, cuOccupancyAvailableDynamicSMemPerBlock );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxActiveBlocksPerMultiprocessor );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxActiveClusters );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxPotentialBlockSize );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxPotentialBlockSizeWithFlags );
+_LIBRARY_FIND( cuda_lib, cuOccupancyMaxPotentialClusterSize );
+_LIBRARY_FIND( cuda_lib, cuParamSetSize );
+_LIBRARY_FIND( cuda_lib, cuParamSetTexRef );
+_LIBRARY_FIND( cuda_lib, cuParamSetf );
+_LIBRARY_FIND( cuda_lib, cuParamSeti );
+_LIBRARY_FIND( cuda_lib, cuParamSetv );
+_LIBRARY_FIND( cuda_lib, cuPointerGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuPointerGetAttributes );
+_LIBRARY_FIND( cuda_lib, cuPointerSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuSignalExternalSemaphoresAsync );
+_LIBRARY_FIND( cuda_lib, cuStreamAddCallback );
+_LIBRARY_FIND( cuda_lib, cuStreamAttachMemAsync );
+_LIBRARY_FIND( cuda_lib, cuStreamBatchMemOp_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamBeginCapture_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamCopyAttributes );
+_LIBRARY_FIND( cuda_lib, cuStreamCreate );
+_LIBRARY_FIND( cuda_lib, cuStreamCreateWithPriority );
+_LIBRARY_FIND( cuda_lib, cuStreamDestroy_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamEndCapture );
+_LIBRARY_FIND( cuda_lib, cuStreamGetAttribute );
+_LIBRARY_FIND( cuda_lib, cuStreamGetCaptureInfo_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamGetCtx );
+_LIBRARY_FIND( cuda_lib, cuStreamGetFlags );
+_LIBRARY_FIND( cuda_lib, cuStreamGetId );
+_LIBRARY_FIND( cuda_lib, cuStreamGetPriority );
+_LIBRARY_FIND( cuda_lib, cuStreamIsCapturing );
+_LIBRARY_FIND( cuda_lib, cuStreamQuery );
+_LIBRARY_FIND( cuda_lib, cuStreamSetAttribute );
+_LIBRARY_FIND( cuda_lib, cuStreamSynchronize );
+_LIBRARY_FIND( cuda_lib, cuStreamUpdateCaptureDependencies );
+_LIBRARY_FIND( cuda_lib, cuStreamWaitEvent );
+_LIBRARY_FIND( cuda_lib, cuStreamWaitValue32_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamWaitValue64_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamWriteValue32_v2 );
+_LIBRARY_FIND( cuda_lib, cuStreamWriteValue64_v2 );
+_LIBRARY_FIND( cuda_lib, cuSurfObjectCreate );
+_LIBRARY_FIND( cuda_lib, cuSurfObjectDestroy );
+_LIBRARY_FIND( cuda_lib, cuSurfObjectGetResourceDesc );
+_LIBRARY_FIND( cuda_lib, cuSurfRefGetArray );
+_LIBRARY_FIND( cuda_lib, cuSurfRefSetArray );
+_LIBRARY_FIND( cuda_lib, cuTensorMapEncodeIm2col );
+_LIBRARY_FIND( cuda_lib, cuTensorMapEncodeTiled );
+_LIBRARY_FIND( cuda_lib, cuTensorMapReplaceAddress );
+_LIBRARY_FIND( cuda_lib, cuTexObjectCreate );
+_LIBRARY_FIND( cuda_lib, cuTexObjectDestroy );
+_LIBRARY_FIND( cuda_lib, cuTexObjectGetResourceDesc );
+_LIBRARY_FIND( cuda_lib, cuTexObjectGetResourceViewDesc );
+_LIBRARY_FIND( cuda_lib, cuTexObjectGetTextureDesc );
+_LIBRARY_FIND( cuda_lib, cuTexRefCreate );
+_LIBRARY_FIND( cuda_lib, cuTexRefDestroy );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetAddressMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetAddress_v2 );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetArray );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetBorderColor );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetFilterMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetFlags );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetFormat );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetMaxAnisotropy );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetMipmapFilterMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetMipmapLevelBias );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetMipmapLevelClamp );
+_LIBRARY_FIND( cuda_lib, cuTexRefGetMipmappedArray );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetAddress2D_v3 );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetAddressMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetAddress_v2 );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetArray );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetBorderColor );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetFilterMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetFlags );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetFormat );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetMaxAnisotropy );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetMipmapFilterMode );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetMipmapLevelBias );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetMipmapLevelClamp );
+_LIBRARY_FIND( cuda_lib, cuTexRefSetMipmappedArray );
+_LIBRARY_FIND( cuda_lib, cuThreadExchangeStreamCaptureMode );
+_LIBRARY_FIND( cuda_lib, cuUserObjectCreate );
+_LIBRARY_FIND( cuda_lib, cuUserObjectRelease );
+_LIBRARY_FIND( cuda_lib, cuUserObjectRetain );
+_LIBRARY_FIND( cuda_lib, cuWaitExternalSemaphoresAsync );
+_LIBRARY_FIND( cudart_lib, cudaArrayGetInfo );
+_LIBRARY_FIND( cudart_lib, cudaArrayGetMemoryRequirements );
+_LIBRARY_FIND( cudart_lib, cudaArrayGetPlane );
+_LIBRARY_FIND( cudart_lib, cudaArrayGetSparseProperties );
+_LIBRARY_FIND( cudart_lib, cudaChooseDevice );
+_LIBRARY_FIND( cudart_lib, cudaCreateChannelDesc );
+_LIBRARY_FIND( cudart_lib, cudaCreateSurfaceObject );
+_LIBRARY_FIND( cudart_lib, cudaCreateTextureObject );
+_LIBRARY_FIND( cudart_lib, cudaCtxResetPersistingL2Cache );
+_LIBRARY_FIND( cudart_lib, cudaDestroyExternalMemory );
+_LIBRARY_FIND( cudart_lib, cudaDestroyExternalSemaphore );
+_LIBRARY_FIND( cudart_lib, cudaDestroySurfaceObject );
+_LIBRARY_FIND( cudart_lib, cudaDestroyTextureObject );
+_LIBRARY_FIND( cudart_lib, cudaDeviceCanAccessPeer );
+_LIBRARY_FIND( cudart_lib, cudaDeviceDisablePeerAccess );
+_LIBRARY_FIND( cudart_lib, cudaDeviceEnablePeerAccess );
+_LIBRARY_FIND( cudart_lib, cudaDeviceFlushGPUDirectRDMAWrites );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetByPCIBusId );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetCacheConfig );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetDefaultMemPool );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetGraphMemAttribute );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetLimit );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetMemPool );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetP2PAttribute );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetPCIBusId );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetSharedMemConfig );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetStreamPriorityRange );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGetTexture1DLinearMaxWidth );
+_LIBRARY_FIND( cudart_lib, cudaDeviceGraphMemTrim );
+_LIBRARY_FIND( cudart_lib, cudaDeviceReset );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSetCacheConfig );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSetGraphMemAttribute );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSetLimit );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSetMemPool );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSetSharedMemConfig );
+_LIBRARY_FIND( cudart_lib, cudaDeviceSynchronize );
+_LIBRARY_FIND( cudart_lib, cudaDriverGetVersion );
+_LIBRARY_FIND( cudart_lib, cudaEventCreate );
+_LIBRARY_FIND( cudart_lib, cudaEventCreateWithFlags );
+_LIBRARY_FIND( cudart_lib, cudaEventDestroy );
+_LIBRARY_FIND( cudart_lib, cudaEventElapsedTime );
+_LIBRARY_FIND( cudart_lib, cudaEventQuery );
+_LIBRARY_FIND( cudart_lib, cudaEventRecord );
+_LIBRARY_FIND( cudart_lib, cudaEventRecordWithFlags );
+_LIBRARY_FIND( cudart_lib, cudaEventSynchronize );
+_LIBRARY_FIND( cudart_lib, cudaExternalMemoryGetMappedBuffer );
+_LIBRARY_FIND( cudart_lib, cudaExternalMemoryGetMappedMipmappedArray );
+_LIBRARY_FIND( cudart_lib, cudaFree );
+_LIBRARY_FIND( cudart_lib, cudaFreeArray );
+_LIBRARY_FIND( cudart_lib, cudaFreeAsync );
+_LIBRARY_FIND( cudart_lib, cudaFreeHost );
+_LIBRARY_FIND( cudart_lib, cudaFreeMipmappedArray );
+_LIBRARY_FIND( cudart_lib, cudaFuncGetAttributes );
+_LIBRARY_FIND( cudart_lib, cudaFuncSetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaFuncSetCacheConfig );
+_LIBRARY_FIND( cudart_lib, cudaFuncSetSharedMemConfig );
+_LIBRARY_FIND( cudart_lib, cudaGetChannelDesc );
+_LIBRARY_FIND( cudart_lib, cudaGetDevice );
+_LIBRARY_FIND( cudart_lib, cudaGetDeviceCount );
+_LIBRARY_FIND( cudart_lib, cudaGetDeviceFlags );
+_LIBRARY_FIND( cudart_lib, cudaGetDeviceProperties_v2 );
+_LIBRARY_FIND( cudart_lib, cudaGetDriverEntryPoint );
+_LIBRARY_FIND( cudart_lib, cudaGetErrorName );
+_LIBRARY_FIND( cudart_lib, cudaGetErrorString );
+_LIBRARY_FIND( cudart_lib, cudaGetExportTable );
+_LIBRARY_FIND( cudart_lib, cudaGetFuncBySymbol );
+_LIBRARY_FIND( cudart_lib, cudaGetKernel );
+_LIBRARY_FIND( cudart_lib, cudaGetLastError );
+_LIBRARY_FIND( cudart_lib, cudaGetMipmappedArrayLevel );
+_LIBRARY_FIND( cudart_lib, cudaGetSurfaceObjectResourceDesc );
+_LIBRARY_FIND( cudart_lib, cudaGetSymbolAddress );
+_LIBRARY_FIND( cudart_lib, cudaGetSymbolSize );
+_LIBRARY_FIND( cudart_lib, cudaGetTextureObjectResourceDesc );
+_LIBRARY_FIND( cudart_lib, cudaGetTextureObjectResourceViewDesc );
+_LIBRARY_FIND( cudart_lib, cudaGetTextureObjectTextureDesc );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddChildGraphNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddDependencies );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddEmptyNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddEventRecordNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddEventWaitNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddExternalSemaphoresSignalNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddExternalSemaphoresWaitNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddHostNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddKernelNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemAllocNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemFreeNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemcpyNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemcpyNode1D );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemcpyNodeFromSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemcpyNodeToSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddMemsetNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphAddNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphChildGraphNodeGetGraph );
+_LIBRARY_FIND( cudart_lib, cudaGraphClone );
+_LIBRARY_FIND( cudart_lib, cudaGraphCreate );
+_LIBRARY_FIND( cudart_lib, cudaGraphDebugDotPrint );
+_LIBRARY_FIND( cudart_lib, cudaGraphDestroy );
+_LIBRARY_FIND( cudart_lib, cudaGraphDestroyNode );
+_LIBRARY_FIND( cudart_lib, cudaGraphEventRecordNodeGetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphEventRecordNodeSetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphEventWaitNodeGetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphEventWaitNodeSetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecChildGraphNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecDestroy );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecEventRecordNodeSetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecEventWaitNodeSetEvent );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecExternalSemaphoresSignalNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecExternalSemaphoresWaitNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecGetFlags );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecHostNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecKernelNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecMemcpyNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecMemcpyNodeSetParams1D );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecMemcpyNodeSetParamsFromSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecMemcpyNodeSetParamsToSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecMemsetNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExecUpdate );
+_LIBRARY_FIND( cudart_lib, cudaGraphExternalSemaphoresSignalNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExternalSemaphoresSignalNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExternalSemaphoresWaitNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphExternalSemaphoresWaitNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphGetEdges );
+_LIBRARY_FIND( cudart_lib, cudaGraphGetNodes );
+_LIBRARY_FIND( cudart_lib, cudaGraphGetRootNodes );
+_LIBRARY_FIND( cudart_lib, cudaGraphHostNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphHostNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphInstantiate );
+_LIBRARY_FIND( cudart_lib, cudaGraphInstantiateWithFlags );
+_LIBRARY_FIND( cudart_lib, cudaGraphInstantiateWithParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphKernelNodeCopyAttributes );
+_LIBRARY_FIND( cudart_lib, cudaGraphKernelNodeGetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaGraphKernelNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphKernelNodeSetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaGraphKernelNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphLaunch );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemAllocNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemFreeNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemcpyNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemcpyNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemcpyNodeSetParams1D );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemcpyNodeSetParamsFromSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemcpyNodeSetParamsToSymbol );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemsetNodeGetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphMemsetNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeFindInClone );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeGetDependencies );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeGetDependentNodes );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeGetEnabled );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeGetType );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeSetEnabled );
+_LIBRARY_FIND( cudart_lib, cudaGraphNodeSetParams );
+_LIBRARY_FIND( cudart_lib, cudaGraphReleaseUserObject );
+_LIBRARY_FIND( cudart_lib, cudaGraphRemoveDependencies );
+_LIBRARY_FIND( cudart_lib, cudaGraphRetainUserObject );
+_LIBRARY_FIND( cudart_lib, cudaGraphUpload );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsMapResources );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsResourceGetMappedMipmappedArray );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsResourceGetMappedPointer );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsResourceSetMapFlags );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsSubResourceGetMappedArray );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsUnmapResources );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsUnregisterResource );
+_LIBRARY_FIND( cudart_lib, cudaHostAlloc );
+_LIBRARY_FIND( cudart_lib, cudaHostGetDevicePointer );
+_LIBRARY_FIND( cudart_lib, cudaHostGetFlags );
+_LIBRARY_FIND( cudart_lib, cudaHostRegister );
+_LIBRARY_FIND( cudart_lib, cudaHostUnregister );
+_LIBRARY_FIND( cudart_lib, cudaImportExternalMemory );
+_LIBRARY_FIND( cudart_lib, cudaImportExternalSemaphore );
+_LIBRARY_FIND( cudart_lib, cudaInitDevice );
+_LIBRARY_FIND( cudart_lib, cudaIpcCloseMemHandle );
+_LIBRARY_FIND( cudart_lib, cudaIpcGetEventHandle );
+_LIBRARY_FIND( cudart_lib, cudaIpcGetMemHandle );
+_LIBRARY_FIND( cudart_lib, cudaIpcOpenEventHandle );
+_LIBRARY_FIND( cudart_lib, cudaIpcOpenMemHandle );
+_LIBRARY_FIND( cudart_lib, cudaLaunchCooperativeKernel );
+_LIBRARY_FIND( cudart_lib, cudaLaunchCooperativeKernelMultiDevice );
+_LIBRARY_FIND( cudart_lib, cudaLaunchHostFunc );
+_LIBRARY_FIND( cudart_lib, cudaLaunchKernel );
+_LIBRARY_FIND( cudart_lib, cudaLaunchKernelExC );
+_LIBRARY_FIND( cudart_lib, cudaMalloc );
+_LIBRARY_FIND( cudart_lib, cudaMalloc3D );
+_LIBRARY_FIND( cudart_lib, cudaMalloc3DArray );
+_LIBRARY_FIND( cudart_lib, cudaMallocArray );
+_LIBRARY_FIND( cudart_lib, cudaMallocAsync );
+_LIBRARY_FIND( cudart_lib, cudaMallocFromPoolAsync );
+_LIBRARY_FIND( cudart_lib, cudaMallocHost );
+_LIBRARY_FIND( cudart_lib, cudaMallocManaged );
+_LIBRARY_FIND( cudart_lib, cudaMallocMipmappedArray );
+_LIBRARY_FIND( cudart_lib, cudaMallocPitch );
+_LIBRARY_FIND( cudart_lib, cudaMemAdvise );
+_LIBRARY_FIND( cudart_lib, cudaMemAdvise_v2 );
+_LIBRARY_FIND( cudart_lib, cudaMemGetInfo );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolCreate );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolDestroy );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolExportPointer );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolExportToShareableHandle );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolGetAccess );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolGetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolImportFromShareableHandle );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolImportPointer );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolSetAccess );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolSetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaMemPoolTrimTo );
+_LIBRARY_FIND( cudart_lib, cudaMemPrefetchAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemPrefetchAsync_v2 );
+_LIBRARY_FIND( cudart_lib, cudaMemRangeGetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaMemRangeGetAttributes );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2D );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DArrayToArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DFromArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DFromArrayAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DToArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy2DToArrayAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy3D );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy3DAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy3DPeer );
+_LIBRARY_FIND( cudart_lib, cudaMemcpy3DPeerAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyArrayToArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyFromArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyFromArrayAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyFromSymbol );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyFromSymbolAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyPeer );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyPeerAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyToArray );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyToArrayAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyToSymbol );
+_LIBRARY_FIND( cudart_lib, cudaMemcpyToSymbolAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemset );
+_LIBRARY_FIND( cudart_lib, cudaMemset2D );
+_LIBRARY_FIND( cudart_lib, cudaMemset2DAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemset3D );
+_LIBRARY_FIND( cudart_lib, cudaMemset3DAsync );
+_LIBRARY_FIND( cudart_lib, cudaMemsetAsync );
+_LIBRARY_FIND( cudart_lib, cudaMipmappedArrayGetMemoryRequirements );
+_LIBRARY_FIND( cudart_lib, cudaMipmappedArrayGetSparseProperties );
+_LIBRARY_FIND( cudart_lib, cudaOccupancyAvailableDynamicSMemPerBlock );
+_LIBRARY_FIND( cudart_lib, cudaOccupancyMaxActiveBlocksPerMultiprocessor );
+_LIBRARY_FIND( cudart_lib, cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags );
+_LIBRARY_FIND( cudart_lib, cudaOccupancyMaxActiveClusters );
+_LIBRARY_FIND( cudart_lib, cudaOccupancyMaxPotentialClusterSize );
+_LIBRARY_FIND( cudart_lib, cudaPeekAtLastError );
+_LIBRARY_FIND( cudart_lib, cudaPointerGetAttributes );
+_LIBRARY_FIND( cudart_lib, cudaProfilerStart );
+_LIBRARY_FIND( cudart_lib, cudaProfilerStop );
+_LIBRARY_FIND( cudart_lib, cudaRuntimeGetVersion );
+_LIBRARY_FIND( cudart_lib, cudaSetDevice );
+_LIBRARY_FIND( cudart_lib, cudaSetDeviceFlags );
+_LIBRARY_FIND( cudart_lib, cudaSetDoubleForDevice );
+_LIBRARY_FIND( cudart_lib, cudaSetDoubleForHost );
+_LIBRARY_FIND( cudart_lib, cudaSetValidDevices );
+_LIBRARY_FIND( cudart_lib, cudaSignalExternalSemaphoresAsync_v2 );
+_LIBRARY_FIND( cudart_lib, cudaStreamAddCallback );
+_LIBRARY_FIND( cudart_lib, cudaStreamAttachMemAsync );
+_LIBRARY_FIND( cudart_lib, cudaStreamBeginCapture );
+_LIBRARY_FIND( cudart_lib, cudaStreamCopyAttributes );
+_LIBRARY_FIND( cudart_lib, cudaStreamCreate );
+_LIBRARY_FIND( cudart_lib, cudaStreamCreateWithFlags );
+_LIBRARY_FIND( cudart_lib, cudaStreamCreateWithPriority );
+_LIBRARY_FIND( cudart_lib, cudaStreamDestroy );
+_LIBRARY_FIND( cudart_lib, cudaStreamEndCapture );
+_LIBRARY_FIND( cudart_lib, cudaStreamGetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaStreamGetCaptureInfo_v2 );
+_LIBRARY_FIND( cudart_lib, cudaStreamGetFlags );
+_LIBRARY_FIND( cudart_lib, cudaStreamGetId );
+_LIBRARY_FIND( cudart_lib, cudaStreamGetPriority );
+_LIBRARY_FIND( cudart_lib, cudaStreamIsCapturing );
+_LIBRARY_FIND( cudart_lib, cudaStreamQuery );
+_LIBRARY_FIND( cudart_lib, cudaStreamSetAttribute );
+_LIBRARY_FIND( cudart_lib, cudaStreamSynchronize );
+_LIBRARY_FIND( cudart_lib, cudaStreamUpdateCaptureDependencies );
+_LIBRARY_FIND( cudart_lib, cudaStreamWaitEvent );
+_LIBRARY_FIND( cudart_lib, cudaThreadExchangeStreamCaptureMode );
+_LIBRARY_FIND( cudart_lib, cudaThreadExit );
+_LIBRARY_FIND( cudart_lib, cudaThreadGetCacheConfig );
+_LIBRARY_FIND( cudart_lib, cudaThreadGetLimit );
+_LIBRARY_FIND( cudart_lib, cudaThreadSetCacheConfig );
+_LIBRARY_FIND( cudart_lib, cudaThreadSetLimit );
+_LIBRARY_FIND( cudart_lib, cudaThreadSynchronize );
+_LIBRARY_FIND( cudart_lib, cudaUserObjectCreate );
+_LIBRARY_FIND( cudart_lib, cudaUserObjectRelease );
+_LIBRARY_FIND( cudart_lib, cudaUserObjectRetain );
+_LIBRARY_FIND( cudart_lib, cudaWaitExternalSemaphoresAsync_v2 );
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_cuew_cpp_2
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
+
+
+
+
+
+
+
 
   result = CUEW_SUCCESS;
   return result;
@@ -681,19 +1675,39 @@ static int cuewNvrtcInit(void)
     return result;
   }
 
-  NVRTC_LIBRARY_FIND(nvrtcGetErrorString);
-  NVRTC_LIBRARY_FIND(nvrtcVersion);
-  NVRTC_LIBRARY_FIND(nvrtcCreateProgram);
-  NVRTC_LIBRARY_FIND(nvrtcDestroyProgram);
-  NVRTC_LIBRARY_FIND(nvrtcCompileProgram);
-  NVRTC_LIBRARY_FIND(nvrtcGetCUBINSize);
-  NVRTC_LIBRARY_FIND(nvrtcGetCUBIN);
-  NVRTC_LIBRARY_FIND(nvrtcGetPTXSize);
-  NVRTC_LIBRARY_FIND(nvrtcGetPTX);
-  NVRTC_LIBRARY_FIND(nvrtcGetProgramLogSize);
-  NVRTC_LIBRARY_FIND(nvrtcGetProgramLog);
-  NVRTC_LIBRARY_FIND(nvrtcAddNameExpression);
-  NVRTC_LIBRARY_FIND(nvrtcGetLoweredName);
+#pragma region OROCHI_SUMMONER_REGION_cuew_cpp_rtc
+
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+_LIBRARY_FIND( nvrtc_lib, nvrtcAddNameExpression );
+_LIBRARY_FIND( nvrtc_lib, nvrtcCompileProgram );
+_LIBRARY_FIND( nvrtc_lib, nvrtcCreateProgram );
+_LIBRARY_FIND( nvrtc_lib, nvrtcDestroyProgram );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetCUBIN );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetCUBINSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetErrorString );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetLTOIR );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetLTOIRSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetLoweredName );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetNVVM );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetNVVMSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetNumSupportedArchs );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetOptiXIR );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetOptiXIRSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetPTX );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetPTXSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetProgramLog );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetProgramLogSize );
+_LIBRARY_FIND( nvrtc_lib, nvrtcGetSupportedArchs );
+_LIBRARY_FIND( nvrtc_lib, nvrtcVersion );
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_cuew_cpp_rtc
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
 
   result = CUEW_SUCCESS;
   return result;
@@ -704,12 +1718,46 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
   *resultDriver = CUEW_NOT_INITIALIZED;
   *resultRtc = CUEW_NOT_INITIALIZED;
 
-  if (flags & CUEW_INIT_CUDA) {
+  const int includeVersion_major = (int)CUDA_VERSION / (int)1000;
+
+  if (flags & CUEW_INIT_CUDA) 
+  {
     *resultDriver = cuewCudaInit();
+
+#ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if ( cudaRuntimeGetVersion_oro )
+    {
+      int runtimeVersion = 0;
+      cudaRuntimeGetVersion_oro(&runtimeVersion);
+      int runtimeVersion_major = runtimeVersion / (int)1000;
+      if ( includeVersion_major > runtimeVersion_major )
+      {
+        *resultDriver = CUEW_ERROR_OLD_DRIVER;
+      }
+    }
+#endif
+
+
   }
-  if (flags & CUEW_INIT_NVRTC) {
+  if (flags & CUEW_INIT_NVRTC) 
+  {
     *resultRtc = cuewNvrtcInit();
+
+#ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if (nvrtcVersion_oro) 
+    {
+      int major, minor = 0;
+      nvrtcVersion_oro(&major, &minor);
+      if ( includeVersion_major > major )
+      {
+        *resultRtc = CUEW_ERROR_OLD_DRIVER;
+      }
+    }
+#endif
+
   }
+
+
 }
 
 const char *cuewErrorString(CUresult result)
@@ -931,8 +1979,8 @@ const char *cuewCompilerPath(void)
 int cuewNvrtcVersion(void)
 {
   int major, minor;
-  if (nvrtcVersion) {
-    nvrtcVersion(&major, &minor);
+  if (nvrtcVersion_oro) {
+    nvrtcVersion_oro(&major, &minor);
     return 10 * major + minor;
   }
   return 0;
@@ -986,3 +2034,7 @@ int cuewCompilerVersion(void)
 
   return 10 * major + minor;
 }
+
+
+#endif // OROCHI_ENABLE_CUEW
+
