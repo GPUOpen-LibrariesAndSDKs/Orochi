@@ -433,20 +433,25 @@ OrochiUtils::~OrochiUtils()
 }
 
 // setup a base option list used in OrochiUtils 
-void SetupCompileOptions(oroDevice device, const std::vector<const char*>* optsIn, bool addArchitectureTarget, std::vector<const char*>& opts)
+void SetupCompileOptions(
+	oroDevice device, 
+	const std::vector<const char*>* optsIn, 
+	std::string* optionalArchitectureTarget, // if this string is given, it must stay alive until it's used into orortcCompileProgram. ( otherwise its "c_str()" becomes an invalid pointer )
+	std::vector<const char*>& opts
+	)
 {
 	opts.push_back( "-std=c++17" );
 
-	if( addArchitectureTarget && oroGetCurAPI( 0 ) == ORO_API_HIP )
+	if( optionalArchitectureTarget && oroGetCurAPI( 0 ) == ORO_API_HIP )
 	{
 		oroDeviceProp props;
 		::memset(&props,0,sizeof(props));
 		oroGetDeviceProperties( &props, device );
 		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
 		{
-			std::string tmp = "--gpu-architecture=";
-			tmp += props.gcnArchName;
-			opts.push_back( tmp.c_str() );
+			*optionalArchitectureTarget = "--gpu-architecture=";
+			*optionalArchitectureTarget += props.gcnArchName;
+			opts.push_back( optionalArchitectureTarget->c_str() );
 		}
 	}
 
@@ -573,7 +578,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	std::vector<const char*> opts;
-	SetupCompileOptions(device, optsIn, false, opts);
+	SetupCompileOptions(device, optsIn, nullptr, opts);
 
 	oroFunction function;
 	std::vector<char> codec;
@@ -644,7 +649,8 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 void OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram* prog )
 {
 	std::vector<const char*> opts;
-	SetupCompileOptions(device, optsIn, true, opts);
+	std::string architectureTarget;
+	SetupCompileOptions(device, optsIn, &architectureTarget, opts);
 	CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
 	return;
 }
