@@ -599,14 +599,19 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	std::vector<const char*> opts;
 	opts.push_back( "-std=c++17" );
 
-	std::string tmp = "--gpu-architecture=";
+	
 
 	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
 	{
 		oroDeviceProp props;
+		::memset(&props,0,sizeof(props));
 		oroGetDeviceProperties( &props, device );
-		tmp += props.gcnArchName;
-		opts.push_back( tmp.c_str() );
+		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
+		{
+			std::string tmp = "--gpu-architecture=";
+			tmp += props.gcnArchName;
+			opts.push_back( tmp.c_str() );
+		}
 	}
 
 	if( optsIn )
@@ -653,14 +658,17 @@ void OrochiUtils::getProgram( oroDevice device, const char* code, const char* pa
 	std::vector<const char*> opts;
 	opts.push_back( "-std=c++17" );
 
-	std::string tmp = "--gpu-architecture=";
-
 	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
 	{
 		oroDeviceProp props;
+		::memset(&props,0,sizeof(props));
 		oroGetDeviceProperties( &props, device );
-		tmp += props.gcnArchName;
-		opts.push_back( tmp.c_str() );
+		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
+		{
+			std::string tmp = "--gpu-architecture=";
+			tmp += props.gcnArchName;
+			opts.push_back( tmp.c_str() );
+		}
 	}
 
 	if( optsIn )
