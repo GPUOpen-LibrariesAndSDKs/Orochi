@@ -1081,7 +1081,7 @@ oroError OROAPI oroGetDeviceProperties(oroDeviceProp_t* props, oroDevice dev)
 	if( api & ORO_API_CUDADRIVER )
 	{
 		#ifdef OROCHI_ENABLE_CUEW
-		return  (oroError_t)( CU4ORO::hipGetDeviceProperties_cu4oro( (CU4ORO::hipDeviceProp_t*) props, deviceId) );
+		return  (oroError_t)( CU4ORO::hipGetDevicePropertiesR0600_cu4oro( (CU4ORO::hipDeviceProp_t*) props, deviceId) );
 		#endif
 	}
 	return oroErrorUnknown;
