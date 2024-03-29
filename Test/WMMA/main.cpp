@@ -21,36 +21,26 @@
 //
 
 #include <Orochi/Orochi.h>
+#include <Orochi/GpuMemory.h>
 #include <Test/Common.h>
 #include <fstream>
+#include "../../UnitTest/demoErrorCodes.h"
 
 // use a third-party library half.hpp to use the fp16 half dataype on the host side
 #include "half.hpp"
 using __half = half_float::half;
 
-void loadFile( const char* path, std::vector<char>& dst ) 
-{
-	std::fstream f( path, std::ios::in );
-	if( f.is_open() )
-	{
-		size_t sizeFile;
-		f.seekg( 0, std::fstream::end );
-		size_t size = sizeFile = (size_t)f.tellg();
-		dst.resize( size );
-		f.seekg( 0, std::fstream::beg );
-		f.read( dst.data(), size );
-		f.close();
-	}
-}
-
-
 int main( int argc, char** argv )
 {
+	bool testErrorFlag = false;
+	OrochiUtils o;
+
 	// Initialize Orochi
-	if ( oroInitialize( ( oroApi )( ORO_API_HIP ), 0 ) != 0 )
+	// only ORO_API_HIP because this Demo currently only works on HIP
+	if ( oroInitialize( ( oroApi )( ORO_API_HIP ), 0 ) != 0 ) 
 	{ 
 		printf( "Unable to initialize Orochi. Please check your HIP installation or create an issue at our github for assistance.\n" );
-		return -1;
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
 	oroError e;
@@ -76,43 +66,10 @@ int main( int argc, char** argv )
 	ERROR_CHECK( e );
 	oroCtxSetCurrent( ctx );
 
-	//try kernel execution
-	oroFunction function;
 
-	std::vector<char> code;
-	const char* funcName = "wmma_matmul";
-	loadFile( "../Test/WMMA/wmma_test_kernel.h", code );
-	orortcProgram prog;
-	orortcResult rtc_e;
-	rtc_e = orortcCreateProgram( &prog, code.data(), funcName, 0, 0, 0 );
-	std::vector<const char*> opts;
-	opts.push_back( "-I ../" );
+	oroFunction function = o.getFunctionFromFile(device, "../Test/WMMA/wmma_test_kernel.h", "wmma_matmul", nullptr);
 
-	// Compile the WMMA kernel
-	printf( "Compiling WMMA kernel...\n" );
-	rtc_e = orortcCompileProgram( prog, opts.size(), opts.data() );
-	if( rtc_e != ORORTC_SUCCESS )
-	{
-		size_t logSize;
-		orortcGetProgramLogSize( prog, &logSize );
-		if( logSize )
-		{
-			std::string log( logSize, '\0' );
-			orortcGetProgramLog( prog, &log[0] );
-			std::cout << log << '\n';
-		};
-		return -1;
-	}
-	size_t codeSize;
-	rtc_e = orortcGetCodeSize( prog, &codeSize );
 
-	std::vector<char> codec( codeSize );
-	rtc_e = orortcGetCode( prog, codec.data() );
-	rtc_e = orortcDestroyProgram( &prog );
-	oroModule module;
-	e = oroModuleLoadData( &module, codec.data() );
-	e = oroModuleGetFunction( &function, module, funcName );
-	
 	__half a[16 * 16] = {};
 	__half b[16 * 16] = {};
 	__half c[16 * 16] = {};
@@ -157,5 +114,9 @@ int main( int argc, char** argv )
 	printf( "Done!\n" );
 	e = oroCtxDestroy( ctx );
 
-	return 0;
+
+
+	if ( testErrorFlag )
+		return OROCHI_TEST_RETCODE__ERROR;
+	return OROCHI_TEST_RETCODE__SUCCESS;
 }

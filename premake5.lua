@@ -13,6 +13,12 @@ newoption {
    description = "Compile kernels used for unit test"
 }
 
+newoption {
+   trigger = "forceCuda",
+   description = "By default, CUDA backend is enabled at compile-time only if the CUDA_PATH exists. Using this argument forces the activation of CUDA backend. However your project may have compilation errors."
+}
+
+
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
 	if not os.isdir(src_dir) then
 		printError("'%s' is not an existing directory!", src_dir)
@@ -86,20 +92,33 @@ workspace "YamatanoOrochi"
     copydir("./contrib/bin/win64", "./dist/bin/Release/")
 	if _OPTIONS["bakeKernel"] then
 		defines { "ORO_PP_LOAD_FROM_STRING" }
-		os.execute(".\\tools\\bakeKernel.bat")
+      if os.ishost("windows") then
+		   os.execute(".\\tools\\bakeKernel.bat")
+      else
+         os.execute(".\\tools\\bakeKernel.sh")
+      end
 	end
 
    if _OPTIONS["precompiled"] then
 		defines {"ORO_PRECOMPILED"}
 	end
 
+
+	-- try to enable CUDA if possible.
+	include "./Orochi/enable_cuew"
+
+
+
+
    include "./UnitTest"
-   group "Samples"
+   group "Demos"
    	include "./Test"
    	include "./Test/DeviceEnum"
 	include "./Test/WMMA"
+	include "./Test/Texture"
    
      if os.istarget("windows") then
-        group "Advanced"
         include "./Test/VulkanComputeSimple"
+        include "./Test/RadixSort"
+        include "./Test/simpleD3D12"
      end

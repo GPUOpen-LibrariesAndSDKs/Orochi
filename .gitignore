@@ -21,3 +21,7 @@ dist/**
 .DS_Store
 .vs/
 build/
+
+result.xml
+UnitTest/bitcodes/*.fatbin
+Test/SimpleD3D12/cache/**

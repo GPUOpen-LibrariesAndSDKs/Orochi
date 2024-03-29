@@ -12,85 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License
+ *
+ * Modifications made by Advanced Micro Devices, Inc.:
+ * Copyright(C) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * The modifications include updates to maintain an up-to-date API,
+ * enhancing compatibility in response to evolving technical standards.
+ * These changes are designed to augment the original work by the Blender Foundation,
+ * ensuring the software remains relevant and efficient for its intended applications.
+ *
+ * The modified software is provided under the Apache License, Version 2.0.
+ * For more details, see the License above.
  */
 
 #ifndef __HIPEW_H__
 #define __HIPEW_H__
 
+
+#include <stdlib.h>
+#include <stdint.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdlib.h>
-
-#define HIP_IPC_HANDLE_SIZE 64
-#define hipHostMallocDefault 0x00
-#define hipHostMallocPortable 0x01
-#define hipHostMallocMapped 0x02
-#define hipHostMallocWriteCombined 0x04
-#define hipHostMallocNumaUser 0x20000000
-#define hipHostMallocCoherent 0x40000000
-#define hipHostMallocNonCoherent 0x80000000
-#define hipHostRegisterPortable 0x01
-#define hipHostRegisterMapped 0x02
-#define hipHostRegisterIoMemory 0x04
-#define hipCooperativeLaunchMultiDeviceNoPreSync 0x01
-#define hipCooperativeLaunchMultiDeviceNoPostSync 0x02
-#define hipArrayLayered 0x01
-#define hipArraySurfaceLoadStore 0x02
-#define hipArrayCubemap 0x04
-#define hipArrayTextureGather 0x08
-#define HIP_TRSA_OVERRIDE_FORMAT 0x01
-#define HIP_TRSF_READ_AS_INTEGER 0x01
-#define HIP_TRSF_NORMALIZED_COORDINATES 0x02
-#define HIP_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
-#define HIP_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
-#define HIP_LAUNCH_PARAM_END ((void*)0x03)
-
-/* Functions which changed 3.1 -> 3.2 for 64 bit stuff,
- * the cuda library has both the old ones for compatibility and new
- * ones with _v2 postfix,
- */
-#define hipModuleGetGlobal hipModuleGetGlobal
-#define hipMemGetInfo hipMemGetInfo
-#define hipMemAllocPitch hipMemAllocPitch
-#define hipMemGetAddressRange hipMemGetAddressRange
-#define hipMemcpy hipMemcpy
-#define hipMemcpyHtoD hipMemcpyHtoD
-#define hipMemcpyDtoH hipMemcpyDtoH
-#define hipMemcpyDtoD hipMemcpyDtoD
-#define hipMemcpyHtoA hipMemcpyHtoA
-#define hipMemcpyAtoH hipMemcpyAtoH
-#define hipMemcpyHtoDAsync hipMemcpyHtoDAsync
-#define hipMemcpyDtoHAsync hipMemcpyDtoHAsync
-#define hipMemcpyDtoDAsync hipMemcpyDtoDAsync
-#define hipMemsetD8 hipMemsetD8
-#define hipMemsetD16 hipMemsetD16
-#define hipMemsetD32 hipMemsetD32
-#define hipArrayCreate hipArrayCreate
-#define hipArray3DCreate hipArray3DCreate
-#define hipPointerGetAttributes hipPointerGetAttributes
-#define hipTexRefSetAddress hipTexRefSetAddress
-#define hipTexRefGetAddress hipTexRefGetAddress
-#define hipStreamDestroy hipStreamDestroy
-#define hipEventDestroy hipEventDestroy
-#define hipTexRefSetAddress2D hipTexRefSetAddress2D
-
-/* Types. */
-#ifdef _MSC_VER
-typedef unsigned __int32 hipuint32_t;
-typedef unsigned __int64 hipuint64_t;
-#else
-#include <stdint.h>
-typedef uint32_t hipuint32_t;
-typedef uint64_t hipuint64_t;
-#endif
-
-#if defined(__x86_64) || defined(AMD64) || defined(_M_AMD64) || defined (__aarch64__)
-typedef unsigned long long hipDeviceptr_t;
-#else
-typedef unsigned int hipDeviceptr_t;
-#endif
 
 
 #ifdef _WIN32
@@ -101,997 +47,1501 @@ typedef unsigned int hipDeviceptr_t;
 #  define HIP_CB
 #endif
 
-typedef int hipDevice_t;
-typedef struct ihipCtx_t* hipCtx_t;
-typedef struct ihipModule_t* hipModule_t;
-typedef struct ihipModuleSymbol_t* hipFunction_t;
-typedef struct hipArray* hArray;
-typedef struct hipMipmappedArray_st* hipMipmappedArray_t;
-typedef struct ihipEvent_t* hipEvent_t;
-typedef struct ihipStream_t* hipStream_t;
-typedef unsigned long long hipTextureObject_t;
-typedef void* hipExternalMemory_t;
 
-typedef struct HIPuuid_st {
-  char bytes[16];
-} HIPuuid;
 
-typedef enum hipMemcpyKind {
-    hipMemcpyHostToHost = 0,
-    hipMemcpyHostToDevice = 1,
-    hipMemcpyDeviceToHost = 2,
-    hipMemcpyDeviceToDevice = 3,
-    hipMemcpyDefault = 4
-} hipMemcpyKind;
 
-typedef enum hipChannelFormatKind {
-    hipChannelFormatKindSigned = 0,
-    hipChannelFormatKindUnsigned = 1,
-    hipChannelFormatKindFloat = 2,
-    hipChannelFormatKindNone = 3,
-}hipChannelFormatKind;
-
-typedef struct hipChannelFormatDesc {
-    int x;
-    int y;
-    int z;
-    int w;
-    enum hipChannelFormatKind f;
-}hipChannelFormatDesc;
-
-typedef enum hipTextureFilterMode {
-  hipFilterModePoint = 0,
-  hipFilterModeLinear = 1,
-} hipTextureFilterMode;
-
-typedef enum hipArray_Format {
-  HIP_AD_FORMAT_UNSIGNED_INT8 = 0x01,
-  HIP_AD_FORMAT_SIGNED_INT8 = 0x08,
-  HIP_AD_FORMAT_UNSIGNED_INT16 = 0x02,
-  HIP_AD_FORMAT_SIGNED_INT16 = 0x09,
-  HIP_AD_FORMAT_UNSIGNED_INT32 = 0x03,
-  HIP_AD_FORMAT_SIGNED_INT32 = 0x0a,
-  HIP_AD_FORMAT_HALF = 0x10,
-  HIP_AD_FORMAT_FLOAT = 0x20,
-} hipArray_Format;
-
-typedef enum hipTextureAddressMode {
-  hipAddressModeWrap = 0,
-  hipAddressModeClamp = 1,
-  hipAddressModeMirror = 2,
-  hipAddressModeBorder = 3,
-} hipTextureAddressMode;
-
-/**
- * hip texture reference
- */
-typedef struct textureReference {
-    int normalized;
-    //enum hipTextureReadMode readMode;// used only for driver API's
-    enum hipTextureFilterMode filterMode;
-    enum hipTextureAddressMode addressMode[3];  // Texture address mode for up to 3 dimensions
-    struct hipChannelFormatDesc channelDesc;
-    int sRGB;                    // Perform sRGB->linear conversion during texture read
-    unsigned int maxAnisotropy;  // Limit to the anisotropy ratio
-    enum hipTextureFilterMode mipmapFilterMode;
-    float mipmapLevelBias;
-    float minMipmapLevelClamp;
-    float maxMipmapLevelClamp;
-
-    hipTextureObject_t textureObject;
-    int numChannels;
-    enum hipArray_Format format;
-}textureReference;
-
-typedef textureReference* hipTexRef;
-
-typedef enum hipMemoryType {
-  hipMemoryTypeHost = 0x00,
-  hipMemoryTypeDevice = 0x01,
-  hipMemoryTypeArray = 0x02,
-  hipMemoryTypeUnified = 0x03,
-} hipMemoryType;
-
-/**
- * Pointer attributes
- */
-typedef struct hipPointerAttribute_t {
-    enum hipMemoryType memoryType;
-    int device;
-    void* devicePointer;
-    void* hostPointer;
-    int isManaged;
-    unsigned allocationFlags; /* flags specified when memory was allocated*/
-    /* peers? */
-} hipPointerAttribute_t;
-
-typedef struct ihipIpcEventHandle_t {
-  char reserved[HIP_IPC_HANDLE_SIZE];
-} ihipIpcEventHandle_t;
-
-typedef struct hipIpcMemHandle_st {
-  char reserved[HIP_IPC_HANDLE_SIZE];
-} hipIpcMemHandle_t;
-
-typedef enum HIPipcMem_flags_enum {
-  hipIpcMemLazyEnablePeerAccess = 0x1,
-} HIPipcMem_flags;
-
-typedef enum HIPmemAttach_flags_enum {
-  hipMemAttachGlobal = 0x1,
-  hipMemAttachHost = 0x2,
-  hipMemAttachSingle  = 0x4,
-} HIPmemAttach_flags;
-
-typedef enum HIPctx_flags_enum {
-  hipDeviceScheduleAuto = 0x00,
-  hipDeviceScheduleSpin = 0x01,
-  hipDeviceScheduleYield = 0x02,
-  hipDeviceScheduleBlockingSync = 0x04,
-  hipDeviceScheduleMask = 0x07,
-  hipDeviceMapHost = 0x08,
-  hipDeviceLmemResizeToMax = 0x10,
-} HIPctx_flags;
-
-typedef enum HIPstream_flags_enum {
-  hipStreamDefault = 0x0,
-  hipStreamNonBlocking = 0x1,
-} HIPstream_flags;
-
-typedef enum HIPevent_flags_enum {
-  hipEventDefault = 0x0,
-  hipEventBlockingSync = 0x1,
-  hipEventDisableTiming = 0x2,
-  hipEventInterprocess = 0x4,
-} HIPevent_flags;
-
-typedef enum HIPstreamWaitValue_flags_enum {
-  HIP_STREAM_WAIT_VALUE_GEQ = 0x0,
-  HIP_STREAM_WAIT_VALUE_EQ = 0x1,
-  HIP_STREAM_WAIT_VALUE_AND = 0x2,
-  HIP_STREAM_WAIT_VALUE_NOR = 0x3,
-  HIP_STREAM_WAIT_VALUE_FLUSH = (1 << 30),
-} HIPstreamWaitValue_flags;
-
-typedef enum HIPstreamWriteValue_flags_enum {
-  HIP_STREAM_WRITE_VALUE_DEFAULT = 0x0,
-  HIP_STREAM_WRITE_VALUE_NO_MEMORY_BARRIER = 0x1,
-} HIPstreamWriteValue_flags;
-
-typedef enum HIPstreamBatchMemOpType_enum {
-  HIP_STREAM_MEM_OP_WAIT_VALUE_32 = 1,
-  HIP_STREAM_MEM_OP_WRITE_VALUE_32 = 2,
-  HIP_STREAM_MEM_OP_WAIT_VALUE_64 = 4,
-  HIP_STREAM_MEM_OP_WRITE_VALUE_64 = 5,
-  HIP_STREAM_MEM_OP_FLUSH_REMOTE_WRITES = 3,
-} HIPstreamBatchMemOpType;
-
-
-typedef union HIPstreamBatchMemOpParams_union {
-  HIPstreamBatchMemOpType operation;
-  struct HIPstreamMemOpWaitValueParams_st {
-    HIPstreamBatchMemOpType operation;
-    hipDeviceptr_t address;
-    union {
-      hipuint32_t value;
-      hipuint64_t value64;
-    };
-    unsigned int flags;
-    hipDeviceptr_t alias;
-  } waitValue;
-  struct HIPstreamMemOpWriteValueParams_st {
-    HIPstreamBatchMemOpType operation;
-    hipDeviceptr_t address;
-    union {
-      hipuint32_t value;
-      hipuint64_t value64;
-    };
-    unsigned int flags;
-    hipDeviceptr_t alias;
-  } writeValue;
-  struct HIPstreamMemOpFlushRemoteWritesParams_st {
-    HIPstreamBatchMemOpType operation;
-    unsigned int flags;
-  } flushRemoteWrites;
-  hipuint64_t pad[6];
-} HIPstreamBatchMemOpParams;
-
-typedef enum HIPoccupancy_flags_enum {
-  hipOccupancyDefault = 0x0,
-  HIP_OCCUPANCY_DISABLE_CACHING_OVERRIDE = 0x1,
-} HIPoccupancy_flags;
-
-typedef enum hipDeviceAttribute_t {
-  hipDeviceAttributeCudaCompatibleBegin = 0,
-  hipDeviceAttributeEccEnabled = hipDeviceAttributeCudaCompatibleBegin, ///< Whether ECC support is enabled.
-  hipDeviceAttributeAccessPolicyMaxWindowSize,        ///< Cuda only. The maximum size of the window policy in bytes.
-  hipDeviceAttributeAsyncEngineCount,                 ///< Cuda only. Asynchronous engines number.
-  hipDeviceAttributeCanMapHostMemory,                 ///< Whether host memory can be mapped into device address space
-  hipDeviceAttributeCanUseHostPointerForRegisteredMem,///< Cuda only. Device can access host registered memory
-                                                      ///< at the same virtual address as the CPU
-  hipDeviceAttributeClockRate,                        ///< Peak clock frequency in kilohertz.
-  hipDeviceAttributeComputeMode,                      ///< Compute mode that device is currently in.
-  hipDeviceAttributeComputePreemptionSupported,       ///< Cuda only. Device supports Compute Preemption.
-  hipDeviceAttributeConcurrentKernels,                ///< Device can possibly execute multiple kernels concurrently.
-  hipDeviceAttributeConcurrentManagedAccess,          ///< Device can coherently access managed memory concurrently with the CPU
-  hipDeviceAttributeCooperativeLaunch,                ///< Support cooperative launch
-  hipDeviceAttributeCooperativeMultiDeviceLaunch,     ///< Support cooperative launch on multiple devices
-  hipDeviceAttributeDeviceOverlap,                    ///< Cuda only. Device can concurrently copy memory and execute a kernel.
-                                                      ///< Deprecated. Use instead asyncEngineCount.
-  hipDeviceAttributeDirectManagedMemAccessFromHost,   ///< Host can directly access managed memory on
-                                                      ///< the device without migration
-  hipDeviceAttributeGlobalL1CacheSupported,           ///< Cuda only. Device supports caching globals in L1
-  hipDeviceAttributeHostNativeAtomicSupported,        ///< Cuda only. Link between the device and the host supports native atomic operations
-  hipDeviceAttributeIntegrated,                       ///< Device is integrated GPU
-  hipDeviceAttributeIsMultiGpuBoard,                  ///< Multiple GPU devices.
-  hipDeviceAttributeKernelExecTimeout,                ///< Run time limit for kernels executed on the device
-  hipDeviceAttributeL2CacheSize,                      ///< Size of L2 cache in bytes. 0 if the device doesn't have L2 cache.
-  hipDeviceAttributeLocalL1CacheSupported,            ///< caching locals in L1 is supported
-  hipDeviceAttributeLuid,                             ///< Cuda only. 8-byte locally unique identifier in 8 bytes. Undefined on TCC and non-Windows platforms
-  hipDeviceAttributeLuidDeviceNodeMask,               ///< Cuda only. Luid device node mask. Undefined on TCC and non-Windows platforms
-  hipDeviceAttributeComputeCapabilityMajor,           ///< Major compute capability version number.
-  hipDeviceAttributeManagedMemory,                    ///< Device supports allocating managed memory on this system
-  hipDeviceAttributeMaxBlocksPerMultiProcessor,       ///< Cuda only. Max block size per multiprocessor
-  hipDeviceAttributeMaxBlockDimX,                     ///< Max block size in width.
-  hipDeviceAttributeMaxBlockDimY,                     ///< Max block size in height.
-  hipDeviceAttributeMaxBlockDimZ,                     ///< Max block size in depth.
-  hipDeviceAttributeMaxGridDimX,                      ///< Max grid size  in width.
-  hipDeviceAttributeMaxGridDimY,                      ///< Max grid size  in height.
-  hipDeviceAttributeMaxGridDimZ,                      ///< Max grid size  in depth.
-  hipDeviceAttributeMaxSurface1D,                     ///< Maximum size of 1D surface.
-  hipDeviceAttributeMaxSurface1DLayered,              ///< Cuda only. Maximum dimensions of 1D layered surface.
-  hipDeviceAttributeMaxSurface2D,                     ///< Maximum dimension (width, height) of 2D surface.
-  hipDeviceAttributeMaxSurface2DLayered,              ///< Cuda only. Maximum dimensions of 2D layered surface.
-  hipDeviceAttributeMaxSurface3D,                     ///< Maximum dimension (width, height, depth) of 3D surface.
-  hipDeviceAttributeMaxSurfaceCubemap,                ///< Cuda only. Maximum dimensions of Cubemap surface.
-  hipDeviceAttributeMaxSurfaceCubemapLayered,         ///< Cuda only. Maximum dimension of Cubemap layered surface.
-  hipDeviceAttributeMaxTexture1DWidth,                ///< Maximum size of 1D texture.
-  hipDeviceAttributeMaxTexture1DLayered,              ///< Cuda only. Maximum dimensions of 1D layered texture.
-  hipDeviceAttributeMaxTexture1DLinear,               ///< Maximum number of elements allocatable in a 1D linear texture.
-                                                      ///< Use cudaDeviceGetTexture1DLinearMaxWidth() instead on Cuda.
-  hipDeviceAttributeMaxTexture1DMipmap,               ///< Cuda only. Maximum size of 1D mipmapped texture.
-  hipDeviceAttributeMaxTexture2DWidth,                ///< Maximum dimension width of 2D texture.
-  hipDeviceAttributeMaxTexture2DHeight,               ///< Maximum dimension hight of 2D texture.
-  hipDeviceAttributeMaxTexture2DGather,               ///< Cuda only. Maximum dimensions of 2D texture if gather operations  performed.
-  hipDeviceAttributeMaxTexture2DLayered,              ///< Cuda only. Maximum dimensions of 2D layered texture.
-  hipDeviceAttributeMaxTexture2DLinear,               ///< Cuda only. Maximum dimensions (width, height, pitch) of 2D textures bound to pitched memory.
-  hipDeviceAttributeMaxTexture2DMipmap,               ///< Cuda only. Maximum dimensions of 2D mipmapped texture.
-  hipDeviceAttributeMaxTexture3DWidth,                ///< Maximum dimension width of 3D texture.
-  hipDeviceAttributeMaxTexture3DHeight,               ///< Maximum dimension height of 3D texture.
-  hipDeviceAttributeMaxTexture3DDepth,                ///< Maximum dimension depth of 3D texture.
-  hipDeviceAttributeMaxTexture3DAlt,                  ///< Cuda only. Maximum dimensions of alternate 3D texture.
-  hipDeviceAttributeMaxTextureCubemap,                ///< Cuda only. Maximum dimensions of Cubemap texture
-  hipDeviceAttributeMaxTextureCubemapLayered,         ///< Cuda only. Maximum dimensions of Cubemap layered texture.
-  hipDeviceAttributeMaxThreadsDim,                    ///< Maximum dimension of a block
-  hipDeviceAttributeMaxThreadsPerBlock,               ///< Maximum number of threads per block.
-  hipDeviceAttributeMaxThreadsPerMultiProcessor,      ///< Maximum resident threads per multiprocessor.
-  hipDeviceAttributeMaxPitch,                         ///< Maximum pitch in bytes allowed by memory copies
-  hipDeviceAttributeMemoryBusWidth,                   ///< Global memory bus width in bits.
-  hipDeviceAttributeMemoryClockRate,                  ///< Peak memory clock frequency in kilohertz.
-  hipDeviceAttributeComputeCapabilityMinor,           ///< Minor compute capability version number.
-  hipDeviceAttributeMultiGpuBoardGroupID,             ///< Cuda only. Unique ID of device group on the same multi-GPU board
-  hipDeviceAttributeMultiprocessorCount,              ///< Number of multiprocessors on the device.
-  hipDeviceAttributeName,                             ///< Device name.
-  hipDeviceAttributePageableMemoryAccess,             ///< Device supports coherently accessing pageable memory
-                                                      ///< without calling hipHostRegister on it
-  hipDeviceAttributePageableMemoryAccessUsesHostPageTables, ///< Device accesses pageable memory via the host's page tables
-  hipDeviceAttributePciBusId,                         ///< PCI Bus ID.
-  hipDeviceAttributePciDeviceId,                      ///< PCI Device ID.
-  hipDeviceAttributePciDomainID,                      ///< PCI Domain ID.
-  hipDeviceAttributePersistingL2CacheMaxSize,         ///< Cuda11 only. Maximum l2 persisting lines capacity in bytes
-  hipDeviceAttributeMaxRegistersPerBlock,             ///< 32-bit registers available to a thread block. This number is shared
-                                                      ///< by all thread blocks simultaneously resident on a multiprocessor.
-  hipDeviceAttributeMaxRegistersPerMultiprocessor,    ///< 32-bit registers available per block.
-  hipDeviceAttributeReservedSharedMemPerBlock,        ///< Cuda11 only. Shared memory reserved by CUDA driver per block.
-  hipDeviceAttributeMaxSharedMemoryPerBlock,          ///< Maximum shared memory available per block in bytes.
-  hipDeviceAttributeSharedMemPerBlockOptin,           ///< Cuda only. Maximum shared memory per block usable by special opt in.
-  hipDeviceAttributeSharedMemPerMultiprocessor,       ///< Cuda only. Shared memory available per multiprocessor.
-  hipDeviceAttributeSingleToDoublePrecisionPerfRatio, ///< Cuda only. Performance ratio of single precision to double precision.
-  hipDeviceAttributeStreamPrioritiesSupported,        ///< Cuda only. Whether to support stream priorities.
-  hipDeviceAttributeSurfaceAlignment,                 ///< Cuda only. Alignment requirement for surfaces
-  hipDeviceAttributeTccDriver,                        ///< Cuda only. Whether device is a Tesla device using TCC driver
-  hipDeviceAttributeTextureAlignment,                 ///< Alignment requirement for textures
-  hipDeviceAttributeTexturePitchAlignment,            ///< Pitch alignment requirement for 2D texture references bound to pitched memory;
-  hipDeviceAttributeTotalConstantMemory,              ///< Constant memory size in bytes.
-  hipDeviceAttributeTotalGlobalMem,                   ///< Global memory available on devicice.
-  hipDeviceAttributeUnifiedAddressing,                ///< Cuda only. An unified address space shared with the host.
-  hipDeviceAttributeUuid,                             ///< Cuda only. Unique ID in 16 byte.
-  hipDeviceAttributeWarpSize,                         ///< Warp size in threads.
-  hipDeviceAttributeCudaCompatibleEnd = 9999,
-  hipDeviceAttributeAmdSpecificBegin = 10000,
-  hipDeviceAttributeClockInstructionRate = hipDeviceAttributeAmdSpecificBegin,  ///< Frequency in khz of the timer used by the device-side "clock*"
-  hipDeviceAttributeArch,                                     ///< Device architecture
-  hipDeviceAttributeMaxSharedMemoryPerMultiprocessor,         ///< Maximum Shared Memory PerMultiprocessor.
-  hipDeviceAttributeGcnArch,                                  ///< Device gcn architecture
-  hipDeviceAttributeGcnArchName,                              ///< Device gcnArch name in 256 bytes
-  hipDeviceAttributeHdpMemFlushCntl,                          ///< Address of the HDP_MEM_COHERENCY_FLUSH_CNTL register
-  hipDeviceAttributeHdpRegFlushCntl,                          ///< Address of the HDP_REG_COHERENCY_FLUSH_CNTL register
-  hipDeviceAttributeCooperativeMultiDeviceUnmatchedFunc,      ///< Supports cooperative launch on multiple
-                                                              ///< devices with unmatched functions
-  hipDeviceAttributeCooperativeMultiDeviceUnmatchedGridDim,   ///< Supports cooperative launch on multiple
-                                                              ///< devices with unmatched grid dimensions
-  hipDeviceAttributeCooperativeMultiDeviceUnmatchedBlockDim,  ///< Supports cooperative launch on multiple
-                                                              ///< devices with unmatched block dimensions
-  hipDeviceAttributeCooperativeMultiDeviceUnmatchedSharedMem, ///< Supports cooperative launch on multiple
-                                                              ///< devices with unmatched shared memories
-  hipDeviceAttributeIsLargeBar,                               ///< Whether it is LargeBar
-  hipDeviceAttributeAsicRevision,                             ///< Revision of the GPU in this device
-  hipDeviceAttributeCanUseStreamWaitValue,                    ///< '1' if Device supports hipStreamWaitValue32() and
-                                                              ///< hipStreamWaitValue64() , '0' otherwise.
-  hipDeviceAttributeAmdSpecificEnd = 19999,
-  hipDeviceAttributeVendorSpecificBegin = 20000,
-  // Extended attributes for vendors
-} hipDeviceAttribute_t;
-
-typedef struct HIPdevprop_st {
-  int maxThreadsPerBlock;
-  int maxThreadsDim[3];
-  int maxGridSize[3];
-  int sharedMemPerBlock;
-  int totalConstantMemory;
-  int SIMDWidth;
-  int memPitch;
-  int regsPerBlock;
-  int clockRate;
-  int textureAlign;
-} HIPdevprop;
-
-typedef struct {
-    // 32-bit Atomics
-    unsigned hasGlobalInt32Atomics : 1;     ///< 32-bit integer atomics for global memory.
-    unsigned hasGlobalFloatAtomicExch : 1;  ///< 32-bit float atomic exch for global memory.
-    unsigned hasSharedInt32Atomics : 1;     ///< 32-bit integer atomics for shared memory.
-    unsigned hasSharedFloatAtomicExch : 1;  ///< 32-bit float atomic exch for shared memory.
-    unsigned hasFloatAtomicAdd : 1;  ///< 32-bit float atomic add in global and shared memory.
-
-    // 64-bit Atomics
-    unsigned hasGlobalInt64Atomics : 1;  ///< 64-bit integer atomics for global memory.
-    unsigned hasSharedInt64Atomics : 1;  ///< 64-bit integer atomics for shared memory.
-
-    // Doubles
-    unsigned hasDoubles : 1;  ///< Double-precision floating point.
-
-    // Warp cross-lane operations
-    unsigned hasWarpVote : 1;     ///< Warp vote instructions (__any, __all).
-    unsigned hasWarpBallot : 1;   ///< Warp ballot instructions (__ballot).
-    unsigned hasWarpShuffle : 1;  ///< Warp shuffle operations. (__shfl_*).
-    unsigned hasFunnelShift : 1;  ///< Funnel two words into one with shift&mask caps.
-
-    // Sync
-    unsigned hasThreadFenceSystem : 1;  ///< __threadfence_system.
-    unsigned hasSyncThreadsExt : 1;     ///< __syncthreads_count, syncthreads_and, syncthreads_or.
-
-    // Misc
-    unsigned hasSurfaceFuncs : 1;        ///< Surface functions.
-    unsigned has3dGrid : 1;              ///< Grid and group dims are 3D (rather than 2D).
-    unsigned hasDynamicParallelism : 1;  ///< Dynamic parallelism.
-} hipDeviceArch_t;
-
-typedef struct hipDeviceProp_t {
-    char name[256];            ///< Device name.
-    size_t totalGlobalMem;     ///< Size of global memory region (in bytes).
-    size_t sharedMemPerBlock;  ///< Size of shared memory region (in bytes).
-    int regsPerBlock;          ///< Registers per block.
-    int warpSize;              ///< Warp size.
-    int maxThreadsPerBlock;    ///< Max work items per work group or workgroup max size.
-    int maxThreadsDim[3];      ///< Max number of threads in each dimension (XYZ) of a block.
-    int maxGridSize[3];        ///< Max grid dimensions (XYZ).
-    int clockRate;             ///< Max clock frequency of the multiProcessors in khz.
-    int memoryClockRate;       ///< Max global memory clock frequency in khz.
-    int memoryBusWidth;        ///< Global memory bus width in bits.
-    size_t totalConstMem;      ///< Size of shared memory region (in bytes).
-    int major;  ///< Major compute capability.  On HCC, this is an approximation and features may
-                ///< differ from CUDA CC.  See the arch feature flags for portable ways to query
-                ///< feature caps.
-    int minor;  ///< Minor compute capability.  On HCC, this is an approximation and features may
-                ///< differ from CUDA CC.  See the arch feature flags for portable ways to query
-                ///< feature caps.
-    int multiProcessorCount;          ///< Number of multi-processors (compute units).
-    int l2CacheSize;                  ///< L2 cache size.
-    int maxThreadsPerMultiProcessor;  ///< Maximum resident threads per multi-processor.
-    int computeMode;                  ///< Compute mode.
-    int clockInstructionRate;  ///< Frequency in khz of the timer used by the device-side "clock*"
-                               ///< instructions.  New for HIP.
-    hipDeviceArch_t arch;      ///< Architectural feature flags.  New for HIP.
-    int concurrentKernels;     ///< Device can possibly execute multiple kernels concurrently.
-    int pciDomainID;           ///< PCI Domain ID
-    int pciBusID;              ///< PCI Bus ID.
-    int pciDeviceID;           ///< PCI Device ID.
-    size_t maxSharedMemoryPerMultiProcessor;  ///< Maximum Shared Memory Per Multiprocessor.
-    int isMultiGpuBoard;                      ///< 1 if device is on a multi-GPU board, 0 if not.
-    int canMapHostMemory;                     ///< Check whether HIP can map host memory
-    int gcnArch;                              ///< DEPRECATED: use gcnArchName instead
-    char gcnArchName[256];                    ///< AMD GCN Arch Name.
-    int integrated;            ///< APU vs dGPU
-    int cooperativeLaunch;            ///< HIP device supports cooperative launch
-    int cooperativeMultiDeviceLaunch; ///< HIP device supports cooperative launch on multiple devices
-    int maxTexture1DLinear;    ///< Maximum size for 1D textures bound to linear memory
-    int maxTexture1D;          ///< Maximum number of elements in 1D images
-    int maxTexture2D[2];       ///< Maximum dimensions (width, height) of 2D images, in image elements
-    int maxTexture3D[3];       ///< Maximum dimensions (width, height, depth) of 3D images, in image elements
-    unsigned int* hdpMemFlushCntl;      ///< Addres of HDP_MEM_COHERENCY_FLUSH_CNTL register
-    unsigned int* hdpRegFlushCntl;      ///< Addres of HDP_REG_COHERENCY_FLUSH_CNTL register
-    size_t memPitch;                 ///<Maximum pitch in bytes allowed by memory copies
-    size_t textureAlignment;         ///<Alignment requirement for textures
-    size_t texturePitchAlignment;    ///<Pitch alignment requirement for texture references bound to pitched memory
-    int kernelExecTimeoutEnabled;    ///<Run time limit for kernels executed on the device
-    int ECCEnabled;                  ///<Device has ECC support enabled
-    int tccDriver;                   ///< 1:If device is Tesla device using TCC driver, else 0
-    int cooperativeMultiDeviceUnmatchedFunc;        ///< HIP device supports cooperative launch on multiple
-                                                    ///devices with unmatched functions
-    int cooperativeMultiDeviceUnmatchedGridDim;     ///< HIP device supports cooperative launch on multiple
-                                                    ///devices with unmatched grid dimensions
-    int cooperativeMultiDeviceUnmatchedBlockDim;    ///< HIP device supports cooperative launch on multiple
-                                                    ///devices with unmatched block dimensions
-    int cooperativeMultiDeviceUnmatchedSharedMem;   ///< HIP device supports cooperative launch on multiple
-                                                    ///devices with unmatched shared memories
-    int isLargeBar;                  ///< 1: if it is a large PCI bar device, else 0
-    int asicRevision;                ///< Revision of the GPU in this device
-    int managedMemory;               ///< Device supports allocating managed memory on this system
-    int directManagedMemAccessFromHost; ///< Host can directly access managed memory on the device without migration
-    int concurrentManagedAccess;     ///< Device can coherently access managed memory concurrently with the CPU
-    int pageableMemoryAccess;        ///< Device supports coherently accessing pageable memory
-                                     ///< without calling hipHostRegister on it
-    int pageableMemoryAccessUsesHostPageTables; ///< Device accesses pageable memory via the host's page tables
-} hipDeviceProp_t;
-
-typedef enum HIPpointer_attribute_enum {
-  HIP_POINTER_ATTRIBUTE_CONTEXT = 1,
-  HIP_POINTER_ATTRIBUTE_MEMORY_TYPE = 2,
-  HIP_POINTER_ATTRIBUTE_DEVICE_POINTER = 3,
-  HIP_POINTER_ATTRIBUTE_HOST_POINTER = 4,
-  HIP_POINTER_ATTRIBUTE_SYNC_MEMOPS = 6,
-  HIP_POINTER_ATTRIBUTE_BUFFER_ID = 7,
-  HIP_POINTER_ATTRIBUTE_IS_MANAGED = 8,
-  HIP_POINTER_ATTRIBUTE_DEVICE_ORDINAL = 9,
-} HIPpointer_attribute;
-
-typedef enum hipFunction_attribute {
-  HIP_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK = 0,
-  HIP_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES = 1,
-  HIP_FUNC_ATTRIBUTE_CONST_SIZE_BYTES = 2,
-  HIP_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES = 3,
-  HIP_FUNC_ATTRIBUTE_NUM_REGS = 4,
-  HIP_FUNC_ATTRIBUTE_PTX_VERSION = 5,
-  HIP_FUNC_ATTRIBUTE_BINARY_VERSION = 6,
-  HIP_FUNC_ATTRIBUTE_CACHE_MODE_CA = 7,
-  HIP_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES = 8,
-  HIP_FUNC_ATTRIBUTE_PREFERRED_SHARED_MEMORY_CARVEOUT = 9,
-  HIP_FUNC_ATTRIBUTE_MAX,
-} hipFunction_attribute;
-
-typedef enum hipFuncCache_t {
-  hipFuncCachePreferNone = 0x00,
-  hipFuncCachePreferShared = 0x01,
-  hipFuncCachePreferL1 = 0x02,
-  hipFuncCachePreferEqual = 0x03,
-} hipFuncCache_t;
-
-typedef enum hipSharedMemConfig {
-  hipSharedMemBankSizeDefault = 0x00,
-  hipSharedMemBankSizeFourByte = 0x01,
-  hipSharedMemBankSizeEightByte = 0x02,
-} hipSharedMemConfig;
-
-typedef enum HIPshared_carveout_enum {
-  HIP_SHAREDMEM_CARVEOUT_DEFAULT,
-  HIP_SHAREDMEM_CARVEOUT_MAX_SHARED = 100,
-  HIP_SHAREDMEM_CARVEOUT_MAX_L1 = 0,
-} HIPshared_carveout;
-
-
-
-typedef enum hipComputeMode {
-  hipComputeModeDefault = 0,
-  hipComputeModeProhibited = 2,
-  hipComputeModeExclusiveProcess = 3,
-} hipComputeMode;
-
-typedef enum HIPmem_advise_enum {
-  HIP_MEM_ADVISE_SET_READ_MOSTLY = 1,
-  HIP_MEM_ADVISE_UNSET_READ_MOSTLY = 2,
-  HIP_MEM_ADVISE_SET_PREFERRED_LOCATION = 3,
-  HIP_MEM_ADVISE_UNSET_PREFERRED_LOCATION = 4,
-  HIP_MEM_ADVISE_SET_ACCESSED_BY = 5,
-  HIP_MEM_ADVISE_UNSET_ACCESSED_BY = 6,
-} HIPmem_advise;
-
-typedef enum HIPmem_range_attribute_enum {
-  HIP_MEM_RANGE_ATTRIBUTE_READ_MOSTLY = 1,
-  HIP_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION = 2,
-  HIP_MEM_RANGE_ATTRIBUTE_ACCESSED_BY = 3,
-  HIP_MEM_RANGE_ATTRIBUTE_LAST_PREFETCH_LOCATION = 4,
-} HIPmem_range_attribute;
-
-typedef enum hipJitOption {
-  hipJitOptionMaxRegisters = 0,
-  hipJitOptionThreadsPerBlock,
-  hipJitOptionWallTime,
-  hipJitOptionInfoLogBuffer,
-  hipJitOptionInfoLogBufferSizeBytes,
-  hipJitOptionErrorLogBuffer,
-  hipJitOptionErrorLogBufferSizeBytes,
-  hipJitOptionOptimizationLevel,
-  hipJitOptionTargetFromContext,
-  hipJitOptionTarget,
-  hipJitOptionFallbackStrategy,
-  hipJitOptionGenerateDebugInfo,
-  hipJitOptionLogVerbose,
-  hipJitOptionGenerateLineInfo,
-  hipJitOptionCacheMode,
-  hipJitOptionSm3xOpt,
-  hipJitOptionFastCompile,
-  hipJitOptionNumOptions,
-} hipJitOption;
-
-typedef enum HIPjit_target_enum {
-  HIP_TARGET_COMPUTE_20 = 20,
-  HIP_TARGET_COMPUTE_21 = 21,
-  HIP_TARGET_COMPUTE_30 = 30,
-  HIP_TARGET_COMPUTE_32 = 32,
-  HIP_TARGET_COMPUTE_35 = 35,
-  HIP_TARGET_COMPUTE_37 = 37,
-  HIP_TARGET_COMPUTE_50 = 50,
-  HIP_TARGET_COMPUTE_52 = 52,
-  HIP_TARGET_COMPUTE_53 = 53,
-  HIP_TARGET_COMPUTE_60 = 60,
-  HIP_TARGET_COMPUTE_61 = 61,
-  HIP_TARGET_COMPUTE_62 = 62,
-  HIP_TARGET_COMPUTE_70 = 70,
-  HIP_TARGET_COMPUTE_73 = 73,
-  HIP_TARGET_COMPUTE_75 = 75,
-} HIPjit_target;
-
-typedef enum HIPjit_fallback_enum {
-  HIP_PREFER_PTX = 0,
-  HIP_PREFER_BINARY,
-} HIPjit_fallback;
-
-typedef enum HIPjit_cacheMode_enum {
-  HIP_JIT_CACHE_OPTION_NONE = 0,
-  HIP_JIT_CACHE_OPTION_CG,
-  HIP_JIT_CACHE_OPTION_CA,
-} HIPjit_cacheMode;
-
-typedef enum HIPjitInputType_enum {
-  HIP_JIT_INPUT_HIPBIN = 0,
-  HIP_JIT_INPUT_PTX,
-  HIP_JIT_INPUT_FATBINARY,
-  HIP_JIT_INPUT_OBJECT,
-  HIP_JIT_INPUT_LIBRARY,
-  HIP_JIT_NUM_INPUT_TYPES,
-} HIPjitInputType;
-
-typedef struct HIPlinkState_st* HIPlinkState;
-
-typedef enum hipGLDeviceList {
-    hipGLDeviceListAll = 1,           ///< All hip devices used by current OpenGL context.
-    hipGLDeviceListCurrentFrame = 2,  ///< Hip devices used by current OpenGL context in current
-                                    ///< frame
-    hipGLDeviceListNextFrame = 3      ///< Hip devices used by current OpenGL context in next
-                                    ///< frame.
-} hipGLDeviceList;
-
-typedef enum hipGraphicsRegisterFlags {
-    hipGraphicsRegisterFlagsNone = 0,
-    hipGraphicsRegisterFlagsReadOnly = 1,  ///< HIP will not write to this registered resource
-    hipGraphicsRegisterFlagsWriteDiscard =
-        2,  ///< HIP will only write and will not read from this registered resource
-    hipGraphicsRegisterFlagsSurfaceLoadStore = 4,  ///< HIP will bind this resource to a surface
-    hipGraphicsRegisterFlagsTextureGather =
-        8  ///< HIP will perform texture gather operations on this registered resource
-} hipGraphicsRegisterFlags;
-
-typedef enum HIPgraphicsRegisterFlags_enum {
-  HIP_GRAPHICS_REGISTER_FLAGS_NONE = 0x00,
-  HIP_GRAPHICS_REGISTER_FLAGS_READ_ONLY = 0x01,
-  HIP_GRAPHICS_REGISTER_FLAGS_WRITE_DISCARD = 0x02,
-  HIP_GRAPHICS_REGISTER_FLAGS_SURFACE_LDST = 0x04,
-  HIP_GRAPHICS_REGISTER_FLAGS_TEXTURE_GATHER = 0x08,
-} HIPgraphicsRegisterFlags;
-
-typedef enum HIPgraphicsMapResourceFlags_enum {
-  HIP_GRAPHICS_MAP_RESOURCE_FLAGS_NONE = 0x00,
-  HIP_GRAPHICS_MAP_RESOURCE_FLAGS_READ_ONLY = 0x01,
-  HIP_GRAPHICS_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
-} HIPgraphicsMapResourceFlags;
-
-typedef enum HIParray_cubemap_face_enum {
-  HIP_HIPBEMAP_FACE_POSITIVE_X = 0x00,
-  HIP_HIPBEMAP_FACE_NEGATIVE_X = 0x01,
-  HIP_HIPBEMAP_FACE_POSITIVE_Y = 0x02,
-  HIP_HIPBEMAP_FACE_NEGATIVE_Y = 0x03,
-  HIP_HIPBEMAP_FACE_POSITIVE_Z = 0x04,
-  HIP_HIPBEMAP_FACE_NEGATIVE_Z = 0x05,
-} HIParray_cubemap_face;
-
-typedef enum hipLimit_t {
-  HIP_LIMIT_STACK_SIZE = 0x00,
-  HIP_LIMIT_PRINTF_FIFO_SIZE = 0x01,
-  hipLimitMallocHeapSize = 0x02,
-  HIP_LIMIT_DEV_RUNTIME_SYNC_DEPTH = 0x03,
-  HIP_LIMIT_DEV_RUNTIME_PENDING_LAUNCH_COUNT = 0x04,
-  HIP_LIMIT_MAX,
-} hipLimit_t;
-
-typedef enum hipResourceType {
-  hipResourceTypeArray = 0x00,
-  hipResourceTypeMipmappedArray = 0x01,
-  hipResourceTypeLinear = 0x02,
-  hipResourceTypePitch2D = 0x03,
-} hipResourceType;
-
-typedef enum hipError_t {
-  hipSuccess = 0,
-  hipErrorInvalidValue = 1,
-  hipErrorOutOfMemory = 2,
-  hipErrorNotInitialized = 3,
-  hipErrorDeinitialized = 4,
-  hipErrorProfilerDisabled = 5,
-  hipErrorProfilerNotInitialized = 6,
-  hipErrorProfilerAlreadyStarted = 7,
-  hipErrorProfilerAlreadyStopped = 8,
-  hipErrorNoDevice = 100,
-  hipErrorInvalidDevice = 101,
-  hipErrorInvalidImage = 200,
-  hipErrorInvalidContext = 201,
-  hipErrorContextAlreadyCurrent = 202,
-  hipErrorMapFailed = 205,
-  hipErrorUnmapFailed = 206,
-  hipErrorArrayIsMapped = 207,
-  hipErrorAlreadyMapped = 208,
-  hipErrorNoBinaryForGpu = 209,
-  hipErrorAlreadyAcquired = 210,
-  hipErrorNotMapped = 211,
-  hipErrorNotMappedAsArray = 212,
-  hipErrorNotMappedAsPointer = 213,
-  hipErrorECCNotCorrectable = 214,
-  hipErrorUnsupportedLimit = 215,
-  hipErrorContextAlreadyInUse = 216,
-  hipErrorPeerAccessUnsupported = 217,
-  hipErrorInvalidKernelFile = 218,
-  hipErrorInvalidGraphicsContext = 219,
-  hipErrorInvalidSource = 300,
-  hipErrorFileNotFound = 301,
-  hipErrorSharedObjectSymbolNotFound = 302,
-  hipErrorSharedObjectInitFailed = 303,
-  hipErrorOperatingSystem = 304,
-  hipErrorInvalidHandle = 400,
-  hipErrorNotFound = 500,
-  hipErrorNotReady = 600,
-  hipErrorIllegalAddress = 700,
-  hipErrorLaunchOutOfResources = 701,
-  hipErrorLaunchTimeOut = 702,
-  hipErrorPeerAccessAlreadyEnabled = 704,
-  hipErrorPeerAccessNotEnabled = 705,
-  hipErrorSetOnActiveProcess = 708,
-  hipErrorAssert = 710,
-  hipErrorHostMemoryAlreadyRegistered = 712,
-  hipErrorHostMemoryNotRegistered = 713,
-  hipErrorLaunchFailure = 719,
-  hipErrorCooperativeLaunchTooLarge = 720,
-  hipErrorNotSupported = 801,
-  hipErrorUnknown = 999,
-} hipError_t;
-
-/**
- * Stream CallBack struct
- */
-typedef void (*hipStreamCallback_t)(hipStream_t stream, hipError_t status, void* userData);
-
-typedef enum HIPdevice_P2PAttribute_enum {
-  HIP_DEVICE_P2P_ATTRIBUTE_PERFORMANCE_RANK = 0x01,
-  HIP_DEVICE_P2P_ATTRIBUTE_ACCESS_SUPPORTED = 0x02,
-  HIP_DEVICE_P2P_ATTRIBUTE_NATIVE_ATOMIC_SUPPORTED = 0x03,
-  HIP_DEVICE_P2P_ATTRIBUTE_ARRAY_ACCESS_ACCESS_SUPPORTED = 0x04,
-} HIPdevice_P2PAttribute;
-
-typedef struct hipGraphicsResource_st* hipGraphicsResource;
-
-typedef struct hip_Memcpy2D {
-  size_t srcXInBytes;
-  size_t srcY;
-  hipMemoryType srcMemoryType;
-  const void* srcHost;
-  hipDeviceptr_t srcDevice;
-  hArray * srcArray;
-  size_t srcPitch;
-  size_t dstXInBytes;
-  size_t dstY;
-  hipMemoryType dstMemoryType;
-  void* dstHost;
-  hipDeviceptr_t dstDevice;
-  hArray * dstArray;
-  size_t dstPitch;
-  size_t WidthInBytes;
-  size_t Height;
-} hip_Memcpy2D;
-
-typedef enum hipDeviceP2PAttr {
-  hipDevP2PAttrPerformanceRank = 0,
-  hipDevP2PAttrAccessSupported,
-  hipDevP2PAttrNativeAtomicSupported,
-  hipDevP2PAttrHipArrayAccessSupported
-} hipDeviceP2PAttr;
-
-typedef struct HIP_MEMCPY3D {
-  unsigned int srcXInBytes;
-  unsigned int srcY;
-  unsigned int srcZ;
-  unsigned int srcLOD;
-  hipMemoryType srcMemoryType;
-  const void* srcHost;
-  hipDeviceptr_t srcDevice;
-  hArray srcArray;
-  unsigned int srcPitch;
-  unsigned int srcHeight;
-  unsigned int dstXInBytes;
-  unsigned int dstY;
-  unsigned int dstZ;
-  unsigned int dstLOD;
-  hipMemoryType dstMemoryType;
-  void* dstHost;
-  hipDeviceptr_t dstDevice;
-  hArray dstArray;
-  unsigned int dstPitch;
-  unsigned int dstHeight;
-  unsigned int WidthInBytes;
-  unsigned int Height;
-  unsigned int Depth;
-} HIP_MEMCPY3D;
-
-typedef struct HIP_MEMCPY3D_PEER_st {
-  size_t srcXInBytes;
-  size_t srcY;
-  size_t srcZ;
-  size_t srcLOD;
-  hipMemoryType srcMemoryType;
-  const void* srcHost;
-  hipDeviceptr_t srcDevice;
-  hArray * srcArray;
-  hipCtx_t srcContext;
-  size_t srcPitch;
-  size_t srcHeight;
-  size_t dstXInBytes;
-  size_t dstY;
-  size_t dstZ;
-  size_t dstLOD;
-  hipMemoryType dstMemoryType;
-  void* dstHost;
-  hipDeviceptr_t dstDevice;
-  hArray * dstArray;
-  hipCtx_t dstContext;
-  size_t dstPitch;
-  size_t dstHeight;
-  size_t WidthInBytes;
-  size_t Height;
-  size_t Depth;
-} HIP_MEMCPY3D_PEER;
-
-typedef struct HIP_ARRAY_DESCRIPTOR {
-  size_t Width;
-  size_t Height;
-  hipArray_Format Format;
-  unsigned int NumChannels;
-} HIP_ARRAY_DESCRIPTOR;
-
-typedef struct HIP_ARRAY3D_DESCRIPTOR {
-  size_t Width;
-  size_t Height;
-  size_t Depth;
-  hipArray_Format Format;
-  unsigned int NumChannels;
-  unsigned int Flags;
-} HIP_ARRAY3D_DESCRIPTOR;
-
-typedef struct HIP_RESOURCE_DESC_st {
-  hipResourceType resType;
-  union {
-    struct {
-      hArray h_Array;
-    } array;
-    struct {
-      hipMipmappedArray_t hMipmappedArray;
-    } mipmap;
-    struct {
-      hipDeviceptr_t devPtr;
-      hipArray_Format format;
-      unsigned int numChannels;
-      size_t sizeInBytes;
-    } linear;
-    struct {
-      hipDeviceptr_t devPtr;
-      hipArray_Format format;
-      unsigned int numChannels;
-      size_t width;
-      size_t height;
-      size_t pitchInBytes;
-    } pitch2D;
-    struct {
-      int reserved[32];
-    } reserved;
-  } res;
-  unsigned int flags;
-} hipResourceDesc;
-
-/**
- * hip texture resource view formats
- */
-typedef enum hipResourceViewFormat {
-    hipResViewFormatNone = 0x00,
-    hipResViewFormatUnsignedChar1 = 0x01,
-    hipResViewFormatUnsignedChar2 = 0x02,
-    hipResViewFormatUnsignedChar4 = 0x03,
-    hipResViewFormatSignedChar1 = 0x04,
-    hipResViewFormatSignedChar2 = 0x05,
-    hipResViewFormatSignedChar4 = 0x06,
-    hipResViewFormatUnsignedShort1 = 0x07,
-    hipResViewFormatUnsignedShort2 = 0x08,
-    hipResViewFormatUnsignedShort4 = 0x09,
-    hipResViewFormatSignedShort1 = 0x0a,
-    hipResViewFormatSignedShort2 = 0x0b,
-    hipResViewFormatSignedShort4 = 0x0c,
-    hipResViewFormatUnsignedInt1 = 0x0d,
-    hipResViewFormatUnsignedInt2 = 0x0e,
-    hipResViewFormatUnsignedInt4 = 0x0f,
-    hipResViewFormatSignedInt1 = 0x10,
-    hipResViewFormatSignedInt2 = 0x11,
-    hipResViewFormatSignedInt4 = 0x12,
-    hipResViewFormatHalf1 = 0x13,
-    hipResViewFormatHalf2 = 0x14,
-    hipResViewFormatHalf4 = 0x15,
-    hipResViewFormatFloat1 = 0x16,
-    hipResViewFormatFloat2 = 0x17,
-    hipResViewFormatFloat4 = 0x18,
-    hipResViewFormatUnsignedBlockCompressed1 = 0x19,
-    hipResViewFormatUnsignedBlockCompressed2 = 0x1a,
-    hipResViewFormatUnsignedBlockCompressed3 = 0x1b,
-    hipResViewFormatUnsignedBlockCompressed4 = 0x1c,
-    hipResViewFormatSignedBlockCompressed4 = 0x1d,
-    hipResViewFormatUnsignedBlockCompressed5 = 0x1e,
-    hipResViewFormatSignedBlockCompressed5 = 0x1f,
-    hipResViewFormatUnsignedBlockCompressed6H = 0x20,
-    hipResViewFormatSignedBlockCompressed6H = 0x21,
-    hipResViewFormatUnsignedBlockCompressed7 = 0x22
-}hipResourceViewFormat;
-
-typedef enum HIPresourceViewFormat_enum
+#pragma region OROCHI_SUMMONER_REGION_hipew_h
+
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+
+// defines:
+#define DEPRECATED(msg) __declspec(deprecated(msg))
+#define DEPRECATED_MSG "This API is marked as deprecated and may not be supported in future releases. For more details please refer https://github.com/ROCm-Developer-Tools/HIP/blob/master/docs/markdown/hip_deprecated_api_list.md"
+#define GENERIC_GRID_LAUNCH 1
+#define HIP_INCLUDE_HIP_HIP_RUNTIME_API_H 
+#define HIP_IPC_HANDLE_SIZE 64
+#define HIP_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
+#define HIP_LAUNCH_PARAM_BUFFER_SIZE ((void*)0x02)
+#define HIP_LAUNCH_PARAM_END ((void*)0x03)
+#define HIP_VERSION (HIP_VERSION_MAJOR * 10000000 + HIP_VERSION_MINOR * 100000 + HIP_VERSION_PATCH)
+#define HIP_VERSION_BUILD_ID 0
+#define HIP_VERSION_BUILD_NAME ""
+#define HIP_VERSION_GITHASH "193a0b56e"
+#define HIP_VERSION_H 
+#define HIP_VERSION_MAJOR 5
+#define HIP_VERSION_MINOR 7
+#define HIP_VERSION_PATCH 32000
+#define USE_PEER_NON_UNIFIED 1
+#define __HIP_HAS_GET_PCH 0
+#define __HIP_NODISCARD 
+#define __dparm(x) 
+#define hipArrayCubemap 0x04
+#define hipArrayDefault 0x00
+#define hipArrayLayered 0x01
+#define hipArraySurfaceLoadStore 0x02
+#define hipArrayTextureGather 0x08
+#define hipCooperativeLaunchMultiDeviceNoPostSync 0x02
+#define hipCooperativeLaunchMultiDeviceNoPreSync 0x01
+#define hipCpuDeviceId ((int)-1)
+#define hipDeviceLmemResizeToMax 0x10
+#define hipDeviceMallocDefault 0x0
+#define hipDeviceMallocFinegrained 0x1
+#define hipDeviceMallocUncached 0x3
+#define hipDeviceMapHost 0x8
+#define hipDeviceScheduleAuto 0x0
+#define hipDeviceScheduleBlockingSync 0x4
+#define hipDeviceScheduleMask 0x7
+#define hipDeviceScheduleSpin 0x1
+#define hipDeviceScheduleYield 0x2
+#define hipEventBlockingSync 0x1
+#define hipEventDefault 0x0
+#define hipEventDisableSystemFence 0x20000000
+#define hipEventDisableTiming 0x2
+#define hipEventInterprocess 0x4
+#define hipEventReleaseToDevice 0x40000000
+#define hipEventReleaseToSystem 0x80000000
+#define hipExtAnyOrderLaunch 0x01
+#define hipExtHostRegisterCoarseGrained 0x8
+#define hipExternalMemoryDedicated 0x1
+#define hipHostMallocCoherent 0x40000000
+#define hipHostMallocDefault 0x0
+#define hipHostMallocMapped 0x2
+#define hipHostMallocNonCoherent 0x80000000
+#define hipHostMallocNumaUser 0x20000000
+#define hipHostMallocPortable 0x1
+#define hipHostMallocWriteCombined 0x4
+#define hipHostRegisterDefault 0x0
+#define hipHostRegisterIoMemory 0x4
+#define hipHostRegisterMapped 0x2
+#define hipHostRegisterPortable 0x1
+#define hipHostRegisterReadOnly 0x08
+#define hipInvalidDeviceId ((int)-2)
+#define hipIpcMemLazyEnablePeerAccess 0
+#define hipMallocSignalMemory 0x2
+#define hipMemAttachGlobal 0x01
+#define hipMemAttachHost 0x02
+#define hipMemAttachSingle 0x04
+#define hipOccupancyDefault 0x00
+#define hipOccupancyDisableCachingOverride 0x01
+#define hipStreamDefault 0x00
+#define hipStreamNonBlocking 0x01
+#define hipStreamPerThread ((hipStream_t)2)
+#define hipStreamWaitValueAnd 0x2
+#define hipStreamWaitValueEq 0x1
+#define hipStreamWaitValueGte 0x0
+#define hipStreamWaitValueNor 0x3
+
+
+enum 
 {
-    HIP_RES_VIEW_FORMAT_NONE          = 0x00, /**< No resource view format (use underlying resource format) */
-    HIP_RES_VIEW_FORMAT_UINT_1X8      = 0x01, /**< 1 channel unsigned 8-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_2X8      = 0x02, /**< 2 channel unsigned 8-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_4X8      = 0x03, /**< 4 channel unsigned 8-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_1X8      = 0x04, /**< 1 channel signed 8-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_2X8      = 0x05, /**< 2 channel signed 8-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_4X8      = 0x06, /**< 4 channel signed 8-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_1X16     = 0x07, /**< 1 channel unsigned 16-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_2X16     = 0x08, /**< 2 channel unsigned 16-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_4X16     = 0x09, /**< 4 channel unsigned 16-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_1X16     = 0x0a, /**< 1 channel signed 16-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_2X16     = 0x0b, /**< 2 channel signed 16-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_4X16     = 0x0c, /**< 4 channel signed 16-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_1X32     = 0x0d, /**< 1 channel unsigned 32-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_2X32     = 0x0e, /**< 2 channel unsigned 32-bit integers */
-    HIP_RES_VIEW_FORMAT_UINT_4X32     = 0x0f, /**< 4 channel unsigned 32-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_1X32     = 0x10, /**< 1 channel signed 32-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_2X32     = 0x11, /**< 2 channel signed 32-bit integers */
-    HIP_RES_VIEW_FORMAT_SINT_4X32     = 0x12, /**< 4 channel signed 32-bit integers */
-    HIP_RES_VIEW_FORMAT_FLOAT_1X16    = 0x13, /**< 1 channel 16-bit floating point */
-    HIP_RES_VIEW_FORMAT_FLOAT_2X16    = 0x14, /**< 2 channel 16-bit floating point */
-    HIP_RES_VIEW_FORMAT_FLOAT_4X16    = 0x15, /**< 4 channel 16-bit floating point */
-    HIP_RES_VIEW_FORMAT_FLOAT_1X32    = 0x16, /**< 1 channel 32-bit floating point */
-    HIP_RES_VIEW_FORMAT_FLOAT_2X32    = 0x17, /**< 2 channel 32-bit floating point */
-    HIP_RES_VIEW_FORMAT_FLOAT_4X32    = 0x18, /**< 4 channel 32-bit floating point */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC1  = 0x19, /**< Block compressed 1 */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC2  = 0x1a, /**< Block compressed 2 */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC3  = 0x1b, /**< Block compressed 3 */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC4  = 0x1c, /**< Block compressed 4 unsigned */
-    HIP_RES_VIEW_FORMAT_SIGNED_BC4    = 0x1d, /**< Block compressed 4 signed */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC5  = 0x1e, /**< Block compressed 5 unsigned */
-    HIP_RES_VIEW_FORMAT_SIGNED_BC5    = 0x1f, /**< Block compressed 5 signed */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC6H = 0x20, /**< Block compressed 6 unsigned half-float */
-    HIP_RES_VIEW_FORMAT_SIGNED_BC6H   = 0x21, /**< Block compressed 6 signed half-float */
-    HIP_RES_VIEW_FORMAT_UNSIGNED_BC7  = 0x22  /**< Block compressed 7 */
-} HIPresourceViewFormat;
-
-/**
- * hip resource view descriptor
- */
-struct hipResourceViewDesc {
-    enum hipResourceViewFormat format;
-    size_t width;
-    size_t height;
-    size_t depth;
-    unsigned int firstMipmapLevel;
-    unsigned int lastMipmapLevel;
-    unsigned int firstLayer;
-    unsigned int lastLayer;
+	HIP_SUCCESS = 0,
+	HIP_ERROR_INVALID_VALUE = 1,
+	HIP_ERROR_NOT_INITIALIZED = 2,
+	HIP_ERROR_LAUNCH_OUT_OF_RESOURCES = 3,
 };
-
-
-typedef struct hipTextureDesc_st {
-  hipTextureAddressMode addressMode[3];
-  hipTextureFilterMode filterMode;
-  unsigned int flags;
-  unsigned int maxAnisotropy;
-  hipTextureFilterMode mipmapFilterMode;
-  float mipmapLevelBias;
-  float minMipmapLevelClamp;
-  float maxMipmapLevelClamp;
-  float borderColor[4];
-  int reserved[12];
-} hipTextureDesc;
-
-/**
- * Resource view descriptor
- */
-typedef struct HIP_RESOURCE_VIEW_DESC_st {
-  hipResourceViewFormat format;
-  size_t width;
-  size_t height;
-  size_t depth;
-  unsigned int firstMipmapLevel;
-  unsigned int lastMipmapLevel;
-  unsigned int firstLayer;
-  unsigned int lastLayer;
-  unsigned int reserved[16];
-} HIP_RESOURCE_VIEW_DESC;
-
-typedef struct HIP_POINTER_ATTRIBUTE_P2P_TOKENS_st {
-  unsigned long long p2pToken;
-  unsigned int vaSpaceToken;
-} HIP_POINTER_ATTRIBUTE_P2P_TOKENS;
-
-
-typedef unsigned int GLenum;
+struct hipDeviceArch_t
+{
+	unsigned int hasGlobalInt32Atomics;
+	unsigned int hasGlobalFloatAtomicExch;
+	unsigned int hasSharedInt32Atomics;
+	unsigned int hasSharedFloatAtomicExch;
+	unsigned int hasFloatAtomicAdd;
+	unsigned int hasGlobalInt64Atomics;
+	unsigned int hasSharedInt64Atomics;
+	unsigned int hasDoubles;
+	unsigned int hasWarpVote;
+	unsigned int hasWarpBallot;
+	unsigned int hasWarpShuffle;
+	unsigned int hasFunnelShift;
+	unsigned int hasThreadFenceSystem;
+	unsigned int hasSyncThreadsExt;
+	unsigned int hasSurfaceFuncs;
+	unsigned int has3dGrid;
+	unsigned int hasDynamicParallelism;
+};
+typedef struct hipDeviceArch_t hipDeviceArch_t;
+struct hipUUID_t
+{
+	char bytes[16];
+};
+typedef struct hipUUID_t hipUUID;
+struct hipDeviceProp_t
+{
+	char name[256];
+	size_t totalGlobalMem;
+	size_t sharedMemPerBlock;
+	int regsPerBlock;
+	int warpSize;
+	int maxThreadsPerBlock;
+	int maxThreadsDim[3];
+	int maxGridSize[3];
+	int clockRate;
+	int memoryClockRate;
+	int memoryBusWidth;
+	size_t totalConstMem;
+	int major;
+	int minor;
+	int multiProcessorCount;
+	int l2CacheSize;
+	int maxThreadsPerMultiProcessor;
+	int computeMode;
+	int clockInstructionRate;
+	hipDeviceArch_t arch;
+	int concurrentKernels;
+	int pciDomainID;
+	int pciBusID;
+	int pciDeviceID;
+	size_t maxSharedMemoryPerMultiProcessor;
+	int isMultiGpuBoard;
+	int canMapHostMemory;
+	int gcnArch;
+	char gcnArchName[256];
+	int integrated;
+	int cooperativeLaunch;
+	int cooperativeMultiDeviceLaunch;
+	int maxTexture1DLinear;
+	int maxTexture1D;
+	int maxTexture2D[2];
+	int maxTexture3D[3];
+	unsigned int * hdpMemFlushCntl;
+	unsigned int * hdpRegFlushCntl;
+	size_t memPitch;
+	size_t textureAlignment;
+	size_t texturePitchAlignment;
+	int kernelExecTimeoutEnabled;
+	int ECCEnabled;
+	int tccDriver;
+	int cooperativeMultiDeviceUnmatchedFunc;
+	int cooperativeMultiDeviceUnmatchedGridDim;
+	int cooperativeMultiDeviceUnmatchedBlockDim;
+	int cooperativeMultiDeviceUnmatchedSharedMem;
+	int isLargeBar;
+	int asicRevision;
+	int managedMemory;
+	int directManagedMemAccessFromHost;
+	int concurrentManagedAccess;
+	int pageableMemoryAccess;
+	int pageableMemoryAccessUsesHostPageTables;
+};
+typedef struct hipDeviceProp_t hipDeviceProp_t;
+enum hipMemoryType
+{
+	hipMemoryTypeHost = 0,
+	hipMemoryTypeDevice = 1,
+	hipMemoryTypeArray = 2,
+	hipMemoryTypeUnified = 3,
+	hipMemoryTypeManaged = 4,
+};
+typedef enum hipMemoryType hipMemoryType;
+struct hipPointerAttribute_t
+{
+	union 
+	{
+		enum hipMemoryType memoryType;
+		enum hipMemoryType type;
+	};
+	int device;
+	void * devicePointer;
+	void * hostPointer;
+	int isManaged;
+	unsigned int allocationFlags;
+};
+typedef struct hipPointerAttribute_t hipPointerAttribute_t;
+enum hipError_t
+{
+	hipSuccess = 0,
+	hipErrorInvalidValue = 1,
+	hipErrorOutOfMemory = 2,
+	hipErrorMemoryAllocation = 2,
+	hipErrorNotInitialized = 3,
+	hipErrorInitializationError = 3,
+	hipErrorDeinitialized = 4,
+	hipErrorProfilerDisabled = 5,
+	hipErrorProfilerNotInitialized = 6,
+	hipErrorProfilerAlreadyStarted = 7,
+	hipErrorProfilerAlreadyStopped = 8,
+	hipErrorInvalidConfiguration = 9,
+	hipErrorInvalidPitchValue = 12,
+	hipErrorInvalidSymbol = 13,
+	hipErrorInvalidDevicePointer = 17,
+	hipErrorInvalidMemcpyDirection = 21,
+	hipErrorInsufficientDriver = 35,
+	hipErrorMissingConfiguration = 52,
+	hipErrorPriorLaunchFailure = 53,
+	hipErrorInvalidDeviceFunction = 98,
+	hipErrorNoDevice = 100,
+	hipErrorInvalidDevice = 101,
+	hipErrorInvalidImage = 200,
+	hipErrorInvalidContext = 201,
+	hipErrorContextAlreadyCurrent = 202,
+	hipErrorMapFailed = 205,
+	hipErrorMapBufferObjectFailed = 205,
+	hipErrorUnmapFailed = 206,
+	hipErrorArrayIsMapped = 207,
+	hipErrorAlreadyMapped = 208,
+	hipErrorNoBinaryForGpu = 209,
+	hipErrorAlreadyAcquired = 210,
+	hipErrorNotMapped = 211,
+	hipErrorNotMappedAsArray = 212,
+	hipErrorNotMappedAsPointer = 213,
+	hipErrorECCNotCorrectable = 214,
+	hipErrorUnsupportedLimit = 215,
+	hipErrorContextAlreadyInUse = 216,
+	hipErrorPeerAccessUnsupported = 217,
+	hipErrorInvalidKernelFile = 218,
+	hipErrorInvalidGraphicsContext = 219,
+	hipErrorInvalidSource = 300,
+	hipErrorFileNotFound = 301,
+	hipErrorSharedObjectSymbolNotFound = 302,
+	hipErrorSharedObjectInitFailed = 303,
+	hipErrorOperatingSystem = 304,
+	hipErrorInvalidHandle = 400,
+	hipErrorInvalidResourceHandle = 400,
+	hipErrorIllegalState = 401,
+	hipErrorNotFound = 500,
+	hipErrorNotReady = 600,
+	hipErrorIllegalAddress = 700,
+	hipErrorLaunchOutOfResources = 701,
+	hipErrorLaunchTimeOut = 702,
+	hipErrorPeerAccessAlreadyEnabled = 704,
+	hipErrorPeerAccessNotEnabled = 705,
+	hipErrorSetOnActiveProcess = 708,
+	hipErrorContextIsDestroyed = 709,
+	hipErrorAssert = 710,
+	hipErrorHostMemoryAlreadyRegistered = 712,
+	hipErrorHostMemoryNotRegistered = 713,
+	hipErrorLaunchFailure = 719,
+	hipErrorCooperativeLaunchTooLarge = 720,
+	hipErrorNotSupported = 801,
+	hipErrorStreamCaptureUnsupported = 900,
+	hipErrorStreamCaptureInvalidated = 901,
+	hipErrorStreamCaptureMerge = 902,
+	hipErrorStreamCaptureUnmatched = 903,
+	hipErrorStreamCaptureUnjoined = 904,
+	hipErrorStreamCaptureIsolation = 905,
+	hipErrorStreamCaptureImplicit = 906,
+	hipErrorCapturedEvent = 907,
+	hipErrorStreamCaptureWrongThread = 908,
+	hipErrorGraphExecUpdateFailure = 910,
+	hipErrorUnknown = 999,
+	hipErrorRuntimeMemory = 1052,
+	hipErrorRuntimeOther = 1053,
+	hipErrorTbd = 1054,
+};
+typedef enum hipError_t hipError_t;
+enum hipDeviceAttribute_t
+{
+	hipDeviceAttributeCudaCompatibleBegin = 0,
+	hipDeviceAttributeEccEnabled = 0,
+	hipDeviceAttributeAccessPolicyMaxWindowSize = 1,
+	hipDeviceAttributeAsyncEngineCount = 2,
+	hipDeviceAttributeCanMapHostMemory = 3,
+	hipDeviceAttributeCanUseHostPointerForRegisteredMem = 4,
+	hipDeviceAttributeClockRate = 5,
+	hipDeviceAttributeComputeMode = 6,
+	hipDeviceAttributeComputePreemptionSupported = 7,
+	hipDeviceAttributeConcurrentKernels = 8,
+	hipDeviceAttributeConcurrentManagedAccess = 9,
+	hipDeviceAttributeCooperativeLaunch = 10,
+	hipDeviceAttributeCooperativeMultiDeviceLaunch = 11,
+	hipDeviceAttributeDeviceOverlap = 12,
+	hipDeviceAttributeDirectManagedMemAccessFromHost = 13,
+	hipDeviceAttributeGlobalL1CacheSupported = 14,
+	hipDeviceAttributeHostNativeAtomicSupported = 15,
+	hipDeviceAttributeIntegrated = 16,
+	hipDeviceAttributeIsMultiGpuBoard = 17,
+	hipDeviceAttributeKernelExecTimeout = 18,
+	hipDeviceAttributeL2CacheSize = 19,
+	hipDeviceAttributeLocalL1CacheSupported = 20,
+	hipDeviceAttributeLuid = 21,
+	hipDeviceAttributeLuidDeviceNodeMask = 22,
+	hipDeviceAttributeComputeCapabilityMajor = 23,
+	hipDeviceAttributeManagedMemory = 24,
+	hipDeviceAttributeMaxBlocksPerMultiProcessor = 25,
+	hipDeviceAttributeMaxBlockDimX = 26,
+	hipDeviceAttributeMaxBlockDimY = 27,
+	hipDeviceAttributeMaxBlockDimZ = 28,
+	hipDeviceAttributeMaxGridDimX = 29,
+	hipDeviceAttributeMaxGridDimY = 30,
+	hipDeviceAttributeMaxGridDimZ = 31,
+	hipDeviceAttributeMaxSurface1D = 32,
+	hipDeviceAttributeMaxSurface1DLayered = 33,
+	hipDeviceAttributeMaxSurface2D = 34,
+	hipDeviceAttributeMaxSurface2DLayered = 35,
+	hipDeviceAttributeMaxSurface3D = 36,
+	hipDeviceAttributeMaxSurfaceCubemap = 37,
+	hipDeviceAttributeMaxSurfaceCubemapLayered = 38,
+	hipDeviceAttributeMaxTexture1DWidth = 39,
+	hipDeviceAttributeMaxTexture1DLayered = 40,
+	hipDeviceAttributeMaxTexture1DLinear = 41,
+	hipDeviceAttributeMaxTexture1DMipmap = 42,
+	hipDeviceAttributeMaxTexture2DWidth = 43,
+	hipDeviceAttributeMaxTexture2DHeight = 44,
+	hipDeviceAttributeMaxTexture2DGather = 45,
+	hipDeviceAttributeMaxTexture2DLayered = 46,
+	hipDeviceAttributeMaxTexture2DLinear = 47,
+	hipDeviceAttributeMaxTexture2DMipmap = 48,
+	hipDeviceAttributeMaxTexture3DWidth = 49,
+	hipDeviceAttributeMaxTexture3DHeight = 50,
+	hipDeviceAttributeMaxTexture3DDepth = 51,
+	hipDeviceAttributeMaxTexture3DAlt = 52,
+	hipDeviceAttributeMaxTextureCubemap = 53,
+	hipDeviceAttributeMaxTextureCubemapLayered = 54,
+	hipDeviceAttributeMaxThreadsDim = 55,
+	hipDeviceAttributeMaxThreadsPerBlock = 56,
+	hipDeviceAttributeMaxThreadsPerMultiProcessor = 57,
+	hipDeviceAttributeMaxPitch = 58,
+	hipDeviceAttributeMemoryBusWidth = 59,
+	hipDeviceAttributeMemoryClockRate = 60,
+	hipDeviceAttributeComputeCapabilityMinor = 61,
+	hipDeviceAttributeMultiGpuBoardGroupID = 62,
+	hipDeviceAttributeMultiprocessorCount = 63,
+	hipDeviceAttributeName = 64,
+	hipDeviceAttributePageableMemoryAccess = 65,
+	hipDeviceAttributePageableMemoryAccessUsesHostPageTables = 66,
+	hipDeviceAttributePciBusId = 67,
+	hipDeviceAttributePciDeviceId = 68,
+	hipDeviceAttributePciDomainID = 69,
+	hipDeviceAttributePersistingL2CacheMaxSize = 70,
+	hipDeviceAttributeMaxRegistersPerBlock = 71,
+	hipDeviceAttributeMaxRegistersPerMultiprocessor = 72,
+	hipDeviceAttributeReservedSharedMemPerBlock = 73,
+	hipDeviceAttributeMaxSharedMemoryPerBlock = 74,
+	hipDeviceAttributeSharedMemPerBlockOptin = 75,
+	hipDeviceAttributeSharedMemPerMultiprocessor = 76,
+	hipDeviceAttributeSingleToDoublePrecisionPerfRatio = 77,
+	hipDeviceAttributeStreamPrioritiesSupported = 78,
+	hipDeviceAttributeSurfaceAlignment = 79,
+	hipDeviceAttributeTccDriver = 80,
+	hipDeviceAttributeTextureAlignment = 81,
+	hipDeviceAttributeTexturePitchAlignment = 82,
+	hipDeviceAttributeTotalConstantMemory = 83,
+	hipDeviceAttributeTotalGlobalMem = 84,
+	hipDeviceAttributeUnifiedAddressing = 85,
+	hipDeviceAttributeUuid = 86,
+	hipDeviceAttributeWarpSize = 87,
+	hipDeviceAttributeMemoryPoolsSupported = 88,
+	hipDeviceAttributeVirtualMemoryManagementSupported = 89,
+	hipDeviceAttributeCudaCompatibleEnd = 9999,
+	hipDeviceAttributeAmdSpecificBegin = 10000,
+	hipDeviceAttributeClockInstructionRate = 10000,
+	hipDeviceAttributeArch = 10001,
+	hipDeviceAttributeMaxSharedMemoryPerMultiprocessor = 10002,
+	hipDeviceAttributeGcnArch = 10003,
+	hipDeviceAttributeGcnArchName = 10004,
+	hipDeviceAttributeHdpMemFlushCntl = 10005,
+	hipDeviceAttributeHdpRegFlushCntl = 10006,
+	hipDeviceAttributeCooperativeMultiDeviceUnmatchedFunc = 10007,
+	hipDeviceAttributeCooperativeMultiDeviceUnmatchedGridDim = 10008,
+	hipDeviceAttributeCooperativeMultiDeviceUnmatchedBlockDim = 10009,
+	hipDeviceAttributeCooperativeMultiDeviceUnmatchedSharedMem = 10010,
+	hipDeviceAttributeIsLargeBar = 10011,
+	hipDeviceAttributeAsicRevision = 10012,
+	hipDeviceAttributeCanUseStreamWaitValue = 10013,
+	hipDeviceAttributeImageSupport = 10014,
+	hipDeviceAttributePhysicalMultiProcessorCount = 10015,
+	hipDeviceAttributeFineGrainSupport = 10016,
+	hipDeviceAttributeWallClockRate = 10017,
+	hipDeviceAttributeAmdSpecificEnd = 19999,
+	hipDeviceAttributeVendorSpecificBegin = 20000,
+};
+typedef enum hipDeviceAttribute_t hipDeviceAttribute_t;
+enum hipComputeMode
+{
+	hipComputeModeDefault = 0,
+	hipComputeModeExclusive = 1,
+	hipComputeModeProhibited = 2,
+	hipComputeModeExclusiveProcess = 3,
+};
+typedef void * hipDeviceptr_t;
+enum hipChannelFormatKind
+{
+	hipChannelFormatKindSigned = 0,
+	hipChannelFormatKindUnsigned = 1,
+	hipChannelFormatKindFloat = 2,
+	hipChannelFormatKindNone = 3,
+};
+typedef enum hipChannelFormatKind hipChannelFormatKind;
+struct hipChannelFormatDesc
+{
+	int x;
+	int y;
+	int z;
+	int w;
+	enum hipChannelFormatKind f;
+};
+typedef struct hipChannelFormatDesc hipChannelFormatDesc;
+enum hipArray_Format
+{
+	HIP_AD_FORMAT_UNSIGNED_INT8 = 1,
+	HIP_AD_FORMAT_UNSIGNED_INT16 = 2,
+	HIP_AD_FORMAT_UNSIGNED_INT32 = 3,
+	HIP_AD_FORMAT_SIGNED_INT8 = 8,
+	HIP_AD_FORMAT_SIGNED_INT16 = 9,
+	HIP_AD_FORMAT_SIGNED_INT32 = 10,
+	HIP_AD_FORMAT_HALF = 16,
+	HIP_AD_FORMAT_FLOAT = 32,
+};
+typedef enum hipArray_Format hipArray_Format;
+struct HIP_ARRAY_DESCRIPTOR
+{
+	size_t Width;
+	size_t Height;
+	enum hipArray_Format Format;
+	unsigned int NumChannels;
+};
+typedef struct HIP_ARRAY_DESCRIPTOR HIP_ARRAY_DESCRIPTOR;
+struct HIP_ARRAY3D_DESCRIPTOR
+{
+	size_t Width;
+	size_t Height;
+	size_t Depth;
+	enum hipArray_Format Format;
+	unsigned int NumChannels;
+	unsigned int Flags;
+};
+typedef struct HIP_ARRAY3D_DESCRIPTOR HIP_ARRAY3D_DESCRIPTOR;
+struct hipArray
+{
+	void * data;
+	struct hipChannelFormatDesc desc;
+	unsigned int type;
+	unsigned int width;
+	unsigned int height;
+	unsigned int depth;
+	enum hipArray_Format Format;
+	unsigned int NumChannels;
+	bool isDrv;
+	unsigned int textureType;
+	unsigned int flags;
+};
+typedef struct hipArray hipArray;
+struct hip_Memcpy2D
+{
+	size_t srcXInBytes;
+	size_t srcY;
+	hipMemoryType srcMemoryType;
+	const void * srcHost;
+	hipDeviceptr_t srcDevice;
+	hipArray * srcArray;
+	size_t srcPitch;
+	size_t dstXInBytes;
+	size_t dstY;
+	hipMemoryType dstMemoryType;
+	void * dstHost;
+	hipDeviceptr_t dstDevice;
+	hipArray * dstArray;
+	size_t dstPitch;
+	size_t WidthInBytes;
+	size_t Height;
+};
+typedef struct hip_Memcpy2D hip_Memcpy2D;
+typedef struct hipArray * hipArray_t;
+typedef hipArray_t hiparray;
+typedef const struct hipArray * hipArray_const_t;
+struct hipMipmappedArray
+{
+	void * data;
+	struct hipChannelFormatDesc desc;
+	unsigned int type;
+	unsigned int width;
+	unsigned int height;
+	unsigned int depth;
+	unsigned int min_mipmap_level;
+	unsigned int max_mipmap_level;
+	unsigned int flags;
+	enum hipArray_Format format;
+	unsigned int num_channels;
+};
+typedef struct hipMipmappedArray hipMipmappedArray;
+typedef struct hipMipmappedArray * hipMipmappedArray_t;
+typedef hipMipmappedArray_t hipmipmappedArray;
+typedef const struct hipMipmappedArray * hipMipmappedArray_const_t;
+enum hipResourceType
+{
+	hipResourceTypeArray = 0,
+	hipResourceTypeMipmappedArray = 1,
+	hipResourceTypeLinear = 2,
+	hipResourceTypePitch2D = 3,
+};
+typedef enum hipResourceType hipResourceType;
+enum HIPresourcetype_enum
+{
+	HIP_RESOURCE_TYPE_ARRAY = 0,
+	HIP_RESOURCE_TYPE_MIPMAPPED_ARRAY = 1,
+	HIP_RESOURCE_TYPE_LINEAR = 2,
+	HIP_RESOURCE_TYPE_PITCH2D = 3,
+};
+typedef enum HIPresourcetype_enum HIPresourcetype;
+typedef enum HIPresourcetype_enum hipResourcetype;
+enum HIPaddress_mode_enum
+{
+	HIP_TR_ADDRESS_MODE_WRAP = 0,
+	HIP_TR_ADDRESS_MODE_CLAMP = 1,
+	HIP_TR_ADDRESS_MODE_MIRROR = 2,
+	HIP_TR_ADDRESS_MODE_BORDER = 3,
+};
+typedef enum HIPaddress_mode_enum HIPaddress_mode;
+enum HIPfilter_mode_enum
+{
+	HIP_TR_FILTER_MODE_POINT = 0,
+	HIP_TR_FILTER_MODE_LINEAR = 1,
+};
+typedef enum HIPfilter_mode_enum HIPfilter_mode;
+struct HIP_TEXTURE_DESC_st
+{
+	HIPaddress_mode addressMode[3];
+	HIPfilter_mode filterMode;
+	unsigned int flags;
+	unsigned int maxAnisotropy;
+	HIPfilter_mode mipmapFilterMode;
+	float mipmapLevelBias;
+	float minMipmapLevelClamp;
+	float maxMipmapLevelClamp;
+	float borderColor[4];
+	int reserved[12];
+};
+typedef struct HIP_TEXTURE_DESC_st HIP_TEXTURE_DESC;
+enum hipResourceViewFormat
+{
+	hipResViewFormatNone = 0,
+	hipResViewFormatUnsignedChar1 = 1,
+	hipResViewFormatUnsignedChar2 = 2,
+	hipResViewFormatUnsignedChar4 = 3,
+	hipResViewFormatSignedChar1 = 4,
+	hipResViewFormatSignedChar2 = 5,
+	hipResViewFormatSignedChar4 = 6,
+	hipResViewFormatUnsignedShort1 = 7,
+	hipResViewFormatUnsignedShort2 = 8,
+	hipResViewFormatUnsignedShort4 = 9,
+	hipResViewFormatSignedShort1 = 10,
+	hipResViewFormatSignedShort2 = 11,
+	hipResViewFormatSignedShort4 = 12,
+	hipResViewFormatUnsignedInt1 = 13,
+	hipResViewFormatUnsignedInt2 = 14,
+	hipResViewFormatUnsignedInt4 = 15,
+	hipResViewFormatSignedInt1 = 16,
+	hipResViewFormatSignedInt2 = 17,
+	hipResViewFormatSignedInt4 = 18,
+	hipResViewFormatHalf1 = 19,
+	hipResViewFormatHalf2 = 20,
+	hipResViewFormatHalf4 = 21,
+	hipResViewFormatFloat1 = 22,
+	hipResViewFormatFloat2 = 23,
+	hipResViewFormatFloat4 = 24,
+	hipResViewFormatUnsignedBlockCompressed1 = 25,
+	hipResViewFormatUnsignedBlockCompressed2 = 26,
+	hipResViewFormatUnsignedBlockCompressed3 = 27,
+	hipResViewFormatUnsignedBlockCompressed4 = 28,
+	hipResViewFormatSignedBlockCompressed4 = 29,
+	hipResViewFormatUnsignedBlockCompressed5 = 30,
+	hipResViewFormatSignedBlockCompressed5 = 31,
+	hipResViewFormatUnsignedBlockCompressed6H = 32,
+	hipResViewFormatSignedBlockCompressed6H = 33,
+	hipResViewFormatUnsignedBlockCompressed7 = 34,
+};
+typedef enum hipResourceViewFormat hipResourceViewFormat;
+enum HIPresourceViewFormat_enum
+{
+	HIP_RES_VIEW_FORMAT_NONE = 0,
+	HIP_RES_VIEW_FORMAT_UINT_1X8 = 1,
+	HIP_RES_VIEW_FORMAT_UINT_2X8 = 2,
+	HIP_RES_VIEW_FORMAT_UINT_4X8 = 3,
+	HIP_RES_VIEW_FORMAT_SINT_1X8 = 4,
+	HIP_RES_VIEW_FORMAT_SINT_2X8 = 5,
+	HIP_RES_VIEW_FORMAT_SINT_4X8 = 6,
+	HIP_RES_VIEW_FORMAT_UINT_1X16 = 7,
+	HIP_RES_VIEW_FORMAT_UINT_2X16 = 8,
+	HIP_RES_VIEW_FORMAT_UINT_4X16 = 9,
+	HIP_RES_VIEW_FORMAT_SINT_1X16 = 10,
+	HIP_RES_VIEW_FORMAT_SINT_2X16 = 11,
+	HIP_RES_VIEW_FORMAT_SINT_4X16 = 12,
+	HIP_RES_VIEW_FORMAT_UINT_1X32 = 13,
+	HIP_RES_VIEW_FORMAT_UINT_2X32 = 14,
+	HIP_RES_VIEW_FORMAT_UINT_4X32 = 15,
+	HIP_RES_VIEW_FORMAT_SINT_1X32 = 16,
+	HIP_RES_VIEW_FORMAT_SINT_2X32 = 17,
+	HIP_RES_VIEW_FORMAT_SINT_4X32 = 18,
+	HIP_RES_VIEW_FORMAT_FLOAT_1X16 = 19,
+	HIP_RES_VIEW_FORMAT_FLOAT_2X16 = 20,
+	HIP_RES_VIEW_FORMAT_FLOAT_4X16 = 21,
+	HIP_RES_VIEW_FORMAT_FLOAT_1X32 = 22,
+	HIP_RES_VIEW_FORMAT_FLOAT_2X32 = 23,
+	HIP_RES_VIEW_FORMAT_FLOAT_4X32 = 24,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC1 = 25,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC2 = 26,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC3 = 27,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC4 = 28,
+	HIP_RES_VIEW_FORMAT_SIGNED_BC4 = 29,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC5 = 30,
+	HIP_RES_VIEW_FORMAT_SIGNED_BC5 = 31,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC6H = 32,
+	HIP_RES_VIEW_FORMAT_SIGNED_BC6H = 33,
+	HIP_RES_VIEW_FORMAT_UNSIGNED_BC7 = 34,
+};
+typedef enum HIPresourceViewFormat_enum HIPresourceViewFormat;
+struct hipResourceDesc
+{
+	enum hipResourceType resType;
+	union 
+	{
+		struct 
+		{
+			hipArray_t array;
+		}array;
+		struct 
+		{
+			hipMipmappedArray_t mipmap;
+		}mipmap;
+		struct 
+		{
+			void * devPtr;
+			struct hipChannelFormatDesc desc;
+			size_t sizeInBytes;
+		}linear;
+		struct 
+		{
+			void * devPtr;
+			struct hipChannelFormatDesc desc;
+			size_t width;
+			size_t height;
+			size_t pitchInBytes;
+		}pitch2D;
+	}res;
+};
+typedef struct hipResourceDesc hipResourceDesc;
+struct HIP_RESOURCE_DESC_st
+{
+	HIPresourcetype resType;
+	union 
+	{
+		struct 
+		{
+			hipArray_t hArray;
+		}array;
+		struct 
+		{
+			hipMipmappedArray_t hMipmappedArray;
+		}mipmap;
+		struct 
+		{
+			hipDeviceptr_t devPtr;
+			hipArray_Format format;
+			unsigned int numChannels;
+			size_t sizeInBytes;
+		}linear;
+		struct 
+		{
+			hipDeviceptr_t devPtr;
+			hipArray_Format format;
+			unsigned int numChannels;
+			size_t width;
+			size_t height;
+			size_t pitchInBytes;
+		}pitch2D;
+		struct 
+		{
+			int reserved[32];
+		}reserved;
+	}res;
+	unsigned int flags;
+};
+typedef struct HIP_RESOURCE_DESC_st HIP_RESOURCE_DESC;
+struct hipResourceViewDesc
+{
+	enum hipResourceViewFormat format;
+	size_t width;
+	size_t height;
+	size_t depth;
+	unsigned int firstMipmapLevel;
+	unsigned int lastMipmapLevel;
+	unsigned int firstLayer;
+	unsigned int lastLayer;
+};
+struct HIP_RESOURCE_VIEW_DESC_st
+{
+	HIPresourceViewFormat format;
+	size_t width;
+	size_t height;
+	size_t depth;
+	unsigned int firstMipmapLevel;
+	unsigned int lastMipmapLevel;
+	unsigned int firstLayer;
+	unsigned int lastLayer;
+	unsigned int reserved[16];
+};
+typedef struct HIP_RESOURCE_VIEW_DESC_st HIP_RESOURCE_VIEW_DESC;
+enum hipMemcpyKind
+{
+	hipMemcpyHostToHost = 0,
+	hipMemcpyHostToDevice = 1,
+	hipMemcpyDeviceToHost = 2,
+	hipMemcpyDeviceToDevice = 3,
+	hipMemcpyDefault = 4,
+};
+typedef enum hipMemcpyKind hipMemcpyKind;
+struct hipPitchedPtr
+{
+	void * ptr;
+	size_t pitch;
+	size_t xsize;
+	size_t ysize;
+};
+typedef struct hipPitchedPtr hipPitchedPtr;
+struct hipExtent
+{
+	size_t width;
+	size_t height;
+	size_t depth;
+};
+typedef struct hipExtent hipExtent;
+struct hipPos
+{
+	size_t x;
+	size_t y;
+	size_t z;
+};
+typedef struct hipPos hipPos;
+struct hipMemcpy3DParms
+{
+	hipArray_t srcArray;
+	struct hipPos srcPos;
+	struct hipPitchedPtr srcPtr;
+	hipArray_t dstArray;
+	struct hipPos dstPos;
+	struct hipPitchedPtr dstPtr;
+	struct hipExtent extent;
+	enum hipMemcpyKind kind;
+};
+typedef struct hipMemcpy3DParms hipMemcpy3DParms;
+struct HIP_MEMCPY3D
+{
+	unsigned int srcXInBytes;
+	unsigned int srcY;
+	unsigned int srcZ;
+	unsigned int srcLOD;
+	hipMemoryType srcMemoryType;
+	const void * srcHost;
+	hipDeviceptr_t srcDevice;
+	hipArray_t srcArray;
+	unsigned int srcPitch;
+	unsigned int srcHeight;
+	unsigned int dstXInBytes;
+	unsigned int dstY;
+	unsigned int dstZ;
+	unsigned int dstLOD;
+	hipMemoryType dstMemoryType;
+	void * dstHost;
+	hipDeviceptr_t dstDevice;
+	hipArray_t dstArray;
+	unsigned int dstPitch;
+	unsigned int dstHeight;
+	unsigned int WidthInBytes;
+	unsigned int Height;
+	unsigned int Depth;
+};
+typedef struct HIP_MEMCPY3D HIP_MEMCPY3D;
+enum hipFunction_attribute
+{
+	HIP_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK = 0,
+	HIP_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES = 1,
+	HIP_FUNC_ATTRIBUTE_CONST_SIZE_BYTES = 2,
+	HIP_FUNC_ATTRIBUTE_LOCAL_SIZE_BYTES = 3,
+	HIP_FUNC_ATTRIBUTE_NUM_REGS = 4,
+	HIP_FUNC_ATTRIBUTE_PTX_VERSION = 5,
+	HIP_FUNC_ATTRIBUTE_BINARY_VERSION = 6,
+	HIP_FUNC_ATTRIBUTE_CACHE_MODE_CA = 7,
+	HIP_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES = 8,
+	HIP_FUNC_ATTRIBUTE_PREFERRED_SHARED_MEMORY_CARVEOUT = 9,
+	HIP_FUNC_ATTRIBUTE_MAX = 10,
+};
+typedef enum hipFunction_attribute hipFunction_attribute;
+enum hipPointer_attribute
+{
+	HIP_POINTER_ATTRIBUTE_CONTEXT = 1,
+	HIP_POINTER_ATTRIBUTE_MEMORY_TYPE = 2,
+	HIP_POINTER_ATTRIBUTE_DEVICE_POINTER = 3,
+	HIP_POINTER_ATTRIBUTE_HOST_POINTER = 4,
+	HIP_POINTER_ATTRIBUTE_P2P_TOKENS = 5,
+	HIP_POINTER_ATTRIBUTE_SYNC_MEMOPS = 6,
+	HIP_POINTER_ATTRIBUTE_BUFFER_ID = 7,
+	HIP_POINTER_ATTRIBUTE_IS_MANAGED = 8,
+	HIP_POINTER_ATTRIBUTE_DEVICE_ORDINAL = 9,
+	HIP_POINTER_ATTRIBUTE_IS_LEGACY_HIP_IPC_CAPABLE = 10,
+	HIP_POINTER_ATTRIBUTE_RANGE_START_ADDR = 11,
+	HIP_POINTER_ATTRIBUTE_RANGE_SIZE = 12,
+	HIP_POINTER_ATTRIBUTE_MAPPED = 13,
+	HIP_POINTER_ATTRIBUTE_ALLOWED_HANDLE_TYPES = 14,
+	HIP_POINTER_ATTRIBUTE_IS_GPU_DIRECT_RDMA_CAPABLE = 15,
+	HIP_POINTER_ATTRIBUTE_ACCESS_FLAGS = 16,
+	HIP_POINTER_ATTRIBUTE_MEMPOOL_HANDLE = 17,
+};
+typedef enum hipPointer_attribute hipPointer_attribute;
+struct __hip_texture;
+typedef struct __hip_texture * hipTextureObject_t;
+enum hipTextureAddressMode
+{
+	hipAddressModeWrap = 0,
+	hipAddressModeClamp = 1,
+	hipAddressModeMirror = 2,
+	hipAddressModeBorder = 3,
+};
+enum hipTextureFilterMode
+{
+	hipFilterModePoint = 0,
+	hipFilterModeLinear = 1,
+};
+enum hipTextureReadMode
+{
+	hipReadModeElementType = 0,
+	hipReadModeNormalizedFloat = 1,
+};
+struct textureReference
+{
+	int normalized;
+	enum hipTextureReadMode readMode;
+	enum hipTextureFilterMode filterMode;
+	enum hipTextureAddressMode addressMode[3];
+	struct hipChannelFormatDesc channelDesc;
+	int sRGB;
+	unsigned int maxAnisotropy;
+	enum hipTextureFilterMode mipmapFilterMode;
+	float mipmapLevelBias;
+	float minMipmapLevelClamp;
+	float maxMipmapLevelClamp;
+	hipTextureObject_t textureObject;
+	int numChannels;
+	enum hipArray_Format format;
+};
+typedef struct textureReference textureReference;
+struct hipTextureDesc
+{
+	enum hipTextureAddressMode addressMode[3];
+	enum hipTextureFilterMode filterMode;
+	enum hipTextureReadMode readMode;
+	int sRGB;
+	float borderColor[4];
+	int normalizedCoords;
+	unsigned int maxAnisotropy;
+	enum hipTextureFilterMode mipmapFilterMode;
+	float mipmapLevelBias;
+	float minMipmapLevelClamp;
+	float maxMipmapLevelClamp;
+};
+typedef struct hipTextureDesc hipTextureDesc;
+struct __hip_surface;
+typedef struct __hip_surface * hipSurfaceObject_t;
+struct surfaceReference
+{
+	hipSurfaceObject_t surfaceObject;
+};
+enum hipSurfaceBoundaryMode
+{
+	hipBoundaryModeZero = 0,
+	hipBoundaryModeTrap = 1,
+	hipBoundaryModeClamp = 2,
+};
+struct ihipCtx_t;
+typedef struct ihipCtx_t * hipCtx_t;
+typedef int hipDevice_t;
+enum hipDeviceP2PAttr
+{
+	hipDevP2PAttrPerformanceRank = 0,
+	hipDevP2PAttrAccessSupported = 1,
+	hipDevP2PAttrNativeAtomicSupported = 2,
+	hipDevP2PAttrHipArrayAccessSupported = 3,
+};
+typedef enum hipDeviceP2PAttr hipDeviceP2PAttr;
+struct ihipStream_t;
+typedef struct ihipStream_t * hipStream_t;
+struct hipIpcMemHandle_st
+{
+	char reserved[64];
+};
+typedef struct hipIpcMemHandle_st hipIpcMemHandle_t;
+struct hipIpcEventHandle_st
+{
+	char reserved[64];
+};
+typedef struct hipIpcEventHandle_st hipIpcEventHandle_t;
+struct ihipModule_t;
+typedef struct ihipModule_t * hipModule_t;
+struct ihipModuleSymbol_t;
+typedef struct ihipModuleSymbol_t * hipFunction_t;
+struct ihipMemPoolHandle_t;
+typedef struct ihipMemPoolHandle_t * hipMemPool_t;
+struct hipFuncAttributes
+{
+	int binaryVersion;
+	int cacheModeCA;
+	size_t constSizeBytes;
+	size_t localSizeBytes;
+	int maxDynamicSharedSizeBytes;
+	int maxThreadsPerBlock;
+	int numRegs;
+	int preferredShmemCarveout;
+	int ptxVersion;
+	size_t sharedSizeBytes;
+};
+typedef struct hipFuncAttributes hipFuncAttributes;
+struct ihipEvent_t;
+typedef struct ihipEvent_t * hipEvent_t;
+enum hipLimit_t
+{
+	hipLimitStackSize = 0,
+	hipLimitPrintfFifoSize = 1,
+	hipLimitMallocHeapSize = 2,
+	hipLimitRange = 3,
+};
+enum hipMemoryAdvise
+{
+	hipMemAdviseSetReadMostly = 1,
+	hipMemAdviseUnsetReadMostly = 2,
+	hipMemAdviseSetPreferredLocation = 3,
+	hipMemAdviseUnsetPreferredLocation = 4,
+	hipMemAdviseSetAccessedBy = 5,
+	hipMemAdviseUnsetAccessedBy = 6,
+	hipMemAdviseSetCoarseGrain = 100,
+	hipMemAdviseUnsetCoarseGrain = 101,
+};
+typedef enum hipMemoryAdvise hipMemoryAdvise;
+enum hipMemRangeCoherencyMode
+{
+	hipMemRangeCoherencyModeFineGrain = 0,
+	hipMemRangeCoherencyModeCoarseGrain = 1,
+	hipMemRangeCoherencyModeIndeterminate = 2,
+};
+typedef enum hipMemRangeCoherencyMode hipMemRangeCoherencyMode;
+enum hipMemRangeAttribute
+{
+	hipMemRangeAttributeReadMostly = 1,
+	hipMemRangeAttributePreferredLocation = 2,
+	hipMemRangeAttributeAccessedBy = 3,
+	hipMemRangeAttributeLastPrefetchLocation = 4,
+	hipMemRangeAttributeCoherencyMode = 100,
+};
+typedef enum hipMemRangeAttribute hipMemRangeAttribute;
+enum hipMemPoolAttr
+{
+	hipMemPoolReuseFollowEventDependencies = 1,
+	hipMemPoolReuseAllowOpportunistic = 2,
+	hipMemPoolReuseAllowInternalDependencies = 3,
+	hipMemPoolAttrReleaseThreshold = 4,
+	hipMemPoolAttrReservedMemCurrent = 5,
+	hipMemPoolAttrReservedMemHigh = 6,
+	hipMemPoolAttrUsedMemCurrent = 7,
+	hipMemPoolAttrUsedMemHigh = 8,
+};
+typedef enum hipMemPoolAttr hipMemPoolAttr;
+enum hipMemLocationType
+{
+	hipMemLocationTypeInvalid = 0,
+	hipMemLocationTypeDevice = 1,
+};
+typedef enum hipMemLocationType hipMemLocationType;
+struct hipMemLocation
+{
+	hipMemLocationType type;
+	int id;
+};
+typedef struct hipMemLocation hipMemLocation;
+enum hipMemAccessFlags
+{
+	hipMemAccessFlagsProtNone = 0,
+	hipMemAccessFlagsProtRead = 1,
+	hipMemAccessFlagsProtReadWrite = 3,
+};
+typedef enum hipMemAccessFlags hipMemAccessFlags;
+struct hipMemAccessDesc
+{
+	hipMemLocation location;
+	hipMemAccessFlags flags;
+};
+typedef struct hipMemAccessDesc hipMemAccessDesc;
+enum hipMemAllocationType
+{
+	hipMemAllocationTypeInvalid = 0,
+	hipMemAllocationTypePinned = 1,
+	hipMemAllocationTypeMax = 2147483647,
+};
+typedef enum hipMemAllocationType hipMemAllocationType;
+enum hipMemAllocationHandleType
+{
+	hipMemHandleTypeNone = 0,
+	hipMemHandleTypePosixFileDescriptor = 1,
+	hipMemHandleTypeWin32 = 2,
+	hipMemHandleTypeWin32Kmt = 4,
+};
+typedef enum hipMemAllocationHandleType hipMemAllocationHandleType;
+struct hipMemPoolProps
+{
+	hipMemAllocationType allocType;
+	hipMemAllocationHandleType handleTypes;
+	hipMemLocation location;
+	void * win32SecurityAttributes;
+	unsigned char reserved[64];
+};
+typedef struct hipMemPoolProps hipMemPoolProps;
+struct hipMemPoolPtrExportData
+{
+	unsigned char reserved[64];
+};
+typedef struct hipMemPoolPtrExportData hipMemPoolPtrExportData;
+enum hipJitOption
+{
+	hipJitOptionMaxRegisters = 0,
+	hipJitOptionThreadsPerBlock = 1,
+	hipJitOptionWallTime = 2,
+	hipJitOptionInfoLogBuffer = 3,
+	hipJitOptionInfoLogBufferSizeBytes = 4,
+	hipJitOptionErrorLogBuffer = 5,
+	hipJitOptionErrorLogBufferSizeBytes = 6,
+	hipJitOptionOptimizationLevel = 7,
+	hipJitOptionTargetFromContext = 8,
+	hipJitOptionTarget = 9,
+	hipJitOptionFallbackStrategy = 10,
+	hipJitOptionGenerateDebugInfo = 11,
+	hipJitOptionLogVerbose = 12,
+	hipJitOptionGenerateLineInfo = 13,
+	hipJitOptionCacheMode = 14,
+	hipJitOptionSm3xOpt = 15,
+	hipJitOptionFastCompile = 16,
+	hipJitOptionNumOptions = 17,
+};
+typedef enum hipJitOption hipJitOption;
+enum hipFuncAttribute
+{
+	hipFuncAttributeMaxDynamicSharedMemorySize = 8,
+	hipFuncAttributePreferredSharedMemoryCarveout = 9,
+	hipFuncAttributeMax = 10,
+};
+typedef enum hipFuncAttribute hipFuncAttribute;
+enum hipFuncCache_t
+{
+	hipFuncCachePreferNone = 0,
+	hipFuncCachePreferShared = 1,
+	hipFuncCachePreferL1 = 2,
+	hipFuncCachePreferEqual = 3,
+};
+typedef enum hipFuncCache_t hipFuncCache_t;
+enum hipSharedMemConfig
+{
+	hipSharedMemBankSizeDefault = 0,
+	hipSharedMemBankSizeFourByte = 1,
+	hipSharedMemBankSizeEightByte = 2,
+};
+typedef enum hipSharedMemConfig hipSharedMemConfig;
+struct dim3
+{
+	uint32_t x;
+	uint32_t y;
+	uint32_t z;
+};
+typedef struct dim3 dim3;
+struct hipLaunchParams_t
+{
+	void * func;
+	dim3 gridDim;
+	dim3 blockDim;
+	void ** args;
+	size_t sharedMem;
+	hipStream_t stream;
+};
+typedef struct hipLaunchParams_t hipLaunchParams;
+struct hipFunctionLaunchParams_t
+{
+	hipFunction_t function;
+	unsigned int gridDimX;
+	unsigned int gridDimY;
+	unsigned int gridDimZ;
+	unsigned int blockDimX;
+	unsigned int blockDimY;
+	unsigned int blockDimZ;
+	unsigned int sharedMemBytes;
+	hipStream_t hStream;
+	void ** kernelParams;
+};
+typedef struct hipFunctionLaunchParams_t hipFunctionLaunchParams;
+enum hipExternalMemoryHandleType_enum
+{
+	hipExternalMemoryHandleTypeOpaqueFd = 1,
+	hipExternalMemoryHandleTypeOpaqueWin32 = 2,
+	hipExternalMemoryHandleTypeOpaqueWin32Kmt = 3,
+	hipExternalMemoryHandleTypeD3D12Heap = 4,
+	hipExternalMemoryHandleTypeD3D12Resource = 5,
+	hipExternalMemoryHandleTypeD3D11Resource = 6,
+	hipExternalMemoryHandleTypeD3D11ResourceKmt = 7,
+};
+typedef enum hipExternalMemoryHandleType_enum hipExternalMemoryHandleType;
+struct hipExternalMemoryHandleDesc_st
+{
+	hipExternalMemoryHandleType type;
+	union 
+	{
+		int fd;
+		struct 
+		{
+			void * handle;
+			const void * name;
+		}win32;
+	}handle;
+	unsigned long long size;
+	unsigned int flags;
+};
+typedef struct hipExternalMemoryHandleDesc_st hipExternalMemoryHandleDesc;
+struct hipExternalMemoryBufferDesc_st
+{
+	unsigned long long offset;
+	unsigned long long size;
+	unsigned int flags;
+};
+typedef struct hipExternalMemoryBufferDesc_st hipExternalMemoryBufferDesc;
+typedef void * hipExternalMemory_t;
+enum hipExternalSemaphoreHandleType_enum
+{
+	hipExternalSemaphoreHandleTypeOpaqueFd = 1,
+	hipExternalSemaphoreHandleTypeOpaqueWin32 = 2,
+	hipExternalSemaphoreHandleTypeOpaqueWin32Kmt = 3,
+	hipExternalSemaphoreHandleTypeD3D12Fence = 4,
+};
+typedef enum hipExternalSemaphoreHandleType_enum hipExternalSemaphoreHandleType;
+struct hipExternalSemaphoreHandleDesc_st
+{
+	hipExternalSemaphoreHandleType type;
+	union 
+	{
+		int fd;
+		struct 
+		{
+			void * handle;
+			const void * name;
+		}win32;
+	}handle;
+	unsigned int flags;
+};
+typedef struct hipExternalSemaphoreHandleDesc_st hipExternalSemaphoreHandleDesc;
+typedef void * hipExternalSemaphore_t;
+struct hipExternalSemaphoreSignalParams_st
+{
+	struct 
+	{
+		struct 
+		{
+			unsigned long long value;
+		}fence;
+		struct 
+		{
+			unsigned long long key;
+		}keyedMutex;
+		unsigned int reserved[12];
+	}params;
+	unsigned int flags;
+	unsigned int reserved[16];
+};
+typedef struct hipExternalSemaphoreSignalParams_st hipExternalSemaphoreSignalParams;
+struct hipExternalSemaphoreWaitParams_st
+{
+	struct 
+	{
+		struct 
+		{
+			unsigned long long value;
+		}fence;
+		struct 
+		{
+			unsigned long long key;
+			unsigned int timeoutMs;
+		}keyedMutex;
+		unsigned int reserved[10];
+	}params;
+	unsigned int flags;
+	unsigned int reserved[16];
+};
+typedef struct hipExternalSemaphoreWaitParams_st hipExternalSemaphoreWaitParams;
+enum hipGLDeviceList
+{
+	hipGLDeviceListAll = 1,
+	hipGLDeviceListCurrentFrame = 2,
+	hipGLDeviceListNextFrame = 3,
+};
+typedef enum hipGLDeviceList hipGLDeviceList;
+enum hipGraphicsRegisterFlags
+{
+	hipGraphicsRegisterFlagsNone = 0,
+	hipGraphicsRegisterFlagsReadOnly = 1,
+	hipGraphicsRegisterFlagsWriteDiscard = 2,
+	hipGraphicsRegisterFlagsSurfaceLoadStore = 4,
+	hipGraphicsRegisterFlagsTextureGather = 8,
+};
+typedef enum hipGraphicsRegisterFlags hipGraphicsRegisterFlags;
+struct _hipGraphicsResource;
+typedef struct _hipGraphicsResource hipGraphicsResource;
+typedef hipGraphicsResource * hipGraphicsResource_t;
+struct ihipGraph;
+typedef struct ihipGraph * hipGraph_t;
+struct hipGraphNode;
+typedef struct hipGraphNode * hipGraphNode_t;
+struct hipGraphExec;
+typedef struct hipGraphExec * hipGraphExec_t;
+struct hipUserObject;
+typedef struct hipUserObject * hipUserObject_t;
+enum hipGraphNodeType
+{
+	hipGraphNodeTypeKernel = 0,
+	hipGraphNodeTypeMemcpy = 1,
+	hipGraphNodeTypeMemset = 2,
+	hipGraphNodeTypeHost = 3,
+	hipGraphNodeTypeGraph = 4,
+	hipGraphNodeTypeEmpty = 5,
+	hipGraphNodeTypeWaitEvent = 6,
+	hipGraphNodeTypeEventRecord = 7,
+	hipGraphNodeTypeExtSemaphoreSignal = 8,
+	hipGraphNodeTypeExtSemaphoreWait = 9,
+	hipGraphNodeTypeMemAlloc = 10,
+	hipGraphNodeTypeMemFree = 11,
+	hipGraphNodeTypeMemcpyFromSymbol = 12,
+	hipGraphNodeTypeMemcpyToSymbol = 13,
+	hipGraphNodeTypeCount = 14,
+};
+typedef enum hipGraphNodeType hipGraphNodeType;
+typedef void (*hipHostFn_t)(void *);
+struct hipHostNodeParams
+{
+	hipHostFn_t fn;
+	void * userData;
+};
+typedef struct hipHostNodeParams hipHostNodeParams;
+struct hipKernelNodeParams
+{
+	dim3 blockDim;
+	void ** extra;
+	void * func;
+	dim3 gridDim;
+	void ** kernelParams;
+	unsigned int sharedMemBytes;
+};
+typedef struct hipKernelNodeParams hipKernelNodeParams;
+struct hipMemsetParams
+{
+	void * dst;
+	unsigned int elementSize;
+	size_t height;
+	size_t pitch;
+	unsigned int value;
+	size_t width;
+};
+typedef struct hipMemsetParams hipMemsetParams;
+struct hipMemAllocNodeParams
+{
+	hipMemPoolProps poolProps;
+	const hipMemAccessDesc * accessDescs;
+	size_t accessDescCount;
+	size_t bytesize;
+	void * dptr;
+};
+typedef struct hipMemAllocNodeParams hipMemAllocNodeParams;
+enum hipKernelNodeAttrID
+{
+	hipKernelNodeAttributeAccessPolicyWindow = 1,
+	hipKernelNodeAttributeCooperative = 2,
+};
+typedef enum hipKernelNodeAttrID hipKernelNodeAttrID;
+enum hipAccessProperty
+{
+	hipAccessPropertyNormal = 0,
+	hipAccessPropertyStreaming = 1,
+	hipAccessPropertyPersisting = 2,
+};
+typedef enum hipAccessProperty hipAccessProperty;
+struct hipAccessPolicyWindow
+{
+	void * base_ptr;
+	hipAccessProperty hitProp;
+	float hitRatio;
+	hipAccessProperty missProp;
+	size_t num_bytes;
+};
+typedef struct hipAccessPolicyWindow hipAccessPolicyWindow;
+union hipKernelNodeAttrValue
+{
+	hipAccessPolicyWindow accessPolicyWindow;
+	int cooperative;
+};
+typedef union hipKernelNodeAttrValue hipKernelNodeAttrValue;
+enum hipGraphExecUpdateResult
+{
+	hipGraphExecUpdateSuccess = 0,
+	hipGraphExecUpdateError = 1,
+	hipGraphExecUpdateErrorTopologyChanged = 2,
+	hipGraphExecUpdateErrorNodeTypeChanged = 3,
+	hipGraphExecUpdateErrorFunctionChanged = 4,
+	hipGraphExecUpdateErrorParametersChanged = 5,
+	hipGraphExecUpdateErrorNotSupported = 6,
+	hipGraphExecUpdateErrorUnsupportedFunctionChange = 7,
+};
+typedef enum hipGraphExecUpdateResult hipGraphExecUpdateResult;
+enum hipStreamCaptureMode
+{
+	hipStreamCaptureModeGlobal = 0,
+	hipStreamCaptureModeThreadLocal = 1,
+	hipStreamCaptureModeRelaxed = 2,
+};
+typedef enum hipStreamCaptureMode hipStreamCaptureMode;
+enum hipStreamCaptureStatus
+{
+	hipStreamCaptureStatusNone = 0,
+	hipStreamCaptureStatusActive = 1,
+	hipStreamCaptureStatusInvalidated = 2,
+};
+typedef enum hipStreamCaptureStatus hipStreamCaptureStatus;
+enum hipStreamUpdateCaptureDependenciesFlags
+{
+	hipStreamAddCaptureDependencies = 0,
+	hipStreamSetCaptureDependencies = 1,
+};
+typedef enum hipStreamUpdateCaptureDependenciesFlags hipStreamUpdateCaptureDependenciesFlags;
+enum hipGraphMemAttributeType
+{
+	hipGraphMemAttrUsedMemCurrent = 0,
+	hipGraphMemAttrUsedMemHigh = 1,
+	hipGraphMemAttrReservedMemCurrent = 2,
+	hipGraphMemAttrReservedMemHigh = 3,
+};
+typedef enum hipGraphMemAttributeType hipGraphMemAttributeType;
+enum hipUserObjectFlags
+{
+	hipUserObjectNoDestructorSync = 1,
+};
+typedef enum hipUserObjectFlags hipUserObjectFlags;
+enum hipUserObjectRetainFlags
+{
+	hipGraphUserObjectMove = 1,
+};
+typedef enum hipUserObjectRetainFlags hipUserObjectRetainFlags;
+enum hipGraphInstantiateFlags
+{
+	hipGraphInstantiateFlagAutoFreeOnLaunch = 1,
+	hipGraphInstantiateFlagUpload = 2,
+	hipGraphInstantiateFlagDeviceLaunch = 4,
+	hipGraphInstantiateFlagUseNodePriority = 8,
+};
+typedef enum hipGraphInstantiateFlags hipGraphInstantiateFlags;
+enum hipGraphDebugDotFlags
+{
+	hipGraphDebugDotFlagsVerbose = 1,
+	hipGraphDebugDotFlagsKernelNodeParams = 4,
+	hipGraphDebugDotFlagsMemcpyNodeParams = 8,
+	hipGraphDebugDotFlagsMemsetNodeParams = 16,
+	hipGraphDebugDotFlagsHostNodeParams = 32,
+	hipGraphDebugDotFlagsEventNodeParams = 64,
+	hipGraphDebugDotFlagsExtSemasSignalNodeParams = 128,
+	hipGraphDebugDotFlagsExtSemasWaitNodeParams = 256,
+	hipGraphDebugDotFlagsKernelNodeAttributes = 512,
+	hipGraphDebugDotFlagsHandles = 1024,
+};
+struct hipMemAllocationProp
+{
+	hipMemAllocationType type;
+	hipMemAllocationHandleType requestedHandleType;
+	hipMemLocation location;
+	void * win32HandleMetaData;
+	struct 
+	{
+		unsigned char compressionType;
+		unsigned char gpuDirectRDMACapable;
+		unsigned short usage;
+	}allocFlags;
+};
+typedef struct hipMemAllocationProp hipMemAllocationProp;
+struct hipExternalSemaphoreSignalNodeParams
+{
+	hipExternalSemaphore_t * extSemArray;
+	const hipExternalSemaphoreSignalParams * paramsArray;
+	unsigned int numExtSems;
+};
+typedef struct hipExternalSemaphoreSignalNodeParams hipExternalSemaphoreSignalNodeParams;
+struct hipExternalSemaphoreWaitNodeParams
+{
+	hipExternalSemaphore_t * extSemArray;
+	const hipExternalSemaphoreWaitParams * paramsArray;
+	unsigned int numExtSems;
+};
+typedef struct hipExternalSemaphoreWaitNodeParams hipExternalSemaphoreWaitNodeParams;
+struct ihipMemGenericAllocationHandle;
+typedef struct ihipMemGenericAllocationHandle * hipMemGenericAllocationHandle_t;
+enum hipMemAllocationGranularity_flags
+{
+	hipMemAllocationGranularityMinimum = 0,
+	hipMemAllocationGranularityRecommended = 1,
+};
+typedef enum hipMemAllocationGranularity_flags hipMemAllocationGranularity_flags;
+enum hipMemHandleType
+{
+	hipMemHandleTypeGeneric = 0,
+};
+typedef enum hipMemHandleType hipMemHandleType;
+enum hipMemOperationType
+{
+	hipMemOperationTypeMap = 1,
+	hipMemOperationTypeUnmap = 2,
+};
+typedef enum hipMemOperationType hipMemOperationType;
+enum hipArraySparseSubresourceType
+{
+	hipArraySparseSubresourceTypeSparseLevel = 0,
+	hipArraySparseSubresourceTypeMiptail = 1,
+};
+typedef enum hipArraySparseSubresourceType hipArraySparseSubresourceType;
+struct hipArrayMapInfo
+{
+	hipResourceType resourceType;
+	union 
+	{
+		hipMipmappedArray mipmap;
+		hipArray_t array;
+	}resource;
+	hipArraySparseSubresourceType subresourceType;
+	union 
+	{
+		struct 
+		{
+			unsigned int level;
+			unsigned int layer;
+			unsigned int offsetX;
+			unsigned int offsetY;
+			unsigned int offsetZ;
+			unsigned int extentWidth;
+			unsigned int extentHeight;
+			unsigned int extentDepth;
+		}sparseLevel;
+		struct 
+		{
+			unsigned int layer;
+			unsigned long long offset;
+			unsigned long long size;
+		}miptail;
+	}subresource;
+	hipMemOperationType memOperationType;
+	hipMemHandleType memHandleType;
+	union 
+	{
+		hipMemGenericAllocationHandle_t memHandle;
+	}memHandle;
+	unsigned long long offset;
+	unsigned int deviceBitMask;
+	unsigned int flags;
+	unsigned int reserved[2];
+};
+typedef struct hipArrayMapInfo hipArrayMapInfo;
+typedef void (*hipStreamCallback_t)(hipStream_t, hipError_t, void *);
 typedef unsigned int GLuint;
-typedef int GLint;
-
-typedef enum HIPGLDeviceList_enum {
-  HIP_GL_DEVICE_LIST_ALL = 0x01,
-  HIP_GL_DEVICE_LIST_CURRENT_FRAME = 0x02,
-  HIP_GL_DEVICE_LIST_NEXT_FRAME = 0x03,
-} HIPGLDeviceList;
-
-typedef enum HIPGLmap_flags_enum {
-  HIP_GL_MAP_RESOURCE_FLAGS_NONE = 0x00,
-  HIP_GL_MAP_RESOURCE_FLAGS_READ_ONLY = 0x01,
-  HIP_GL_MAP_RESOURCE_FLAGS_WRITE_DISCARD = 0x02,
-} HIPGLmap_flags;
-
-typedef enum hipExternalMemoryHandleType_enum {
-  hipExternalMemoryHandleTypeOpaqueFd = 1,
-  hipExternalMemoryHandleTypeOpaqueWin32 = 2,
-  hipExternalMemoryHandleTypeOpaqueWin32Kmt = 3,
-  hipExternalMemoryHandleTypeD3D12Heap = 4,
-  hipExternalMemoryHandleTypeD3D12Resource = 5,
-  hipExternalMemoryHandleTypeD3D11Resource = 6,
-  hipExternalMemoryHandleTypeD3D11ResourceKmt = 7,
-} hipExternalMemoryHandleType;
-typedef struct hipExternalMemoryHandleDesc_st {
-  hipExternalMemoryHandleType type;
-  union {
-    int fd;
-    struct {
-      void *handle;
-      const void *name;
-    } win32;
-  } handle;
-  unsigned long long size;
-  unsigned int flags;
-} hipExternalMemoryHandleDesc;
-typedef struct hipExternalMemoryBufferDesc_st {
-  unsigned long long offset;
-  unsigned long long size;
-  unsigned int flags;
-} hipExternalMemoryBufferDesc;
-
-/**
-* hipRTC related
-*/
-typedef struct _hiprtcProgram* hiprtcProgram;
-
-typedef enum hiprtcResult {
+typedef unsigned int GLenum;
+enum hiprtcResult
+{
 	HIPRTC_SUCCESS = 0,
 	HIPRTC_ERROR_OUT_OF_MEMORY = 1,
 	HIPRTC_ERROR_PROGRAM_CREATION_FAILURE = 2,
@@ -1104,360 +1554,988 @@ typedef enum hiprtcResult {
 	HIPRTC_ERROR_NO_LOWERED_NAMES_BEFORE_COMPILATION = 9,
 	HIPRTC_ERROR_NAME_EXPRESSION_NOT_VALID = 10,
 	HIPRTC_ERROR_INTERNAL_ERROR = 11,
-	HIPRTC_ERROR_LINKING = 100
-} hiprtcResult;
-
-typedef enum hiprtcJIT_option
+	HIPRTC_ERROR_LINKING = 100,
+};
+typedef enum hiprtcResult hiprtcResult;
+enum hiprtcJIT_option
 {
 	HIPRTC_JIT_MAX_REGISTERS = 0,
-	HIPRTC_JIT_THREADS_PER_BLOCK,
-	HIPRTC_JIT_WALL_TIME,
-	HIPRTC_JIT_INFO_LOG_BUFFER,
-	HIPRTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES,
-	HIPRTC_JIT_ERROR_LOG_BUFFER,
-	HIPRTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES,
-	HIPRTC_JIT_OPTIMIZATION_LEVEL,
-	HIPRTC_JIT_TARGET_FROM_HIPCONTEXT,
-	HIPRTC_JIT_TARGET,
-	HIPRTC_JIT_FALLBACK_STRATEGY,
-	HIPRTC_JIT_GENERATE_DEBUG_INFO,
-	HIPRTC_JIT_LOG_VERBOSE,
-	HIPRTC_JIT_GENERATE_LINE_INFO,
-	HIPRTC_JIT_CACHE_MODE,
-	HIPRTC_JIT_NEW_SM3X_OPT,
-	HIPRTC_JIT_FAST_COMPILE,
-	HIPRTC_JIT_GLOBAL_SYMBOL_NAMES,
-	HIPRTC_JIT_GLOBAL_SYMBOL_ADDRESS,
-	HIPRTC_JIT_GLOBAL_SYMBOL_COUNT,
-	HIPRTC_JIT_LTO,
-	HIPRTC_JIT_FTZ,
-	HIPRTC_JIT_PREC_DIV,
-	HIPRTC_JIT_PREC_SQRT,
-	HIPRTC_JIT_FMA,
-	HIPRTC_JIT_NUM_OPTIONS,
-} hiprtcJIT_option;
-
-typedef enum hiprtcJITInputType
+	HIPRTC_JIT_THREADS_PER_BLOCK = 1,
+	HIPRTC_JIT_WALL_TIME = 2,
+	HIPRTC_JIT_INFO_LOG_BUFFER = 3,
+	HIPRTC_JIT_INFO_LOG_BUFFER_SIZE_BYTES = 4,
+	HIPRTC_JIT_ERROR_LOG_BUFFER = 5,
+	HIPRTC_JIT_ERROR_LOG_BUFFER_SIZE_BYTES = 6,
+	HIPRTC_JIT_OPTIMIZATION_LEVEL = 7,
+	HIPRTC_JIT_TARGET_FROM_HIPCONTEXT = 8,
+	HIPRTC_JIT_TARGET = 9,
+	HIPRTC_JIT_FALLBACK_STRATEGY = 10,
+	HIPRTC_JIT_GENERATE_DEBUG_INFO = 11,
+	HIPRTC_JIT_LOG_VERBOSE = 12,
+	HIPRTC_JIT_GENERATE_LINE_INFO = 13,
+	HIPRTC_JIT_CACHE_MODE = 14,
+	HIPRTC_JIT_NEW_SM3X_OPT = 15,
+	HIPRTC_JIT_FAST_COMPILE = 16,
+	HIPRTC_JIT_GLOBAL_SYMBOL_NAMES = 17,
+	HIPRTC_JIT_GLOBAL_SYMBOL_ADDRESS = 18,
+	HIPRTC_JIT_GLOBAL_SYMBOL_COUNT = 19,
+	HIPRTC_JIT_LTO = 20,
+	HIPRTC_JIT_FTZ = 21,
+	HIPRTC_JIT_PREC_DIV = 22,
+	HIPRTC_JIT_PREC_SQRT = 23,
+	HIPRTC_JIT_FMA = 24,
+	HIPRTC_JIT_NUM_OPTIONS = 25,
+	HIPRTC_JIT_IR_TO_ISA_OPT_EXT = 10000,
+	HIPRTC_JIT_IR_TO_ISA_OPT_COUNT_EXT = 10001,
+};
+typedef enum hiprtcJIT_option hiprtcJIT_option;
+enum hiprtcJITInputType
 {
 	HIPRTC_JIT_INPUT_CUBIN = 0,
-	HIPRTC_JIT_INPUT_PTX,
-	HIPRTC_JIT_INPUT_FATBINARY,
-	HIPRTC_JIT_INPUT_OBJECT,
-	HIPRTC_JIT_INPUT_LIBRARY,
-	HIPRTC_JIT_INPUT_NVVM,
-	HIPRTC_JIT_NUM_LEGACY_INPUT_TYPES,
+	HIPRTC_JIT_INPUT_PTX = 1,
+	HIPRTC_JIT_INPUT_FATBINARY = 2,
+	HIPRTC_JIT_INPUT_OBJECT = 3,
+	HIPRTC_JIT_INPUT_LIBRARY = 4,
+	HIPRTC_JIT_INPUT_NVVM = 5,
+	HIPRTC_JIT_NUM_LEGACY_INPUT_TYPES = 6,
 	HIPRTC_JIT_INPUT_LLVM_BITCODE = 100,
 	HIPRTC_JIT_INPUT_LLVM_BUNDLED_BITCODE = 101,
 	HIPRTC_JIT_INPUT_LLVM_ARCHIVES_OF_BUNDLED_BITCODE = 102,
-	HIPRTC_JIT_NUM_INPUT_TYPES = ( HIPRTC_JIT_NUM_LEGACY_INPUT_TYPES + 3 )
-} hiprtcJITInputType;
+	HIPRTC_JIT_NUM_INPUT_TYPES = 9,
+};
+typedef enum hiprtcJITInputType hiprtcJITInputType;
+struct ihiprtcLinkState;
+typedef struct ihiprtcLinkState * hiprtcLinkState;
+struct _hiprtcProgram;
+typedef struct _hiprtcProgram * hiprtcProgram;
 
-typedef struct ihiprtcLinkState* hiprtcLinkState;
-
-/* Function types. */
-typedef hipError_t HIPAPI thipGetErrorName(hipError_t error, const char** pStr);
-typedef const char* HIPAPI thipGetErrorString(hipError_t error);
-typedef hipError_t HIPAPI thipGetLastError(hipError_t error);
-typedef hipError_t HIPAPI thipInit(unsigned int Flags);
-typedef hipError_t HIPAPI thipDriverGetVersion(int* driverVersion);
-typedef hipError_t HIPAPI thipGetDevice(int* device);
-typedef hipError_t HIPAPI thipGetDeviceCount(int* count);
-typedef hipError_t HIPAPI thipGetDeviceProperties(hipDeviceProp_t* props, int deviceId);
-typedef hipError_t HIPAPI thipDeviceGet(hipDevice_t* device, int ordinal);
-typedef hipError_t HIPAPI thipDeviceGetName(char* name, int len, hipDevice_t dev);
-typedef hipError_t HIPAPI thipDeviceGetAttribute(int* pi, hipDeviceAttribute_t attrib, hipDevice_t dev);
-typedef hipError_t HIPAPI thipDeviceGetLimit(size_t* pValue, enum hipLimit_t limit);
-typedef hipError_t HIPAPI thipDeviceSetLimit(enum hipLimit_t limit, size_t value);
-typedef hipError_t HIPAPI thipDeviceComputeCapability(int* major, int* minor, hipDevice_t dev);
-typedef hipError_t HIPAPI thipDevicePrimaryCtxRetain(hipCtx_t* pctx, hipDevice_t dev);
-typedef hipError_t HIPAPI thipDevicePrimaryCtxRelease(hipDevice_t dev);
-typedef hipError_t HIPAPI thipDevicePrimaryCtxSetFlags(hipDevice_t dev, unsigned int flags);
-typedef hipError_t HIPAPI thipDevicePrimaryCtxGetState(hipDevice_t dev, unsigned int* flags, int* active);
-typedef hipError_t HIPAPI thipDevicePrimaryCtxReset(hipDevice_t dev);
-typedef hipError_t HIPAPI thipCtxCreate(hipCtx_t* pctx, unsigned int flags, hipDevice_t dev);
+typedef hipError_t HIPAPI t__hipPopCallConfiguration(dim3 * gridDim, dim3 * blockDim, size_t * sharedMem, hipStream_t * stream);
+typedef hipError_t HIPAPI t__hipPushCallConfiguration(dim3 gridDim, dim3 blockDim, size_t sharedMem, hipStream_t stream);
+typedef const char * HIPAPI thipApiName(uint32_t id);
+typedef hipError_t HIPAPI thipArray3DCreate(hipArray ** array, const HIP_ARRAY3D_DESCRIPTOR * pAllocateArray);
+typedef hipError_t HIPAPI thipArray3DGetDescriptor(HIP_ARRAY3D_DESCRIPTOR * pArrayDescriptor, hipArray * array);
+typedef hipError_t HIPAPI thipArrayCreate(hipArray ** pHandle, const HIP_ARRAY_DESCRIPTOR * pAllocateArray);
+typedef hipError_t HIPAPI thipArrayDestroy(hipArray * array);
+typedef hipError_t HIPAPI thipArrayGetDescriptor(HIP_ARRAY_DESCRIPTOR * pArrayDescriptor, hipArray * array);
+typedef hipError_t HIPAPI thipArrayGetInfo(hipChannelFormatDesc * desc, hipExtent * extent, unsigned int * flags, hipArray * array);
+typedef hipError_t HIPAPI thipBindTexture(size_t * offset, const textureReference * tex, const void * devPtr, const hipChannelFormatDesc * desc, size_t size);
+typedef hipError_t HIPAPI thipBindTexture2D(size_t * offset, const textureReference * tex, const void * devPtr, const hipChannelFormatDesc * desc, size_t width, size_t height, size_t pitch);
+typedef hipError_t HIPAPI thipBindTextureToArray(const textureReference * tex, hipArray_const_t array, const hipChannelFormatDesc * desc);
+typedef hipError_t HIPAPI thipBindTextureToMipmappedArray(const textureReference * tex, hipMipmappedArray_const_t mipmappedArray, const hipChannelFormatDesc * desc);
+typedef hipError_t HIPAPI thipChooseDevice(int * device, const hipDeviceProp_t * prop);
+typedef hipError_t HIPAPI thipConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, hipStream_t stream);
+typedef struct hipChannelFormatDesc HIPAPI thipCreateChannelDesc(int x, int y, int z, int w, enum hipChannelFormatKind f);
+typedef hipError_t HIPAPI thipCreateSurfaceObject(hipSurfaceObject_t * pSurfObject, const hipResourceDesc * pResDesc);
+typedef hipError_t HIPAPI thipCreateTextureObject(hipTextureObject_t * pTexObject, const hipResourceDesc * pResDesc, const hipTextureDesc * pTexDesc, const struct hipResourceViewDesc * pResViewDesc);
+typedef hipError_t HIPAPI thipCtxCreate(hipCtx_t * ctx, unsigned int flags, hipDevice_t device);
 typedef hipError_t HIPAPI thipCtxDestroy(hipCtx_t ctx);
+typedef hipError_t HIPAPI thipCtxDisablePeerAccess(hipCtx_t peerCtx);
+typedef hipError_t HIPAPI thipCtxEnablePeerAccess(hipCtx_t peerCtx, unsigned int flags);
+typedef hipError_t HIPAPI thipCtxGetApiVersion(hipCtx_t ctx, int * apiVersion);
+typedef hipError_t HIPAPI thipCtxGetCacheConfig(hipFuncCache_t * cacheConfig);
+typedef hipError_t HIPAPI thipCtxGetCurrent(hipCtx_t * ctx);
+typedef hipError_t HIPAPI thipCtxGetDevice(hipDevice_t * device);
+typedef hipError_t HIPAPI thipCtxGetFlags(unsigned int * flags);
+typedef hipError_t HIPAPI thipCtxGetSharedMemConfig(hipSharedMemConfig * pConfig);
+typedef hipError_t HIPAPI thipCtxPopCurrent(hipCtx_t * ctx);
 typedef hipError_t HIPAPI thipCtxPushCurrent(hipCtx_t ctx);
-typedef hipError_t HIPAPI thipCtxPopCurrent(hipCtx_t* pctx);
+typedef hipError_t HIPAPI thipCtxSetCacheConfig(hipFuncCache_t cacheConfig);
 typedef hipError_t HIPAPI thipCtxSetCurrent(hipCtx_t ctx);
-typedef hipError_t HIPAPI thipCtxGetCurrent(hipCtx_t* pctx);
-typedef hipError_t HIPAPI thipCtxGetDevice(hipDevice_t* device);
-typedef hipError_t HIPAPI thipCtxGetFlags(unsigned int* flags);
-typedef hipError_t HIPAPI thipCtxSynchronize(void);
-typedef hipError_t HIPAPI thipDeviceSynchronize(void);
-typedef hipError_t HIPAPI thipCtxGetCacheConfig(hipFuncCache_t* pconfig);
-typedef hipError_t HIPAPI thipCtxSetCacheConfig(hipFuncCache_t config);
-typedef hipError_t HIPAPI thipCtxGetSharedMemConfig(hipSharedMemConfig* pConfig);
 typedef hipError_t HIPAPI thipCtxSetSharedMemConfig(hipSharedMemConfig config);
-typedef hipError_t HIPAPI thipCtxGetApiVersion(hipCtx_t ctx, unsigned int* version);
-typedef hipError_t HIPAPI thipModuleLoad(hipModule_t* module, const char* fname);
-typedef hipError_t HIPAPI thipModuleLoadData(hipModule_t* module, const void* image);
-typedef hipError_t HIPAPI thipModuleLoadDataEx(hipModule_t* module, const void* image, unsigned int numOptions, hipJitOption* options, void** optionValues);
-typedef hipError_t HIPAPI thipModuleUnload(hipModule_t hmod);
-typedef hipError_t HIPAPI thipModuleGetFunction(hipFunction_t* hfunc, hipModule_t hmod, const char* name);
-typedef hipError_t HIPAPI thipModuleGetGlobal(hipDeviceptr_t* dptr, size_t* bytes, hipModule_t hmod, const char* name);
-typedef hipError_t HIPAPI thipModuleGetTexRef(textureReference** pTexRef, hipModule_t hmod, const char* name);
-typedef hipError_t HIPAPI thipMemGetInfo(size_t* free, size_t* total);
-typedef hipError_t HIPAPI thipMalloc(hipDeviceptr_t* dptr, size_t bytesize);
-typedef hipError_t HIPAPI thipMemAllocPitch(hipDeviceptr_t* dptr, size_t* pPitch, size_t WidthInBytes, size_t Height, unsigned int ElementSizeBytes);
-typedef hipError_t HIPAPI thipFree(hipDeviceptr_t dptr);
-typedef hipError_t HIPAPI thipMemGetAddressRange(hipDeviceptr_t* pbase, size_t* psize, hipDeviceptr_t dptr);
-typedef hipError_t HIPAPI thipHostMalloc(void** pp, size_t bytesize, unsigned int flags);
-typedef hipError_t HIPAPI thipHostFree(void* p);
-typedef hipError_t HIPAPI thipMemHostAlloc(void** pp, size_t bytesize, unsigned int Flags);
-typedef hipError_t HIPAPI thipHostRegister(void* p, size_t bytesize, unsigned int Flags);
-typedef hipError_t HIPAPI thipHostGetDevicePointer(hipDeviceptr_t* pdptr, void* p, unsigned int Flags);
-typedef hipError_t HIPAPI thipHostGetFlags(unsigned int* pFlags, void* p);
-typedef hipError_t HIPAPI thipMallocManaged(hipDeviceptr_t* dptr, size_t bytesize, unsigned int flags);
-typedef hipError_t HIPAPI thipDeviceGetByPCIBusId(hipDevice_t* dev, const char* pciBusId);
-typedef hipError_t HIPAPI thipDeviceGetPCIBusId(char* pciBusId, int len, hipDevice_t dev);
-typedef hipError_t HIPAPI thipHostUnregister(void* p);
-typedef hipError_t HIPAPI thipMemcpy(void* dst, const void* src, size_t ByteCount, hipMemcpyKind kind);
-typedef hipError_t HIPAPI thipMemcpyPeer(hipDeviceptr_t dstDevice, hipCtx_t dstContext, hipDeviceptr_t srcDevice, hipCtx_t srcContext, size_t ByteCount);
-typedef hipError_t HIPAPI thipMemcpyHtoD(hipDeviceptr_t dstDevice, void* srcHost, size_t ByteCount);
-typedef hipError_t HIPAPI thipMemcpyDtoH(void* dstHost, hipDeviceptr_t srcDevice, size_t ByteCount);
-typedef hipError_t HIPAPI thipMemcpyDtoD(hipDeviceptr_t dstDevice, hipDeviceptr_t srcDevice, size_t ByteCount);
-typedef hipError_t HIPAPI thipDrvMemcpy2DUnaligned(const hip_Memcpy2D* pCopy);
-typedef hipError_t HIPAPI thipMemcpyParam2D(const hip_Memcpy2D* pCopy);
-typedef hipError_t HIPAPI thipDrvMemcpy3D(const HIP_MEMCPY3D* pCopy);
-typedef hipError_t HIPAPI thipMemcpyHtoDAsync(hipDeviceptr_t dstDevice, const void* srcHost, size_t ByteCount, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemcpyDtoHAsync(void* dstHost, hipDeviceptr_t srcDevice, size_t ByteCount, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemcpyDtoDAsync(hipDeviceptr_t dstDevice, hipDeviceptr_t srcDevice, size_t ByteCount, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemcpyParam2DAsync(const hip_Memcpy2D* pCopy, hipStream_t hStream);
-typedef hipError_t HIPAPI thipDrvMemcpy3DAsync(const HIP_MEMCPY3D* pCopy, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemset(void* dstDevice, int value, size_t sizeBytes);
-typedef hipError_t HIPAPI thipMemsetD8(hipDeviceptr_t dstDevice, unsigned char uc, size_t N);
-typedef hipError_t HIPAPI thipMemsetD16(hipDeviceptr_t dstDevice, unsigned short us, size_t N);
-typedef hipError_t HIPAPI thipMemsetD32(hipDeviceptr_t dstDevice, unsigned int ui, size_t N);
-typedef hipError_t HIPAPI thipMemsetD8Async(hipDeviceptr_t dstDevice, unsigned char uc, size_t N, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemsetD16Async(hipDeviceptr_t dstDevice, unsigned short us, size_t N, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemsetD32Async(hipDeviceptr_t dstDevice, unsigned int ui, size_t N, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemsetD2D8Async(hipDeviceptr_t dstDevice, size_t dstPitch, unsigned char uc, size_t Width, size_t Height, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemsetD2D16Async(hipDeviceptr_t dstDevice, size_t dstPitch, unsigned short us, size_t Width, size_t Height, hipStream_t hStream);
-typedef hipError_t HIPAPI thipMemsetD2D32Async(hipDeviceptr_t dstDevice, size_t dstPitch, unsigned int ui, size_t Width, size_t Height, hipStream_t hStream);
-typedef hipError_t HIPAPI thipArrayCreate(hArray ** pHandle, const HIP_ARRAY_DESCRIPTOR* pAllocateArray);
-typedef hipError_t HIPAPI thipArrayDestroy(hArray hArray);
-typedef hipError_t HIPAPI thipArray3DCreate(hArray * pHandle, const HIP_ARRAY3D_DESCRIPTOR* pAllocateArray);
-typedef hipError_t HIPAPI thipPointerGetAttributes(hipPointerAttribute_t* attributes, const void* ptr);
-typedef hipError_t HIPAPI thipStreamCreate(hipStream_t* phStream);
-typedef hipError_t HIPAPI thipStreamCreateWithFlags(hipStream_t* phStream, unsigned int Flags);
-typedef hipError_t HIPAPI thipStreamCreateWithPriority(hipStream_t* phStream, unsigned int flags, int priority);
-typedef hipError_t HIPAPI thipStreamGetPriority(hipStream_t hStream, int* priority);
-typedef hipError_t HIPAPI thipStreamGetFlags(hipStream_t hStream, unsigned int* flags);
-typedef hipError_t HIPAPI thipStreamWaitEvent(hipStream_t hStream, hipEvent_t hEvent, unsigned int Flags);
-typedef hipError_t HIPAPI thipStreamAddCallback(hipStream_t hStream, hipStreamCallback_t callback, void* userData, unsigned int flags);
-typedef hipError_t HIPAPI thipStreamQuery(hipStream_t hStream);
-typedef hipError_t HIPAPI thipStreamSynchronize(hipStream_t hStream);
-typedef hipError_t HIPAPI thipStreamDestroy(hipStream_t hStream);
-typedef hipError_t HIPAPI thipEventCreateWithFlags(hipEvent_t* phEvent, unsigned int Flags);
-typedef hipError_t HIPAPI thipEventRecord(hipEvent_t hEvent, hipStream_t hStream);
-typedef hipError_t HIPAPI thipEventQuery(hipEvent_t hEvent);
-typedef hipError_t HIPAPI thipEventSynchronize(hipEvent_t hEvent);
-typedef hipError_t HIPAPI thipEventDestroy(hipEvent_t hEvent);
-typedef hipError_t HIPAPI thipEventElapsedTime(float* pMilliseconds, hipEvent_t hStart, hipEvent_t hEnd);
-typedef hipError_t HIPAPI thipFuncGetAttribute(int* pi, hipFunction_attribute attrib, hipFunction_t hfunc);
-typedef hipError_t HIPAPI thipFuncSetCacheConfig(hipFunction_t hfunc, hipFuncCache_t config);
-typedef hipError_t HIPAPI thipModuleLaunchKernel(hipFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, hipStream_t hStream, void** kernelParams, void** extra);
-typedef hipError_t HIPAPI thipDrvOccupancyMaxActiveBlocksPerMultiprocessor(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize);
-typedef hipError_t HIPAPI thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int* numBlocks, hipFunction_t func, int blockSize, size_t dynamicSMemSize, unsigned int flags);
-typedef hipError_t HIPAPI thipModuleOccupancyMaxPotentialBlockSize(int* minGridSize, int* blockSize, hipFunction_t func, size_t dynamicSMemSize, int blockSizeLimit);
-typedef hipError_t HIPAPI thipTexRefSetArray(hipTexRef hTexRef, hArray * hArray, unsigned int Flags);
-typedef hipError_t HIPAPI thipTexRefSetAddress(size_t* ByteOffset, hipTexRef hTexRef, hipDeviceptr_t dptr, size_t bytes);
-typedef hipError_t HIPAPI thipTexRefSetAddress2D(hipTexRef hTexRef, const HIP_ARRAY_DESCRIPTOR* desc, hipDeviceptr_t dptr, size_t Pitch);
-typedef hipError_t HIPAPI thipTexRefSetFormat(hipTexRef hTexRef, hipArray_Format fmt, int NumPackedComponents);
-typedef hipError_t HIPAPI thipTexRefSetAddressMode(hipTexRef hTexRef, int dim, hipTextureAddressMode am);
-typedef hipError_t HIPAPI thipTexRefSetFilterMode(hipTexRef hTexRef, hipTextureFilterMode fm);
-typedef hipError_t HIPAPI thipTexRefSetFlags(hipTexRef hTexRef, unsigned int Flags);
-typedef hipError_t HIPAPI thipTexRefGetAddress(hipDeviceptr_t* pdptr, hipTexRef hTexRef);
-typedef hipError_t HIPAPI thipTexRefGetArray(hArray ** phArray, hipTexRef hTexRef);
-typedef hipError_t HIPAPI thipTexRefGetAddressMode(hipTextureAddressMode* pam, hipTexRef hTexRef, int dim);
-typedef hipError_t HIPAPI thipTexObjectCreate(hipTextureObject_t* pTexObject, const hipResourceDesc* pResDesc, const hipTextureDesc* pTexDesc, const HIP_RESOURCE_VIEW_DESC* pResViewDesc);
-typedef hipError_t HIPAPI thipTexObjectDestroy(hipTextureObject_t texObject);
-typedef hipError_t HIPAPI thipDeviceCanAccessPeer(int* canAccessPeer, hipDevice_t dev, hipDevice_t peerDev);
-typedef hipError_t HIPAPI thipCtxEnablePeerAccess(hipCtx_t peerContext, unsigned int Flags);
-typedef hipError_t HIPAPI thipCtxDisablePeerAccess(hipCtx_t peerContext);
-typedef hipError_t HIPAPI thipDeviceGetP2PAttribute(int* value, hipDeviceP2PAttr attrib, hipDevice_t srcDevice, hipDevice_t dstDevice);
-typedef hipError_t HIPAPI thipGraphicsUnregisterResource(hipGraphicsResource resource);
-typedef hipError_t HIPAPI thipGraphicsResourceGetMappedMipmappedArray(hipMipmappedArray_t* pMipmappedArray, hipGraphicsResource resource);
-typedef hipError_t HIPAPI thipGraphicsResourceGetMappedPointer(hipDeviceptr_t* pDevPtr, size_t* pSize, hipGraphicsResource resource);
-typedef hipError_t HIPAPI thipGraphicsMapResources(unsigned int count, hipGraphicsResource* resources, hipStream_t hStream);
-typedef hipError_t HIPAPI thipGraphicsUnmapResources(unsigned int count, hipGraphicsResource* resources, hipStream_t hStream);
-typedef hipError_t HIPAPI thipGraphicsGLRegisterBuffer(hipGraphicsResource* pCudaResource, GLuint buffer, unsigned int Flags);
-typedef hipError_t HIPAPI thipGLGetDevices(unsigned int* pHipDeviceCount, int* pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
-typedef hipError_t HIPAPI thipImportExternalMemory(hipExternalMemory_t* extMem_out, const hipExternalMemoryHandleDesc* memHandleDesc);
-typedef hipError_t HIPAPI thipExternalMemoryGetMappedBuffer(void **devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc *bufferDesc);
+typedef hipError_t HIPAPI thipCtxSynchronize();
 typedef hipError_t HIPAPI thipDestroyExternalMemory(hipExternalMemory_t extMem);
-typedef const char* HIPAPI thiprtcGetErrorString(hiprtcResult result);
-typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char* name_expression);
-typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char** options);
-typedef hiprtcResult HIPAPI thiprtcCreateProgram(hiprtcProgram* prog, const char* src, const char* name, int numHeaders, const char** headers, const char** includeNames);
-typedef hiprtcResult HIPAPI thiprtcDestroyProgram(hiprtcProgram* prog);
-typedef hiprtcResult HIPAPI thiprtcGetLoweredName(hiprtcProgram prog, const char* name_expression, const char** lowered_name);
-typedef hiprtcResult HIPAPI thiprtcGetProgramLog(hiprtcProgram prog, char* log);
-typedef hiprtcResult HIPAPI thiprtcGetProgramLogSize(hiprtcProgram prog, size_t* logSizeRet);
-typedef hiprtcResult HIPAPI thiprtcGetBitcode( hiprtcProgram prog, char* bitcode );
-typedef hiprtcResult HIPAPI thiprtcGetBitcodeSize( hiprtcProgram prog, size_t* bitcodeSizeRet );
-typedef hiprtcResult HIPAPI thiprtcGetCode(hiprtcProgram prog, char* code);
-typedef hiprtcResult HIPAPI thiprtcGetCodeSize(hiprtcProgram prog, size_t* codeSizeRet);
-typedef hiprtcResult HIPAPI thiprtcLinkCreate( unsigned int num_options, hiprtcJIT_option* option_ptr, void** option_vals_pptr, hiprtcLinkState* hip_link_state_ptr );
-typedef hiprtcResult HIPAPI thiprtcLinkAddFile( hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, const char* file_path, unsigned int num_options, hiprtcJIT_option* options_ptr, void** option_values );
-typedef hiprtcResult HIPAPI thiprtcLinkAddData( hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, void* image, size_t image_size, const char* name, unsigned int num_options, hiprtcJIT_option* options_ptr, void** option_values );
-typedef hiprtcResult HIPAPI thiprtcLinkComplete( hiprtcLinkState hip_link_state, void** bin_out, size_t* size_out );
-typedef hiprtcResult HIPAPI thiprtcLinkDestroy( hiprtcLinkState hip_link_state );
+typedef hipError_t HIPAPI thipDestroyExternalSemaphore(hipExternalSemaphore_t extSem);
+typedef hipError_t HIPAPI thipDestroySurfaceObject(hipSurfaceObject_t surfaceObject);
+typedef hipError_t HIPAPI thipDestroyTextureObject(hipTextureObject_t textureObject);
+typedef hipError_t HIPAPI thipDeviceCanAccessPeer(int * canAccessPeer, int deviceId, int peerDeviceId);
+typedef hipError_t HIPAPI thipDeviceComputeCapability(int * major, int * minor, hipDevice_t device);
+typedef hipError_t HIPAPI thipDeviceDisablePeerAccess(int peerDeviceId);
+typedef hipError_t HIPAPI thipDeviceEnablePeerAccess(int peerDeviceId, unsigned int flags);
+typedef hipError_t HIPAPI thipDeviceGet(hipDevice_t * device, int ordinal);
+typedef hipError_t HIPAPI thipDeviceGetAttribute(int * pi, hipDeviceAttribute_t attr, int deviceId);
+typedef hipError_t HIPAPI thipDeviceGetByPCIBusId(int * device, const char * pciBusId);
+typedef hipError_t HIPAPI thipDeviceGetCacheConfig(hipFuncCache_t * cacheConfig);
+typedef hipError_t HIPAPI thipDeviceGetDefaultMemPool(hipMemPool_t * mem_pool, int device);
+typedef hipError_t HIPAPI thipDeviceGetGraphMemAttribute(int device, hipGraphMemAttributeType attr, void * value);
+typedef hipError_t HIPAPI thipDeviceGetLimit(size_t * pValue, enum hipLimit_t limit);
+typedef hipError_t HIPAPI thipDeviceGetMemPool(hipMemPool_t * mem_pool, int device);
+typedef hipError_t HIPAPI thipDeviceGetName(char * name, int len, hipDevice_t device);
+typedef hipError_t HIPAPI thipDeviceGetP2PAttribute(int * value, hipDeviceP2PAttr attr, int srcDevice, int dstDevice);
+typedef hipError_t HIPAPI thipDeviceGetPCIBusId(char * pciBusId, int len, int device);
+typedef hipError_t HIPAPI thipDeviceGetSharedMemConfig(hipSharedMemConfig * pConfig);
+typedef hipError_t HIPAPI thipDeviceGetStreamPriorityRange(int * leastPriority, int * greatestPriority);
+typedef hipError_t HIPAPI thipDeviceGetUuid(hipUUID * uuid, hipDevice_t device);
+typedef hipError_t HIPAPI thipDeviceGraphMemTrim(int device);
+typedef hipError_t HIPAPI thipDevicePrimaryCtxGetState(hipDevice_t dev, unsigned int * flags, int * active);
+typedef hipError_t HIPAPI thipDevicePrimaryCtxRelease(hipDevice_t dev);
+typedef hipError_t HIPAPI thipDevicePrimaryCtxReset(hipDevice_t dev);
+typedef hipError_t HIPAPI thipDevicePrimaryCtxRetain(hipCtx_t * pctx, hipDevice_t dev);
+typedef hipError_t HIPAPI thipDevicePrimaryCtxSetFlags(hipDevice_t dev, unsigned int flags);
+typedef hipError_t HIPAPI thipDeviceReset();
+typedef hipError_t HIPAPI thipDeviceSetCacheConfig(hipFuncCache_t cacheConfig);
+typedef hipError_t HIPAPI thipDeviceSetGraphMemAttribute(int device, hipGraphMemAttributeType attr, void * value);
+typedef hipError_t HIPAPI thipDeviceSetLimit(enum hipLimit_t limit, size_t value);
+typedef hipError_t HIPAPI thipDeviceSetMemPool(int device, hipMemPool_t mem_pool);
+typedef hipError_t HIPAPI thipDeviceSetSharedMemConfig(hipSharedMemConfig config);
+typedef hipError_t HIPAPI thipDeviceSynchronize();
+typedef hipError_t HIPAPI thipDeviceTotalMem(size_t * bytes, hipDevice_t device);
+typedef hipError_t HIPAPI thipDriverGetVersion(int * driverVersion);
+typedef hipError_t HIPAPI thipDrvGetErrorName(hipError_t hipError, const char ** errorString);
+typedef hipError_t HIPAPI thipDrvGetErrorString(hipError_t hipError, const char ** errorString);
+typedef hipError_t HIPAPI thipDrvMemcpy2DUnaligned(const hip_Memcpy2D * pCopy);
+typedef hipError_t HIPAPI thipDrvMemcpy3D(const HIP_MEMCPY3D * pCopy);
+typedef hipError_t HIPAPI thipDrvMemcpy3DAsync(const HIP_MEMCPY3D * pCopy, hipStream_t stream);
+typedef hipError_t HIPAPI thipDrvPointerGetAttributes(unsigned int numAttributes, hipPointer_attribute * attributes, void ** data, hipDeviceptr_t ptr);
+typedef hipError_t HIPAPI thipEventCreate(hipEvent_t * event);
+typedef hipError_t HIPAPI thipEventCreateWithFlags(hipEvent_t * event, unsigned int flags);
+typedef hipError_t HIPAPI thipEventDestroy(hipEvent_t event);
+typedef hipError_t HIPAPI thipEventElapsedTime(float * ms, hipEvent_t start, hipEvent_t stop);
+typedef hipError_t HIPAPI thipEventQuery(hipEvent_t event);
+typedef hipError_t HIPAPI thipEventRecord(hipEvent_t event, hipStream_t stream);
+typedef hipError_t HIPAPI thipEventRecord_spt(hipEvent_t event, hipStream_t stream);
+typedef hipError_t HIPAPI thipEventSynchronize(hipEvent_t event);
+typedef hipError_t HIPAPI thipExtGetLinkTypeAndHopCount(int device1, int device2, uint32_t * linktype, uint32_t * hopcount);
+typedef hipError_t HIPAPI thipExtLaunchKernel(const void * function_address, dim3 numBlocks, dim3 dimBlocks, void ** args, size_t sharedMemBytes, hipStream_t stream, hipEvent_t startEvent, hipEvent_t stopEvent, int flags);
+typedef hipError_t HIPAPI thipExtLaunchMultiKernelMultiDevice(hipLaunchParams * launchParamsList, int numDevices, unsigned int flags);
+typedef hipError_t HIPAPI thipExtMallocWithFlags(void ** ptr, size_t sizeBytes, unsigned int flags);
+typedef hipError_t HIPAPI thipExtStreamCreateWithCUMask(hipStream_t * stream, uint32_t cuMaskSize, const uint32_t * cuMask);
+typedef hipError_t HIPAPI thipExtStreamGetCUMask(hipStream_t stream, uint32_t cuMaskSize, uint32_t * cuMask);
+typedef hipError_t HIPAPI thipExternalMemoryGetMappedBuffer(void ** devPtr, hipExternalMemory_t extMem, const hipExternalMemoryBufferDesc * bufferDesc);
+typedef hipError_t HIPAPI thipFree(void * ptr);
+typedef hipError_t HIPAPI thipFreeArray(hipArray * array);
+typedef hipError_t HIPAPI thipFreeAsync(void * dev_ptr, hipStream_t stream);
+typedef hipError_t HIPAPI thipFreeHost(void * ptr);
+typedef hipError_t HIPAPI thipFreeMipmappedArray(hipMipmappedArray_t mipmappedArray);
+typedef hipError_t HIPAPI thipFuncGetAttribute(int * value, hipFunction_attribute attrib, hipFunction_t hfunc);
+typedef hipError_t HIPAPI thipFuncGetAttributes(struct hipFuncAttributes * attr, const void * func);
+typedef hipError_t HIPAPI thipFuncSetAttribute(const void * func, hipFuncAttribute attr, int value);
+typedef hipError_t HIPAPI thipFuncSetCacheConfig(const void * func, hipFuncCache_t config);
+typedef hipError_t HIPAPI thipFuncSetSharedMemConfig(const void * func, hipSharedMemConfig config);
+typedef hipError_t HIPAPI thipGLGetDevices(unsigned int * pHipDeviceCount, int * pHipDevices, unsigned int hipDeviceCount, hipGLDeviceList deviceList);
+typedef hipError_t HIPAPI thipGetChannelDesc(hipChannelFormatDesc * desc, hipArray_const_t array);
+typedef hipError_t HIPAPI thipGetDevice(int * deviceId);
+typedef hipError_t HIPAPI thipGetDeviceCount(int * count);
+typedef hipError_t HIPAPI thipGetDeviceFlags(unsigned int * flags);
+typedef hipError_t HIPAPI thipGetDeviceProperties(hipDeviceProp_t * prop, int deviceId);
+typedef const char * HIPAPI thipGetErrorName(hipError_t hip_error);
+typedef const char * HIPAPI thipGetErrorString(hipError_t hipError);
+typedef hipError_t HIPAPI thipGetLastError();
+typedef hipError_t HIPAPI thipGetMipmappedArrayLevel(hipArray_t * levelArray, hipMipmappedArray_const_t mipmappedArray, unsigned int level);
+typedef int HIPAPI thipGetStreamDeviceId(hipStream_t stream);
+typedef hipError_t HIPAPI thipGetSymbolAddress(void ** devPtr, const void * symbol);
+typedef hipError_t HIPAPI thipGetSymbolSize(size_t * size, const void * symbol);
+typedef hipError_t HIPAPI thipGetTextureAlignmentOffset(size_t * offset, const textureReference * texref);
+typedef hipError_t HIPAPI thipGetTextureObjectResourceDesc(hipResourceDesc * pResDesc, hipTextureObject_t textureObject);
+typedef hipError_t HIPAPI thipGetTextureObjectResourceViewDesc(struct hipResourceViewDesc * pResViewDesc, hipTextureObject_t textureObject);
+typedef hipError_t HIPAPI thipGetTextureObjectTextureDesc(hipTextureDesc * pTexDesc, hipTextureObject_t textureObject);
+typedef hipError_t HIPAPI thipGetTextureReference(const textureReference ** texref, const void * symbol);
+typedef hipError_t HIPAPI thipGraphAddChildGraphNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipGraph_t childGraph);
+typedef hipError_t HIPAPI thipGraphAddDependencies(hipGraph_t graph, const hipGraphNode_t * from, const hipGraphNode_t * to, size_t numDependencies);
+typedef hipError_t HIPAPI thipGraphAddEmptyNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies);
+typedef hipError_t HIPAPI thipGraphAddEventRecordNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphAddEventWaitNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphAddExternalSemaphoresSignalNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphAddExternalSemaphoresWaitNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipExternalSemaphoreWaitNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphAddHostNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipHostNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphAddKernelNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipKernelNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphAddMemAllocNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipMemAllocNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphAddMemFreeNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, void * dev_ptr);
+typedef hipError_t HIPAPI thipGraphAddMemcpyNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipMemcpy3DParms * pCopyParams);
+typedef hipError_t HIPAPI thipGraphAddMemcpyNode1D(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, void * dst, const void * src, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphAddMemcpyNodeFromSymbol(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, void * dst, const void * symbol, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphAddMemcpyNodeToSymbol(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const void * symbol, const void * src, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphAddMemsetNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipMemsetParams * pMemsetParams);
+typedef hipError_t HIPAPI thipGraphChildGraphNodeGetGraph(hipGraphNode_t node, hipGraph_t * pGraph);
+typedef hipError_t HIPAPI thipGraphClone(hipGraph_t * pGraphClone, hipGraph_t originalGraph);
+typedef hipError_t HIPAPI thipGraphCreate(hipGraph_t * pGraph, unsigned int flags);
+typedef hipError_t HIPAPI thipGraphDebugDotPrint(hipGraph_t graph, const char * path, unsigned int flags);
+typedef hipError_t HIPAPI thipGraphDestroy(hipGraph_t graph);
+typedef hipError_t HIPAPI thipGraphDestroyNode(hipGraphNode_t node);
+typedef hipError_t HIPAPI thipGraphEventRecordNodeGetEvent(hipGraphNode_t node, hipEvent_t * event_out);
+typedef hipError_t HIPAPI thipGraphEventRecordNodeSetEvent(hipGraphNode_t node, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphEventWaitNodeGetEvent(hipGraphNode_t node, hipEvent_t * event_out);
+typedef hipError_t HIPAPI thipGraphEventWaitNodeSetEvent(hipGraphNode_t node, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphExecChildGraphNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, hipGraph_t childGraph);
+typedef hipError_t HIPAPI thipGraphExecDestroy(hipGraphExec_t graphExec);
+typedef hipError_t HIPAPI thipGraphExecEventRecordNodeSetEvent(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphExecEventWaitNodeSetEvent(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphExecExternalSemaphoresSignalNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExecExternalSemaphoresWaitNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipExternalSemaphoreWaitNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExecHostNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipHostNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphExecKernelNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipKernelNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, hipMemcpy3DParms * pNodeParams);
+typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParams1D(hipGraphExec_t hGraphExec, hipGraphNode_t node, void * dst, const void * src, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParamsFromSymbol(hipGraphExec_t hGraphExec, hipGraphNode_t node, void * dst, const void * symbol, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParamsToSymbol(hipGraphExec_t hGraphExec, hipGraphNode_t node, const void * symbol, const void * src, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphExecMemsetNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipMemsetParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphExecUpdate(hipGraphExec_t hGraphExec, hipGraph_t hGraph, hipGraphNode_t * hErrorNode_out, hipGraphExecUpdateResult * updateResult_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresSignalNodeGetParams(hipGraphNode_t hNode, const hipExternalSemaphoreSignalNodeParams * params_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresSignalNodeSetParams(hipGraphNode_t hNode, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresWaitNodeGetParams(hipGraphNode_t hNode, const hipExternalSemaphoreWaitNodeParams * params_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresWaitNodeSetParams(hipGraphNode_t hNode, const hipExternalSemaphoreWaitNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphGetEdges(hipGraph_t graph, hipGraphNode_t * from, hipGraphNode_t * to, size_t * numEdges);
+typedef hipError_t HIPAPI thipGraphGetNodes(hipGraph_t graph, hipGraphNode_t * nodes, size_t * numNodes);
+typedef hipError_t HIPAPI thipGraphGetRootNodes(hipGraph_t graph, hipGraphNode_t * pRootNodes, size_t * pNumRootNodes);
+typedef hipError_t HIPAPI thipGraphHostNodeGetParams(hipGraphNode_t node, hipHostNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphHostNodeSetParams(hipGraphNode_t node, const hipHostNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphInstantiate(hipGraphExec_t * pGraphExec, hipGraph_t graph, hipGraphNode_t * pErrorNode, char * pLogBuffer, size_t bufferSize);
+typedef hipError_t HIPAPI thipGraphInstantiateWithFlags(hipGraphExec_t * pGraphExec, hipGraph_t graph, unsigned long long flags);
+typedef hipError_t HIPAPI thipGraphKernelNodeCopyAttributes(hipGraphNode_t hSrc, hipGraphNode_t hDst);
+typedef hipError_t HIPAPI thipGraphKernelNodeGetAttribute(hipGraphNode_t hNode, hipKernelNodeAttrID attr, hipKernelNodeAttrValue * value);
+typedef hipError_t HIPAPI thipGraphKernelNodeGetParams(hipGraphNode_t node, hipKernelNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphKernelNodeSetAttribute(hipGraphNode_t hNode, hipKernelNodeAttrID attr, const hipKernelNodeAttrValue * value);
+typedef hipError_t HIPAPI thipGraphKernelNodeSetParams(hipGraphNode_t node, const hipKernelNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphLaunch(hipGraphExec_t graphExec, hipStream_t stream);
+typedef hipError_t HIPAPI thipGraphLaunch_spt(hipGraphExec_t graphExec, hipStream_t stream);
+typedef hipError_t HIPAPI thipGraphMemAllocNodeGetParams(hipGraphNode_t node, hipMemAllocNodeParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphMemFreeNodeGetParams(hipGraphNode_t node, void * dev_ptr);
+typedef hipError_t HIPAPI thipGraphMemcpyNodeGetParams(hipGraphNode_t node, hipMemcpy3DParms * pNodeParams);
+typedef hipError_t HIPAPI thipGraphMemcpyNodeSetParams(hipGraphNode_t node, const hipMemcpy3DParms * pNodeParams);
+typedef hipError_t HIPAPI thipGraphMemcpyNodeSetParams1D(hipGraphNode_t node, void * dst, const void * src, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphMemcpyNodeSetParamsFromSymbol(hipGraphNode_t node, void * dst, const void * symbol, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphMemcpyNodeSetParamsToSymbol(hipGraphNode_t node, const void * symbol, const void * src, size_t count, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipGraphMemsetNodeGetParams(hipGraphNode_t node, hipMemsetParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphMemsetNodeSetParams(hipGraphNode_t node, const hipMemsetParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphNodeFindInClone(hipGraphNode_t * pNode, hipGraphNode_t originalNode, hipGraph_t clonedGraph);
+typedef hipError_t HIPAPI thipGraphNodeGetDependencies(hipGraphNode_t node, hipGraphNode_t * pDependencies, size_t * pNumDependencies);
+typedef hipError_t HIPAPI thipGraphNodeGetDependentNodes(hipGraphNode_t node, hipGraphNode_t * pDependentNodes, size_t * pNumDependentNodes);
+typedef hipError_t HIPAPI thipGraphNodeGetEnabled(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, unsigned int * isEnabled);
+typedef hipError_t HIPAPI thipGraphNodeGetType(hipGraphNode_t node, hipGraphNodeType * pType);
+typedef hipError_t HIPAPI thipGraphNodeSetEnabled(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, unsigned int isEnabled);
+typedef hipError_t HIPAPI thipGraphReleaseUserObject(hipGraph_t graph, hipUserObject_t object, unsigned int count);
+typedef hipError_t HIPAPI thipGraphRemoveDependencies(hipGraph_t graph, const hipGraphNode_t * from, const hipGraphNode_t * to, size_t numDependencies);
+typedef hipError_t HIPAPI thipGraphRetainUserObject(hipGraph_t graph, hipUserObject_t object, unsigned int count, unsigned int flags);
+typedef hipError_t HIPAPI thipGraphUpload(hipGraphExec_t graphExec, hipStream_t stream);
+typedef hipError_t HIPAPI thipGraphicsGLRegisterBuffer(hipGraphicsResource ** resource, GLuint buffer, unsigned int flags);
+typedef hipError_t HIPAPI thipGraphicsGLRegisterImage(hipGraphicsResource ** resource, GLuint image, GLenum target, unsigned int flags);
+typedef hipError_t HIPAPI thipGraphicsMapResources(int count, hipGraphicsResource_t * resources, hipStream_t stream);
+typedef hipError_t HIPAPI thipGraphicsResourceGetMappedPointer(void ** devPtr, size_t * size, hipGraphicsResource_t resource);
+typedef hipError_t HIPAPI thipGraphicsSubResourceGetMappedArray(hipArray_t * array, hipGraphicsResource_t resource, unsigned int arrayIndex, unsigned int mipLevel);
+typedef hipError_t HIPAPI thipGraphicsUnmapResources(int count, hipGraphicsResource_t * resources, hipStream_t stream);
+typedef hipError_t HIPAPI thipGraphicsUnregisterResource(hipGraphicsResource_t resource);
+typedef hipError_t HIPAPI thipHostAlloc(void ** ptr, size_t size, unsigned int flags);
+typedef hipError_t HIPAPI thipHostFree(void * ptr);
+typedef hipError_t HIPAPI thipHostGetDevicePointer(void ** devPtr, void * hstPtr, unsigned int flags);
+typedef hipError_t HIPAPI thipHostGetFlags(unsigned int * flagsPtr, void * hostPtr);
+typedef hipError_t HIPAPI thipHostMalloc(void ** ptr, size_t size, unsigned int flags);
+typedef hipError_t HIPAPI thipHostRegister(void * hostPtr, size_t sizeBytes, unsigned int flags);
+typedef hipError_t HIPAPI thipHostUnregister(void * hostPtr);
+typedef hipError_t HIPAPI thipImportExternalMemory(hipExternalMemory_t * extMem_out, const hipExternalMemoryHandleDesc * memHandleDesc);
+typedef hipError_t HIPAPI thipImportExternalSemaphore(hipExternalSemaphore_t * extSem_out, const hipExternalSemaphoreHandleDesc * semHandleDesc);
+typedef hipError_t HIPAPI thipInit(unsigned int flags);
+typedef hipError_t HIPAPI thipIpcCloseMemHandle(void * devPtr);
+typedef hipError_t HIPAPI thipIpcGetEventHandle(hipIpcEventHandle_t * handle, hipEvent_t event);
+typedef hipError_t HIPAPI thipIpcGetMemHandle(hipIpcMemHandle_t * handle, void * devPtr);
+typedef hipError_t HIPAPI thipIpcOpenEventHandle(hipEvent_t * event, hipIpcEventHandle_t handle);
+typedef hipError_t HIPAPI thipIpcOpenMemHandle(void ** devPtr, hipIpcMemHandle_t handle, unsigned int flags);
+typedef const char * HIPAPI thipKernelNameRef(const hipFunction_t f);
+typedef const char * HIPAPI thipKernelNameRefByPtr(const void * hostFunction, hipStream_t stream);
+typedef hipError_t HIPAPI thipLaunchByPtr(const void * func);
+typedef hipError_t HIPAPI thipLaunchCooperativeKernel(const void * f, dim3 gridDim, dim3 blockDimX, void ** kernelParams, unsigned int sharedMemBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipLaunchCooperativeKernelMultiDevice(hipLaunchParams * launchParamsList, int numDevices, unsigned int flags);
+typedef hipError_t HIPAPI thipLaunchCooperativeKernel_spt(const void * f, dim3 gridDim, dim3 blockDim, void ** kernelParams, uint32_t sharedMemBytes, hipStream_t hStream);
+typedef hipError_t HIPAPI thipLaunchHostFunc(hipStream_t stream, hipHostFn_t fn, void * userData);
+typedef hipError_t HIPAPI thipLaunchHostFunc_spt(hipStream_t stream, hipHostFn_t fn, void * userData);
+typedef hipError_t HIPAPI thipLaunchKernel(const void * function_address, dim3 numBlocks, dim3 dimBlocks, void ** args, size_t sharedMemBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipLaunchKernel_spt(const void * function_address, dim3 numBlocks, dim3 dimBlocks, void ** args, size_t sharedMemBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMalloc(void ** ptr, size_t size);
+typedef hipError_t HIPAPI thipMalloc3D(hipPitchedPtr * pitchedDevPtr, hipExtent extent);
+typedef hipError_t HIPAPI thipMalloc3DArray(hipArray ** array, const struct hipChannelFormatDesc * desc, struct hipExtent extent, unsigned int flags);
+typedef hipError_t HIPAPI thipMallocArray(hipArray ** array, const hipChannelFormatDesc * desc, size_t width, size_t height, unsigned int flags);
+typedef hipError_t HIPAPI thipMallocAsync(void ** dev_ptr, size_t size, hipStream_t stream);
+typedef hipError_t HIPAPI thipMallocFromPoolAsync(void ** dev_ptr, size_t size, hipMemPool_t mem_pool, hipStream_t stream);
+typedef hipError_t HIPAPI thipMallocHost(void ** ptr, size_t size);
+typedef hipError_t HIPAPI thipMallocManaged(void ** dev_ptr, size_t size, unsigned int flags);
+typedef hipError_t HIPAPI thipMallocMipmappedArray(hipMipmappedArray_t * mipmappedArray, const struct hipChannelFormatDesc * desc, struct hipExtent extent, unsigned int numLevels, unsigned int flags);
+typedef hipError_t HIPAPI thipMallocPitch(void ** ptr, size_t * pitch, size_t width, size_t height);
+typedef hipError_t HIPAPI thipMemAddressFree(void * devPtr, size_t size);
+typedef hipError_t HIPAPI thipMemAddressReserve(void ** ptr, size_t size, size_t alignment, void * addr, unsigned long long flags);
+typedef hipError_t HIPAPI thipMemAdvise(const void * dev_ptr, size_t count, hipMemoryAdvise advice, int device);
+typedef hipError_t HIPAPI thipMemAllocHost(void ** ptr, size_t size);
+typedef hipError_t HIPAPI thipMemAllocPitch(hipDeviceptr_t * dptr, size_t * pitch, size_t widthInBytes, size_t height, unsigned int elementSizeBytes);
+typedef hipError_t HIPAPI thipMemCreate(hipMemGenericAllocationHandle_t * handle, size_t size, const hipMemAllocationProp * prop, unsigned long long flags);
+typedef hipError_t HIPAPI thipMemExportToShareableHandle(void * shareableHandle, hipMemGenericAllocationHandle_t handle, hipMemAllocationHandleType handleType, unsigned long long flags);
+typedef hipError_t HIPAPI thipMemGetAccess(unsigned long long * flags, const hipMemLocation * location, void * ptr);
+typedef hipError_t HIPAPI thipMemGetAddressRange(hipDeviceptr_t * pbase, size_t * psize, hipDeviceptr_t dptr);
+typedef hipError_t HIPAPI thipMemGetAllocationGranularity(size_t * granularity, const hipMemAllocationProp * prop, hipMemAllocationGranularity_flags option);
+typedef hipError_t HIPAPI thipMemGetAllocationPropertiesFromHandle(hipMemAllocationProp * prop, hipMemGenericAllocationHandle_t handle);
+typedef hipError_t HIPAPI thipMemGetInfo(size_t * free, size_t * total);
+typedef hipError_t HIPAPI thipMemImportFromShareableHandle(hipMemGenericAllocationHandle_t * handle, void * osHandle, hipMemAllocationHandleType shHandleType);
+typedef hipError_t HIPAPI thipMemMap(void * ptr, size_t size, size_t offset, hipMemGenericAllocationHandle_t handle, unsigned long long flags);
+typedef hipError_t HIPAPI thipMemMapArrayAsync(hipArrayMapInfo * mapInfoList, unsigned int count, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemPoolCreate(hipMemPool_t * mem_pool, const hipMemPoolProps * pool_props);
+typedef hipError_t HIPAPI thipMemPoolDestroy(hipMemPool_t mem_pool);
+typedef hipError_t HIPAPI thipMemPoolExportPointer(hipMemPoolPtrExportData * export_data, void * dev_ptr);
+typedef hipError_t HIPAPI thipMemPoolExportToShareableHandle(void * shared_handle, hipMemPool_t mem_pool, hipMemAllocationHandleType handle_type, unsigned int flags);
+typedef hipError_t HIPAPI thipMemPoolGetAccess(hipMemAccessFlags * flags, hipMemPool_t mem_pool, hipMemLocation * location);
+typedef hipError_t HIPAPI thipMemPoolGetAttribute(hipMemPool_t mem_pool, hipMemPoolAttr attr, void * value);
+typedef hipError_t HIPAPI thipMemPoolImportFromShareableHandle(hipMemPool_t * mem_pool, void * shared_handle, hipMemAllocationHandleType handle_type, unsigned int flags);
+typedef hipError_t HIPAPI thipMemPoolImportPointer(void ** dev_ptr, hipMemPool_t mem_pool, hipMemPoolPtrExportData * export_data);
+typedef hipError_t HIPAPI thipMemPoolSetAccess(hipMemPool_t mem_pool, const hipMemAccessDesc * desc_list, size_t count);
+typedef hipError_t HIPAPI thipMemPoolSetAttribute(hipMemPool_t mem_pool, hipMemPoolAttr attr, void * value);
+typedef hipError_t HIPAPI thipMemPoolTrimTo(hipMemPool_t mem_pool, size_t min_bytes_to_hold);
+typedef hipError_t HIPAPI thipMemPrefetchAsync(const void * dev_ptr, size_t count, int device, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemPtrGetInfo(void * ptr, size_t * size);
+typedef hipError_t HIPAPI thipMemRangeGetAttribute(void * data, size_t data_size, hipMemRangeAttribute attribute, const void * dev_ptr, size_t count);
+typedef hipError_t HIPAPI thipMemRangeGetAttributes(void ** data, size_t * data_sizes, hipMemRangeAttribute * attributes, size_t num_attributes, const void * dev_ptr, size_t count);
+typedef hipError_t HIPAPI thipMemRelease(hipMemGenericAllocationHandle_t handle);
+typedef hipError_t HIPAPI thipMemRetainAllocationHandle(hipMemGenericAllocationHandle_t * handle, void * addr);
+typedef hipError_t HIPAPI thipMemSetAccess(void * ptr, size_t size, const hipMemAccessDesc * desc, size_t count);
+typedef hipError_t HIPAPI thipMemUnmap(void * ptr, size_t size);
+typedef hipError_t HIPAPI thipMemcpy(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2D(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2DAsync(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DAsync_spt(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DFromArray(void * dst, size_t dpitch, hipArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2DFromArrayAsync(void * dst, size_t dpitch, hipArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DFromArrayAsync_spt(void * dst, size_t dpitch, hipArray_const_t src, size_t wOffsetSrc, size_t hOffsetSrc, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DFromArray_spt(void * dst, size_t dpitch, hipArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2DToArray(hipArray * dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2DToArrayAsync(hipArray * dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DToArrayAsync_spt(hipArray * dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy2DToArray_spt(hipArray * dst, size_t wOffset, size_t hOffset, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2D_spt(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy3D(const struct hipMemcpy3DParms * p);
+typedef hipError_t HIPAPI thipMemcpy3DAsync(const struct hipMemcpy3DParms * p, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy3DAsync_spt(const hipMemcpy3DParms * p, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy3D_spt(const struct hipMemcpy3DParms * p);
+typedef hipError_t HIPAPI thipMemcpyAsync(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyAsync_spt(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyAtoH(void * dst, hipArray * srcArray, size_t srcOffset, size_t count);
+typedef hipError_t HIPAPI thipMemcpyDtoD(hipDeviceptr_t dst, hipDeviceptr_t src, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemcpyDtoDAsync(hipDeviceptr_t dst, hipDeviceptr_t src, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyDtoH(void * dst, hipDeviceptr_t src, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemcpyDtoHAsync(void * dst, hipDeviceptr_t src, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyFromArray(void * dst, hipArray_const_t srcArray, size_t wOffset, size_t hOffset, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyFromArray_spt(void * dst, hipArray_const_t src, size_t wOffsetSrc, size_t hOffset, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyFromSymbol(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyFromSymbolAsync(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyFromSymbolAsync_spt(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyFromSymbol_spt(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyHtoA(hipArray * dstArray, size_t dstOffset, const void * srcHost, size_t count);
+typedef hipError_t HIPAPI thipMemcpyHtoD(hipDeviceptr_t dst, void * src, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemcpyHtoDAsync(hipDeviceptr_t dst, void * src, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyParam2D(const hip_Memcpy2D * pCopy);
+typedef hipError_t HIPAPI thipMemcpyParam2DAsync(const hip_Memcpy2D * pCopy, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyPeer(void * dst, int dstDeviceId, const void * src, int srcDeviceId, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemcpyPeerAsync(void * dst, int dstDeviceId, const void * src, int srcDevice, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyToArray(hipArray * dst, size_t wOffset, size_t hOffset, const void * src, size_t count, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyToSymbol(const void * symbol, const void * src, size_t sizeBytes, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyToSymbolAsync(const void * symbol, const void * src, size_t sizeBytes, size_t offset, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyToSymbolAsync_spt(const void * symbol, const void * src, size_t sizeBytes, size_t offset, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyToSymbol_spt(const void * symbol, const void * src, size_t sizeBytes, size_t offset, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpyWithStream(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpy_spt(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemset(void * dst, int value, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemset2D(void * dst, size_t pitch, int value, size_t width, size_t height);
+typedef hipError_t HIPAPI thipMemset2DAsync(void * dst, size_t pitch, int value, size_t width, size_t height, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemset2DAsync_spt(void * dst, size_t pitch, int value, size_t width, size_t height, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemset2D_spt(void * dst, size_t pitch, int value, size_t width, size_t height);
+typedef hipError_t HIPAPI thipMemset3D(hipPitchedPtr pitchedDevPtr, int value, hipExtent extent);
+typedef hipError_t HIPAPI thipMemset3DAsync(hipPitchedPtr pitchedDevPtr, int value, hipExtent extent, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemset3DAsync_spt(hipPitchedPtr pitchedDevPtr, int value, hipExtent extent, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemset3D_spt(hipPitchedPtr pitchedDevPtr, int value, hipExtent extent);
+typedef hipError_t HIPAPI thipMemsetAsync(void * dst, int value, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemsetAsync_spt(void * dst, int value, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemsetD16(hipDeviceptr_t dest, unsigned short value, size_t count);
+typedef hipError_t HIPAPI thipMemsetD16Async(hipDeviceptr_t dest, unsigned short value, size_t count, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemsetD32(hipDeviceptr_t dest, int value, size_t count);
+typedef hipError_t HIPAPI thipMemsetD32Async(hipDeviceptr_t dst, int value, size_t count, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemsetD8(hipDeviceptr_t dest, unsigned char value, size_t count);
+typedef hipError_t HIPAPI thipMemsetD8Async(hipDeviceptr_t dest, unsigned char value, size_t count, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemset_spt(void * dst, int value, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMipmappedArrayCreate(hipMipmappedArray_t * pHandle, HIP_ARRAY3D_DESCRIPTOR * pMipmappedArrayDesc, unsigned int numMipmapLevels);
+typedef hipError_t HIPAPI thipMipmappedArrayDestroy(hipMipmappedArray_t hMipmappedArray);
+typedef hipError_t HIPAPI thipMipmappedArrayGetLevel(hipArray_t * pLevelArray, hipMipmappedArray_t hMipMappedArray, unsigned int level);
+typedef hipError_t HIPAPI thipModuleGetFunction(hipFunction_t * function, hipModule_t module, const char * kname);
+typedef hipError_t HIPAPI thipModuleGetGlobal(hipDeviceptr_t * dptr, size_t * bytes, hipModule_t hmod, const char * name);
+typedef hipError_t HIPAPI thipModuleGetTexRef(textureReference ** texRef, hipModule_t hmod, const char * name);
+typedef hipError_t HIPAPI thipModuleLaunchCooperativeKernel(hipFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, hipStream_t stream, void ** kernelParams);
+typedef hipError_t HIPAPI thipModuleLaunchCooperativeKernelMultiDevice(hipFunctionLaunchParams * launchParamsList, unsigned int numDevices, unsigned int flags);
+typedef hipError_t HIPAPI thipModuleLaunchKernel(hipFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, hipStream_t stream, void ** kernelParams, void ** extra);
+typedef hipError_t HIPAPI thipModuleLoad(hipModule_t * module, const char * fname);
+typedef hipError_t HIPAPI thipModuleLoadData(hipModule_t * module, const void * image);
+typedef hipError_t HIPAPI thipModuleLoadDataEx(hipModule_t * module, const void * image, unsigned int numOptions, hipJitOption * options, void ** optionValues);
+typedef hipError_t HIPAPI thipModuleOccupancyMaxActiveBlocksPerMultiprocessor(int * numBlocks, hipFunction_t f, int blockSize, size_t dynSharedMemPerBlk);
+typedef hipError_t HIPAPI thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int * numBlocks, hipFunction_t f, int blockSize, size_t dynSharedMemPerBlk, unsigned int flags);
+typedef hipError_t HIPAPI thipModuleOccupancyMaxPotentialBlockSize(int * gridSize, int * blockSize, hipFunction_t f, size_t dynSharedMemPerBlk, int blockSizeLimit);
+typedef hipError_t HIPAPI thipModuleOccupancyMaxPotentialBlockSizeWithFlags(int * gridSize, int * blockSize, hipFunction_t f, size_t dynSharedMemPerBlk, int blockSizeLimit, unsigned int flags);
+typedef hipError_t HIPAPI thipModuleUnload(hipModule_t module);
+typedef hipError_t HIPAPI thipOccupancyMaxActiveBlocksPerMultiprocessor(int * numBlocks, const void * f, int blockSize, size_t dynSharedMemPerBlk);
+typedef hipError_t HIPAPI thipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(int * numBlocks, const void * f, int blockSize, size_t dynSharedMemPerBlk, unsigned int flags);
+typedef hipError_t HIPAPI thipOccupancyMaxPotentialBlockSize(int * gridSize, int * blockSize, const void * f, size_t dynSharedMemPerBlk, int blockSizeLimit);
+typedef hipError_t HIPAPI thipPeekAtLastError();
+typedef hipError_t HIPAPI thipPointerGetAttribute(void * data, hipPointer_attribute attribute, hipDeviceptr_t ptr);
+typedef hipError_t HIPAPI thipPointerGetAttributes(hipPointerAttribute_t * attributes, const void * ptr);
+typedef hipError_t HIPAPI thipPointerSetAttribute(const void * value, hipPointer_attribute attribute, hipDeviceptr_t ptr);
+typedef hipError_t HIPAPI thipProfilerStart();
+typedef hipError_t HIPAPI thipProfilerStop();
+typedef hipError_t HIPAPI thipRuntimeGetVersion(int * runtimeVersion);
+typedef hipError_t HIPAPI thipSetDevice(int deviceId);
+typedef hipError_t HIPAPI thipSetDeviceFlags(unsigned int flags);
+typedef hipError_t HIPAPI thipSetupArgument(const void * arg, size_t size, size_t offset);
+typedef hipError_t HIPAPI thipSignalExternalSemaphoresAsync(const hipExternalSemaphore_t * extSemArray, const hipExternalSemaphoreSignalParams * paramsArray, unsigned int numExtSems, hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamAddCallback(hipStream_t stream, hipStreamCallback_t callback, void * userData, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamAddCallback_spt(hipStream_t stream, hipStreamCallback_t callback, void * userData, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamAttachMemAsync(hipStream_t stream, void * dev_ptr, size_t length, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamBeginCapture(hipStream_t stream, hipStreamCaptureMode mode);
+typedef hipError_t HIPAPI thipStreamBeginCapture_spt(hipStream_t stream, hipStreamCaptureMode mode);
+typedef hipError_t HIPAPI thipStreamCreate(hipStream_t * stream);
+typedef hipError_t HIPAPI thipStreamCreateWithFlags(hipStream_t * stream, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamCreateWithPriority(hipStream_t * stream, unsigned int flags, int priority);
+typedef hipError_t HIPAPI thipStreamDestroy(hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamEndCapture(hipStream_t stream, hipGraph_t * pGraph);
+typedef hipError_t HIPAPI thipStreamEndCapture_spt(hipStream_t stream, hipGraph_t * pGraph);
+typedef hipError_t HIPAPI thipStreamGetCaptureInfo(hipStream_t stream, hipStreamCaptureStatus * pCaptureStatus, unsigned long long * pId);
+typedef hipError_t HIPAPI thipStreamGetCaptureInfo_spt(hipStream_t stream, hipStreamCaptureStatus * pCaptureStatus, unsigned long long * pId);
+typedef hipError_t HIPAPI thipStreamGetCaptureInfo_v2(hipStream_t stream, hipStreamCaptureStatus * captureStatus_out, unsigned long long * id_out, hipGraph_t * graph_out, const hipGraphNode_t ** dependencies_out, size_t * numDependencies_out);
+typedef hipError_t HIPAPI thipStreamGetCaptureInfo_v2_spt(hipStream_t stream, hipStreamCaptureStatus * captureStatus_out, unsigned long long * id_out, hipGraph_t * graph_out, const hipGraphNode_t ** dependencies_out, size_t * numDependencies_out);
+typedef hipError_t HIPAPI thipStreamGetDevice(hipStream_t stream, hipDevice_t * device);
+typedef hipError_t HIPAPI thipStreamGetFlags(hipStream_t stream, unsigned int * flags);
+typedef hipError_t HIPAPI thipStreamGetFlags_spt(hipStream_t stream, unsigned int * flags);
+typedef hipError_t HIPAPI thipStreamGetPriority(hipStream_t stream, int * priority);
+typedef hipError_t HIPAPI thipStreamGetPriority_spt(hipStream_t stream, int * priority);
+typedef hipError_t HIPAPI thipStreamIsCapturing(hipStream_t stream, hipStreamCaptureStatus * pCaptureStatus);
+typedef hipError_t HIPAPI thipStreamIsCapturing_spt(hipStream_t stream, hipStreamCaptureStatus * pCaptureStatus);
+typedef hipError_t HIPAPI thipStreamQuery(hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamQuery_spt(hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamSynchronize(hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamSynchronize_spt(hipStream_t stream);
+typedef hipError_t HIPAPI thipStreamUpdateCaptureDependencies(hipStream_t stream, hipGraphNode_t * dependencies, size_t numDependencies, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamWaitEvent(hipStream_t stream, hipEvent_t event, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamWaitEvent_spt(hipStream_t stream, hipEvent_t event, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamWaitValue32(hipStream_t stream, void * ptr, uint32_t value, unsigned int flags, uint32_t mask);
+typedef hipError_t HIPAPI thipStreamWaitValue64(hipStream_t stream, void * ptr, uint64_t value, unsigned int flags, uint64_t mask);
+typedef hipError_t HIPAPI thipStreamWriteValue32(hipStream_t stream, void * ptr, uint32_t value, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamWriteValue64(hipStream_t stream, void * ptr, uint64_t value, unsigned int flags);
+typedef hipError_t HIPAPI thipTexObjectCreate(hipTextureObject_t * pTexObject, const HIP_RESOURCE_DESC * pResDesc, const HIP_TEXTURE_DESC * pTexDesc, const HIP_RESOURCE_VIEW_DESC * pResViewDesc);
+typedef hipError_t HIPAPI thipTexObjectDestroy(hipTextureObject_t texObject);
+typedef hipError_t HIPAPI thipTexObjectGetResourceDesc(HIP_RESOURCE_DESC * pResDesc, hipTextureObject_t texObject);
+typedef hipError_t HIPAPI thipTexObjectGetResourceViewDesc(HIP_RESOURCE_VIEW_DESC * pResViewDesc, hipTextureObject_t texObject);
+typedef hipError_t HIPAPI thipTexObjectGetTextureDesc(HIP_TEXTURE_DESC * pTexDesc, hipTextureObject_t texObject);
+typedef hipError_t HIPAPI thipTexRefGetAddress(hipDeviceptr_t * dev_ptr, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetAddressMode(enum hipTextureAddressMode * pam, const textureReference * texRef, int dim);
+typedef hipError_t HIPAPI thipTexRefGetFilterMode(enum hipTextureFilterMode * pfm, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetFlags(unsigned int * pFlags, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetFormat(hipArray_Format * pFormat, int * pNumChannels, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetMaxAnisotropy(int * pmaxAnsio, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetMipMappedArray(hipMipmappedArray_t * pArray, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetMipmapFilterMode(enum hipTextureFilterMode * pfm, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetMipmapLevelBias(float * pbias, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetMipmapLevelClamp(float * pminMipmapLevelClamp, float * pmaxMipmapLevelClamp, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefSetAddress(size_t * ByteOffset, textureReference * texRef, hipDeviceptr_t dptr, size_t bytes);
+typedef hipError_t HIPAPI thipTexRefSetAddress2D(textureReference * texRef, const HIP_ARRAY_DESCRIPTOR * desc, hipDeviceptr_t dptr, size_t Pitch);
+typedef hipError_t HIPAPI thipTexRefSetAddressMode(textureReference * texRef, int dim, enum hipTextureAddressMode am);
+typedef hipError_t HIPAPI thipTexRefSetArray(textureReference * tex, hipArray_const_t array, unsigned int flags);
+typedef hipError_t HIPAPI thipTexRefSetBorderColor(textureReference * texRef, float * pBorderColor);
+typedef hipError_t HIPAPI thipTexRefSetFilterMode(textureReference * texRef, enum hipTextureFilterMode fm);
+typedef hipError_t HIPAPI thipTexRefSetFlags(textureReference * texRef, unsigned int Flags);
+typedef hipError_t HIPAPI thipTexRefSetFormat(textureReference * texRef, hipArray_Format fmt, int NumPackedComponents);
+typedef hipError_t HIPAPI thipTexRefSetMaxAnisotropy(textureReference * texRef, unsigned int maxAniso);
+typedef hipError_t HIPAPI thipTexRefSetMipmapFilterMode(textureReference * texRef, enum hipTextureFilterMode fm);
+typedef hipError_t HIPAPI thipTexRefSetMipmapLevelBias(textureReference * texRef, float bias);
+typedef hipError_t HIPAPI thipTexRefSetMipmapLevelClamp(textureReference * texRef, float minMipMapLevelClamp, float maxMipMapLevelClamp);
+typedef hipError_t HIPAPI thipTexRefSetMipmappedArray(textureReference * texRef, struct hipMipmappedArray * mipmappedArray, unsigned int Flags);
+typedef hipError_t HIPAPI thipThreadExchangeStreamCaptureMode(hipStreamCaptureMode * mode);
+typedef hipError_t HIPAPI thipUnbindTexture(const textureReference * tex);
+typedef hipError_t HIPAPI thipUserObjectCreate(hipUserObject_t * object_out, void * ptr, hipHostFn_t destroy, unsigned int initialRefcount, unsigned int flags);
+typedef hipError_t HIPAPI thipUserObjectRelease(hipUserObject_t object, unsigned int count);
+typedef hipError_t HIPAPI thipUserObjectRetain(hipUserObject_t object, unsigned int count);
+typedef hipError_t HIPAPI thipWaitExternalSemaphoresAsync(const hipExternalSemaphore_t * extSemArray, const hipExternalSemaphoreWaitParams * paramsArray, unsigned int numExtSems, hipStream_t stream);
+typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char * name_expression);
+typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char ** options);
+typedef hiprtcResult HIPAPI thiprtcCreateProgram(hiprtcProgram * prog, const char * src, const char * name, int numHeaders, const char ** headers, const char ** includeNames);
+typedef hiprtcResult HIPAPI thiprtcDestroyProgram(hiprtcProgram * prog);
+typedef hiprtcResult HIPAPI thiprtcGetBitcode(hiprtcProgram prog, char * bitcode);
+typedef hiprtcResult HIPAPI thiprtcGetBitcodeSize(hiprtcProgram prog, size_t * bitcode_size);
+typedef hiprtcResult HIPAPI thiprtcGetCode(hiprtcProgram prog, char * code);
+typedef hiprtcResult HIPAPI thiprtcGetCodeSize(hiprtcProgram prog, size_t * codeSizeRet);
+typedef const char * HIPAPI thiprtcGetErrorString(hiprtcResult result);
+typedef hiprtcResult HIPAPI thiprtcGetLoweredName(hiprtcProgram prog, const char * name_expression, const char ** lowered_name);
+typedef hiprtcResult HIPAPI thiprtcGetProgramLog(hiprtcProgram prog, char * log);
+typedef hiprtcResult HIPAPI thiprtcGetProgramLogSize(hiprtcProgram prog, size_t * logSizeRet);
+typedef hiprtcResult HIPAPI thiprtcLinkAddData(hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, void * image, size_t image_size, const char * name, unsigned int num_options, hiprtcJIT_option * options_ptr, void ** option_values);
+typedef hiprtcResult HIPAPI thiprtcLinkAddFile(hiprtcLinkState hip_link_state, hiprtcJITInputType input_type, const char * file_path, unsigned int num_options, hiprtcJIT_option * options_ptr, void ** option_values);
+typedef hiprtcResult HIPAPI thiprtcLinkComplete(hiprtcLinkState hip_link_state, void ** bin_out, size_t * size_out);
+typedef hiprtcResult HIPAPI thiprtcLinkCreate(unsigned int num_options, hiprtcJIT_option * option_ptr, void ** option_vals_pptr, hiprtcLinkState * hip_link_state_ptr);
+typedef hiprtcResult HIPAPI thiprtcLinkDestroy(hiprtcLinkState hip_link_state);
+typedef hiprtcResult HIPAPI thiprtcVersion(int * major, int * minor);
+typedef struct hipExtent HIPAPI tmake_hipExtent(size_t w, size_t h, size_t d);
+typedef struct hipPitchedPtr HIPAPI tmake_hipPitchedPtr(void * d, size_t p, size_t xsz, size_t ysz);
+typedef struct hipPos HIPAPI tmake_hipPos(size_t x, size_t y, size_t z);
 
-/* Function declarations. */
-extern thipGetErrorName *hipGetErrorName;
-extern thipGetErrorString* hipGetErrorString;
-extern thipGetLastError* hipGetLastError;
-extern thipInit *hipInit;
-extern thipDriverGetVersion *hipDriverGetVersion;
-extern thipGetDevice *hipGetDevice;
-extern thipGetDeviceCount *hipGetDeviceCount;
-extern thipGetDeviceProperties *hipGetDeviceProperties;
-extern thipDeviceGet *hipDeviceGet;
-extern thipDeviceGetName *hipDeviceGetName;
-extern thipDeviceGetAttribute *hipDeviceGetAttribute;
-extern thipDeviceGetLimit *hipDeviceGetLimit;
-extern thipDeviceSetLimit *hipDeviceSetLimit;
-extern thipDeviceComputeCapability *hipDeviceComputeCapability;
-extern thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
-extern thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
-extern thipDevicePrimaryCtxSetFlags *hipDevicePrimaryCtxSetFlags;
-extern thipDevicePrimaryCtxGetState *hipDevicePrimaryCtxGetState;
-extern thipDevicePrimaryCtxReset *hipDevicePrimaryCtxReset;
+extern t__hipPopCallConfiguration *__hipPopCallConfiguration;
+extern t__hipPushCallConfiguration *__hipPushCallConfiguration;
+extern thipApiName *hipApiName;
+extern thipArray3DCreate *hipArray3DCreate;
+extern thipArray3DGetDescriptor *hipArray3DGetDescriptor;
+extern thipArrayCreate *hipArrayCreate;
+extern thipArrayDestroy *hipArrayDestroy;
+extern thipArrayGetDescriptor *hipArrayGetDescriptor;
+extern thipArrayGetInfo *hipArrayGetInfo;
+extern thipBindTexture *hipBindTexture;
+extern thipBindTexture2D *hipBindTexture2D;
+extern thipBindTextureToArray *hipBindTextureToArray;
+extern thipBindTextureToMipmappedArray *hipBindTextureToMipmappedArray;
+extern thipChooseDevice *hipChooseDevice;
+extern thipConfigureCall *hipConfigureCall;
+extern thipCreateChannelDesc *hipCreateChannelDesc;
+extern thipCreateSurfaceObject *hipCreateSurfaceObject;
+extern thipCreateTextureObject *hipCreateTextureObject;
 extern thipCtxCreate *hipCtxCreate;
 extern thipCtxDestroy *hipCtxDestroy;
-extern thipCtxPushCurrent *hipCtxPushCurrent;
-extern thipCtxPopCurrent *hipCtxPopCurrent;
-extern thipCtxSetCurrent *hipCtxSetCurrent;
+extern thipCtxDisablePeerAccess *hipCtxDisablePeerAccess;
+extern thipCtxEnablePeerAccess *hipCtxEnablePeerAccess;
+extern thipCtxGetApiVersion *hipCtxGetApiVersion;
+extern thipCtxGetCacheConfig *hipCtxGetCacheConfig;
 extern thipCtxGetCurrent *hipCtxGetCurrent;
 extern thipCtxGetDevice *hipCtxGetDevice;
 extern thipCtxGetFlags *hipCtxGetFlags;
-extern thipCtxSynchronize *hipCtxSynchronize;
-extern thipDeviceSynchronize *hipDeviceSynchronize;
-extern thipCtxGetCacheConfig *hipCtxGetCacheConfig;
-extern thipCtxSetCacheConfig *hipCtxSetCacheConfig;
 extern thipCtxGetSharedMemConfig *hipCtxGetSharedMemConfig;
+extern thipCtxPopCurrent *hipCtxPopCurrent;
+extern thipCtxPushCurrent *hipCtxPushCurrent;
+extern thipCtxSetCacheConfig *hipCtxSetCacheConfig;
+extern thipCtxSetCurrent *hipCtxSetCurrent;
 extern thipCtxSetSharedMemConfig *hipCtxSetSharedMemConfig;
-extern thipCtxGetApiVersion *hipCtxGetApiVersion;
-extern thipModuleLoad *hipModuleLoad;
-extern thipModuleLoadData *hipModuleLoadData;
-extern thipModuleLoadDataEx *hipModuleLoadDataEx;
-extern thipModuleUnload *hipModuleUnload;
+extern thipCtxSynchronize *hipCtxSynchronize;
+extern thipDestroyExternalMemory *hipDestroyExternalMemory;
+extern thipDestroyExternalSemaphore *hipDestroyExternalSemaphore;
+extern thipDestroySurfaceObject *hipDestroySurfaceObject;
+extern thipDestroyTextureObject *hipDestroyTextureObject;
+extern thipDeviceCanAccessPeer *hipDeviceCanAccessPeer;
+extern thipDeviceComputeCapability *hipDeviceComputeCapability;
+extern thipDeviceDisablePeerAccess *hipDeviceDisablePeerAccess;
+extern thipDeviceEnablePeerAccess *hipDeviceEnablePeerAccess;
+extern thipDeviceGet *hipDeviceGet;
+extern thipDeviceGetAttribute *hipDeviceGetAttribute;
+extern thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
+extern thipDeviceGetCacheConfig *hipDeviceGetCacheConfig;
+extern thipDeviceGetDefaultMemPool *hipDeviceGetDefaultMemPool;
+extern thipDeviceGetGraphMemAttribute *hipDeviceGetGraphMemAttribute;
+extern thipDeviceGetLimit *hipDeviceGetLimit;
+extern thipDeviceGetMemPool *hipDeviceGetMemPool;
+extern thipDeviceGetName *hipDeviceGetName;
+extern thipDeviceGetP2PAttribute *hipDeviceGetP2PAttribute;
+extern thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
+extern thipDeviceGetSharedMemConfig *hipDeviceGetSharedMemConfig;
+extern thipDeviceGetStreamPriorityRange *hipDeviceGetStreamPriorityRange;
+extern thipDeviceGetUuid *hipDeviceGetUuid;
+extern thipDeviceGraphMemTrim *hipDeviceGraphMemTrim;
+extern thipDevicePrimaryCtxGetState *hipDevicePrimaryCtxGetState;
+extern thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
+extern thipDevicePrimaryCtxReset *hipDevicePrimaryCtxReset;
+extern thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
+extern thipDevicePrimaryCtxSetFlags *hipDevicePrimaryCtxSetFlags;
+extern thipDeviceReset *hipDeviceReset;
+extern thipDeviceSetCacheConfig *hipDeviceSetCacheConfig;
+extern thipDeviceSetGraphMemAttribute *hipDeviceSetGraphMemAttribute;
+extern thipDeviceSetLimit *hipDeviceSetLimit;
+extern thipDeviceSetMemPool *hipDeviceSetMemPool;
+extern thipDeviceSetSharedMemConfig *hipDeviceSetSharedMemConfig;
+extern thipDeviceSynchronize *hipDeviceSynchronize;
+extern thipDeviceTotalMem *hipDeviceTotalMem;
+extern thipDriverGetVersion *hipDriverGetVersion;
+extern thipDrvGetErrorName *hipDrvGetErrorName;
+extern thipDrvGetErrorString *hipDrvGetErrorString;
+extern thipDrvMemcpy2DUnaligned *hipDrvMemcpy2DUnaligned;
+extern thipDrvMemcpy3D *hipDrvMemcpy3D;
+extern thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
+extern thipDrvPointerGetAttributes *hipDrvPointerGetAttributes;
+extern thipEventCreate *hipEventCreate;
+extern thipEventCreateWithFlags *hipEventCreateWithFlags;
+extern thipEventDestroy *hipEventDestroy;
+extern thipEventElapsedTime *hipEventElapsedTime;
+extern thipEventQuery *hipEventQuery;
+extern thipEventRecord *hipEventRecord;
+extern thipEventRecord_spt *hipEventRecord_spt;
+extern thipEventSynchronize *hipEventSynchronize;
+extern thipExtGetLinkTypeAndHopCount *hipExtGetLinkTypeAndHopCount;
+extern thipExtLaunchKernel *hipExtLaunchKernel;
+extern thipExtLaunchMultiKernelMultiDevice *hipExtLaunchMultiKernelMultiDevice;
+extern thipExtMallocWithFlags *hipExtMallocWithFlags;
+extern thipExtStreamCreateWithCUMask *hipExtStreamCreateWithCUMask;
+extern thipExtStreamGetCUMask *hipExtStreamGetCUMask;
+extern thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
+extern thipFree *hipFree;
+extern thipFreeArray *hipFreeArray;
+extern thipFreeAsync *hipFreeAsync;
+extern thipFreeHost *hipFreeHost;
+extern thipFreeMipmappedArray *hipFreeMipmappedArray;
+extern thipFuncGetAttribute *hipFuncGetAttribute;
+extern thipFuncGetAttributes *hipFuncGetAttributes;
+extern thipFuncSetAttribute *hipFuncSetAttribute;
+extern thipFuncSetCacheConfig *hipFuncSetCacheConfig;
+extern thipFuncSetSharedMemConfig *hipFuncSetSharedMemConfig;
+extern thipGLGetDevices *hipGLGetDevices;
+extern thipGetChannelDesc *hipGetChannelDesc;
+extern thipGetDevice *hipGetDevice;
+extern thipGetDeviceCount *hipGetDeviceCount;
+extern thipGetDeviceFlags *hipGetDeviceFlags;
+extern thipGetDeviceProperties *hipGetDeviceProperties;
+extern thipGetErrorName *hipGetErrorName;
+extern thipGetErrorString *hipGetErrorString;
+extern thipGetLastError *hipGetLastError;
+extern thipGetMipmappedArrayLevel *hipGetMipmappedArrayLevel;
+extern thipGetStreamDeviceId *hipGetStreamDeviceId;
+extern thipGetSymbolAddress *hipGetSymbolAddress;
+extern thipGetSymbolSize *hipGetSymbolSize;
+extern thipGetTextureAlignmentOffset *hipGetTextureAlignmentOffset;
+extern thipGetTextureObjectResourceDesc *hipGetTextureObjectResourceDesc;
+extern thipGetTextureObjectResourceViewDesc *hipGetTextureObjectResourceViewDesc;
+extern thipGetTextureObjectTextureDesc *hipGetTextureObjectTextureDesc;
+extern thipGetTextureReference *hipGetTextureReference;
+extern thipGraphAddChildGraphNode *hipGraphAddChildGraphNode;
+extern thipGraphAddDependencies *hipGraphAddDependencies;
+extern thipGraphAddEmptyNode *hipGraphAddEmptyNode;
+extern thipGraphAddEventRecordNode *hipGraphAddEventRecordNode;
+extern thipGraphAddEventWaitNode *hipGraphAddEventWaitNode;
+extern thipGraphAddExternalSemaphoresSignalNode *hipGraphAddExternalSemaphoresSignalNode;
+extern thipGraphAddExternalSemaphoresWaitNode *hipGraphAddExternalSemaphoresWaitNode;
+extern thipGraphAddHostNode *hipGraphAddHostNode;
+extern thipGraphAddKernelNode *hipGraphAddKernelNode;
+extern thipGraphAddMemAllocNode *hipGraphAddMemAllocNode;
+extern thipGraphAddMemFreeNode *hipGraphAddMemFreeNode;
+extern thipGraphAddMemcpyNode *hipGraphAddMemcpyNode;
+extern thipGraphAddMemcpyNode1D *hipGraphAddMemcpyNode1D;
+extern thipGraphAddMemcpyNodeFromSymbol *hipGraphAddMemcpyNodeFromSymbol;
+extern thipGraphAddMemcpyNodeToSymbol *hipGraphAddMemcpyNodeToSymbol;
+extern thipGraphAddMemsetNode *hipGraphAddMemsetNode;
+extern thipGraphChildGraphNodeGetGraph *hipGraphChildGraphNodeGetGraph;
+extern thipGraphClone *hipGraphClone;
+extern thipGraphCreate *hipGraphCreate;
+extern thipGraphDebugDotPrint *hipGraphDebugDotPrint;
+extern thipGraphDestroy *hipGraphDestroy;
+extern thipGraphDestroyNode *hipGraphDestroyNode;
+extern thipGraphEventRecordNodeGetEvent *hipGraphEventRecordNodeGetEvent;
+extern thipGraphEventRecordNodeSetEvent *hipGraphEventRecordNodeSetEvent;
+extern thipGraphEventWaitNodeGetEvent *hipGraphEventWaitNodeGetEvent;
+extern thipGraphEventWaitNodeSetEvent *hipGraphEventWaitNodeSetEvent;
+extern thipGraphExecChildGraphNodeSetParams *hipGraphExecChildGraphNodeSetParams;
+extern thipGraphExecDestroy *hipGraphExecDestroy;
+extern thipGraphExecEventRecordNodeSetEvent *hipGraphExecEventRecordNodeSetEvent;
+extern thipGraphExecEventWaitNodeSetEvent *hipGraphExecEventWaitNodeSetEvent;
+extern thipGraphExecExternalSemaphoresSignalNodeSetParams *hipGraphExecExternalSemaphoresSignalNodeSetParams;
+extern thipGraphExecExternalSemaphoresWaitNodeSetParams *hipGraphExecExternalSemaphoresWaitNodeSetParams;
+extern thipGraphExecHostNodeSetParams *hipGraphExecHostNodeSetParams;
+extern thipGraphExecKernelNodeSetParams *hipGraphExecKernelNodeSetParams;
+extern thipGraphExecMemcpyNodeSetParams *hipGraphExecMemcpyNodeSetParams;
+extern thipGraphExecMemcpyNodeSetParams1D *hipGraphExecMemcpyNodeSetParams1D;
+extern thipGraphExecMemcpyNodeSetParamsFromSymbol *hipGraphExecMemcpyNodeSetParamsFromSymbol;
+extern thipGraphExecMemcpyNodeSetParamsToSymbol *hipGraphExecMemcpyNodeSetParamsToSymbol;
+extern thipGraphExecMemsetNodeSetParams *hipGraphExecMemsetNodeSetParams;
+extern thipGraphExecUpdate *hipGraphExecUpdate;
+extern thipGraphExternalSemaphoresSignalNodeGetParams *hipGraphExternalSemaphoresSignalNodeGetParams;
+extern thipGraphExternalSemaphoresSignalNodeSetParams *hipGraphExternalSemaphoresSignalNodeSetParams;
+extern thipGraphExternalSemaphoresWaitNodeGetParams *hipGraphExternalSemaphoresWaitNodeGetParams;
+extern thipGraphExternalSemaphoresWaitNodeSetParams *hipGraphExternalSemaphoresWaitNodeSetParams;
+extern thipGraphGetEdges *hipGraphGetEdges;
+extern thipGraphGetNodes *hipGraphGetNodes;
+extern thipGraphGetRootNodes *hipGraphGetRootNodes;
+extern thipGraphHostNodeGetParams *hipGraphHostNodeGetParams;
+extern thipGraphHostNodeSetParams *hipGraphHostNodeSetParams;
+extern thipGraphInstantiate *hipGraphInstantiate;
+extern thipGraphInstantiateWithFlags *hipGraphInstantiateWithFlags;
+extern thipGraphKernelNodeCopyAttributes *hipGraphKernelNodeCopyAttributes;
+extern thipGraphKernelNodeGetAttribute *hipGraphKernelNodeGetAttribute;
+extern thipGraphKernelNodeGetParams *hipGraphKernelNodeGetParams;
+extern thipGraphKernelNodeSetAttribute *hipGraphKernelNodeSetAttribute;
+extern thipGraphKernelNodeSetParams *hipGraphKernelNodeSetParams;
+extern thipGraphLaunch *hipGraphLaunch;
+extern thipGraphLaunch_spt *hipGraphLaunch_spt;
+extern thipGraphMemAllocNodeGetParams *hipGraphMemAllocNodeGetParams;
+extern thipGraphMemFreeNodeGetParams *hipGraphMemFreeNodeGetParams;
+extern thipGraphMemcpyNodeGetParams *hipGraphMemcpyNodeGetParams;
+extern thipGraphMemcpyNodeSetParams *hipGraphMemcpyNodeSetParams;
+extern thipGraphMemcpyNodeSetParams1D *hipGraphMemcpyNodeSetParams1D;
+extern thipGraphMemcpyNodeSetParamsFromSymbol *hipGraphMemcpyNodeSetParamsFromSymbol;
+extern thipGraphMemcpyNodeSetParamsToSymbol *hipGraphMemcpyNodeSetParamsToSymbol;
+extern thipGraphMemsetNodeGetParams *hipGraphMemsetNodeGetParams;
+extern thipGraphMemsetNodeSetParams *hipGraphMemsetNodeSetParams;
+extern thipGraphNodeFindInClone *hipGraphNodeFindInClone;
+extern thipGraphNodeGetDependencies *hipGraphNodeGetDependencies;
+extern thipGraphNodeGetDependentNodes *hipGraphNodeGetDependentNodes;
+extern thipGraphNodeGetEnabled *hipGraphNodeGetEnabled;
+extern thipGraphNodeGetType *hipGraphNodeGetType;
+extern thipGraphNodeSetEnabled *hipGraphNodeSetEnabled;
+extern thipGraphReleaseUserObject *hipGraphReleaseUserObject;
+extern thipGraphRemoveDependencies *hipGraphRemoveDependencies;
+extern thipGraphRetainUserObject *hipGraphRetainUserObject;
+extern thipGraphUpload *hipGraphUpload;
+extern thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
+extern thipGraphicsGLRegisterImage *hipGraphicsGLRegisterImage;
+extern thipGraphicsMapResources *hipGraphicsMapResources;
+extern thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
+extern thipGraphicsSubResourceGetMappedArray *hipGraphicsSubResourceGetMappedArray;
+extern thipGraphicsUnmapResources *hipGraphicsUnmapResources;
+extern thipGraphicsUnregisterResource *hipGraphicsUnregisterResource;
+extern thipHostAlloc *hipHostAlloc;
+extern thipHostFree *hipHostFree;
+extern thipHostGetDevicePointer *hipHostGetDevicePointer;
+extern thipHostGetFlags *hipHostGetFlags;
+extern thipHostMalloc *hipHostMalloc;
+extern thipHostRegister *hipHostRegister;
+extern thipHostUnregister *hipHostUnregister;
+extern thipImportExternalMemory *hipImportExternalMemory;
+extern thipImportExternalSemaphore *hipImportExternalSemaphore;
+extern thipInit *hipInit;
+extern thipIpcCloseMemHandle *hipIpcCloseMemHandle;
+extern thipIpcGetEventHandle *hipIpcGetEventHandle;
+extern thipIpcGetMemHandle *hipIpcGetMemHandle;
+extern thipIpcOpenEventHandle *hipIpcOpenEventHandle;
+extern thipIpcOpenMemHandle *hipIpcOpenMemHandle;
+extern thipKernelNameRef *hipKernelNameRef;
+extern thipKernelNameRefByPtr *hipKernelNameRefByPtr;
+extern thipLaunchByPtr *hipLaunchByPtr;
+extern thipLaunchCooperativeKernel *hipLaunchCooperativeKernel;
+extern thipLaunchCooperativeKernelMultiDevice *hipLaunchCooperativeKernelMultiDevice;
+extern thipLaunchCooperativeKernel_spt *hipLaunchCooperativeKernel_spt;
+extern thipLaunchHostFunc *hipLaunchHostFunc;
+extern thipLaunchHostFunc_spt *hipLaunchHostFunc_spt;
+extern thipLaunchKernel *hipLaunchKernel;
+extern thipLaunchKernel_spt *hipLaunchKernel_spt;
+extern thipMalloc *hipMalloc;
+extern thipMalloc3D *hipMalloc3D;
+extern thipMalloc3DArray *hipMalloc3DArray;
+extern thipMallocArray *hipMallocArray;
+extern thipMallocAsync *hipMallocAsync;
+extern thipMallocFromPoolAsync *hipMallocFromPoolAsync;
+extern thipMallocHost *hipMallocHost;
+extern thipMallocManaged *hipMallocManaged;
+extern thipMallocMipmappedArray *hipMallocMipmappedArray;
+extern thipMallocPitch *hipMallocPitch;
+extern thipMemAddressFree *hipMemAddressFree;
+extern thipMemAddressReserve *hipMemAddressReserve;
+extern thipMemAdvise *hipMemAdvise;
+extern thipMemAllocHost *hipMemAllocHost;
+extern thipMemAllocPitch *hipMemAllocPitch;
+extern thipMemCreate *hipMemCreate;
+extern thipMemExportToShareableHandle *hipMemExportToShareableHandle;
+extern thipMemGetAccess *hipMemGetAccess;
+extern thipMemGetAddressRange *hipMemGetAddressRange;
+extern thipMemGetAllocationGranularity *hipMemGetAllocationGranularity;
+extern thipMemGetAllocationPropertiesFromHandle *hipMemGetAllocationPropertiesFromHandle;
+extern thipMemGetInfo *hipMemGetInfo;
+extern thipMemImportFromShareableHandle *hipMemImportFromShareableHandle;
+extern thipMemMap *hipMemMap;
+extern thipMemMapArrayAsync *hipMemMapArrayAsync;
+extern thipMemPoolCreate *hipMemPoolCreate;
+extern thipMemPoolDestroy *hipMemPoolDestroy;
+extern thipMemPoolExportPointer *hipMemPoolExportPointer;
+extern thipMemPoolExportToShareableHandle *hipMemPoolExportToShareableHandle;
+extern thipMemPoolGetAccess *hipMemPoolGetAccess;
+extern thipMemPoolGetAttribute *hipMemPoolGetAttribute;
+extern thipMemPoolImportFromShareableHandle *hipMemPoolImportFromShareableHandle;
+extern thipMemPoolImportPointer *hipMemPoolImportPointer;
+extern thipMemPoolSetAccess *hipMemPoolSetAccess;
+extern thipMemPoolSetAttribute *hipMemPoolSetAttribute;
+extern thipMemPoolTrimTo *hipMemPoolTrimTo;
+extern thipMemPrefetchAsync *hipMemPrefetchAsync;
+extern thipMemPtrGetInfo *hipMemPtrGetInfo;
+extern thipMemRangeGetAttribute *hipMemRangeGetAttribute;
+extern thipMemRangeGetAttributes *hipMemRangeGetAttributes;
+extern thipMemRelease *hipMemRelease;
+extern thipMemRetainAllocationHandle *hipMemRetainAllocationHandle;
+extern thipMemSetAccess *hipMemSetAccess;
+extern thipMemUnmap *hipMemUnmap;
+extern thipMemcpy *hipMemcpy;
+extern thipMemcpy2D *hipMemcpy2D;
+extern thipMemcpy2DAsync *hipMemcpy2DAsync;
+extern thipMemcpy2DAsync_spt *hipMemcpy2DAsync_spt;
+extern thipMemcpy2DFromArray *hipMemcpy2DFromArray;
+extern thipMemcpy2DFromArrayAsync *hipMemcpy2DFromArrayAsync;
+extern thipMemcpy2DFromArrayAsync_spt *hipMemcpy2DFromArrayAsync_spt;
+extern thipMemcpy2DFromArray_spt *hipMemcpy2DFromArray_spt;
+extern thipMemcpy2DToArray *hipMemcpy2DToArray;
+extern thipMemcpy2DToArrayAsync *hipMemcpy2DToArrayAsync;
+extern thipMemcpy2DToArrayAsync_spt *hipMemcpy2DToArrayAsync_spt;
+extern thipMemcpy2DToArray_spt *hipMemcpy2DToArray_spt;
+extern thipMemcpy2D_spt *hipMemcpy2D_spt;
+extern thipMemcpy3D *hipMemcpy3D;
+extern thipMemcpy3DAsync *hipMemcpy3DAsync;
+extern thipMemcpy3DAsync_spt *hipMemcpy3DAsync_spt;
+extern thipMemcpy3D_spt *hipMemcpy3D_spt;
+extern thipMemcpyAsync *hipMemcpyAsync;
+extern thipMemcpyAsync_spt *hipMemcpyAsync_spt;
+extern thipMemcpyAtoH *hipMemcpyAtoH;
+extern thipMemcpyDtoD *hipMemcpyDtoD;
+extern thipMemcpyDtoDAsync *hipMemcpyDtoDAsync;
+extern thipMemcpyDtoH *hipMemcpyDtoH;
+extern thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
+extern thipMemcpyFromArray *hipMemcpyFromArray;
+extern thipMemcpyFromArray_spt *hipMemcpyFromArray_spt;
+extern thipMemcpyFromSymbol *hipMemcpyFromSymbol;
+extern thipMemcpyFromSymbolAsync *hipMemcpyFromSymbolAsync;
+extern thipMemcpyFromSymbolAsync_spt *hipMemcpyFromSymbolAsync_spt;
+extern thipMemcpyFromSymbol_spt *hipMemcpyFromSymbol_spt;
+extern thipMemcpyHtoA *hipMemcpyHtoA;
+extern thipMemcpyHtoD *hipMemcpyHtoD;
+extern thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
+extern thipMemcpyParam2D *hipMemcpyParam2D;
+extern thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
+extern thipMemcpyPeer *hipMemcpyPeer;
+extern thipMemcpyPeerAsync *hipMemcpyPeerAsync;
+extern thipMemcpyToArray *hipMemcpyToArray;
+extern thipMemcpyToSymbol *hipMemcpyToSymbol;
+extern thipMemcpyToSymbolAsync *hipMemcpyToSymbolAsync;
+extern thipMemcpyToSymbolAsync_spt *hipMemcpyToSymbolAsync_spt;
+extern thipMemcpyToSymbol_spt *hipMemcpyToSymbol_spt;
+extern thipMemcpyWithStream *hipMemcpyWithStream;
+extern thipMemcpy_spt *hipMemcpy_spt;
+extern thipMemset *hipMemset;
+extern thipMemset2D *hipMemset2D;
+extern thipMemset2DAsync *hipMemset2DAsync;
+extern thipMemset2DAsync_spt *hipMemset2DAsync_spt;
+extern thipMemset2D_spt *hipMemset2D_spt;
+extern thipMemset3D *hipMemset3D;
+extern thipMemset3DAsync *hipMemset3DAsync;
+extern thipMemset3DAsync_spt *hipMemset3DAsync_spt;
+extern thipMemset3D_spt *hipMemset3D_spt;
+extern thipMemsetAsync *hipMemsetAsync;
+extern thipMemsetAsync_spt *hipMemsetAsync_spt;
+extern thipMemsetD16 *hipMemsetD16;
+extern thipMemsetD16Async *hipMemsetD16Async;
+extern thipMemsetD32 *hipMemsetD32;
+extern thipMemsetD32Async *hipMemsetD32Async;
+extern thipMemsetD8 *hipMemsetD8;
+extern thipMemsetD8Async *hipMemsetD8Async;
+extern thipMemset_spt *hipMemset_spt;
+extern thipMipmappedArrayCreate *hipMipmappedArrayCreate;
+extern thipMipmappedArrayDestroy *hipMipmappedArrayDestroy;
+extern thipMipmappedArrayGetLevel *hipMipmappedArrayGetLevel;
 extern thipModuleGetFunction *hipModuleGetFunction;
 extern thipModuleGetGlobal *hipModuleGetGlobal;
 extern thipModuleGetTexRef *hipModuleGetTexRef;
-extern thipMemGetInfo *hipMemGetInfo;
-extern thipMalloc *hipMalloc;
-extern thipMemAllocPitch *hipMemAllocPitch;
-extern thipFree *hipFree;
-extern thipMemGetAddressRange *hipMemGetAddressRange;
-extern thipHostMalloc *hipHostMalloc;
-extern thipHostFree *hipHostFree;
-extern thipHostRegister *hipHostRegister;
-extern thipHostGetDevicePointer *hipHostGetDevicePointer;
-extern thipHostGetFlags *hipHostGetFlags;
-extern thipHostUnregister *hipHostUnregister;
-extern thipMallocManaged *hipMallocManaged;
-extern thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
-extern thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
-extern thipMemcpy *hipMemcpy;
-extern thipMemcpyPeer *hipMemcpyPeer;
-extern thipMemcpyHtoD *hipMemcpyHtoD;
-extern thipMemcpyDtoH *hipMemcpyDtoH;
-extern thipMemcpyDtoD *hipMemcpyDtoD;
-extern thipDrvMemcpy2DUnaligned *hipDrvMemcpy2DUnaligned;
-extern thipMemcpyParam2D *hipMemcpyParam2D;
-extern thipDrvMemcpy3D *hipDrvMemcpy3D;
-extern thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
-extern thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
-extern thipMemcpyDtoDAsync *hipMemcpyDtoDAsync;
-extern thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
-extern thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
-extern thipMemset *hipMemset;
-extern thipMemsetD8 *hipMemsetD8;
-extern thipMemsetD16 *hipMemsetD16;
-extern thipMemsetD32 *hipMemsetD32;
-extern thipMemsetD8Async *hipMemsetD8Async;
-extern thipMemsetD16Async *hipMemsetD16Async;
-extern thipMemsetD32Async *hipMemsetD32Async;
-extern thipArrayCreate *hipArrayCreate;
-extern thipArrayDestroy *hipArrayDestroy;
-extern thipArray3DCreate *hipArray3DCreate;
+extern thipModuleLaunchCooperativeKernel *hipModuleLaunchCooperativeKernel;
+extern thipModuleLaunchCooperativeKernelMultiDevice *hipModuleLaunchCooperativeKernelMultiDevice;
+extern thipModuleLaunchKernel *hipModuleLaunchKernel;
+extern thipModuleLoad *hipModuleLoad;
+extern thipModuleLoadData *hipModuleLoadData;
+extern thipModuleLoadDataEx *hipModuleLoadDataEx;
+extern thipModuleOccupancyMaxActiveBlocksPerMultiprocessor *hipModuleOccupancyMaxActiveBlocksPerMultiprocessor;
+extern thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+extern thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
+extern thipModuleOccupancyMaxPotentialBlockSizeWithFlags *hipModuleOccupancyMaxPotentialBlockSizeWithFlags;
+extern thipModuleUnload *hipModuleUnload;
+extern thipOccupancyMaxActiveBlocksPerMultiprocessor *hipOccupancyMaxActiveBlocksPerMultiprocessor;
+extern thipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
+extern thipOccupancyMaxPotentialBlockSize *hipOccupancyMaxPotentialBlockSize;
+extern thipPeekAtLastError *hipPeekAtLastError;
+extern thipPointerGetAttribute *hipPointerGetAttribute;
 extern thipPointerGetAttributes *hipPointerGetAttributes;
-extern thipStreamCreate* hipStreamCreate;
+extern thipPointerSetAttribute *hipPointerSetAttribute;
+extern thipProfilerStart *hipProfilerStart;
+extern thipProfilerStop *hipProfilerStop;
+extern thipRuntimeGetVersion *hipRuntimeGetVersion;
+extern thipSetDevice *hipSetDevice;
+extern thipSetDeviceFlags *hipSetDeviceFlags;
+extern thipSetupArgument *hipSetupArgument;
+extern thipSignalExternalSemaphoresAsync *hipSignalExternalSemaphoresAsync;
+extern thipStreamAddCallback *hipStreamAddCallback;
+extern thipStreamAddCallback_spt *hipStreamAddCallback_spt;
+extern thipStreamAttachMemAsync *hipStreamAttachMemAsync;
+extern thipStreamBeginCapture *hipStreamBeginCapture;
+extern thipStreamBeginCapture_spt *hipStreamBeginCapture_spt;
+extern thipStreamCreate *hipStreamCreate;
 extern thipStreamCreateWithFlags *hipStreamCreateWithFlags;
 extern thipStreamCreateWithPriority *hipStreamCreateWithPriority;
-extern thipStreamGetPriority *hipStreamGetPriority;
-extern thipStreamGetFlags *hipStreamGetFlags;
-extern thipStreamWaitEvent *hipStreamWaitEvent;
-extern thipStreamAddCallback *hipStreamAddCallback;
-extern thipStreamQuery *hipStreamQuery;
-extern thipStreamSynchronize *hipStreamSynchronize;
 extern thipStreamDestroy *hipStreamDestroy;
-extern thipEventCreateWithFlags *hipEventCreateWithFlags;
-extern thipEventRecord *hipEventRecord;
-extern thipEventQuery *hipEventQuery;
-extern thipEventSynchronize *hipEventSynchronize;
-extern thipEventDestroy *hipEventDestroy;
-extern thipEventElapsedTime *hipEventElapsedTime;
-extern thipFuncGetAttribute *hipFuncGetAttribute;
-extern thipFuncSetCacheConfig *hipFuncSetCacheConfig;
-extern thipModuleLaunchKernel *hipModuleLaunchKernel;
-extern thipDrvOccupancyMaxActiveBlocksPerMultiprocessor *hipDrvOccupancyMaxActiveBlocksPerMultiprocessor;
-extern thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
-extern thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
-extern thipTexRefSetArray *hipTexRefSetArray;
-extern thipTexRefSetAddress *hipTexRefSetAddress;
-extern thipTexRefSetAddress2D *hipTexRefSetAddress2D;
-extern thipTexRefSetFormat *hipTexRefSetFormat;
-extern thipTexRefSetAddressMode *hipTexRefSetAddressMode;
-extern thipTexRefSetFilterMode *hipTexRefSetFilterMode;
-extern thipTexRefSetFlags *hipTexRefSetFlags;
-extern thipTexRefGetAddress *hipTexRefGetAddress;
-extern thipTexRefGetArray *hipTexRefGetArray;
-extern thipTexRefGetAddressMode *hipTexRefGetAddressMode;
+extern thipStreamEndCapture *hipStreamEndCapture;
+extern thipStreamEndCapture_spt *hipStreamEndCapture_spt;
+extern thipStreamGetCaptureInfo *hipStreamGetCaptureInfo;
+extern thipStreamGetCaptureInfo_spt *hipStreamGetCaptureInfo_spt;
+extern thipStreamGetCaptureInfo_v2 *hipStreamGetCaptureInfo_v2;
+extern thipStreamGetCaptureInfo_v2_spt *hipStreamGetCaptureInfo_v2_spt;
+extern thipStreamGetDevice *hipStreamGetDevice;
+extern thipStreamGetFlags *hipStreamGetFlags;
+extern thipStreamGetFlags_spt *hipStreamGetFlags_spt;
+extern thipStreamGetPriority *hipStreamGetPriority;
+extern thipStreamGetPriority_spt *hipStreamGetPriority_spt;
+extern thipStreamIsCapturing *hipStreamIsCapturing;
+extern thipStreamIsCapturing_spt *hipStreamIsCapturing_spt;
+extern thipStreamQuery *hipStreamQuery;
+extern thipStreamQuery_spt *hipStreamQuery_spt;
+extern thipStreamSynchronize *hipStreamSynchronize;
+extern thipStreamSynchronize_spt *hipStreamSynchronize_spt;
+extern thipStreamUpdateCaptureDependencies *hipStreamUpdateCaptureDependencies;
+extern thipStreamWaitEvent *hipStreamWaitEvent;
+extern thipStreamWaitEvent_spt *hipStreamWaitEvent_spt;
+extern thipStreamWaitValue32 *hipStreamWaitValue32;
+extern thipStreamWaitValue64 *hipStreamWaitValue64;
+extern thipStreamWriteValue32 *hipStreamWriteValue32;
+extern thipStreamWriteValue64 *hipStreamWriteValue64;
 extern thipTexObjectCreate *hipTexObjectCreate;
 extern thipTexObjectDestroy *hipTexObjectDestroy;
-extern thipDeviceCanAccessPeer *hipDeviceCanAccessPeer;
-extern thipCtxEnablePeerAccess *hipCtxEnablePeerAccess;
-extern thipCtxDisablePeerAccess *hipCtxDisablePeerAccess;
-extern thipDeviceGetP2PAttribute *hipDeviceGetP2PAttribute;
-extern thipGraphicsUnregisterResource *hipGraphicsUnregisterResource;
-extern thipGraphicsResourceGetMappedMipmappedArray *hipGraphicsResourceGetMappedMipmappedArray;
-extern thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
-extern thipGraphicsMapResources *hipGraphicsMapResources;
-extern thipGraphicsUnmapResources *hipGraphicsUnmapResources;
+extern thipTexObjectGetResourceDesc *hipTexObjectGetResourceDesc;
+extern thipTexObjectGetResourceViewDesc *hipTexObjectGetResourceViewDesc;
+extern thipTexObjectGetTextureDesc *hipTexObjectGetTextureDesc;
+extern thipTexRefGetAddress *hipTexRefGetAddress;
+extern thipTexRefGetAddressMode *hipTexRefGetAddressMode;
+extern thipTexRefGetFilterMode *hipTexRefGetFilterMode;
+extern thipTexRefGetFlags *hipTexRefGetFlags;
+extern thipTexRefGetFormat *hipTexRefGetFormat;
+extern thipTexRefGetMaxAnisotropy *hipTexRefGetMaxAnisotropy;
+extern thipTexRefGetMipMappedArray *hipTexRefGetMipMappedArray;
+extern thipTexRefGetMipmapFilterMode *hipTexRefGetMipmapFilterMode;
+extern thipTexRefGetMipmapLevelBias *hipTexRefGetMipmapLevelBias;
+extern thipTexRefGetMipmapLevelClamp *hipTexRefGetMipmapLevelClamp;
+extern thipTexRefSetAddress *hipTexRefSetAddress;
+extern thipTexRefSetAddress2D *hipTexRefSetAddress2D;
+extern thipTexRefSetAddressMode *hipTexRefSetAddressMode;
+extern thipTexRefSetArray *hipTexRefSetArray;
+extern thipTexRefSetBorderColor *hipTexRefSetBorderColor;
+extern thipTexRefSetFilterMode *hipTexRefSetFilterMode;
+extern thipTexRefSetFlags *hipTexRefSetFlags;
+extern thipTexRefSetFormat *hipTexRefSetFormat;
+extern thipTexRefSetMaxAnisotropy *hipTexRefSetMaxAnisotropy;
+extern thipTexRefSetMipmapFilterMode *hipTexRefSetMipmapFilterMode;
+extern thipTexRefSetMipmapLevelBias *hipTexRefSetMipmapLevelBias;
+extern thipTexRefSetMipmapLevelClamp *hipTexRefSetMipmapLevelClamp;
+extern thipTexRefSetMipmappedArray *hipTexRefSetMipmappedArray;
+extern thipThreadExchangeStreamCaptureMode *hipThreadExchangeStreamCaptureMode;
+extern thipUnbindTexture *hipUnbindTexture;
+extern thipUserObjectCreate *hipUserObjectCreate;
+extern thipUserObjectRelease *hipUserObjectRelease;
+extern thipUserObjectRetain *hipUserObjectRetain;
+extern thipWaitExternalSemaphoresAsync *hipWaitExternalSemaphoresAsync;
+extern thiprtcAddNameExpression *hiprtcAddNameExpression;
+extern thiprtcCompileProgram *hiprtcCompileProgram;
+extern thiprtcCreateProgram *hiprtcCreateProgram;
+extern thiprtcDestroyProgram *hiprtcDestroyProgram;
+extern thiprtcGetBitcode *hiprtcGetBitcode;
+extern thiprtcGetBitcodeSize *hiprtcGetBitcodeSize;
+extern thiprtcGetCode *hiprtcGetCode;
+extern thiprtcGetCodeSize *hiprtcGetCodeSize;
+extern thiprtcGetErrorString *hiprtcGetErrorString;
+extern thiprtcGetLoweredName *hiprtcGetLoweredName;
+extern thiprtcGetProgramLog *hiprtcGetProgramLog;
+extern thiprtcGetProgramLogSize *hiprtcGetProgramLogSize;
+extern thiprtcLinkAddData *hiprtcLinkAddData;
+extern thiprtcLinkAddFile *hiprtcLinkAddFile;
+extern thiprtcLinkComplete *hiprtcLinkComplete;
+extern thiprtcLinkCreate *hiprtcLinkCreate;
+extern thiprtcLinkDestroy *hiprtcLinkDestroy;
+extern thiprtcVersion *hiprtcVersion;
+extern tmake_hipExtent *make_hipExtent;
+extern tmake_hipPitchedPtr *make_hipPitchedPtr;
+extern tmake_hipPos *make_hipPos;
 
-extern thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
-extern thipGLGetDevices *hipGLGetDevices;
-extern thipImportExternalMemory *hipImportExternalMemory;
-extern thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
-extern thipDestroyExternalMemory *hipDestroyExternalMemory;
 
-extern thiprtcGetErrorString* hiprtcGetErrorString;
-extern thiprtcAddNameExpression* hiprtcAddNameExpression;
-extern thiprtcCompileProgram* hiprtcCompileProgram;
-extern thiprtcCreateProgram* hiprtcCreateProgram;
-extern thiprtcDestroyProgram* hiprtcDestroyProgram;
-extern thiprtcGetLoweredName* hiprtcGetLoweredName;
-extern thiprtcGetProgramLog* hiprtcGetProgramLog;
-extern thiprtcGetProgramLogSize* hiprtcGetProgramLogSize;
-extern thiprtcGetBitcode* hiprtcGetBitcode;
-extern thiprtcGetBitcodeSize* hiprtcGetBitcodeSize;
-extern thiprtcGetCode* hiprtcGetCode;
-extern thiprtcGetCodeSize* hiprtcGetCodeSize;
-extern thiprtcLinkCreate* hiprtcLinkCreate;
-extern thiprtcLinkAddFile* hiprtcLinkAddFile;
-extern thiprtcLinkAddData* hiprtcLinkAddData;
-extern thiprtcLinkComplete* hiprtcLinkComplete;
-extern thiprtcLinkDestroy* hiprtcLinkDestroy;
+
+///// END REGION: OROCHI_SUMMONER_REGION_hipew_h
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
+
 
 enum {
   HIPEW_SUCCESS = 0,
   HIPEW_ERROR_OPEN_FAILED = -1,
   HIPEW_ERROR_ATEXIT_FAILED = -2,
-  HIPEW_ERROR_OLD_DRIVER = -3,
-  HIPEW_NOT_INITIALIZED = -4,
+  HIPEW_NOT_INITIALIZED = -3,
+
+  // error code if the major version of the API used to compiled is more recent than the one of the driver
+  // It doesn't seem a good idea to use an API that is unkonwn by the driver.
+  HIPEW_ERROR_OLD_DRIVER = -4,
 };
 
 enum {
@@ -1465,7 +2543,7 @@ enum {
 	HIPEW_INIT_HIPRTC = 1 << 1,
 };
 
-void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags );
+void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags );
 const char *hipewErrorString(hipError_t result);
 const char *hipewCompilerPath(void);
 int hipewCompilerVersion(void);

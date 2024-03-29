@@ -16,9 +16,26 @@ graph LR
 
 ## Requirement
 
-This library doesn't require you to link to CUDA (for the driver APIs) nor HIP (for both driver and runtime APIs) at build-time. This provides the benefit that you don't need to install HIP SDK on your machine or CUDA SDK in case you're not using the runtime APIs. 
+In order to enable the CUDA backend you need to:
+ * Have the CUDA SDK installed ( only the header folder is used by Orochi, at compile-time )
+ * Add the CUDA include folder to the Include Directories list of your project.
+ * Add the define `OROCHI_ENABLE_CUEW` to your project
+
+For the HIP backend: it's easier as everything needed is embedded in this project, thus you don't need to do anything.
+
+This library doesn't require you to link to CUDA nor HIP at build-time. This provides the benefit that the runtime works even if one of the two drivers, either CUDA or HIP, is installed.
+
 To run an application compiled with Orochi, you need to install a driver of your choice with the corresponding .dll/.so files based on the GPU(s) available. Orochi will automatically link with the corresponding shared library at runtime.
 
+---
+
+## SDK multiple versions support
+
+Orochi will try to keep its API up-to-date with both latest CUDA and HIP SDK releases in its `main` branch.
+
+it will also keep the previous versions in branches: 
+
+For example, a branch named `hip5.7_cuda12.2` means this branch is based on HIP SDK 5.7 and CUDA SDK 12.2.
 
 ----
 

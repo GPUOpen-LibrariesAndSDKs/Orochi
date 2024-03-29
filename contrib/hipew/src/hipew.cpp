@@ -12,7 +12,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License
+ *
+ * Modifications made by Advanced Micro Devices, Inc.:
+ * Copyright(C) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * The modifications include updates to maintain an up-to-date API,
+ * enhancing compatibility in response to evolving technical standards.
+ * These changes are designed to augment the original work by the Blender Foundation,
+ * ensuring the software remains relevant and efficient for its intended applications.
+ *
+ * The modified software is provided under the Apache License, Version 2.0.
+ * For more details, see the License above.
  */
+
 #ifdef _MSC_VER
 #  if _MSC_VER < 1900
 #    define snprintf _snprintf
@@ -59,163 +71,479 @@ typedef void* DynamicLibrary;
 #define _LIBRARY_FIND(lib, name) \
         name = (t##name *)dynamic_library_find(lib, #name);
 
-#define HIP_LIBRARY_FIND_CHECKED(name) \
-        _LIBRARY_FIND_CHECKED(hip_lib, name)
-#define HIP_LIBRARY_FIND(name) _LIBRARY_FIND(hip_lib, name)
 
-#define HIPRTC_LIBRARY_FIND_CHECKED( name ) _LIBRARY_FIND_CHECKED( hiprtc_lib, name )
-#define HIPRTC_LIBRARY_FIND( name ) _LIBRARY_FIND( hiprtc_lib, name )
+static DynamicLibrary hip_lib = NULL;
+static DynamicLibrary hiprtc_lib = NULL;
 
-static DynamicLibrary hip_lib;
-static DynamicLibrary hiprtc_lib;
 
-/* Function definitions. */
-thipGetErrorName *hipGetErrorName;
-thipGetErrorString *hipGetErrorString;
-thipGetLastError *hipGetLastError;
-thipInit *hipInit;
-thipDriverGetVersion *hipDriverGetVersion;
-thipGetDevice *hipGetDevice;
-thipGetDeviceCount *hipGetDeviceCount;
-thipGetDeviceProperties *hipGetDeviceProperties;
-thipDeviceGet* hipDeviceGet;
-thipDeviceGetName *hipDeviceGetName;
-thipDeviceGetAttribute *hipDeviceGetAttribute;
-thipDeviceGetLimit *hipDeviceGetLimit;
-thipDeviceSetLimit *hipDeviceSetLimit;
-thipDeviceComputeCapability *hipDeviceComputeCapability;
-thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain;
-thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease;
-thipDevicePrimaryCtxSetFlags *hipDevicePrimaryCtxSetFlags;
-thipDevicePrimaryCtxGetState *hipDevicePrimaryCtxGetState;
-thipDevicePrimaryCtxReset *hipDevicePrimaryCtxReset;
-thipCtxCreate *hipCtxCreate;
-thipCtxDestroy *hipCtxDestroy;
-thipCtxPushCurrent *hipCtxPushCurrent;
-thipCtxPopCurrent *hipCtxPopCurrent;
-thipCtxSetCurrent *hipCtxSetCurrent;
-thipCtxGetCurrent *hipCtxGetCurrent;
-thipCtxGetDevice *hipCtxGetDevice;
-thipCtxGetFlags *hipCtxGetFlags;
-thipCtxSynchronize *hipCtxSynchronize;
-thipDeviceSynchronize *hipDeviceSynchronize;
-thipCtxGetCacheConfig *hipCtxGetCacheConfig;
-thipCtxSetCacheConfig *hipCtxSetCacheConfig;
-thipCtxGetSharedMemConfig *hipCtxGetSharedMemConfig;
-thipCtxSetSharedMemConfig *hipCtxSetSharedMemConfig;
-thipCtxGetApiVersion *hipCtxGetApiVersion;
-thipModuleLoad *hipModuleLoad;
-thipModuleLoadData *hipModuleLoadData;
-thipModuleLoadDataEx *hipModuleLoadDataEx;
-thipModuleUnload *hipModuleUnload;
-thipModuleGetFunction *hipModuleGetFunction;
-thipModuleGetGlobal *hipModuleGetGlobal;
-thipModuleGetTexRef *hipModuleGetTexRef;
-thipMemGetInfo *hipMemGetInfo;
-thipMalloc *hipMalloc;
-thipMemAllocPitch *hipMemAllocPitch;
-thipFree *hipFree;
-thipMemGetAddressRange *hipMemGetAddressRange;
-thipHostMalloc *hipHostMalloc;
-thipHostFree *hipHostFree;
-thipHostRegister *hipHostRegister;
-thipHostGetDevicePointer *hipHostGetDevicePointer;
-thipHostGetFlags *hipHostGetFlags;
-thipHostUnregister *hipHostUnregister;
-thipMallocManaged *hipMallocManaged;
-thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId;
-thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
-thipMemcpy *hipMemcpy;
-thipMemcpyPeer *hipMemcpyPeer;
-thipMemcpyHtoD *hipMemcpyHtoD;
-thipMemcpyDtoH *hipMemcpyDtoH;
-thipMemcpyDtoD *hipMemcpyDtoD;
-thipDrvMemcpy2DUnaligned *hipDrvMemcpy2DUnaligned;
-thipMemcpyParam2D *hipMemcpyParam2D;
-thipDrvMemcpy3D *hipDrvMemcpy3D;
-thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
-thipMemcpyDtoHAsync *hipMemcpyDtoHAsync;
-thipMemcpyDtoDAsync *hipMemcpyDtoDAsync;
-thipMemcpyParam2DAsync *hipMemcpyParam2DAsync;
-thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
-thipMemset *hipMemset;
-thipMemsetD8 *hipMemsetD8;
-thipMemsetD16 *hipMemsetD16;
-thipMemsetD32 *hipMemsetD32;
-thipMemsetD8Async *hipMemsetD8Async;
-thipMemsetD16Async *hipMemsetD16Async;
-thipMemsetD32Async *hipMemsetD32Async;
-thipArrayCreate *hipArrayCreate;
-thipArrayDestroy *hipArrayDestroy;
-thipArray3DCreate *hipArray3DCreate;
-thipPointerGetAttributes* hipPointerGetAttributes;
-thipStreamCreate* hipStreamCreate;
-thipStreamCreateWithFlags *hipStreamCreateWithFlags;
-thipStreamCreateWithPriority *hipStreamCreateWithPriority;
-thipStreamGetPriority *hipStreamGetPriority;
-thipStreamGetFlags *hipStreamGetFlags;
-thipStreamWaitEvent *hipStreamWaitEvent;
-thipStreamAddCallback *hipStreamAddCallback;
-thipStreamQuery *hipStreamQuery;
-thipStreamSynchronize *hipStreamSynchronize;
-thipStreamDestroy *hipStreamDestroy;
-thipEventCreateWithFlags *hipEventCreateWithFlags;
-thipEventRecord *hipEventRecord;
-thipEventQuery *hipEventQuery;
-thipEventSynchronize *hipEventSynchronize;
-thipEventDestroy *hipEventDestroy;
-thipEventElapsedTime *hipEventElapsedTime;
-thipFuncGetAttribute *hipFuncGetAttribute;
-thipFuncSetCacheConfig *hipFuncSetCacheConfig;
-thipModuleLaunchKernel *hipModuleLaunchKernel;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessor *hipDrvOccupancyMaxActiveBlocksPerMultiprocessor;
-thipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipDrvOccupancyMaxActiveBlocksPerMultiprocessorWithFlags;
-thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize;
-thipTexRefSetArray *hipTexRefSetArray;
-thipTexRefSetAddress *hipTexRefSetAddress;
-thipTexRefSetAddress2D *hipTexRefSetAddress2D;
-thipTexRefSetFormat *hipTexRefSetFormat;
-thipTexRefSetAddressMode *hipTexRefSetAddressMode;
-thipTexRefSetFilterMode *hipTexRefSetFilterMode;
-thipTexRefSetFlags *hipTexRefSetFlags;
-thipTexRefGetAddress *hipTexRefGetAddress;
-thipTexRefGetArray *hipTexRefGetArray;
-thipTexRefGetAddressMode *hipTexRefGetAddressMode;
-thipTexObjectCreate *hipTexObjectCreate;
-thipTexObjectDestroy *hipTexObjectDestroy;
-thipDeviceCanAccessPeer *hipDeviceCanAccessPeer;
+#pragma region OROCHI_SUMMONER_REGION_hipew_cpp_1
 
-thipCtxEnablePeerAccess *hipCtxEnablePeerAccess;
-thipCtxDisablePeerAccess *hipCtxDisablePeerAccess;
-thipDeviceGetP2PAttribute *hipDeviceGetP2PAttribute;
-thipGraphicsUnregisterResource *hipGraphicsUnregisterResource;
-thipGraphicsMapResources *hipGraphicsMapResources;
-thipGraphicsUnmapResources *hipGraphicsUnmapResources;
-thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
 
-thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
-thipGLGetDevices *hipGLGetDevices;
-thipImportExternalMemory *hipImportExternalMemory;
-thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer;
-thipDestroyExternalMemory *hipDestroyExternalMemory;
+t__hipPopCallConfiguration *__hipPopCallConfiguration = nullptr;
+t__hipPushCallConfiguration *__hipPushCallConfiguration = nullptr;
+thipApiName *hipApiName = nullptr;
+thipArray3DCreate *hipArray3DCreate = nullptr;
+thipArray3DGetDescriptor *hipArray3DGetDescriptor = nullptr;
+thipArrayCreate *hipArrayCreate = nullptr;
+thipArrayDestroy *hipArrayDestroy = nullptr;
+thipArrayGetDescriptor *hipArrayGetDescriptor = nullptr;
+thipArrayGetInfo *hipArrayGetInfo = nullptr;
+thipBindTexture *hipBindTexture = nullptr;
+thipBindTexture2D *hipBindTexture2D = nullptr;
+thipBindTextureToArray *hipBindTextureToArray = nullptr;
+thipBindTextureToMipmappedArray *hipBindTextureToMipmappedArray = nullptr;
+thipChooseDevice *hipChooseDevice = nullptr;
+thipConfigureCall *hipConfigureCall = nullptr;
+thipCreateChannelDesc *hipCreateChannelDesc = nullptr;
+thipCreateSurfaceObject *hipCreateSurfaceObject = nullptr;
+thipCreateTextureObject *hipCreateTextureObject = nullptr;
+thipCtxCreate *hipCtxCreate = nullptr;
+thipCtxDestroy *hipCtxDestroy = nullptr;
+thipCtxDisablePeerAccess *hipCtxDisablePeerAccess = nullptr;
+thipCtxEnablePeerAccess *hipCtxEnablePeerAccess = nullptr;
+thipCtxGetApiVersion *hipCtxGetApiVersion = nullptr;
+thipCtxGetCacheConfig *hipCtxGetCacheConfig = nullptr;
+thipCtxGetCurrent *hipCtxGetCurrent = nullptr;
+thipCtxGetDevice *hipCtxGetDevice = nullptr;
+thipCtxGetFlags *hipCtxGetFlags = nullptr;
+thipCtxGetSharedMemConfig *hipCtxGetSharedMemConfig = nullptr;
+thipCtxPopCurrent *hipCtxPopCurrent = nullptr;
+thipCtxPushCurrent *hipCtxPushCurrent = nullptr;
+thipCtxSetCacheConfig *hipCtxSetCacheConfig = nullptr;
+thipCtxSetCurrent *hipCtxSetCurrent = nullptr;
+thipCtxSetSharedMemConfig *hipCtxSetSharedMemConfig = nullptr;
+thipCtxSynchronize *hipCtxSynchronize = nullptr;
+thipDestroyExternalMemory *hipDestroyExternalMemory = nullptr;
+thipDestroyExternalSemaphore *hipDestroyExternalSemaphore = nullptr;
+thipDestroySurfaceObject *hipDestroySurfaceObject = nullptr;
+thipDestroyTextureObject *hipDestroyTextureObject = nullptr;
+thipDeviceCanAccessPeer *hipDeviceCanAccessPeer = nullptr;
+thipDeviceComputeCapability *hipDeviceComputeCapability = nullptr;
+thipDeviceDisablePeerAccess *hipDeviceDisablePeerAccess = nullptr;
+thipDeviceEnablePeerAccess *hipDeviceEnablePeerAccess = nullptr;
+thipDeviceGet *hipDeviceGet = nullptr;
+thipDeviceGetAttribute *hipDeviceGetAttribute = nullptr;
+thipDeviceGetByPCIBusId *hipDeviceGetByPCIBusId = nullptr;
+thipDeviceGetCacheConfig *hipDeviceGetCacheConfig = nullptr;
+thipDeviceGetDefaultMemPool *hipDeviceGetDefaultMemPool = nullptr;
+thipDeviceGetGraphMemAttribute *hipDeviceGetGraphMemAttribute = nullptr;
+thipDeviceGetLimit *hipDeviceGetLimit = nullptr;
+thipDeviceGetMemPool *hipDeviceGetMemPool = nullptr;
+thipDeviceGetName *hipDeviceGetName = nullptr;
+thipDeviceGetP2PAttribute *hipDeviceGetP2PAttribute = nullptr;
+thipDeviceGetPCIBusId *hipDeviceGetPCIBusId = nullptr;
+thipDeviceGetSharedMemConfig *hipDeviceGetSharedMemConfig = nullptr;
+thipDeviceGetStreamPriorityRange *hipDeviceGetStreamPriorityRange = nullptr;
+thipDeviceGetUuid *hipDeviceGetUuid = nullptr;
+thipDeviceGraphMemTrim *hipDeviceGraphMemTrim = nullptr;
+thipDevicePrimaryCtxGetState *hipDevicePrimaryCtxGetState = nullptr;
+thipDevicePrimaryCtxRelease *hipDevicePrimaryCtxRelease = nullptr;
+thipDevicePrimaryCtxReset *hipDevicePrimaryCtxReset = nullptr;
+thipDevicePrimaryCtxRetain *hipDevicePrimaryCtxRetain = nullptr;
+thipDevicePrimaryCtxSetFlags *hipDevicePrimaryCtxSetFlags = nullptr;
+thipDeviceReset *hipDeviceReset = nullptr;
+thipDeviceSetCacheConfig *hipDeviceSetCacheConfig = nullptr;
+thipDeviceSetGraphMemAttribute *hipDeviceSetGraphMemAttribute = nullptr;
+thipDeviceSetLimit *hipDeviceSetLimit = nullptr;
+thipDeviceSetMemPool *hipDeviceSetMemPool = nullptr;
+thipDeviceSetSharedMemConfig *hipDeviceSetSharedMemConfig = nullptr;
+thipDeviceSynchronize *hipDeviceSynchronize = nullptr;
+thipDeviceTotalMem *hipDeviceTotalMem = nullptr;
+thipDriverGetVersion *hipDriverGetVersion = nullptr;
+thipDrvGetErrorName *hipDrvGetErrorName = nullptr;
+thipDrvGetErrorString *hipDrvGetErrorString = nullptr;
+thipDrvMemcpy2DUnaligned *hipDrvMemcpy2DUnaligned = nullptr;
+thipDrvMemcpy3D *hipDrvMemcpy3D = nullptr;
+thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync = nullptr;
+thipDrvPointerGetAttributes *hipDrvPointerGetAttributes = nullptr;
+thipEventCreate *hipEventCreate = nullptr;
+thipEventCreateWithFlags *hipEventCreateWithFlags = nullptr;
+thipEventDestroy *hipEventDestroy = nullptr;
+thipEventElapsedTime *hipEventElapsedTime = nullptr;
+thipEventQuery *hipEventQuery = nullptr;
+thipEventRecord *hipEventRecord = nullptr;
+thipEventRecord_spt *hipEventRecord_spt = nullptr;
+thipEventSynchronize *hipEventSynchronize = nullptr;
+thipExtGetLinkTypeAndHopCount *hipExtGetLinkTypeAndHopCount = nullptr;
+thipExtLaunchKernel *hipExtLaunchKernel = nullptr;
+thipExtLaunchMultiKernelMultiDevice *hipExtLaunchMultiKernelMultiDevice = nullptr;
+thipExtMallocWithFlags *hipExtMallocWithFlags = nullptr;
+thipExtStreamCreateWithCUMask *hipExtStreamCreateWithCUMask = nullptr;
+thipExtStreamGetCUMask *hipExtStreamGetCUMask = nullptr;
+thipExternalMemoryGetMappedBuffer *hipExternalMemoryGetMappedBuffer = nullptr;
+thipFree *hipFree = nullptr;
+thipFreeArray *hipFreeArray = nullptr;
+thipFreeAsync *hipFreeAsync = nullptr;
+thipFreeHost *hipFreeHost = nullptr;
+thipFreeMipmappedArray *hipFreeMipmappedArray = nullptr;
+thipFuncGetAttribute *hipFuncGetAttribute = nullptr;
+thipFuncGetAttributes *hipFuncGetAttributes = nullptr;
+thipFuncSetAttribute *hipFuncSetAttribute = nullptr;
+thipFuncSetCacheConfig *hipFuncSetCacheConfig = nullptr;
+thipFuncSetSharedMemConfig *hipFuncSetSharedMemConfig = nullptr;
+thipGLGetDevices *hipGLGetDevices = nullptr;
+thipGetChannelDesc *hipGetChannelDesc = nullptr;
+thipGetDevice *hipGetDevice = nullptr;
+thipGetDeviceCount *hipGetDeviceCount = nullptr;
+thipGetDeviceFlags *hipGetDeviceFlags = nullptr;
+thipGetDeviceProperties *hipGetDeviceProperties = nullptr;
+thipGetErrorName *hipGetErrorName = nullptr;
+thipGetErrorString *hipGetErrorString = nullptr;
+thipGetLastError *hipGetLastError = nullptr;
+thipGetMipmappedArrayLevel *hipGetMipmappedArrayLevel = nullptr;
+thipGetStreamDeviceId *hipGetStreamDeviceId = nullptr;
+thipGetSymbolAddress *hipGetSymbolAddress = nullptr;
+thipGetSymbolSize *hipGetSymbolSize = nullptr;
+thipGetTextureAlignmentOffset *hipGetTextureAlignmentOffset = nullptr;
+thipGetTextureObjectResourceDesc *hipGetTextureObjectResourceDesc = nullptr;
+thipGetTextureObjectResourceViewDesc *hipGetTextureObjectResourceViewDesc = nullptr;
+thipGetTextureObjectTextureDesc *hipGetTextureObjectTextureDesc = nullptr;
+thipGetTextureReference *hipGetTextureReference = nullptr;
+thipGraphAddChildGraphNode *hipGraphAddChildGraphNode = nullptr;
+thipGraphAddDependencies *hipGraphAddDependencies = nullptr;
+thipGraphAddEmptyNode *hipGraphAddEmptyNode = nullptr;
+thipGraphAddEventRecordNode *hipGraphAddEventRecordNode = nullptr;
+thipGraphAddEventWaitNode *hipGraphAddEventWaitNode = nullptr;
+thipGraphAddExternalSemaphoresSignalNode *hipGraphAddExternalSemaphoresSignalNode = nullptr;
+thipGraphAddExternalSemaphoresWaitNode *hipGraphAddExternalSemaphoresWaitNode = nullptr;
+thipGraphAddHostNode *hipGraphAddHostNode = nullptr;
+thipGraphAddKernelNode *hipGraphAddKernelNode = nullptr;
+thipGraphAddMemAllocNode *hipGraphAddMemAllocNode = nullptr;
+thipGraphAddMemFreeNode *hipGraphAddMemFreeNode = nullptr;
+thipGraphAddMemcpyNode *hipGraphAddMemcpyNode = nullptr;
+thipGraphAddMemcpyNode1D *hipGraphAddMemcpyNode1D = nullptr;
+thipGraphAddMemcpyNodeFromSymbol *hipGraphAddMemcpyNodeFromSymbol = nullptr;
+thipGraphAddMemcpyNodeToSymbol *hipGraphAddMemcpyNodeToSymbol = nullptr;
+thipGraphAddMemsetNode *hipGraphAddMemsetNode = nullptr;
+thipGraphChildGraphNodeGetGraph *hipGraphChildGraphNodeGetGraph = nullptr;
+thipGraphClone *hipGraphClone = nullptr;
+thipGraphCreate *hipGraphCreate = nullptr;
+thipGraphDebugDotPrint *hipGraphDebugDotPrint = nullptr;
+thipGraphDestroy *hipGraphDestroy = nullptr;
+thipGraphDestroyNode *hipGraphDestroyNode = nullptr;
+thipGraphEventRecordNodeGetEvent *hipGraphEventRecordNodeGetEvent = nullptr;
+thipGraphEventRecordNodeSetEvent *hipGraphEventRecordNodeSetEvent = nullptr;
+thipGraphEventWaitNodeGetEvent *hipGraphEventWaitNodeGetEvent = nullptr;
+thipGraphEventWaitNodeSetEvent *hipGraphEventWaitNodeSetEvent = nullptr;
+thipGraphExecChildGraphNodeSetParams *hipGraphExecChildGraphNodeSetParams = nullptr;
+thipGraphExecDestroy *hipGraphExecDestroy = nullptr;
+thipGraphExecEventRecordNodeSetEvent *hipGraphExecEventRecordNodeSetEvent = nullptr;
+thipGraphExecEventWaitNodeSetEvent *hipGraphExecEventWaitNodeSetEvent = nullptr;
+thipGraphExecExternalSemaphoresSignalNodeSetParams *hipGraphExecExternalSemaphoresSignalNodeSetParams = nullptr;
+thipGraphExecExternalSemaphoresWaitNodeSetParams *hipGraphExecExternalSemaphoresWaitNodeSetParams = nullptr;
+thipGraphExecHostNodeSetParams *hipGraphExecHostNodeSetParams = nullptr;
+thipGraphExecKernelNodeSetParams *hipGraphExecKernelNodeSetParams = nullptr;
+thipGraphExecMemcpyNodeSetParams *hipGraphExecMemcpyNodeSetParams = nullptr;
+thipGraphExecMemcpyNodeSetParams1D *hipGraphExecMemcpyNodeSetParams1D = nullptr;
+thipGraphExecMemcpyNodeSetParamsFromSymbol *hipGraphExecMemcpyNodeSetParamsFromSymbol = nullptr;
+thipGraphExecMemcpyNodeSetParamsToSymbol *hipGraphExecMemcpyNodeSetParamsToSymbol = nullptr;
+thipGraphExecMemsetNodeSetParams *hipGraphExecMemsetNodeSetParams = nullptr;
+thipGraphExecUpdate *hipGraphExecUpdate = nullptr;
+thipGraphExternalSemaphoresSignalNodeGetParams *hipGraphExternalSemaphoresSignalNodeGetParams = nullptr;
+thipGraphExternalSemaphoresSignalNodeSetParams *hipGraphExternalSemaphoresSignalNodeSetParams = nullptr;
+thipGraphExternalSemaphoresWaitNodeGetParams *hipGraphExternalSemaphoresWaitNodeGetParams = nullptr;
+thipGraphExternalSemaphoresWaitNodeSetParams *hipGraphExternalSemaphoresWaitNodeSetParams = nullptr;
+thipGraphGetEdges *hipGraphGetEdges = nullptr;
+thipGraphGetNodes *hipGraphGetNodes = nullptr;
+thipGraphGetRootNodes *hipGraphGetRootNodes = nullptr;
+thipGraphHostNodeGetParams *hipGraphHostNodeGetParams = nullptr;
+thipGraphHostNodeSetParams *hipGraphHostNodeSetParams = nullptr;
+thipGraphInstantiate *hipGraphInstantiate = nullptr;
+thipGraphInstantiateWithFlags *hipGraphInstantiateWithFlags = nullptr;
+thipGraphKernelNodeCopyAttributes *hipGraphKernelNodeCopyAttributes = nullptr;
+thipGraphKernelNodeGetAttribute *hipGraphKernelNodeGetAttribute = nullptr;
+thipGraphKernelNodeGetParams *hipGraphKernelNodeGetParams = nullptr;
+thipGraphKernelNodeSetAttribute *hipGraphKernelNodeSetAttribute = nullptr;
+thipGraphKernelNodeSetParams *hipGraphKernelNodeSetParams = nullptr;
+thipGraphLaunch *hipGraphLaunch = nullptr;
+thipGraphLaunch_spt *hipGraphLaunch_spt = nullptr;
+thipGraphMemAllocNodeGetParams *hipGraphMemAllocNodeGetParams = nullptr;
+thipGraphMemFreeNodeGetParams *hipGraphMemFreeNodeGetParams = nullptr;
+thipGraphMemcpyNodeGetParams *hipGraphMemcpyNodeGetParams = nullptr;
+thipGraphMemcpyNodeSetParams *hipGraphMemcpyNodeSetParams = nullptr;
+thipGraphMemcpyNodeSetParams1D *hipGraphMemcpyNodeSetParams1D = nullptr;
+thipGraphMemcpyNodeSetParamsFromSymbol *hipGraphMemcpyNodeSetParamsFromSymbol = nullptr;
+thipGraphMemcpyNodeSetParamsToSymbol *hipGraphMemcpyNodeSetParamsToSymbol = nullptr;
+thipGraphMemsetNodeGetParams *hipGraphMemsetNodeGetParams = nullptr;
+thipGraphMemsetNodeSetParams *hipGraphMemsetNodeSetParams = nullptr;
+thipGraphNodeFindInClone *hipGraphNodeFindInClone = nullptr;
+thipGraphNodeGetDependencies *hipGraphNodeGetDependencies = nullptr;
+thipGraphNodeGetDependentNodes *hipGraphNodeGetDependentNodes = nullptr;
+thipGraphNodeGetEnabled *hipGraphNodeGetEnabled = nullptr;
+thipGraphNodeGetType *hipGraphNodeGetType = nullptr;
+thipGraphNodeSetEnabled *hipGraphNodeSetEnabled = nullptr;
+thipGraphReleaseUserObject *hipGraphReleaseUserObject = nullptr;
+thipGraphRemoveDependencies *hipGraphRemoveDependencies = nullptr;
+thipGraphRetainUserObject *hipGraphRetainUserObject = nullptr;
+thipGraphUpload *hipGraphUpload = nullptr;
+thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer = nullptr;
+thipGraphicsGLRegisterImage *hipGraphicsGLRegisterImage = nullptr;
+thipGraphicsMapResources *hipGraphicsMapResources = nullptr;
+thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer = nullptr;
+thipGraphicsSubResourceGetMappedArray *hipGraphicsSubResourceGetMappedArray = nullptr;
+thipGraphicsUnmapResources *hipGraphicsUnmapResources = nullptr;
+thipGraphicsUnregisterResource *hipGraphicsUnregisterResource = nullptr;
+thipHostAlloc *hipHostAlloc = nullptr;
+thipHostFree *hipHostFree = nullptr;
+thipHostGetDevicePointer *hipHostGetDevicePointer = nullptr;
+thipHostGetFlags *hipHostGetFlags = nullptr;
+thipHostMalloc *hipHostMalloc = nullptr;
+thipHostRegister *hipHostRegister = nullptr;
+thipHostUnregister *hipHostUnregister = nullptr;
+thipImportExternalMemory *hipImportExternalMemory = nullptr;
+thipImportExternalSemaphore *hipImportExternalSemaphore = nullptr;
+thipInit *hipInit = nullptr;
+thipIpcCloseMemHandle *hipIpcCloseMemHandle = nullptr;
+thipIpcGetEventHandle *hipIpcGetEventHandle = nullptr;
+thipIpcGetMemHandle *hipIpcGetMemHandle = nullptr;
+thipIpcOpenEventHandle *hipIpcOpenEventHandle = nullptr;
+thipIpcOpenMemHandle *hipIpcOpenMemHandle = nullptr;
+thipKernelNameRef *hipKernelNameRef = nullptr;
+thipKernelNameRefByPtr *hipKernelNameRefByPtr = nullptr;
+thipLaunchByPtr *hipLaunchByPtr = nullptr;
+thipLaunchCooperativeKernel *hipLaunchCooperativeKernel = nullptr;
+thipLaunchCooperativeKernelMultiDevice *hipLaunchCooperativeKernelMultiDevice = nullptr;
+thipLaunchCooperativeKernel_spt *hipLaunchCooperativeKernel_spt = nullptr;
+thipLaunchHostFunc *hipLaunchHostFunc = nullptr;
+thipLaunchHostFunc_spt *hipLaunchHostFunc_spt = nullptr;
+thipLaunchKernel *hipLaunchKernel = nullptr;
+thipLaunchKernel_spt *hipLaunchKernel_spt = nullptr;
+thipMalloc *hipMalloc = nullptr;
+thipMalloc3D *hipMalloc3D = nullptr;
+thipMalloc3DArray *hipMalloc3DArray = nullptr;
+thipMallocArray *hipMallocArray = nullptr;
+thipMallocAsync *hipMallocAsync = nullptr;
+thipMallocFromPoolAsync *hipMallocFromPoolAsync = nullptr;
+thipMallocHost *hipMallocHost = nullptr;
+thipMallocManaged *hipMallocManaged = nullptr;
+thipMallocMipmappedArray *hipMallocMipmappedArray = nullptr;
+thipMallocPitch *hipMallocPitch = nullptr;
+thipMemAddressFree *hipMemAddressFree = nullptr;
+thipMemAddressReserve *hipMemAddressReserve = nullptr;
+thipMemAdvise *hipMemAdvise = nullptr;
+thipMemAllocHost *hipMemAllocHost = nullptr;
+thipMemAllocPitch *hipMemAllocPitch = nullptr;
+thipMemCreate *hipMemCreate = nullptr;
+thipMemExportToShareableHandle *hipMemExportToShareableHandle = nullptr;
+thipMemGetAccess *hipMemGetAccess = nullptr;
+thipMemGetAddressRange *hipMemGetAddressRange = nullptr;
+thipMemGetAllocationGranularity *hipMemGetAllocationGranularity = nullptr;
+thipMemGetAllocationPropertiesFromHandle *hipMemGetAllocationPropertiesFromHandle = nullptr;
+thipMemGetInfo *hipMemGetInfo = nullptr;
+thipMemImportFromShareableHandle *hipMemImportFromShareableHandle = nullptr;
+thipMemMap *hipMemMap = nullptr;
+thipMemMapArrayAsync *hipMemMapArrayAsync = nullptr;
+thipMemPoolCreate *hipMemPoolCreate = nullptr;
+thipMemPoolDestroy *hipMemPoolDestroy = nullptr;
+thipMemPoolExportPointer *hipMemPoolExportPointer = nullptr;
+thipMemPoolExportToShareableHandle *hipMemPoolExportToShareableHandle = nullptr;
+thipMemPoolGetAccess *hipMemPoolGetAccess = nullptr;
+thipMemPoolGetAttribute *hipMemPoolGetAttribute = nullptr;
+thipMemPoolImportFromShareableHandle *hipMemPoolImportFromShareableHandle = nullptr;
+thipMemPoolImportPointer *hipMemPoolImportPointer = nullptr;
+thipMemPoolSetAccess *hipMemPoolSetAccess = nullptr;
+thipMemPoolSetAttribute *hipMemPoolSetAttribute = nullptr;
+thipMemPoolTrimTo *hipMemPoolTrimTo = nullptr;
+thipMemPrefetchAsync *hipMemPrefetchAsync = nullptr;
+thipMemPtrGetInfo *hipMemPtrGetInfo = nullptr;
+thipMemRangeGetAttribute *hipMemRangeGetAttribute = nullptr;
+thipMemRangeGetAttributes *hipMemRangeGetAttributes = nullptr;
+thipMemRelease *hipMemRelease = nullptr;
+thipMemRetainAllocationHandle *hipMemRetainAllocationHandle = nullptr;
+thipMemSetAccess *hipMemSetAccess = nullptr;
+thipMemUnmap *hipMemUnmap = nullptr;
+thipMemcpy *hipMemcpy = nullptr;
+thipMemcpy2D *hipMemcpy2D = nullptr;
+thipMemcpy2DAsync *hipMemcpy2DAsync = nullptr;
+thipMemcpy2DAsync_spt *hipMemcpy2DAsync_spt = nullptr;
+thipMemcpy2DFromArray *hipMemcpy2DFromArray = nullptr;
+thipMemcpy2DFromArrayAsync *hipMemcpy2DFromArrayAsync = nullptr;
+thipMemcpy2DFromArrayAsync_spt *hipMemcpy2DFromArrayAsync_spt = nullptr;
+thipMemcpy2DFromArray_spt *hipMemcpy2DFromArray_spt = nullptr;
+thipMemcpy2DToArray *hipMemcpy2DToArray = nullptr;
+thipMemcpy2DToArrayAsync *hipMemcpy2DToArrayAsync = nullptr;
+thipMemcpy2DToArrayAsync_spt *hipMemcpy2DToArrayAsync_spt = nullptr;
+thipMemcpy2DToArray_spt *hipMemcpy2DToArray_spt = nullptr;
+thipMemcpy2D_spt *hipMemcpy2D_spt = nullptr;
+thipMemcpy3D *hipMemcpy3D = nullptr;
+thipMemcpy3DAsync *hipMemcpy3DAsync = nullptr;
+thipMemcpy3DAsync_spt *hipMemcpy3DAsync_spt = nullptr;
+thipMemcpy3D_spt *hipMemcpy3D_spt = nullptr;
+thipMemcpyAsync *hipMemcpyAsync = nullptr;
+thipMemcpyAsync_spt *hipMemcpyAsync_spt = nullptr;
+thipMemcpyAtoH *hipMemcpyAtoH = nullptr;
+thipMemcpyDtoD *hipMemcpyDtoD = nullptr;
+thipMemcpyDtoDAsync *hipMemcpyDtoDAsync = nullptr;
+thipMemcpyDtoH *hipMemcpyDtoH = nullptr;
+thipMemcpyDtoHAsync *hipMemcpyDtoHAsync = nullptr;
+thipMemcpyFromArray *hipMemcpyFromArray = nullptr;
+thipMemcpyFromArray_spt *hipMemcpyFromArray_spt = nullptr;
+thipMemcpyFromSymbol *hipMemcpyFromSymbol = nullptr;
+thipMemcpyFromSymbolAsync *hipMemcpyFromSymbolAsync = nullptr;
+thipMemcpyFromSymbolAsync_spt *hipMemcpyFromSymbolAsync_spt = nullptr;
+thipMemcpyFromSymbol_spt *hipMemcpyFromSymbol_spt = nullptr;
+thipMemcpyHtoA *hipMemcpyHtoA = nullptr;
+thipMemcpyHtoD *hipMemcpyHtoD = nullptr;
+thipMemcpyHtoDAsync *hipMemcpyHtoDAsync = nullptr;
+thipMemcpyParam2D *hipMemcpyParam2D = nullptr;
+thipMemcpyParam2DAsync *hipMemcpyParam2DAsync = nullptr;
+thipMemcpyPeer *hipMemcpyPeer = nullptr;
+thipMemcpyPeerAsync *hipMemcpyPeerAsync = nullptr;
+thipMemcpyToArray *hipMemcpyToArray = nullptr;
+thipMemcpyToSymbol *hipMemcpyToSymbol = nullptr;
+thipMemcpyToSymbolAsync *hipMemcpyToSymbolAsync = nullptr;
+thipMemcpyToSymbolAsync_spt *hipMemcpyToSymbolAsync_spt = nullptr;
+thipMemcpyToSymbol_spt *hipMemcpyToSymbol_spt = nullptr;
+thipMemcpyWithStream *hipMemcpyWithStream = nullptr;
+thipMemcpy_spt *hipMemcpy_spt = nullptr;
+thipMemset *hipMemset = nullptr;
+thipMemset2D *hipMemset2D = nullptr;
+thipMemset2DAsync *hipMemset2DAsync = nullptr;
+thipMemset2DAsync_spt *hipMemset2DAsync_spt = nullptr;
+thipMemset2D_spt *hipMemset2D_spt = nullptr;
+thipMemset3D *hipMemset3D = nullptr;
+thipMemset3DAsync *hipMemset3DAsync = nullptr;
+thipMemset3DAsync_spt *hipMemset3DAsync_spt = nullptr;
+thipMemset3D_spt *hipMemset3D_spt = nullptr;
+thipMemsetAsync *hipMemsetAsync = nullptr;
+thipMemsetAsync_spt *hipMemsetAsync_spt = nullptr;
+thipMemsetD16 *hipMemsetD16 = nullptr;
+thipMemsetD16Async *hipMemsetD16Async = nullptr;
+thipMemsetD32 *hipMemsetD32 = nullptr;
+thipMemsetD32Async *hipMemsetD32Async = nullptr;
+thipMemsetD8 *hipMemsetD8 = nullptr;
+thipMemsetD8Async *hipMemsetD8Async = nullptr;
+thipMemset_spt *hipMemset_spt = nullptr;
+thipMipmappedArrayCreate *hipMipmappedArrayCreate = nullptr;
+thipMipmappedArrayDestroy *hipMipmappedArrayDestroy = nullptr;
+thipMipmappedArrayGetLevel *hipMipmappedArrayGetLevel = nullptr;
+thipModuleGetFunction *hipModuleGetFunction = nullptr;
+thipModuleGetGlobal *hipModuleGetGlobal = nullptr;
+thipModuleGetTexRef *hipModuleGetTexRef = nullptr;
+thipModuleLaunchCooperativeKernel *hipModuleLaunchCooperativeKernel = nullptr;
+thipModuleLaunchCooperativeKernelMultiDevice *hipModuleLaunchCooperativeKernelMultiDevice = nullptr;
+thipModuleLaunchKernel *hipModuleLaunchKernel = nullptr;
+thipModuleLoad *hipModuleLoad = nullptr;
+thipModuleLoadData *hipModuleLoadData = nullptr;
+thipModuleLoadDataEx *hipModuleLoadDataEx = nullptr;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessor *hipModuleOccupancyMaxActiveBlocksPerMultiprocessor = nullptr;
+thipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags = nullptr;
+thipModuleOccupancyMaxPotentialBlockSize *hipModuleOccupancyMaxPotentialBlockSize = nullptr;
+thipModuleOccupancyMaxPotentialBlockSizeWithFlags *hipModuleOccupancyMaxPotentialBlockSizeWithFlags = nullptr;
+thipModuleUnload *hipModuleUnload = nullptr;
+thipOccupancyMaxActiveBlocksPerMultiprocessor *hipOccupancyMaxActiveBlocksPerMultiprocessor = nullptr;
+thipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags *hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags = nullptr;
+thipOccupancyMaxPotentialBlockSize *hipOccupancyMaxPotentialBlockSize = nullptr;
+thipPeekAtLastError *hipPeekAtLastError = nullptr;
+thipPointerGetAttribute *hipPointerGetAttribute = nullptr;
+thipPointerGetAttributes *hipPointerGetAttributes = nullptr;
+thipPointerSetAttribute *hipPointerSetAttribute = nullptr;
+thipProfilerStart *hipProfilerStart = nullptr;
+thipProfilerStop *hipProfilerStop = nullptr;
+thipRuntimeGetVersion *hipRuntimeGetVersion = nullptr;
+thipSetDevice *hipSetDevice = nullptr;
+thipSetDeviceFlags *hipSetDeviceFlags = nullptr;
+thipSetupArgument *hipSetupArgument = nullptr;
+thipSignalExternalSemaphoresAsync *hipSignalExternalSemaphoresAsync = nullptr;
+thipStreamAddCallback *hipStreamAddCallback = nullptr;
+thipStreamAddCallback_spt *hipStreamAddCallback_spt = nullptr;
+thipStreamAttachMemAsync *hipStreamAttachMemAsync = nullptr;
+thipStreamBeginCapture *hipStreamBeginCapture = nullptr;
+thipStreamBeginCapture_spt *hipStreamBeginCapture_spt = nullptr;
+thipStreamCreate *hipStreamCreate = nullptr;
+thipStreamCreateWithFlags *hipStreamCreateWithFlags = nullptr;
+thipStreamCreateWithPriority *hipStreamCreateWithPriority = nullptr;
+thipStreamDestroy *hipStreamDestroy = nullptr;
+thipStreamEndCapture *hipStreamEndCapture = nullptr;
+thipStreamEndCapture_spt *hipStreamEndCapture_spt = nullptr;
+thipStreamGetCaptureInfo *hipStreamGetCaptureInfo = nullptr;
+thipStreamGetCaptureInfo_spt *hipStreamGetCaptureInfo_spt = nullptr;
+thipStreamGetCaptureInfo_v2 *hipStreamGetCaptureInfo_v2 = nullptr;
+thipStreamGetCaptureInfo_v2_spt *hipStreamGetCaptureInfo_v2_spt = nullptr;
+thipStreamGetDevice *hipStreamGetDevice = nullptr;
+thipStreamGetFlags *hipStreamGetFlags = nullptr;
+thipStreamGetFlags_spt *hipStreamGetFlags_spt = nullptr;
+thipStreamGetPriority *hipStreamGetPriority = nullptr;
+thipStreamGetPriority_spt *hipStreamGetPriority_spt = nullptr;
+thipStreamIsCapturing *hipStreamIsCapturing = nullptr;
+thipStreamIsCapturing_spt *hipStreamIsCapturing_spt = nullptr;
+thipStreamQuery *hipStreamQuery = nullptr;
+thipStreamQuery_spt *hipStreamQuery_spt = nullptr;
+thipStreamSynchronize *hipStreamSynchronize = nullptr;
+thipStreamSynchronize_spt *hipStreamSynchronize_spt = nullptr;
+thipStreamUpdateCaptureDependencies *hipStreamUpdateCaptureDependencies = nullptr;
+thipStreamWaitEvent *hipStreamWaitEvent = nullptr;
+thipStreamWaitEvent_spt *hipStreamWaitEvent_spt = nullptr;
+thipStreamWaitValue32 *hipStreamWaitValue32 = nullptr;
+thipStreamWaitValue64 *hipStreamWaitValue64 = nullptr;
+thipStreamWriteValue32 *hipStreamWriteValue32 = nullptr;
+thipStreamWriteValue64 *hipStreamWriteValue64 = nullptr;
+thipTexObjectCreate *hipTexObjectCreate = nullptr;
+thipTexObjectDestroy *hipTexObjectDestroy = nullptr;
+thipTexObjectGetResourceDesc *hipTexObjectGetResourceDesc = nullptr;
+thipTexObjectGetResourceViewDesc *hipTexObjectGetResourceViewDesc = nullptr;
+thipTexObjectGetTextureDesc *hipTexObjectGetTextureDesc = nullptr;
+thipTexRefGetAddress *hipTexRefGetAddress = nullptr;
+thipTexRefGetAddressMode *hipTexRefGetAddressMode = nullptr;
+thipTexRefGetFilterMode *hipTexRefGetFilterMode = nullptr;
+thipTexRefGetFlags *hipTexRefGetFlags = nullptr;
+thipTexRefGetFormat *hipTexRefGetFormat = nullptr;
+thipTexRefGetMaxAnisotropy *hipTexRefGetMaxAnisotropy = nullptr;
+thipTexRefGetMipMappedArray *hipTexRefGetMipMappedArray = nullptr;
+thipTexRefGetMipmapFilterMode *hipTexRefGetMipmapFilterMode = nullptr;
+thipTexRefGetMipmapLevelBias *hipTexRefGetMipmapLevelBias = nullptr;
+thipTexRefGetMipmapLevelClamp *hipTexRefGetMipmapLevelClamp = nullptr;
+thipTexRefSetAddress *hipTexRefSetAddress = nullptr;
+thipTexRefSetAddress2D *hipTexRefSetAddress2D = nullptr;
+thipTexRefSetAddressMode *hipTexRefSetAddressMode = nullptr;
+thipTexRefSetArray *hipTexRefSetArray = nullptr;
+thipTexRefSetBorderColor *hipTexRefSetBorderColor = nullptr;
+thipTexRefSetFilterMode *hipTexRefSetFilterMode = nullptr;
+thipTexRefSetFlags *hipTexRefSetFlags = nullptr;
+thipTexRefSetFormat *hipTexRefSetFormat = nullptr;
+thipTexRefSetMaxAnisotropy *hipTexRefSetMaxAnisotropy = nullptr;
+thipTexRefSetMipmapFilterMode *hipTexRefSetMipmapFilterMode = nullptr;
+thipTexRefSetMipmapLevelBias *hipTexRefSetMipmapLevelBias = nullptr;
+thipTexRefSetMipmapLevelClamp *hipTexRefSetMipmapLevelClamp = nullptr;
+thipTexRefSetMipmappedArray *hipTexRefSetMipmappedArray = nullptr;
+thipThreadExchangeStreamCaptureMode *hipThreadExchangeStreamCaptureMode = nullptr;
+thipUnbindTexture *hipUnbindTexture = nullptr;
+thipUserObjectCreate *hipUserObjectCreate = nullptr;
+thipUserObjectRelease *hipUserObjectRelease = nullptr;
+thipUserObjectRetain *hipUserObjectRetain = nullptr;
+thipWaitExternalSemaphoresAsync *hipWaitExternalSemaphoresAsync = nullptr;
+thiprtcAddNameExpression *hiprtcAddNameExpression = nullptr;
+thiprtcCompileProgram *hiprtcCompileProgram = nullptr;
+thiprtcCreateProgram *hiprtcCreateProgram = nullptr;
+thiprtcDestroyProgram *hiprtcDestroyProgram = nullptr;
+thiprtcGetBitcode *hiprtcGetBitcode = nullptr;
+thiprtcGetBitcodeSize *hiprtcGetBitcodeSize = nullptr;
+thiprtcGetCode *hiprtcGetCode = nullptr;
+thiprtcGetCodeSize *hiprtcGetCodeSize = nullptr;
+thiprtcGetErrorString *hiprtcGetErrorString = nullptr;
+thiprtcGetLoweredName *hiprtcGetLoweredName = nullptr;
+thiprtcGetProgramLog *hiprtcGetProgramLog = nullptr;
+thiprtcGetProgramLogSize *hiprtcGetProgramLogSize = nullptr;
+thiprtcLinkAddData *hiprtcLinkAddData = nullptr;
+thiprtcLinkAddFile *hiprtcLinkAddFile = nullptr;
+thiprtcLinkComplete *hiprtcLinkComplete = nullptr;
+thiprtcLinkCreate *hiprtcLinkCreate = nullptr;
+thiprtcLinkDestroy *hiprtcLinkDestroy = nullptr;
+thiprtcVersion *hiprtcVersion = nullptr;
+tmake_hipExtent *make_hipExtent = nullptr;
+tmake_hipPitchedPtr *make_hipPitchedPtr = nullptr;
+tmake_hipPos *make_hipPos = nullptr;
 
-thiprtcGetErrorString* hiprtcGetErrorString;
-thiprtcAddNameExpression* hiprtcAddNameExpression;
-thiprtcCompileProgram* hiprtcCompileProgram;
-thiprtcCreateProgram* hiprtcCreateProgram;
-thiprtcDestroyProgram* hiprtcDestroyProgram;
-thiprtcGetLoweredName* hiprtcGetLoweredName;
-thiprtcGetProgramLog* hiprtcGetProgramLog;
-thiprtcGetProgramLogSize* hiprtcGetProgramLogSize;
-thiprtcGetBitcode* hiprtcGetBitcode;
-thiprtcGetBitcodeSize* hiprtcGetBitcodeSize;
-thiprtcGetCode* hiprtcGetCode;
-thiprtcGetCodeSize* hiprtcGetCodeSize;
-thiprtcLinkCreate* hiprtcLinkCreate;
-thiprtcLinkAddFile* hiprtcLinkAddFile;
-thiprtcLinkAddData* hiprtcLinkAddData;
-thiprtcLinkComplete* hiprtcLinkComplete;
-thiprtcLinkDestroy* hiprtcLinkDestroy;
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_hipew_cpp_1
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
 
 static DynamicLibrary dynamic_library_open_find(const char **paths) {
   int i = 0;
@@ -240,6 +568,11 @@ static void hipewHipExit(void) {
 
 #ifdef _WIN32
 static int hipewHasOldDriver(const char *hip_path) {
+    //
+    //
+    // we shoudn't need this complicated check anymore, and just rely on the "hipRuntimeGetVersion" check done during the hipewInit.
+    // As this check doesn't seem to hurt, let's keep it for now...
+    //
   DWORD verHandle = 0;
   DWORD verSize = GetFileVersionInfoSizeA(hip_path, &verHandle);
   int old_driver = 0;
@@ -268,12 +601,12 @@ static int hipewHasOldDriver(const char *hip_path) {
 }
 #endif
 
-void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
+void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags )
 {
   /* Library paths. */
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
-  const char* hip_paths[] = {"amdhip64.dll", NULL};
+  const char* hip_paths[] = {"amdhip64_6.dll", "amdhip64.dll", NULL};
   const char* hiprtc_paths[] = {
                                 "hiprtc0605.dll",
                                 "hiprtc0604.dll",
@@ -293,11 +626,13 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   const char* hiprtc_paths[] = { NULL };
 #else
   const char *hip_paths[] = { "/opt/rocm/hip/lib/libamdhip64.so",
-                              "/opt/rocm/lib/libamdhip64.so",
-	                      "libamdhip64.so", NULL };
+                              "/opt/rocm/lib/libamdhip64.so", 
+                              "libamdhip64.so",
+                              NULL };
   const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so",
-                              "/opt/rocm/lib/libhiprtc.so", 
-	                      "libamdhip64.so", NULL };
+                                 "/opt/rocm/lib/libhiprtc.so", 
+                                 "libhiprtc.so",
+                                 NULL };
 #endif
   static int initialized = 0;
   static int s_resultDriver = 0;
@@ -343,136 +678,445 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
     return;
   }
 
-  /* Fetch all function pointers. */
-  HIP_LIBRARY_FIND_CHECKED(hipGetErrorName);
-  HIP_LIBRARY_FIND_CHECKED(hipGetErrorString);
-  HIP_LIBRARY_FIND_CHECKED(hipGetLastError);
-  HIP_LIBRARY_FIND_CHECKED(hipInit);
-  HIP_LIBRARY_FIND_CHECKED(hipDriverGetVersion);
-  HIP_LIBRARY_FIND_CHECKED(hipGetDevice);
-  HIP_LIBRARY_FIND_CHECKED(hipGetDeviceCount);
-  HIP_LIBRARY_FIND_CHECKED(hipGetDeviceProperties);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGet);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetName);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetAttribute);
-  HIP_LIBRARY_FIND( hipDeviceGetLimit );
-  HIP_LIBRARY_FIND( hipDeviceSetLimit );
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceComputeCapability);
-  HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRetain);
-  HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxRelease);
-  HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxSetFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxGetState);
-  HIP_LIBRARY_FIND_CHECKED(hipDevicePrimaryCtxReset);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxCreate);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxDestroy);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxPushCurrent);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxPopCurrent);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxSetCurrent);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetCurrent);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetDevice);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxSynchronize);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceSynchronize);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetCacheConfig);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxSetCacheConfig);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetSharedMemConfig);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxSetSharedMemConfig);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxGetApiVersion);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleLoad);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleLoadData);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleLoadDataEx);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleUnload);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleGetFunction);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleGetGlobal);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleGetTexRef);
-  HIP_LIBRARY_FIND_CHECKED(hipMemGetInfo);
-  HIP_LIBRARY_FIND_CHECKED(hipMalloc);
-  HIP_LIBRARY_FIND_CHECKED(hipMemAllocPitch);
-  HIP_LIBRARY_FIND_CHECKED(hipFree);
-  HIP_LIBRARY_FIND_CHECKED(hipMemGetAddressRange);
-  HIP_LIBRARY_FIND_CHECKED(hipHostMalloc);
-  HIP_LIBRARY_FIND_CHECKED(hipHostFree);
-  HIP_LIBRARY_FIND_CHECKED(hipHostRegister);
-  HIP_LIBRARY_FIND_CHECKED(hipHostGetDevicePointer);
-  HIP_LIBRARY_FIND_CHECKED(hipHostGetFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipHostUnregister);
-  HIP_LIBRARY_FIND_CHECKED(hipMallocManaged);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetByPCIBusId);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetPCIBusId);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpy);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyPeer);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyHtoD);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoH);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoD);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyParam2D);
-  HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy3D);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyHtoDAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoHAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyDtoDAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy2DUnaligned);
-  HIP_LIBRARY_FIND_CHECKED(hipMemcpyParam2DAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipDrvMemcpy3DAsync);
-  HIP_LIBRARY_FIND_CHECKED(hipMemset);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD8);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD16);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD32);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD8Async);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD16Async);
-  HIP_LIBRARY_FIND_CHECKED(hipMemsetD32Async);
-  HIP_LIBRARY_FIND_CHECKED(hipArrayCreate);
-  HIP_LIBRARY_FIND_CHECKED(hipArrayDestroy);
-  HIP_LIBRARY_FIND_CHECKED(hipArray3DCreate);
-  HIP_LIBRARY_FIND_CHECKED(hipPointerGetAttributes);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamCreate);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamCreateWithFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamCreateWithPriority);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamGetPriority);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamGetFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamWaitEvent);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamAddCallback);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamQuery);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamSynchronize);
-  HIP_LIBRARY_FIND_CHECKED(hipStreamDestroy);
-  HIP_LIBRARY_FIND_CHECKED(hipEventCreateWithFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipEventRecord);
-  HIP_LIBRARY_FIND_CHECKED(hipEventQuery);
-  HIP_LIBRARY_FIND_CHECKED(hipEventSynchronize);
-  HIP_LIBRARY_FIND_CHECKED(hipEventDestroy);
-  HIP_LIBRARY_FIND_CHECKED(hipEventElapsedTime);
-  HIP_LIBRARY_FIND_CHECKED(hipFuncGetAttribute);
-  HIP_LIBRARY_FIND_CHECKED(hipFuncSetCacheConfig);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleLaunchKernel);
-  HIP_LIBRARY_FIND_CHECKED(hipModuleOccupancyMaxPotentialBlockSize);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetArray);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetAddress);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetAddress2D);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetFormat);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetAddressMode);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetFilterMode);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefSetFlags);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefGetAddress);
-  HIP_LIBRARY_FIND_CHECKED(hipTexRefGetAddressMode);
-  HIP_LIBRARY_FIND_CHECKED(hipTexObjectCreate);
-  HIP_LIBRARY_FIND_CHECKED(hipTexObjectDestroy);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceCanAccessPeer);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxEnablePeerAccess);
-  HIP_LIBRARY_FIND_CHECKED(hipCtxDisablePeerAccess);
-  HIP_LIBRARY_FIND_CHECKED(hipDeviceGetP2PAttribute);
-#ifdef _WIN32
-  HIP_LIBRARY_FIND_CHECKED(hipGraphicsUnregisterResource);
-  HIP_LIBRARY_FIND_CHECKED(hipGraphicsMapResources);
-  HIP_LIBRARY_FIND_CHECKED(hipGraphicsUnmapResources);
-  HIP_LIBRARY_FIND_CHECKED(hipGraphicsResourceGetMappedPointer);
-  HIP_LIBRARY_FIND_CHECKED(hipGraphicsGLRegisterBuffer);
-  HIP_LIBRARY_FIND_CHECKED(hipGLGetDevices);
-#endif
-  HIP_LIBRARY_FIND_CHECKED(hipImportExternalMemory);
-  HIP_LIBRARY_FIND_CHECKED(hipExternalMemoryGetMappedBuffer);
-  HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalMemory);
-  // HIP_LIBRARY_FIND_CHECKED(hipImportExternalSemaphore);
-  // HIP_LIBRARY_FIND_CHECKED(hipDestroyExternalSemaphore);
-  // HIP_LIBRARY_FIND_CHECKED(hipSignalExternalSemaphoresAsync);
-  // HIP_LIBRARY_FIND_CHECKED(hipWaitExternalSemaphoresAsync);
+
+
+
+#pragma region OROCHI_SUMMONER_REGION_hipew_cpp_2
+
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+_LIBRARY_FIND( hip_lib, __hipPopCallConfiguration );
+_LIBRARY_FIND( hip_lib, __hipPushCallConfiguration );
+_LIBRARY_FIND( hip_lib, hipApiName );
+_LIBRARY_FIND( hip_lib, hipArray3DCreate );
+_LIBRARY_FIND( hip_lib, hipArray3DGetDescriptor );
+_LIBRARY_FIND( hip_lib, hipArrayCreate );
+_LIBRARY_FIND( hip_lib, hipArrayDestroy );
+_LIBRARY_FIND( hip_lib, hipArrayGetDescriptor );
+_LIBRARY_FIND( hip_lib, hipArrayGetInfo );
+_LIBRARY_FIND( hip_lib, hipBindTexture );
+_LIBRARY_FIND( hip_lib, hipBindTexture2D );
+_LIBRARY_FIND( hip_lib, hipBindTextureToArray );
+_LIBRARY_FIND( hip_lib, hipBindTextureToMipmappedArray );
+_LIBRARY_FIND( hip_lib, hipChooseDevice );
+_LIBRARY_FIND( hip_lib, hipConfigureCall );
+_LIBRARY_FIND( hip_lib, hipCreateChannelDesc );
+_LIBRARY_FIND( hip_lib, hipCreateSurfaceObject );
+_LIBRARY_FIND( hip_lib, hipCreateTextureObject );
+_LIBRARY_FIND( hip_lib, hipCtxCreate );
+_LIBRARY_FIND( hip_lib, hipCtxDestroy );
+_LIBRARY_FIND( hip_lib, hipCtxDisablePeerAccess );
+_LIBRARY_FIND( hip_lib, hipCtxEnablePeerAccess );
+_LIBRARY_FIND( hip_lib, hipCtxGetApiVersion );
+_LIBRARY_FIND( hip_lib, hipCtxGetCacheConfig );
+_LIBRARY_FIND( hip_lib, hipCtxGetCurrent );
+_LIBRARY_FIND( hip_lib, hipCtxGetDevice );
+_LIBRARY_FIND( hip_lib, hipCtxGetFlags );
+_LIBRARY_FIND( hip_lib, hipCtxGetSharedMemConfig );
+_LIBRARY_FIND( hip_lib, hipCtxPopCurrent );
+_LIBRARY_FIND( hip_lib, hipCtxPushCurrent );
+_LIBRARY_FIND( hip_lib, hipCtxSetCacheConfig );
+_LIBRARY_FIND( hip_lib, hipCtxSetCurrent );
+_LIBRARY_FIND( hip_lib, hipCtxSetSharedMemConfig );
+_LIBRARY_FIND( hip_lib, hipCtxSynchronize );
+_LIBRARY_FIND( hip_lib, hipDestroyExternalMemory );
+_LIBRARY_FIND( hip_lib, hipDestroyExternalSemaphore );
+_LIBRARY_FIND( hip_lib, hipDestroySurfaceObject );
+_LIBRARY_FIND( hip_lib, hipDestroyTextureObject );
+_LIBRARY_FIND( hip_lib, hipDeviceCanAccessPeer );
+_LIBRARY_FIND( hip_lib, hipDeviceComputeCapability );
+_LIBRARY_FIND( hip_lib, hipDeviceDisablePeerAccess );
+_LIBRARY_FIND( hip_lib, hipDeviceEnablePeerAccess );
+_LIBRARY_FIND( hip_lib, hipDeviceGet );
+_LIBRARY_FIND( hip_lib, hipDeviceGetAttribute );
+_LIBRARY_FIND( hip_lib, hipDeviceGetByPCIBusId );
+_LIBRARY_FIND( hip_lib, hipDeviceGetCacheConfig );
+_LIBRARY_FIND( hip_lib, hipDeviceGetDefaultMemPool );
+_LIBRARY_FIND( hip_lib, hipDeviceGetGraphMemAttribute );
+_LIBRARY_FIND( hip_lib, hipDeviceGetLimit );
+_LIBRARY_FIND( hip_lib, hipDeviceGetMemPool );
+_LIBRARY_FIND( hip_lib, hipDeviceGetName );
+_LIBRARY_FIND( hip_lib, hipDeviceGetP2PAttribute );
+_LIBRARY_FIND( hip_lib, hipDeviceGetPCIBusId );
+_LIBRARY_FIND( hip_lib, hipDeviceGetSharedMemConfig );
+_LIBRARY_FIND( hip_lib, hipDeviceGetStreamPriorityRange );
+_LIBRARY_FIND( hip_lib, hipDeviceGetUuid );
+_LIBRARY_FIND( hip_lib, hipDeviceGraphMemTrim );
+_LIBRARY_FIND( hip_lib, hipDevicePrimaryCtxGetState );
+_LIBRARY_FIND( hip_lib, hipDevicePrimaryCtxRelease );
+_LIBRARY_FIND( hip_lib, hipDevicePrimaryCtxReset );
+_LIBRARY_FIND( hip_lib, hipDevicePrimaryCtxRetain );
+_LIBRARY_FIND( hip_lib, hipDevicePrimaryCtxSetFlags );
+_LIBRARY_FIND( hip_lib, hipDeviceReset );
+_LIBRARY_FIND( hip_lib, hipDeviceSetCacheConfig );
+_LIBRARY_FIND( hip_lib, hipDeviceSetGraphMemAttribute );
+_LIBRARY_FIND( hip_lib, hipDeviceSetLimit );
+_LIBRARY_FIND( hip_lib, hipDeviceSetMemPool );
+_LIBRARY_FIND( hip_lib, hipDeviceSetSharedMemConfig );
+_LIBRARY_FIND( hip_lib, hipDeviceSynchronize );
+_LIBRARY_FIND( hip_lib, hipDeviceTotalMem );
+_LIBRARY_FIND( hip_lib, hipDriverGetVersion );
+_LIBRARY_FIND( hip_lib, hipDrvGetErrorName );
+_LIBRARY_FIND( hip_lib, hipDrvGetErrorString );
+_LIBRARY_FIND( hip_lib, hipDrvMemcpy2DUnaligned );
+_LIBRARY_FIND( hip_lib, hipDrvMemcpy3D );
+_LIBRARY_FIND( hip_lib, hipDrvMemcpy3DAsync );
+_LIBRARY_FIND( hip_lib, hipDrvPointerGetAttributes );
+_LIBRARY_FIND( hip_lib, hipEventCreate );
+_LIBRARY_FIND( hip_lib, hipEventCreateWithFlags );
+_LIBRARY_FIND( hip_lib, hipEventDestroy );
+_LIBRARY_FIND( hip_lib, hipEventElapsedTime );
+_LIBRARY_FIND( hip_lib, hipEventQuery );
+_LIBRARY_FIND( hip_lib, hipEventRecord );
+_LIBRARY_FIND( hip_lib, hipEventRecord_spt );
+_LIBRARY_FIND( hip_lib, hipEventSynchronize );
+_LIBRARY_FIND( hip_lib, hipExtGetLinkTypeAndHopCount );
+_LIBRARY_FIND( hip_lib, hipExtLaunchKernel );
+_LIBRARY_FIND( hip_lib, hipExtLaunchMultiKernelMultiDevice );
+_LIBRARY_FIND( hip_lib, hipExtMallocWithFlags );
+_LIBRARY_FIND( hip_lib, hipExtStreamCreateWithCUMask );
+_LIBRARY_FIND( hip_lib, hipExtStreamGetCUMask );
+_LIBRARY_FIND( hip_lib, hipExternalMemoryGetMappedBuffer );
+_LIBRARY_FIND( hip_lib, hipFree );
+_LIBRARY_FIND( hip_lib, hipFreeArray );
+_LIBRARY_FIND( hip_lib, hipFreeAsync );
+_LIBRARY_FIND( hip_lib, hipFreeHost );
+_LIBRARY_FIND( hip_lib, hipFreeMipmappedArray );
+_LIBRARY_FIND( hip_lib, hipFuncGetAttribute );
+_LIBRARY_FIND( hip_lib, hipFuncGetAttributes );
+_LIBRARY_FIND( hip_lib, hipFuncSetAttribute );
+_LIBRARY_FIND( hip_lib, hipFuncSetCacheConfig );
+_LIBRARY_FIND( hip_lib, hipFuncSetSharedMemConfig );
+_LIBRARY_FIND( hip_lib, hipGLGetDevices );
+_LIBRARY_FIND( hip_lib, hipGetChannelDesc );
+_LIBRARY_FIND( hip_lib, hipGetDevice );
+_LIBRARY_FIND( hip_lib, hipGetDeviceCount );
+_LIBRARY_FIND( hip_lib, hipGetDeviceFlags );
+_LIBRARY_FIND( hip_lib, hipGetDeviceProperties );
+_LIBRARY_FIND( hip_lib, hipGetErrorName );
+_LIBRARY_FIND( hip_lib, hipGetErrorString );
+_LIBRARY_FIND( hip_lib, hipGetLastError );
+_LIBRARY_FIND( hip_lib, hipGetMipmappedArrayLevel );
+_LIBRARY_FIND( hip_lib, hipGetStreamDeviceId );
+_LIBRARY_FIND( hip_lib, hipGetSymbolAddress );
+_LIBRARY_FIND( hip_lib, hipGetSymbolSize );
+_LIBRARY_FIND( hip_lib, hipGetTextureAlignmentOffset );
+_LIBRARY_FIND( hip_lib, hipGetTextureObjectResourceDesc );
+_LIBRARY_FIND( hip_lib, hipGetTextureObjectResourceViewDesc );
+_LIBRARY_FIND( hip_lib, hipGetTextureObjectTextureDesc );
+_LIBRARY_FIND( hip_lib, hipGetTextureReference );
+_LIBRARY_FIND( hip_lib, hipGraphAddChildGraphNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddDependencies );
+_LIBRARY_FIND( hip_lib, hipGraphAddEmptyNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddEventRecordNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddEventWaitNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddHostNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddKernelNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemAllocNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemFreeNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemcpyNode );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemcpyNode1D );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemcpyNodeFromSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemcpyNodeToSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphAddMemsetNode );
+_LIBRARY_FIND( hip_lib, hipGraphChildGraphNodeGetGraph );
+_LIBRARY_FIND( hip_lib, hipGraphClone );
+_LIBRARY_FIND( hip_lib, hipGraphCreate );
+_LIBRARY_FIND( hip_lib, hipGraphDebugDotPrint );
+_LIBRARY_FIND( hip_lib, hipGraphDestroy );
+_LIBRARY_FIND( hip_lib, hipGraphDestroyNode );
+_LIBRARY_FIND( hip_lib, hipGraphEventRecordNodeGetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphEventRecordNodeSetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphEventWaitNodeGetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphEventWaitNodeSetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphExecChildGraphNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphExecDestroy );
+_LIBRARY_FIND( hip_lib, hipGraphExecEventRecordNodeSetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphExecEventWaitNodeSetEvent );
+_LIBRARY_FIND( hip_lib, hipGraphExecHostNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphExecKernelNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphExecMemcpyNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphExecMemcpyNodeSetParams1D );
+_LIBRARY_FIND( hip_lib, hipGraphExecMemcpyNodeSetParamsFromSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphExecMemcpyNodeSetParamsToSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphExecMemsetNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphExecUpdate );
+_LIBRARY_FIND( hip_lib, hipGraphGetEdges );
+_LIBRARY_FIND( hip_lib, hipGraphGetNodes );
+_LIBRARY_FIND( hip_lib, hipGraphGetRootNodes );
+_LIBRARY_FIND( hip_lib, hipGraphHostNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphHostNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphInstantiate );
+_LIBRARY_FIND( hip_lib, hipGraphInstantiateWithFlags );
+_LIBRARY_FIND( hip_lib, hipGraphKernelNodeCopyAttributes );
+_LIBRARY_FIND( hip_lib, hipGraphKernelNodeGetAttribute );
+_LIBRARY_FIND( hip_lib, hipGraphKernelNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphKernelNodeSetAttribute );
+_LIBRARY_FIND( hip_lib, hipGraphKernelNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphLaunch );
+_LIBRARY_FIND( hip_lib, hipGraphLaunch_spt );
+_LIBRARY_FIND( hip_lib, hipGraphMemAllocNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphMemFreeNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphMemcpyNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphMemcpyNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphMemcpyNodeSetParams1D );
+_LIBRARY_FIND( hip_lib, hipGraphMemcpyNodeSetParamsFromSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphMemcpyNodeSetParamsToSymbol );
+_LIBRARY_FIND( hip_lib, hipGraphMemsetNodeGetParams );
+_LIBRARY_FIND( hip_lib, hipGraphMemsetNodeSetParams );
+_LIBRARY_FIND( hip_lib, hipGraphNodeFindInClone );
+_LIBRARY_FIND( hip_lib, hipGraphNodeGetDependencies );
+_LIBRARY_FIND( hip_lib, hipGraphNodeGetDependentNodes );
+_LIBRARY_FIND( hip_lib, hipGraphNodeGetEnabled );
+_LIBRARY_FIND( hip_lib, hipGraphNodeGetType );
+_LIBRARY_FIND( hip_lib, hipGraphNodeSetEnabled );
+_LIBRARY_FIND( hip_lib, hipGraphReleaseUserObject );
+_LIBRARY_FIND( hip_lib, hipGraphRemoveDependencies );
+_LIBRARY_FIND( hip_lib, hipGraphRetainUserObject );
+_LIBRARY_FIND( hip_lib, hipGraphUpload );
+_LIBRARY_FIND( hip_lib, hipGraphicsGLRegisterBuffer );
+_LIBRARY_FIND( hip_lib, hipGraphicsGLRegisterImage );
+_LIBRARY_FIND( hip_lib, hipGraphicsMapResources );
+_LIBRARY_FIND( hip_lib, hipGraphicsResourceGetMappedPointer );
+_LIBRARY_FIND( hip_lib, hipGraphicsSubResourceGetMappedArray );
+_LIBRARY_FIND( hip_lib, hipGraphicsUnmapResources );
+_LIBRARY_FIND( hip_lib, hipGraphicsUnregisterResource );
+_LIBRARY_FIND( hip_lib, hipHostAlloc );
+_LIBRARY_FIND( hip_lib, hipHostFree );
+_LIBRARY_FIND( hip_lib, hipHostGetDevicePointer );
+_LIBRARY_FIND( hip_lib, hipHostGetFlags );
+_LIBRARY_FIND( hip_lib, hipHostMalloc );
+_LIBRARY_FIND( hip_lib, hipHostRegister );
+_LIBRARY_FIND( hip_lib, hipHostUnregister );
+_LIBRARY_FIND( hip_lib, hipImportExternalMemory );
+_LIBRARY_FIND( hip_lib, hipImportExternalSemaphore );
+_LIBRARY_FIND( hip_lib, hipInit );
+_LIBRARY_FIND( hip_lib, hipIpcCloseMemHandle );
+_LIBRARY_FIND( hip_lib, hipIpcGetEventHandle );
+_LIBRARY_FIND( hip_lib, hipIpcGetMemHandle );
+_LIBRARY_FIND( hip_lib, hipIpcOpenEventHandle );
+_LIBRARY_FIND( hip_lib, hipIpcOpenMemHandle );
+_LIBRARY_FIND( hip_lib, hipKernelNameRef );
+_LIBRARY_FIND( hip_lib, hipLaunchByPtr );
+_LIBRARY_FIND( hip_lib, hipLaunchCooperativeKernel );
+_LIBRARY_FIND( hip_lib, hipLaunchCooperativeKernelMultiDevice );
+_LIBRARY_FIND( hip_lib, hipLaunchCooperativeKernel_spt );
+_LIBRARY_FIND( hip_lib, hipLaunchHostFunc );
+_LIBRARY_FIND( hip_lib, hipLaunchHostFunc_spt );
+_LIBRARY_FIND( hip_lib, hipLaunchKernel );
+_LIBRARY_FIND( hip_lib, hipLaunchKernel_spt );
+_LIBRARY_FIND( hip_lib, hipMalloc );
+_LIBRARY_FIND( hip_lib, hipMalloc3D );
+_LIBRARY_FIND( hip_lib, hipMalloc3DArray );
+_LIBRARY_FIND( hip_lib, hipMallocArray );
+_LIBRARY_FIND( hip_lib, hipMallocAsync );
+_LIBRARY_FIND( hip_lib, hipMallocFromPoolAsync );
+_LIBRARY_FIND( hip_lib, hipMallocHost );
+_LIBRARY_FIND( hip_lib, hipMallocManaged );
+_LIBRARY_FIND( hip_lib, hipMallocMipmappedArray );
+_LIBRARY_FIND( hip_lib, hipMallocPitch );
+_LIBRARY_FIND( hip_lib, hipMemAddressFree );
+_LIBRARY_FIND( hip_lib, hipMemAddressReserve );
+_LIBRARY_FIND( hip_lib, hipMemAdvise );
+_LIBRARY_FIND( hip_lib, hipMemAllocHost );
+_LIBRARY_FIND( hip_lib, hipMemAllocPitch );
+_LIBRARY_FIND( hip_lib, hipMemCreate );
+_LIBRARY_FIND( hip_lib, hipMemExportToShareableHandle );
+_LIBRARY_FIND( hip_lib, hipMemGetAccess );
+_LIBRARY_FIND( hip_lib, hipMemGetAddressRange );
+_LIBRARY_FIND( hip_lib, hipMemGetAllocationGranularity );
+_LIBRARY_FIND( hip_lib, hipMemGetAllocationPropertiesFromHandle );
+_LIBRARY_FIND( hip_lib, hipMemGetInfo );
+_LIBRARY_FIND( hip_lib, hipMemImportFromShareableHandle );
+_LIBRARY_FIND( hip_lib, hipMemMap );
+_LIBRARY_FIND( hip_lib, hipMemMapArrayAsync );
+_LIBRARY_FIND( hip_lib, hipMemPoolCreate );
+_LIBRARY_FIND( hip_lib, hipMemPoolDestroy );
+_LIBRARY_FIND( hip_lib, hipMemPoolExportPointer );
+_LIBRARY_FIND( hip_lib, hipMemPoolExportToShareableHandle );
+_LIBRARY_FIND( hip_lib, hipMemPoolGetAccess );
+_LIBRARY_FIND( hip_lib, hipMemPoolGetAttribute );
+_LIBRARY_FIND( hip_lib, hipMemPoolImportFromShareableHandle );
+_LIBRARY_FIND( hip_lib, hipMemPoolImportPointer );
+_LIBRARY_FIND( hip_lib, hipMemPoolSetAccess );
+_LIBRARY_FIND( hip_lib, hipMemPoolSetAttribute );
+_LIBRARY_FIND( hip_lib, hipMemPoolTrimTo );
+_LIBRARY_FIND( hip_lib, hipMemPrefetchAsync );
+_LIBRARY_FIND( hip_lib, hipMemPtrGetInfo );
+_LIBRARY_FIND( hip_lib, hipMemRangeGetAttribute );
+_LIBRARY_FIND( hip_lib, hipMemRangeGetAttributes );
+_LIBRARY_FIND( hip_lib, hipMemRelease );
+_LIBRARY_FIND( hip_lib, hipMemRetainAllocationHandle );
+_LIBRARY_FIND( hip_lib, hipMemSetAccess );
+_LIBRARY_FIND( hip_lib, hipMemUnmap );
+_LIBRARY_FIND( hip_lib, hipMemcpy );
+_LIBRARY_FIND( hip_lib, hipMemcpy2D );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DFromArray );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DFromArrayAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DFromArrayAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DFromArray_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DToArray );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DToArrayAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DToArrayAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy2DToArray_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy2D_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy3D );
+_LIBRARY_FIND( hip_lib, hipMemcpy3DAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpy3DAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpy3D_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyAtoH );
+_LIBRARY_FIND( hip_lib, hipMemcpyDtoD );
+_LIBRARY_FIND( hip_lib, hipMemcpyDtoDAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyDtoH );
+_LIBRARY_FIND( hip_lib, hipMemcpyDtoHAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromArray );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromArray_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromSymbol );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromSymbolAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromSymbolAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyFromSymbol_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyHtoA );
+_LIBRARY_FIND( hip_lib, hipMemcpyHtoD );
+_LIBRARY_FIND( hip_lib, hipMemcpyHtoDAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyParam2D );
+_LIBRARY_FIND( hip_lib, hipMemcpyParam2DAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyPeer );
+_LIBRARY_FIND( hip_lib, hipMemcpyPeerAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyToArray );
+_LIBRARY_FIND( hip_lib, hipMemcpyToSymbol );
+_LIBRARY_FIND( hip_lib, hipMemcpyToSymbolAsync );
+_LIBRARY_FIND( hip_lib, hipMemcpyToSymbolAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyToSymbol_spt );
+_LIBRARY_FIND( hip_lib, hipMemcpyWithStream );
+_LIBRARY_FIND( hip_lib, hipMemcpy_spt );
+_LIBRARY_FIND( hip_lib, hipMemset );
+_LIBRARY_FIND( hip_lib, hipMemset2D );
+_LIBRARY_FIND( hip_lib, hipMemset2DAsync );
+_LIBRARY_FIND( hip_lib, hipMemset2DAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemset2D_spt );
+_LIBRARY_FIND( hip_lib, hipMemset3D );
+_LIBRARY_FIND( hip_lib, hipMemset3DAsync );
+_LIBRARY_FIND( hip_lib, hipMemset3DAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemset3D_spt );
+_LIBRARY_FIND( hip_lib, hipMemsetAsync );
+_LIBRARY_FIND( hip_lib, hipMemsetAsync_spt );
+_LIBRARY_FIND( hip_lib, hipMemsetD16 );
+_LIBRARY_FIND( hip_lib, hipMemsetD16Async );
+_LIBRARY_FIND( hip_lib, hipMemsetD32 );
+_LIBRARY_FIND( hip_lib, hipMemsetD32Async );
+_LIBRARY_FIND( hip_lib, hipMemsetD8 );
+_LIBRARY_FIND( hip_lib, hipMemsetD8Async );
+_LIBRARY_FIND( hip_lib, hipMemset_spt );
+_LIBRARY_FIND( hip_lib, hipMipmappedArrayCreate );
+_LIBRARY_FIND( hip_lib, hipMipmappedArrayDestroy );
+_LIBRARY_FIND( hip_lib, hipMipmappedArrayGetLevel );
+_LIBRARY_FIND( hip_lib, hipModuleGetFunction );
+_LIBRARY_FIND( hip_lib, hipModuleGetGlobal );
+_LIBRARY_FIND( hip_lib, hipModuleGetTexRef );
+_LIBRARY_FIND( hip_lib, hipModuleLaunchCooperativeKernel );
+_LIBRARY_FIND( hip_lib, hipModuleLaunchCooperativeKernelMultiDevice );
+_LIBRARY_FIND( hip_lib, hipModuleLaunchKernel );
+_LIBRARY_FIND( hip_lib, hipModuleLoad );
+_LIBRARY_FIND( hip_lib, hipModuleLoadData );
+_LIBRARY_FIND( hip_lib, hipModuleLoadDataEx );
+_LIBRARY_FIND( hip_lib, hipModuleOccupancyMaxActiveBlocksPerMultiprocessor );
+_LIBRARY_FIND( hip_lib, hipModuleOccupancyMaxActiveBlocksPerMultiprocessorWithFlags );
+_LIBRARY_FIND( hip_lib, hipModuleOccupancyMaxPotentialBlockSize );
+_LIBRARY_FIND( hip_lib, hipModuleOccupancyMaxPotentialBlockSizeWithFlags );
+_LIBRARY_FIND( hip_lib, hipModuleUnload );
+_LIBRARY_FIND( hip_lib, hipOccupancyMaxActiveBlocksPerMultiprocessor );
+_LIBRARY_FIND( hip_lib, hipOccupancyMaxActiveBlocksPerMultiprocessorWithFlags );
+_LIBRARY_FIND( hip_lib, hipOccupancyMaxPotentialBlockSize );
+_LIBRARY_FIND( hip_lib, hipPeekAtLastError );
+_LIBRARY_FIND( hip_lib, hipPointerGetAttribute );
+_LIBRARY_FIND( hip_lib, hipPointerGetAttributes );
+_LIBRARY_FIND( hip_lib, hipProfilerStart );
+_LIBRARY_FIND( hip_lib, hipProfilerStop );
+_LIBRARY_FIND( hip_lib, hipRuntimeGetVersion );
+_LIBRARY_FIND( hip_lib, hipSetDevice );
+_LIBRARY_FIND( hip_lib, hipSetDeviceFlags );
+_LIBRARY_FIND( hip_lib, hipSetupArgument );
+_LIBRARY_FIND( hip_lib, hipSignalExternalSemaphoresAsync );
+_LIBRARY_FIND( hip_lib, hipStreamAddCallback );
+_LIBRARY_FIND( hip_lib, hipStreamAddCallback_spt );
+_LIBRARY_FIND( hip_lib, hipStreamAttachMemAsync );
+_LIBRARY_FIND( hip_lib, hipStreamBeginCapture );
+_LIBRARY_FIND( hip_lib, hipStreamBeginCapture_spt );
+_LIBRARY_FIND( hip_lib, hipStreamCreate );
+_LIBRARY_FIND( hip_lib, hipStreamCreateWithFlags );
+_LIBRARY_FIND( hip_lib, hipStreamCreateWithPriority );
+_LIBRARY_FIND( hip_lib, hipStreamDestroy );
+_LIBRARY_FIND( hip_lib, hipStreamEndCapture );
+_LIBRARY_FIND( hip_lib, hipStreamEndCapture_spt );
+_LIBRARY_FIND( hip_lib, hipStreamGetCaptureInfo );
+_LIBRARY_FIND( hip_lib, hipStreamGetCaptureInfo_spt );
+_LIBRARY_FIND( hip_lib, hipStreamGetCaptureInfo_v2 );
+_LIBRARY_FIND( hip_lib, hipStreamGetCaptureInfo_v2_spt );
+_LIBRARY_FIND( hip_lib, hipStreamGetDevice );
+_LIBRARY_FIND( hip_lib, hipStreamGetFlags );
+_LIBRARY_FIND( hip_lib, hipStreamGetFlags_spt );
+_LIBRARY_FIND( hip_lib, hipStreamGetPriority );
+_LIBRARY_FIND( hip_lib, hipStreamGetPriority_spt );
+_LIBRARY_FIND( hip_lib, hipStreamIsCapturing );
+_LIBRARY_FIND( hip_lib, hipStreamIsCapturing_spt );
+_LIBRARY_FIND( hip_lib, hipStreamQuery );
+_LIBRARY_FIND( hip_lib, hipStreamQuery_spt );
+_LIBRARY_FIND( hip_lib, hipStreamSynchronize );
+_LIBRARY_FIND( hip_lib, hipStreamSynchronize_spt );
+_LIBRARY_FIND( hip_lib, hipStreamUpdateCaptureDependencies );
+_LIBRARY_FIND( hip_lib, hipStreamWaitEvent );
+_LIBRARY_FIND( hip_lib, hipStreamWaitEvent_spt );
+_LIBRARY_FIND( hip_lib, hipStreamWaitValue32 );
+_LIBRARY_FIND( hip_lib, hipStreamWaitValue64 );
+_LIBRARY_FIND( hip_lib, hipStreamWriteValue32 );
+_LIBRARY_FIND( hip_lib, hipStreamWriteValue64 );
+_LIBRARY_FIND( hip_lib, hipTexObjectCreate );
+_LIBRARY_FIND( hip_lib, hipTexObjectDestroy );
+_LIBRARY_FIND( hip_lib, hipTexObjectGetResourceDesc );
+_LIBRARY_FIND( hip_lib, hipTexObjectGetResourceViewDesc );
+_LIBRARY_FIND( hip_lib, hipTexObjectGetTextureDesc );
+_LIBRARY_FIND( hip_lib, hipTexRefGetAddress );
+_LIBRARY_FIND( hip_lib, hipTexRefGetAddressMode );
+_LIBRARY_FIND( hip_lib, hipTexRefGetFilterMode );
+_LIBRARY_FIND( hip_lib, hipTexRefGetFlags );
+_LIBRARY_FIND( hip_lib, hipTexRefGetFormat );
+_LIBRARY_FIND( hip_lib, hipTexRefGetMaxAnisotropy );
+_LIBRARY_FIND( hip_lib, hipTexRefGetMipmapFilterMode );
+_LIBRARY_FIND( hip_lib, hipTexRefGetMipmapLevelBias );
+_LIBRARY_FIND( hip_lib, hipTexRefGetMipmapLevelClamp );
+_LIBRARY_FIND( hip_lib, hipTexRefSetAddress );
+_LIBRARY_FIND( hip_lib, hipTexRefSetAddress2D );
+_LIBRARY_FIND( hip_lib, hipTexRefSetAddressMode );
+_LIBRARY_FIND( hip_lib, hipTexRefSetArray );
+_LIBRARY_FIND( hip_lib, hipTexRefSetBorderColor );
+_LIBRARY_FIND( hip_lib, hipTexRefSetFilterMode );
+_LIBRARY_FIND( hip_lib, hipTexRefSetFlags );
+_LIBRARY_FIND( hip_lib, hipTexRefSetFormat );
+_LIBRARY_FIND( hip_lib, hipTexRefSetMaxAnisotropy );
+_LIBRARY_FIND( hip_lib, hipTexRefSetMipmapFilterMode );
+_LIBRARY_FIND( hip_lib, hipTexRefSetMipmapLevelBias );
+_LIBRARY_FIND( hip_lib, hipTexRefSetMipmapLevelClamp );
+_LIBRARY_FIND( hip_lib, hipTexRefSetMipmappedArray );
+_LIBRARY_FIND( hip_lib, hipThreadExchangeStreamCaptureMode );
+_LIBRARY_FIND( hip_lib, hipUnbindTexture );
+_LIBRARY_FIND( hip_lib, hipUserObjectCreate );
+_LIBRARY_FIND( hip_lib, hipUserObjectRelease );
+_LIBRARY_FIND( hip_lib, hipUserObjectRetain );
+_LIBRARY_FIND( hip_lib, hipWaitExternalSemaphoresAsync );
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_hipew_cpp_2
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
+
 
   s_resultDriver = HIPEW_SUCCESS;
   *resultDriver = s_resultDriver;
@@ -488,22 +1132,40 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
   _LIBRARY_FIND( rtcLib, hiprtcGetErrorString );
   if( hiprtcGetErrorString )
   {
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcAddNameExpression );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcCompileProgram );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcCreateProgram );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcDestroyProgram );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetLoweredName );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLog );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetProgramLogSize );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCode );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcodeSize );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetBitcode );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcGetCodeSize );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkCreate );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkAddFile );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkAddData );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkComplete );
-    _LIBRARY_FIND_CHECKED( rtcLib, hiprtcLinkDestroy );
+
+
+
+#pragma region OROCHI_SUMMONER_REGION_hipew_cpp_rtc
+
+/////
+///// THIS REGION HAS BEEN AUTOMATICALLY GENERATED BY OROCHI SUMMONER.
+///// Manual modification of this region is not recommended.
+/////
+
+_LIBRARY_FIND( rtcLib, hiprtcAddNameExpression );
+_LIBRARY_FIND( rtcLib, hiprtcCompileProgram );
+_LIBRARY_FIND( rtcLib, hiprtcCreateProgram );
+_LIBRARY_FIND( rtcLib, hiprtcDestroyProgram );
+_LIBRARY_FIND( rtcLib, hiprtcGetBitcode );
+_LIBRARY_FIND( rtcLib, hiprtcGetBitcodeSize );
+_LIBRARY_FIND( rtcLib, hiprtcGetCode );
+_LIBRARY_FIND( rtcLib, hiprtcGetCodeSize );
+_LIBRARY_FIND( rtcLib, hiprtcGetErrorString );
+_LIBRARY_FIND( rtcLib, hiprtcGetLoweredName );
+_LIBRARY_FIND( rtcLib, hiprtcGetProgramLog );
+_LIBRARY_FIND( rtcLib, hiprtcGetProgramLogSize );
+_LIBRARY_FIND( rtcLib, hiprtcLinkAddData );
+_LIBRARY_FIND( rtcLib, hiprtcLinkAddFile );
+_LIBRARY_FIND( rtcLib, hiprtcLinkComplete );
+_LIBRARY_FIND( rtcLib, hiprtcLinkCreate );
+_LIBRARY_FIND( rtcLib, hiprtcLinkDestroy );
+_LIBRARY_FIND( rtcLib, hiprtcVersion );
+
+
+///// END REGION: OROCHI_SUMMONER_REGION_hipew_cpp_rtc
+///// (region automatically generated by Orochi Summoner)
+#pragma endregion
+
 
 	s_resultRtc = HIPEW_SUCCESS;
 	*resultRtc = s_resultRtc;
@@ -513,6 +1175,35 @@ void hipewInit( int* resultDriver, int* resultRtc, hipuint32_t flags )
 	s_resultRtc = HIPEW_ERROR_OPEN_FAILED;
 	*resultRtc = s_resultRtc;
   }
+
+
+
+#ifndef HIPEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
+    if ( hipRuntimeGetVersion )
+    {
+      int runtimeVersion = 0;
+      hipRuntimeGetVersion(&runtimeVersion);
+      int runtimeVersion_major = runtimeVersion / (int)10000000;
+      if ( (int)HIP_VERSION_MAJOR > runtimeVersion_major )
+      {
+        *resultDriver = HIPEW_ERROR_OLD_DRIVER;
+        *resultRtc = HIPEW_ERROR_OLD_DRIVER; // as currently hiprtcVersion is not used, set the same result than resultDriver
+      }
+    }
+
+    if (hiprtcVersion) 
+    {
+      int major, minor = 0;
+      hiprtcVersion(&major, &minor);
+      // we currently can't compare this version with API as this version is decoupled from HIP_VERSION
+    }
+
+#endif
+
+
+
+
+
 }
 
 const char *hipewErrorString(hipError_t result) {

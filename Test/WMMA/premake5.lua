@@ -9,7 +9,7 @@ project "WMMA"
    end
 
       includedirs { "../../" }
-      files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
+      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
       files { "../../contrib/**.h", "../../contrib/**.cpp" }
       files { "*.h", "*.cpp" }
 	  files { "half.hpp" }
