@@ -432,6 +432,60 @@ OrochiUtils::~OrochiUtils()
 		printf("Warning: OrochiUtils::unloadKernelCache should be called for good practice.\n");
 }
 
+// setup a base option list used in OrochiUtils 
+void SetupCompileOptions(oroDevice device, const std::vector<const char*>* optsIn, bool addArchitectureTarget, std::vector<const char*>& opts)
+{
+	opts.push_back( "-std=c++17" );
+
+	if( addArchitectureTarget && oroGetCurAPI( 0 ) == ORO_API_HIP )
+	{
+		oroDeviceProp props;
+		::memset(&props,0,sizeof(props));
+		oroGetDeviceProperties( &props, device );
+		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
+		{
+			std::string tmp = "--gpu-architecture=";
+			tmp += props.gcnArchName;
+			opts.push_back( tmp.c_str() );
+		}
+	}
+
+	if( optsIn )
+	{
+		for( int i = 0; i < optsIn->size(); i++ )
+			opts.push_back( ( *optsIn )[i] );
+	}
+}
+
+// base program compilation, used in several components of OrochiUtils
+void CreateAndCompileProgram(const char* code, const char* programName, std::vector<const char*>& opts, const char* nameExpression, 
+							int numHeaders, const char** headers, const char** includeNames,
+							orortcProgram* prog)
+{
+	orortcResult e;
+	e = orortcCreateProgram( prog, code, programName, numHeaders, headers, includeNames );
+
+	if ( nameExpression )
+		e = orortcAddNameExpression( *prog, nameExpression );
+
+	e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
+	if( e != ORORTC_SUCCESS )
+	{
+		std::cout << "ERROR: orortcCompileProgram failed with log:\n";
+		size_t logSize = 0;
+		orortcGetProgramLogSize( *prog, &logSize );
+		if( logSize )
+		{
+			std::string log( logSize, '\0' );
+			orortcGetProgramLog( *prog, &log[0] );
+			std::cout << log << '\n';
+		}
+		else
+		{
+			std::cout << "<NO LOG>\n";
+		}
+	}
+}
 
 bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) 
 {
@@ -519,13 +573,7 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
+	SetupCompileOptions(device, optsIn, false, opts);
 
 	oroFunction function;
 	std::vector<char> codec;
@@ -545,28 +593,10 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	else
 	{
 		orortcProgram prog;
-		orortcResult e;
-		e = orortcCreateProgram( &prog, code, funcName, numHeaders, headers, includeNames );
-		OROASSERT( e == ORORTC_SUCCESS, 0 );
+		CreateAndCompileProgram(code, funcName, opts, nullptr, numHeaders, headers, includeNames, &prog);
 
-		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
-			size_t logSize = 0;
-			orortcGetProgramLogSize( prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( prog, &log[0] );
-				std::cout << log << '\n';
-			}
-			else
-			{
-				std::cout << "<NO LOG>\n";
-			}
-		}
 		size_t codeSize;
+		orortcResult e;
 		e = orortcGetCodeSize( prog, &codeSize );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
@@ -596,110 +626,26 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 
 void OrochiUtils::getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, std::vector<char>& dst )
 {
-	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
+	orortcProgram prog = nullptr;
+	getProgram( device, code, path, optsIn, nullptr, &prog );
 
-	
-
-	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
-	{
-		oroDeviceProp props;
-		::memset(&props,0,sizeof(props));
-		oroGetDeviceProperties( &props, device );
-		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
-		{
-			std::string tmp = "--gpu-architecture=";
-			tmp += props.gcnArchName;
-			opts.push_back( tmp.c_str() );
-		}
-	}
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
+	orortcResult e;
+	size_t codeSize = 0;
+	e = orortcGetBitcodeSize( prog, &codeSize );
 
 	std::vector<char>& codec = dst;
-	{
-		orortcProgram prog;
-		orortcResult e;
-		e = orortcCreateProgram( &prog, code, path, 0, 0, 0 );
-
-		e = orortcCompileProgram( prog, static_cast<int>( opts.size() ), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
-			size_t logSize = 0;
-			orortcGetProgramLogSize( prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( prog, &log[0] );
-				std::cout << log << '\n';
-			}
-			else
-			{
-				std::cout << "<NO LOG>\n";
-			}
-		}
-		size_t codeSize;
-		e = orortcGetBitcodeSize( prog, &codeSize );
-
-		codec.resize( codeSize );
-		e = orortcGetBitcode( prog, codec.data() );
-		e = orortcDestroyProgram( &prog );
-	}
+	codec.resize( codeSize );
+	e = orortcGetBitcode( prog, codec.data() );
+	e = orortcDestroyProgram( &prog );
+	
 	return;
 }
 
 void OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram* prog )
 {
 	std::vector<const char*> opts;
-	opts.push_back( "-std=c++17" );
-
-	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
-	{
-		oroDeviceProp props;
-		::memset(&props,0,sizeof(props));
-		oroGetDeviceProperties( &props, device );
-		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
-		{
-			std::string tmp = "--gpu-architecture=";
-			tmp += props.gcnArchName;
-			opts.push_back( tmp.c_str() );
-		}
-	}
-
-	if( optsIn )
-	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
-	}
-
-	{
-		orortcResult e;
-		e = orortcCreateProgram( prog, code, path, 0, 0, 0 );
-		e = orortcAddNameExpression( *prog, funcName );
-
-		e = orortcCompileProgram( *prog, static_cast<int>( opts.size() ), opts.data() );
-		if( e != ORORTC_SUCCESS )
-		{
-			std::cout << "ERROR: orortcCompileProgram failed with log:\n";
-			size_t logSize = 0;
-			orortcGetProgramLogSize( *prog, &logSize );
-			if( logSize )
-			{
-				std::string log( logSize, '\0' );
-				orortcGetProgramLog( *prog, &log[0] );
-				std::cout << log << '\n';
-			}
-			else
-			{
-				std::cout << "<NO LOG>\n";
-			}
-		}
-	}
+	SetupCompileOptions(device, optsIn, true, opts);
+	CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
 	return;
 }
 
