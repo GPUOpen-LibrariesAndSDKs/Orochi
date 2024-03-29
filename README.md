@@ -34,10 +34,10 @@ To run an application compiled with Orochi, you need to install a driver of your
 Orochi will aim to maintain support for various version combinations, enabling developers to switch between branches depending on their environment.
 
 Combinations currently supported:
-| HIP version | CUDA version | branch                                                        |
-|-------------|--------------|---------------------------------------------------------------|
-| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) |
-| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) |
+| HIP version | CUDA version | Branch                                                                                                     | Remarks |
+|-------------|--------------|------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) | tested and validated                                 |
+| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) | tested and validated - Windows DLLs not provided yet |
 
 If you need a combination that is currently not supported, open an [Issue](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/issues).
 
