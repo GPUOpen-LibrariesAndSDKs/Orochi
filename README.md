@@ -99,4 +99,14 @@ The source code for the test applications can be found [here](./Test/).
 
 ----
 
+## Contribution
+
+Feel free to open pull requests.
+
+You can either target a specific `release/` branch or the `main` branch.
+
+If it makes sense, your commit will then be propagated in the different `release/` branches by us.
+
+----
+
 [1] Yamata no Orochi (ヤマタノオロチ, 八岐大蛇) is a legendary eight-headed and eight-tailed Japanese dragon.
