@@ -35,9 +35,9 @@ Orochi will aim to maintain support for various version combinations, enabling d
 
 Combinations currently supported:
 | HIP version | CUDA version | Branch                                                                                                     | Remarks |
-|-------------|--------------|------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
-| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) | tested and validated                                 |
-| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) | tested and validated - Windows DLLs not provided yet |
+|-------------|--------------|------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
+| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) | tested and validated                                     |
+| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) | tested and validated - HIP Windows DLLs not provided yet |
 
 If you need a combination that is currently not supported, open an [Issue](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/issues).
 
@@ -96,6 +96,16 @@ Test is a minimum application.
 The test applications run on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
 
 The source code for the test applications can be found [here](./Test/).
+
+----
+
+## Contribution
+
+Feel free to open pull requests.
+
+You can either target a specific `release/` branch or the `main` branch.
+
+If it makes sense, your commit will then be propagated in the different `release/` branches by us.
 
 ----
 

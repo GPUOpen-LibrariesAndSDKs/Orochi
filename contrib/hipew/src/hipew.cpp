@@ -549,13 +549,21 @@ static DynamicLibrary dynamic_library_open_find(const char **paths) {
   return NULL;
 }
 
-/* Implementation function. */
+// Implementation function.
 static void hipewHipExit(void) {
   if (hip_lib != NULL) {
-    /*  Ignore errors. */
+    //  Ignore errors.
     dynamic_library_close(hip_lib);
     hip_lib = NULL;
   }
+
+  if (hiprtc_lib != NULL) {
+    //  Ignore errors.
+    dynamic_library_close(hiprtc_lib);
+    hiprtc_lib = NULL;
+  }
+
+  return;
 }
 
 #ifdef _WIN32
