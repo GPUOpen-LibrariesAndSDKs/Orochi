@@ -609,9 +609,13 @@ static int hipewHasOldDriver(const char *hip_path) {
 }
 #endif
 
-void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags )
+
+// description in header
+void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** customPaths_Hip, const char** customPaths_Hiprtc )
 {
-  /* Library paths. */
+
+  // Library paths.
+  // All those fixed paths can be overridden by the arguments of hipewInit/oroInitialize
 #ifdef _WIN32
   /* Expected in C:/Windows/System32 or similar, no path needed. */
   const char* hip_paths[] = {"amdhip64.dll", NULL};
@@ -636,6 +640,8 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags )
                                  "libhiprtc.so",
                                  NULL };
 #endif
+
+
   static int initialized = 0;
   static int s_resultDriver = 0;
   static int s_resultRtc = 0;
@@ -659,7 +665,7 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags )
 
 #ifdef _WIN32
   /* Test for driver version. */
-  if(hipewHasOldDriver(hip_paths[0])) {
+  if(hipewHasOldDriver(customPaths_Hip ? customPaths_Hip[0] : hip_paths[0])) {
     s_resultDriver = HIPEW_ERROR_OLD_DRIVER;
     s_resultRtc = HIPEW_NOT_INITIALIZED;
     *resultDriver = s_resultDriver;
@@ -669,8 +675,8 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags )
 #endif
 
   /* Load library. */
-  hip_lib = dynamic_library_open_find(hip_paths);
-  hiprtc_lib = dynamic_library_open_find(hiprtc_paths);
+  hip_lib = dynamic_library_open_find(customPaths_Hip ? customPaths_Hip : hip_paths);
+  hiprtc_lib = dynamic_library_open_find(customPaths_Hiprtc ? customPaths_Hiprtc : hiprtc_paths);
 
   if (hip_lib == NULL) {
     s_resultDriver = HIPEW_ERROR_ATEXIT_FAILED;
