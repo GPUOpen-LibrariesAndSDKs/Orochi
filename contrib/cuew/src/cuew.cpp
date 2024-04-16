@@ -1926,7 +1926,7 @@ const char *cuewCompilerPath(void)
 {
 #ifdef _WIN32
   const char *defaultpaths[] = {
-      "C:/CUDA/bin", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/bin", NULL};
+      "C:/CUDA/bin", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/bin", NULL};
   const char *executable = "nvcc.exe";
 #else
   const char *defaultpaths[] = {"/Developer/NVIDIA/CUDA-5.0/bin",
