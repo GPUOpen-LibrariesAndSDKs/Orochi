@@ -2608,7 +2608,20 @@ enum {
 	HIPEW_INIT_HIPRTC = 1 << 1,
 };
 
-void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags );
+#ifdef __cplusplus
+#define hipew__dparm(x) = x
+#else
+#define hipew__dparm(x)
+#endif
+
+// 'customPaths_Hip' and 'customPaths_Hiprtc' are optional parameters and can be used to overide the default values defined in HIPEW.
+// It's a list of C-strings. This list must have a NULL as last element.
+// The order of the elements matters: the first library file to exist will be the one loaded.
+// Examples, for Windows:
+// customPaths_Hip[]    = {"amdhip64_6.dll", "amdhip64.dll", NULL};
+// customPaths_Hiprtc[] = {"hiprtc0600.dll", "hiprtc0507.dll", NULL};
+void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** customPaths_Hip hipew__dparm(0), const char** customPaths_Hiprtc hipew__dparm(0));
+
 const char *hipewErrorString(hipError_t result);
 const char *hipewCompilerPath(void);
 int hipewCompilerVersion(void);

@@ -831,8 +831,14 @@ oroApi getRawDeviceIndex( int& deviceId )
 	return api;
 }
 
-
-int oroInitialize( oroApi api, oroU32 flags )
+// description in the header
+int oroInitialize( oroApi api, oroU32 flags, 
+	const char** customPaths_Hip,
+	const char** customPaths_Hiprtc,
+	const char** customPaths_Cuda,
+	const char** customPaths_CudaRT,
+	const char** customPaths_NvRTC
+	)
 {
 	s_api = api;
 	int e = 0;
@@ -852,7 +858,7 @@ int oroInitialize( oroApi api, oroU32 flags )
 		}
 		
 		int resultDriver, resultRtc;
-		CU4ORO::cuewInit( &resultDriver, &resultRtc, flag );
+		CU4ORO::cuewInit( &resultDriver, &resultRtc, flag, customPaths_Cuda, customPaths_CudaRT, customPaths_NvRTC);
 
 		if( resultDriver == CU4ORO::CUEW_SUCCESS )
 		{
@@ -877,7 +883,7 @@ int oroInitialize( oroApi api, oroU32 flags )
 		}
 
 		int resultDriver, resultRtc;
-		hipewInit( &resultDriver, &resultRtc, flag );
+		hipewInit( &resultDriver, &resultRtc, flag, customPaths_Hip, customPaths_Hiprtc );
 
 		if( resultDriver == HIPEW_SUCCESS )
 		{
