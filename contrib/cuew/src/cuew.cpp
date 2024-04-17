@@ -856,7 +856,7 @@ static void cuewCudaExit(void)
   }
 }
 
-static int cuewCudaInit(void)
+static int cuewCudaInit(const char** customPaths_Cuda, const char** customPaths_CudaRT)
 {
   // Library paths.
 #ifdef _WIN32
@@ -888,7 +888,7 @@ static int cuewCudaInit(void)
   }
 
   // Load library.
-  cuda_lib = dynamic_library_open_find(cuda_paths);
+  cuda_lib = dynamic_library_open_find(customPaths_Cuda ? customPaths_Cuda : cuda_paths);
 
   if (cuda_lib == NULL) {
     result = CUEW_ERROR_OPEN_FAILED;
@@ -898,7 +898,7 @@ static int cuewCudaInit(void)
 
 
   // Load library.
-  cudart_lib = dynamic_library_open_find(cudart_paths);
+  cudart_lib = dynamic_library_open_find(customPaths_CudaRT ? customPaths_CudaRT : cudart_paths);
 
   if (cudart_lib == NULL) {
       // maybe better to not fail for this DLL, which is not included in driver ? 
@@ -1624,7 +1624,7 @@ static void cuewExitNvrtc(void)
   }
 }
 
-static int cuewNvrtcInit(void)
+static int cuewNvrtcInit(const char** customPaths_NvRTC)
 {
   /* Library paths. */
 #ifdef _WIN32
@@ -1668,7 +1668,7 @@ static int cuewNvrtcInit(void)
   }
 
   /* Load library. */
-  nvrtc_lib = dynamic_library_open_find(nvrtc_paths);
+  nvrtc_lib = dynamic_library_open_find(customPaths_NvRTC ? customPaths_NvRTC : nvrtc_paths);
 
   if (nvrtc_lib == NULL) {
     result = CUEW_ERROR_OPEN_FAILED;
@@ -1713,7 +1713,12 @@ _LIBRARY_FIND( nvrtc_lib, nvrtcVersion );
   return result;
 }
 
-void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
+// description in the header
+void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags, 
+    const char** customPaths_Cuda, 
+    const char** customPaths_CudaRT, 
+    const char** customPaths_NvRTC 
+    )
 {
   *resultDriver = CUEW_NOT_INITIALIZED;
   *resultRtc = CUEW_NOT_INITIALIZED;
@@ -1722,7 +1727,7 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
 
   if (flags & CUEW_INIT_CUDA) 
   {
-    *resultDriver = cuewCudaInit();
+    *resultDriver = cuewCudaInit(customPaths_Cuda, customPaths_CudaRT);
 
 #ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
     if ( cudaRuntimeGetVersion_oro )
@@ -1741,7 +1746,7 @@ void cuewInit( int* resultDriver, int* resultRtc, cuuint32_t flags )
   }
   if (flags & CUEW_INIT_NVRTC) 
   {
-    *resultRtc = cuewNvrtcInit();
+    *resultRtc = cuewNvrtcInit(customPaths_NvRTC);
 
 #ifndef CUEW_DO_NOT_CHECK_VERSION // not recommanded to define this flag, but just give a possibility for the developer to do it...
     if (nvrtcVersion_oro) 
@@ -1921,7 +1926,7 @@ const char *cuewCompilerPath(void)
 {
 #ifdef _WIN32
   const char *defaultpaths[] = {
-      "C:/CUDA/bin", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/bin", NULL};
+      "C:/CUDA/bin", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.2/bin", NULL};
   const char *executable = "nvcc.exe";
 #else
   const char *defaultpaths[] = {"/Developer/NVIDIA/CUDA-5.0/bin",
