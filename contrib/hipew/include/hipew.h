@@ -145,23 +145,23 @@ enum
 };
 struct hipDeviceArch_t
 {
-	unsigned int hasGlobalInt32Atomics;
-	unsigned int hasGlobalFloatAtomicExch;
-	unsigned int hasSharedInt32Atomics;
-	unsigned int hasSharedFloatAtomicExch;
-	unsigned int hasFloatAtomicAdd;
-	unsigned int hasGlobalInt64Atomics;
-	unsigned int hasSharedInt64Atomics;
-	unsigned int hasDoubles;
-	unsigned int hasWarpVote;
-	unsigned int hasWarpBallot;
-	unsigned int hasWarpShuffle;
-	unsigned int hasFunnelShift;
-	unsigned int hasThreadFenceSystem;
-	unsigned int hasSyncThreadsExt;
-	unsigned int hasSurfaceFuncs;
-	unsigned int has3dGrid;
-	unsigned int hasDynamicParallelism;
+	unsigned hasGlobalInt32Atomics : 1;
+	unsigned hasGlobalFloatAtomicExch : 1;
+	unsigned hasSharedInt32Atomics : 1;
+	unsigned hasSharedFloatAtomicExch : 1;
+	unsigned hasFloatAtomicAdd : 1;
+	unsigned hasGlobalInt64Atomics : 1;
+	unsigned hasSharedInt64Atomics : 1;
+	unsigned hasDoubles : 1;
+	unsigned hasWarpVote : 1;
+	unsigned hasWarpBallot : 1;
+	unsigned hasWarpShuffle : 1;
+	unsigned hasFunnelShift : 1;
+	unsigned hasThreadFenceSystem : 1;
+	unsigned hasSyncThreadsExt : 1;
+	unsigned hasSurfaceFuncs : 1;
+	unsigned has3dGrid : 1;
+	unsigned hasDynamicParallelism : 1;
 };
 typedef struct hipDeviceArch_t hipDeviceArch_t;
 struct hipUUID_t
