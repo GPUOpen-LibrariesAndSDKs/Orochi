@@ -617,28 +617,44 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   // Library paths.
   // All those fixed paths can be overridden by the arguments of hipewInit/oroInitialize
 #ifdef _WIN32
-  /* Expected in C:/Windows/System32 or similar, no path needed. */
-  const char* hip_paths[] = {"amdhip64.dll", NULL};
+  // Expected in C:/Windows/System32 or similar, no path needed.
+  const char* hip_paths[] = {
+      "amdhip64.dll",   // <- hip '5.x' DLL.
+      "amdhip64_6.dll", // <- if the hip 5 doesn't exist, try the hip '6.x' DLL. This newer DLL will be able to run HIP 5 code.
+      NULL };
   const char* hiprtc_paths[] = {
-                                "hiprtc0507.dll",  
-                                "hiprtc0506.dll", 
-                                "hiprtc0505.dll", 
-                                "hiprtc0504.dll",
-                                "hiprtc0503.dll",
-                                NULL};
+      "hiprtc0507.dll",  
+      "hiprtc0506.dll", 
+      "hiprtc0505.dll", 
+      "hiprtc0504.dll",
+      "hiprtc0503.dll",
+      NULL };
 #elif defined(__APPLE__)
-  /* Default installation path. */
+  // Default installation path. 
   const char *hip_paths[] = {"", NULL};
   const char* hiprtc_paths[] = { NULL };
 #else
-  const char *hip_paths[] = { "/opt/rocm/hip/lib/libamdhip64.so",
-                              "/opt/rocm/lib/libamdhip64.so", 
-                              "libamdhip64.so",
-                              NULL };
-  const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so",
-                                 "/opt/rocm/lib/libhiprtc.so", 
-                                 "libhiprtc.so",
-                                 NULL };
+  const char *hip_paths[] = { 
+
+      // we first try the specific '5.x' version
+      "/opt/rocm/hip/lib/libamdhip64.so.5",
+      "/opt/rocm/lib/libamdhip64.so.5", 
+      "libamdhip64.so.5",
+
+      // .. if it doesn't exist, we take the generic symbolic link.
+      // if it links to any version above 5, it will be able to run HIP 5 code.
+      "/opt/rocm/hip/lib/libamdhip64.so",
+      "/opt/rocm/lib/libamdhip64.so", 
+      "libamdhip64.so",
+
+      NULL };
+
+  const char* hiprtc_paths[] = { 
+      "/opt/rocm/hip/lib/libhiprtc.so",
+      "/opt/rocm/lib/libhiprtc.so", 
+      "libhiprtc.so",
+      NULL };
+
 #endif
 
 
