@@ -605,41 +605,54 @@ static int hipewHasOldDriver(const char *hip_path) {
 // description in header
 void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** customPaths_Hip, const char** customPaths_Hiprtc )
 {
-
   // Library paths.
   // All those fixed paths can be overridden by the arguments of hipewInit/oroInitialize
 #ifdef _WIN32
-  /* Expected in C:/Windows/System32 or similar, no path needed. */
+  // Expected in C:/Windows/System32 or similar, no path needed.
   const char* hip_paths[] = {
-                 "amdhip64_6.dll",
-                 "amdhip64.dll", 
-                 NULL};
+      "amdhip64_6.dll", // <- Try to load in priority the hip 6 DLL
+      "amdhip64.dll",   // <- Otherwise, load the hip '5.x' DLL as a backup. However this library may not be able to manage all the HIP 6 API
+      NULL };
   const char* hiprtc_paths[] = {
-                                "hiprtc0605.dll",
-                                "hiprtc0604.dll",
-                                "hiprtc0603.dll",
-                                "hiprtc0602.dll",
-                                "hiprtc0601.dll",
-                                "hiprtc0600.dll",
-                                "hiprtc0507.dll",  
-                                "hiprtc0506.dll", 
-                                "hiprtc0505.dll", 
-                                "hiprtc0504.dll",
-                                "hiprtc0503.dll",
-                                NULL};
+      "hiprtc0605.dll",
+      "hiprtc0604.dll",
+      "hiprtc0603.dll",
+      "hiprtc0602.dll",
+      "hiprtc0601.dll",
+      "hiprtc0600.dll",
+      "hiprtc0507.dll",  
+      "hiprtc0506.dll", 
+      "hiprtc0505.dll", 
+      "hiprtc0504.dll",
+      "hiprtc0503.dll",
+      NULL };
 #elif defined(__APPLE__)
-  /* Default installation path. */
+  // Default installation path. 
   const char *hip_paths[] = {"", NULL};
   const char* hiprtc_paths[] = { NULL };
 #else
-  const char *hip_paths[] = { "/opt/rocm/hip/lib/libamdhip64.so",
-                              "/opt/rocm/lib/libamdhip64.so", 
-                              "libamdhip64.so",
-                              NULL };
-  const char* hiprtc_paths[] = { "/opt/rocm/hip/lib/libhiprtc.so",
-                                 "/opt/rocm/lib/libhiprtc.so", 
-                                 "libhiprtc.so",
-                                 NULL };
+  const char *hip_paths[] = { 
+
+      // we first try the specific '6.x' version
+      "/opt/rocm/hip/lib/libamdhip64.so.6",
+      "/opt/rocm/lib/libamdhip64.so.6", 
+      "libamdhip64.so.6",
+
+      // .. if it doesn't exist, we take the generic symbolic link.
+      // If it links to any version above 6, it will be able to run HIP 6 code.
+      // Otherwise if it links to a version lower than 6, this library may not be able to manage all the HIP 6 API
+      "/opt/rocm/hip/lib/libamdhip64.so",
+      "/opt/rocm/lib/libamdhip64.so", 
+      "libamdhip64.so",
+
+      NULL };
+
+  const char* hiprtc_paths[] = { 
+      "/opt/rocm/hip/lib/libhiprtc.so",
+      "/opt/rocm/lib/libhiprtc.so", 
+      "libhiprtc.so",
+      NULL };
+
 #endif
 
 

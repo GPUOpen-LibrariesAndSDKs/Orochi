@@ -36,8 +36,8 @@ Orochi will aim to maintain support for various version combinations, enabling d
 Combinations currently supported:
 | HIP version | CUDA version | Branch                                                                                                     | Remarks |
 |-------------|--------------|------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
-| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) | tested and validated                                     |
-| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) | tested and validated - HIP Windows DLLs not provided yet |
+| 5.7         | 12.2         | [release/hip5.7_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip5.7_cuda12.2) | - Tested and validated.<br> - Synchronized with the `main` branch.<br> - Use this one for compatibility with a wider range of machines. |
+| 6.0         | 12.2         | [release/hip6.0_cuda12.2](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/tree/release/hip6.0_cuda12.2) | - Tested and validated.<br> - HIP Windows DLLs not provided yet.<br> - Use this one to take advantage of the latest HIP features and if you are on machine with HIP 6 driver. |
 
 If you need a combination that is currently not supported, open an [Issue](https://github.com/GPUOpen-LibrariesAndSDKs/Orochi/issues).
 
