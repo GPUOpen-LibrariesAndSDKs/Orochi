@@ -76,6 +76,12 @@ TEST_F( OroTestBase, kernelExec )
 	OROCHECK( oroMalloc( (oroDeviceptr*)&a_device, sizeof( int ) ) );
 	OROCHECK( oroMemset( (oroDeviceptr)a_device, 0, sizeof( int ) ) );
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 ); 
+	if ( !kernel )
+	{
+		printf("ERROR: kernel file failed to load.");
+		ASSERT_TRUE(false);
+		return;
+	}
 	int blockCount = 0;
 	OROCHECK( oroModuleOccupancyMaxActiveBlocksPerMultiprocessor( &blockCount, kernel, 128, 0 ) );
 	printf( "%d blocks per multiprocessor\n", blockCount );
@@ -100,6 +106,13 @@ TEST_F( OroTestBase, GpuMemoryTest )
 	device_memory.reset();
 
 	auto kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	if ( !kernel )
+	{
+		printf("ERROR: kernel file failed to load.");
+		ASSERT_TRUE(false);
+		return;
+	}
+
 	const void* args[] = { Oro::arg_cast( device_memory.address() ) };
 
 	OrochiUtils::launch1D( kernel, 64, args, 64 );
@@ -138,6 +151,13 @@ TEST_F( OroTestBase, Event )
 	OroStopwatch sw( m_stream );
 
 	oroFunction kernel = o.getFunctionFromFile( m_device, "../UnitTest/testKernel.h", "testKernel", 0 );
+	if ( !kernel )
+	{
+		printf("ERROR: kernel file failed to load.");
+		ASSERT_TRUE(false);
+		return;
+	}
+
 	const void* args[] = { &a_device };
 	sw.start();
 	OrochiUtils::launch1D( kernel, 64, args, 64, 0, m_stream );
@@ -819,6 +839,12 @@ TEST_F( OroTestBase, ManagedMemory )
 
 		{
 			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			if ( !kernel )
+			{
+				printf("ERROR: kernel file failed to load.");
+				ASSERT_TRUE(false);
+				return;
+			}
 			const void* args[] = { &data, &n, &output, &value };
 
 			sw.start();
@@ -850,6 +876,12 @@ TEST_F( OroTestBase, ManagedMemory )
 
 		{
 			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			if ( !kernel )
+			{
+				printf("ERROR: kernel file failed to load.");
+				ASSERT_TRUE(false);
+				return;
+			}
 			const void* args[] = { &output, &n, &data, &value };
 
 			sw.start();
@@ -880,6 +912,12 @@ TEST_F( OroTestBase, ManagedMemory )
 
 		{
 			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			if ( !kernel )
+			{
+				printf("ERROR: kernel file failed to load.");
+				ASSERT_TRUE(false);
+				return;
+			}
 			const void* args[] = { &data, &n, &output, &value };
 
 			sw.start();
@@ -909,6 +947,12 @@ TEST_F( OroTestBase, ManagedMemory )
 
 		{
 			auto kernel = o.getFunctionFromFile(m_device, "../UnitTest/testKernel.h", "streamData", 0);
+			if ( !kernel )
+			{
+				printf("ERROR: kernel file failed to load.");
+				ASSERT_TRUE(false);
+				return;
+			}
 			const void* args[] = { &output, &n, &data, &value };
 
 			sw.start();

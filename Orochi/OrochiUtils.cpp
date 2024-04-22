@@ -505,6 +505,7 @@ bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCo
 	return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); 
 }
 
+// returns nullptr if failed
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
@@ -517,7 +518,10 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 
 	std::string source;
 	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) 
+	{
+		printf("WARNING: getFunctionFromFile of file %s failed.\n", path);
 		return 0;
+	}
 
 	oroModule module = nullptr;
 	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn, 0, nullptr, nullptr, &module );

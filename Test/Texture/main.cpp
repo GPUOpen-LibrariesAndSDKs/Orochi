@@ -96,6 +96,11 @@ int main()
 	std::vector<const char*> opts;
 	opts.push_back( "-I../" );
 	oroFunction function = o.getFunctionFromFile(device, "../Test/Texture/texture_test_kernel.hpp", "texture_test", &opts);
+	if ( !function )
+	{
+		printf("ERROR: getFunctionFromFile failed\n");
+		return OROCHI_TEST_RETCODE__ERROR;
+	}
 
 
 	static constexpr auto grid_resolution = 256;
