@@ -32,6 +32,8 @@ using __half = half_float::half;
 
 int main( int argc, char** argv )
 {
+	printf("Program starts.\n");
+
 	bool testErrorFlag = false;
 	OrochiUtils o;
 
@@ -43,7 +45,9 @@ int main( int argc, char** argv )
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
-	oroError e;
+	oroError e = oroSuccess;
+
+	printf("oroInit...\n");
 	e = oroInit( 0 );
 	ERROR_CHECK( e );
 
@@ -56,19 +60,26 @@ int main( int argc, char** argv )
 	e = oroDeviceGetName( name, 128, device );
 	ERROR_CHECK( e );
 
+	printf("oroGetDeviceProperties...\n");
 	oroDeviceProp props;
 	e = oroGetDeviceProperties( &props, device );
 	ERROR_CHECK( e );
 	printf( "executing on %s (%s)\n", props.name, props.gcnArchName );
 
-	oroCtx ctx;
+	printf("oroCtxCreate...\n");
+	oroCtx ctx = 0;
 	e = oroCtxCreate( &ctx, 0, device );
 	ERROR_CHECK( e );
 	oroCtxSetCurrent( ctx );
 
-
+	printf("getFunctionFromFile...\n");
 	oroFunction function = o.getFunctionFromFile(device, "../Test/WMMA/wmma_test_kernel.h", "wmma_matmul", nullptr);
 
+	if ( !function )
+	{
+		printf( "getFunctionFromFile FAILED.\n" );
+		return OROCHI_TEST_RETCODE__ERROR;
+	}
 
 	__half a[16 * 16] = {};
 	__half b[16 * 16] = {};
