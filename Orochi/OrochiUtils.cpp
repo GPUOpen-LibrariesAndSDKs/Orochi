@@ -491,7 +491,11 @@ int CreateAndCompileProgram(const char* code, const char* programName, std::vect
 		{
 			std::cout << "<NO LOG>\n";
 		}
-		return 1; // fail code
+
+		// Even if orortcCompileProgram failed, let's return 'success' because there's a known issue where this function returns ORORTC_ERROR_COMPILATION even though the program might have been compiled correctly.
+		//    ( example with Orochi Unit Test:  TEST_F( OroTestBase, link )   )
+		// The failure check is done at a higher level in functions like 'orortcGetBitcodeSize', so we won't miss any actual errors.
+		return 0;
 	}
 	return 0; // success code
 }
@@ -653,12 +657,22 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	int getProgErrorCode = getProgram( device, code, path, optsIn, nullptr, &prog );
 	if ( getProgErrorCode != 0 )
 	{
+		printf("WARNING: getProgram failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
 		return;
 	}
 
-	orortcResult e;
+	orortcResult e = ORORTC_SUCCESS;
 	size_t codeSize = 0;
 	e = orortcGetBitcodeSize( prog, &codeSize );
+	if ( e != ORORTC_SUCCESS || codeSize == 0 )
+	{
+		printf("WARNING: orortcGetBitcodeSize failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 
 	std::vector<char>& codec = dst;
 	codec.resize( codeSize );
@@ -685,14 +699,23 @@ void OrochiUtils::getModule( oroDevice device, const char* code, const char* pat
 	int getProgErrorCode = getProgram( device, code, path, optsIn, funcName, &prog );
 	if ( getProgErrorCode != 0 )
 	{
+		printf("WARNING: getProgram failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
 		return;
 	}
 
-	size_t codeSize;
-	orortcResult e;
+	size_t codeSize = 0;
+	orortcResult e = ORORTC_SUCCESS;
 	std::vector<char> codec;
 	e = orortcGetCodeSize( prog, &codeSize );
-	OROASSERT( e == ORORTC_SUCCESS, 0 );
+	if ( e != ORORTC_SUCCESS || codeSize == 0 )
+	{
+		printf("WARNING: orortcGetCodeSize failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 
 	codec.resize( codeSize );
 	e = orortcGetCode( prog, codec.data() );
