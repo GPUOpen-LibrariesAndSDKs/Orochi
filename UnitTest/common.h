@@ -64,7 +64,7 @@ class OroTestBase : public ::testing::Test
 		if ( isAmd && !hiprtcCreateProgram )
 		{
 			// check that files like 'libhiprtc.so' / 'hiprtc0507.dll' could be found by your executable. ( check hipewInit() in hipew.cpp )
-			printf("WARNING: using HIP but hiprtcCreateProgram wasn't found. hiprtc library file could be missing?");
+			printf("WARNING: using HIP but hiprtcCreateProgram wasn't found. hiprtc library file could be missing?\n");
 		}
 
 	}
