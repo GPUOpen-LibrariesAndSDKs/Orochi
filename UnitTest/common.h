@@ -59,6 +59,14 @@ class OroTestBase : public ::testing::Test
 		const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 		m_jitLogVerbose = isAmd ? 1 : 0; // on CUDA, if using '1', orortcLinkComplete crashes... (driver 546.33 / CUDA 12.2)
 
+
+		// help to understand potential future crashes in the Unit Tests.
+		if ( isAmd && !hiprtcCreateProgram )
+		{
+			// check that files like 'libhiprtc.so' / 'hiprtc0507.dll' could be found by your executable. ( check hipewInit() in hipew.cpp )
+			printf("WARNING: using HIP but hiprtcCreateProgram wasn't found. hiprtc library file could be missing?");
+		}
+
 	}
 
 	void TearDown() 
