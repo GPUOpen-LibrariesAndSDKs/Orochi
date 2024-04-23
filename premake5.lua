@@ -22,6 +22,7 @@ newoption {
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
 	if not os.isdir(src_dir) then
 		print("copydir FAILED: " .. src_dir .. " is not an existing directory!" )
+		return nil
 	end
 	filter = filter or "**"
 	src_dir = src_dir .. "/"
