@@ -463,7 +463,9 @@ void SetupCompileOptions(
 }
 
 // base program compilation, used in several components of OrochiUtils
-void CreateAndCompileProgram(const char* code, const char* programName, std::vector<const char*>& opts, const char* nameExpression, 
+// returns 0 if success.
+// if fails, returns a non-zero value
+int CreateAndCompileProgram(const char* code, const char* programName, std::vector<const char*>& opts, const char* nameExpression, 
 							int numHeaders, const char** headers, const char** includeNames,
 							orortcProgram* prog)
 {
@@ -489,7 +491,13 @@ void CreateAndCompileProgram(const char* code, const char* programName, std::vec
 		{
 			std::cout << "<NO LOG>\n";
 		}
+
+		// Even if orortcCompileProgram failed, let's return 'success' because there's a known issue where this function returns ORORTC_ERROR_COMPILATION even though the program might have been compiled correctly.
+		//    ( example with Orochi Unit Test:  TEST_F( OroTestBase, link )   )
+		// The failure check is done at a higher level in functions like 'orortcGetBitcodeSize', so we won't miss any actual errors.
+		return 0;
 	}
+	return 0; // success code
 }
 
 bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCode, std::vector<std::string>* includes ) 
@@ -497,6 +505,7 @@ bool OrochiUtils::readSourceCode( const std::string& path, std::string& sourceCo
 	return OrochiUtilsImpl::readSourceCode( path, sourceCode, includes ); 
 }
 
+// returns nullptr if failed
 oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* optsIn )
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
@@ -509,14 +518,19 @@ oroFunction OrochiUtils::getFunctionFromFile( oroDevice device, const char* path
 
 	std::string source;
 	if( !OrochiUtilsImpl::readSourceCode( path, source, 0 ) ) 
+	{
+		printf("WARNING: getFunctionFromFile of file %s failed.\n", path);
 		return 0;
+	}
 
-	oroModule module;
-
+	oroModule module = nullptr;
 	oroFunction f = getFunction( device, source.c_str(), path, funcName, optsIn, 0, nullptr, nullptr, &module );
 
-	m_kernelMap[cacheName].function = f;
-	m_kernelMap[cacheName].module = module;
+	if ( f )
+	{
+		m_kernelMap[cacheName].function = f;
+		m_kernelMap[cacheName].module = module;
+	}
 
 	return f;
 }
@@ -535,8 +549,11 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 
 	oroFunction f = getFunction( device, source, path, funcName, optsIn, numHeaders, headers, includeNames, &module );
 
-	m_kernelMap[cacheName].function = f;
-	m_kernelMap[cacheName].module = module;
+	if ( f )
+	{
+		m_kernelMap[cacheName].function = f;
+		m_kernelMap[cacheName].module = module;
+	}
 	
 	return f;
 }
@@ -573,6 +590,7 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	return functionOut;
 }
 
+// returns nullptr if failed
 oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* optsIn, int numHeaders, const char** headers, const char** includeNames, oroModule* loadedModule)
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
@@ -597,8 +615,16 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	}
 	else
 	{
-		orortcProgram prog;
-		CreateAndCompileProgram(code, funcName, opts, nullptr, numHeaders, headers, includeNames, &prog);
+		orortcProgram prog = nullptr;
+		int createProgramErrorCode = CreateAndCompileProgram(code, funcName, opts, nullptr, numHeaders, headers, includeNames, &prog);
+
+		// if CreateAndCompileProgram failed
+		if ( createProgramErrorCode != 0 )
+		{
+			if ( prog )
+				orortcDestroyProgram( &prog );
+			return nullptr;
+		}
 
 		size_t codeSize;
 		orortcResult e;
@@ -632,11 +658,25 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 void OrochiUtils::getData( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, std::vector<char>& dst )
 {
 	orortcProgram prog = nullptr;
-	getProgram( device, code, path, optsIn, nullptr, &prog );
+	int getProgErrorCode = getProgram( device, code, path, optsIn, nullptr, &prog );
+	if ( getProgErrorCode != 0 )
+	{
+		printf("WARNING: getProgram failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 
-	orortcResult e;
+	orortcResult e = ORORTC_SUCCESS;
 	size_t codeSize = 0;
 	e = orortcGetBitcodeSize( prog, &codeSize );
+	if ( e != ORORTC_SUCCESS || codeSize == 0 )
+	{
+		printf("WARNING: orortcGetBitcodeSize failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 
 	std::vector<char>& codec = dst;
 	codec.resize( codeSize );
@@ -646,24 +686,40 @@ void OrochiUtils::getData( oroDevice device, const char* code, const char* path,
 	return;
 }
 
-void OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram* prog )
+// returns 0 if SUCCEED
+// return non-zero value if FAILED
+int OrochiUtils::getProgram( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, orortcProgram* prog )
 {
 	std::vector<const char*> opts;
 	std::string architectureTarget;
 	SetupCompileOptions(device, optsIn, &architectureTarget, opts);
-	CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
-	return;
+	int createProgramErrorCode = CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
+	return createProgramErrorCode;
 }
 
 void OrochiUtils::getModule( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, oroModule* moduleOut ) 
 { 
-	orortcProgram prog;
-	getProgram( device, code, path, optsIn, funcName, &prog );
-	size_t codeSize;
-	orortcResult e;
+	orortcProgram prog = nullptr;
+	int getProgErrorCode = getProgram( device, code, path, optsIn, funcName, &prog );
+	if ( getProgErrorCode != 0 )
+	{
+		printf("WARNING: getProgram failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
+
+	size_t codeSize = 0;
+	orortcResult e = ORORTC_SUCCESS;
 	std::vector<char> codec;
 	e = orortcGetCodeSize( prog, &codeSize );
-	OROASSERT( e == ORORTC_SUCCESS, 0 );
+	if ( e != ORORTC_SUCCESS || codeSize == 0 )
+	{
+		printf("WARNING: orortcGetCodeSize failed.\n");
+		if ( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 
 	codec.resize( codeSize );
 	e = orortcGetCode( prog, codec.data() );

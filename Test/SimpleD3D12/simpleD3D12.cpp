@@ -60,6 +60,11 @@ void RunSineWaveKernel1(oroDevice gOroDevice, size_t mesh_width, size_t mesh_hei
   OrochiUtils o;
   // gOroDevice = 4; //set api...
   oroFunction kernel = (o.getFunctionFromFile(gOroDevice, "./sinewave_Orochi.oro", "sinewave_gen_kernel", 0));
+  if ( !kernel )
+  {
+      printf("Error: kernel file not found.");
+      return;
+  }
   dim3 block = { 16, 16, 1 };
   dim3 grid = { mesh_width / 16, mesh_height / 16, 1 };
   Vertex* vertices = (Vertex*)oroDevVertptr;

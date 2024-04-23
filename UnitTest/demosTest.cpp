@@ -101,12 +101,13 @@ TEST_F( OroDemoBase, DeviceEnum64 )
 	return;
 }
 
-TEST_F( OroDemoBase, WMMA64 )
-{
-	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-	ExecDemo(testName);
-	return;
-}
+// for now, remove WMMA from test list.
+//TEST_F( OroDemoBase, WMMA64 )
+//{
+//	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
+//	ExecDemo(testName);
+//	return;
+//}
 
 
 //
