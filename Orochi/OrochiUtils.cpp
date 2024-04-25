@@ -569,15 +569,22 @@ oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& pa
 	}
 
 	std::ifstream instream( path, std::ios::in | std::ios::binary );
+	if ( !instream || !instream.is_open() )
+	{
+		printf("OrochiUtils::getFunctionFromPrecompiledBinary FAILED to open file: %s\n", path.c_str());
+		return nullptr;
+	}
+
 	std::vector<char> binary( ( std::istreambuf_iterator<char>( instream ) ), std::istreambuf_iterator<char>() );
 
-	oroModule module;
+	oroModule module = nullptr;
 	oroFunction functionOut{};
 	oroError e = oroModuleLoadData( &module, binary.data() );
 	if ( e != oroSuccess )
 	{
 		// add some verbose info to help debugging missing file
 		printf("oroModuleLoadData FAILED (error = %d) loading file: %s\n", e, path.c_str());
+		return nullptr;
 	}
 	OROASSERT( e == oroSuccess, 0 );
 
