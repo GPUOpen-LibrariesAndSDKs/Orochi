@@ -623,6 +623,12 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
       "amdhip64_6.dll", // <- if the hip 5 doesn't exist, try the hip '6.x' DLL. This newer DLL will be able to run HIP 5 code.
       NULL };
   const char* hiprtc_paths[] = {
+      "hiprtc0605.dll",
+      "hiprtc0604.dll",
+      "hiprtc0603.dll",
+      "hiprtc0602.dll",
+      "hiprtc0601.dll",
+      "hiprtc0600.dll",
       "hiprtc0507.dll",  
       "hiprtc0506.dll", 
       "hiprtc0505.dll", 
@@ -636,7 +642,11 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
 #else
   const char *hip_paths[] = { 
 
-      // we first try the specific '5.x' version
+      // we first try the specific '5.x' or '6.x' version
+      "/opt/rocm/hip/lib/libamdhip64.so.6",
+      "/opt/rocm/lib/libamdhip64.so.6", 
+      "libamdhip64.so.6",
+
       "/opt/rocm/hip/lib/libamdhip64.so.5",
       "/opt/rocm/lib/libamdhip64.so.5", 
       "libamdhip64.so.5",
@@ -650,6 +660,18 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
       NULL };
 
   const char* hiprtc_paths[] = { 
+
+      // we first try the specific '5.x' or '6.x' version
+      "/opt/rocm/hip/lib/libhiprtc.so.6",
+      "/opt/rocm/lib/libhiprtc.so.6", 
+      "libhiprtc.so.6",
+
+      "/opt/rocm/hip/lib/libhiprtc.so.5",
+      "/opt/rocm/lib/libhiprtc.so.5", 
+      "libhiprtc.so.5",
+
+      // .. if it doesn't exist, we take the generic symbolic link.
+      // if it links to any version above 5, it will be able to run HIP 5 code.
       "/opt/rocm/hip/lib/libhiprtc.so",
       "/opt/rocm/lib/libhiprtc.so", 
       "libhiprtc.so",
