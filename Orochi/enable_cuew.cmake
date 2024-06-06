@@ -32,9 +32,9 @@ endfunction()
 # Function to check if a path is valid
 function(path_ok result inPath)
 	if(EXISTS "${inPath}" AND IS_DIRECTORY "${inPath}")
-		set(${result} TRUE)
+		set(${result} TRUE PARENT_SCOPE)
 	else()
-		set(${result} FALSE)
+		set(${result} FALSE PARENT_SCOPE)
 	endif()
 endfunction()
 
@@ -55,6 +55,7 @@ if(DEFINED ENV{${BEST_CUDA_ENVVAR}})
 	set(cuda_path $ENV{${BEST_CUDA_ENVVAR}})
 endif()
 
+# if not found in envvar, try if path exist ( linux )
 if(NOT cuda_path)
 	path_ok(cuda_path_ok ${BEST_CUDA_PATH_LINUX})
 	if(cuda_path_ok)
@@ -62,6 +63,7 @@ if(NOT cuda_path)
 	endif()
 endif()
 
+# try the windows path
 if(NOT cuda_path)
 	path_ok(cuda_path_ok ${BEST_CUDA_PATH_WINDOWS})
 	if(cuda_path_ok)
