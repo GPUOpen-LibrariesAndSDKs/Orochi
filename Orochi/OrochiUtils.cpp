@@ -558,6 +558,41 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 	return f;
 }
 
+oroFunction OrochiUtils::getFunctionFromPrecompiledBinary_asData( const unsigned char* precompData, size_t dataSizeInBytes, const std::string& funcName )
+{
+	std::lock_guard<std::recursive_mutex> lock( m_mutex );
+
+	const std::string cacheName = OrochiUtilsImpl::getCacheName( "___BAKED_BIN___", funcName );
+	if( m_kernelMap.find( cacheName.c_str() ) != m_kernelMap.end() )
+	{
+		return m_kernelMap[cacheName].function;
+	}
+
+	oroModule module = nullptr;
+	oroError e = oroModuleLoadData( &module, precompData );
+	if ( e != oroSuccess )
+	{
+		// add some verbose info to help debugging missing data
+		printf("oroModuleLoadData FAILED (error = %d) loading baked precomp data: %s\n", e, funcName.c_str());
+		return nullptr;
+	}
+
+	oroFunction functionOut{};
+	e = oroModuleGetFunction( &functionOut, module, funcName.c_str() );
+	if ( e != oroSuccess )
+	{
+		// add some verbose info to help debugging missing data
+		printf("oroModuleGetFunction FAILED (error = %d) loading baked precomp data: %s\n", e, funcName.c_str());
+		return nullptr;
+	}
+	OROASSERT( e == oroSuccess, 0 );
+
+	m_kernelMap[cacheName].function = functionOut;
+	m_kernelMap[cacheName].module = module;
+
+	return functionOut;
+}
+
 oroFunction OrochiUtils::getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName )
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );

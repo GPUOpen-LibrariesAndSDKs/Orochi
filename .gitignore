@@ -25,3 +25,7 @@ build/
 result.xml
 UnitTest/bitcodes/*.fatbin
 Test/SimpleD3D12/cache/**
+
+ParallelPrimitives/cache/KernelArgs.h
+ParallelPrimitives/cache/Kernels.h
+ParallelPrimitives/cache/oro_compiled_kernels.h

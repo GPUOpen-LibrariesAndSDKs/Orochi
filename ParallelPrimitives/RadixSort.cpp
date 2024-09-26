@@ -40,24 +40,47 @@
 #include <dlfcn.h>
 #endif
 
-namespace
-{
-#if defined( ORO_PRECOMPILED )
-constexpr auto useBitCode = true;
+#if defined( ORO_PRECOMPILED ) && defined( ORO_PP_LOAD_FROM_STRING ) 
+#include <ParallelPrimitives/cache/oro_compiled_kernels.h> // generate this header with 'convert_binary_to_array.py'
 #else
-constexpr auto useBitCode = false;
+const unsigned char oro_compiled_kernels_h[] = "";
+const size_t oro_compiled_kernels_h_size = 0;
 #endif
 
-#if defined( ORO_PP_LOAD_FROM_STRING )
-constexpr auto useBakeKernel = true;
-#else
-constexpr auto useBakeKernel = false;
-static const char* hip_RadixSortKernels = nullptr;
-namespace hip
+namespace
 {
-static const char** RadixSortKernelsArgs = nullptr;
-static const char** RadixSortKernelsIncludes = nullptr;
-} // namespace hip
+
+// if those 2 preprocessors are enabled, this activates the 'usePrecompiledAndBakedKernel' mode.
+#if defined( ORO_PRECOMPILED ) && defined( ORO_PP_LOAD_FROM_STRING ) 
+	
+	// this flag means that we bake the precompiled kernels
+	constexpr auto usePrecompiledAndBakedKernel = true;
+
+	constexpr auto useBitCode = false;
+	constexpr auto useBakeKernel = false;
+
+#else
+
+	constexpr auto usePrecompiledAndBakedKernel = false;
+
+	#if defined( ORO_PRECOMPILED )
+	constexpr auto useBitCode = true; // this flag means we use the bitcode file
+	#else
+	constexpr auto useBitCode = false;
+	#endif
+
+	#if defined( ORO_PP_LOAD_FROM_STRING )
+	constexpr auto useBakeKernel = true; // this flag means we use the HIP source code embeded in the binary ( as a string ) 
+	#else
+	constexpr auto useBakeKernel = false;
+	static const char* hip_RadixSortKernels = nullptr;
+	namespace hip
+	{
+	static const char** RadixSortKernelsArgs = nullptr;
+	static const char** RadixSortKernelsIncludes = nullptr;
+	} // namespace hip
+	#endif
+
 #endif
 
 static_assert( !( useBitCode && useBakeKernel ), "useBitCode and useBakeKernel cannot coexist" );
@@ -211,9 +234,14 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	opts.push_back( sort_block_size_param.c_str() );
 	opts.push_back( sort_num_warps_param.c_str() );
 
+
 	for( const auto& record : records )
 	{
-		if constexpr( useBakeKernel )
+		if constexpr( usePrecompiledAndBakedKernel )
+		{
+			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData(oro_compiled_kernels_h, oro_compiled_kernels_h_size, record.kernelName.c_str() );
+		}
+		else if constexpr( useBakeKernel )
 		{
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromString( m_device, hip_RadixSortKernels, currentKernelPath.c_str(), record.kernelName.c_str(), &opts, 1, hip::RadixSortKernelsArgs, hip::RadixSortKernelsIncludes );
 		}
@@ -231,6 +259,8 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 			printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );
 		}
 	}
+
+	return;
 }
 
 int RadixSort::calculateWGsToExecute( const int blockSize ) const noexcept
