@@ -866,6 +866,8 @@ oroError_t OROAPI oroGraphicsResourceGetMappedPointer(void ** devPtr, size_t * s
 oroError_t OROAPI oroGraphicsSubResourceGetMappedArray(oroArray_t * array, oroGraphicsResource_t resource, unsigned int arrayIndex, unsigned int mipLevel);
 oroError_t OROAPI oroGraphicsUnmapResources(int count, oroGraphicsResource_t * resources, oroStream_t stream);
 oroError_t OROAPI oroGraphicsUnregisterResource(oroGraphicsResource_t resource);
+oroError_t OROAPI oroGraphicsGLRegisterBuffer( oroGraphicsResource** resource, GLuint buffer, unsigned int flags );
+oroError_t OROAPI oroGraphicsGLRegisterImage( oroGraphicsResource** resource, GLuint image, GLenum target, unsigned int flags );
 oroError_t OROAPI oroHostAlloc(void ** ptr, size_t size, unsigned int flags);
 oroError_t OROAPI oroHostFree(void * ptr);
 oroError_t OROAPI oroHostGetDevicePointer(void ** devPtr, void * hstPtr, unsigned int flags);

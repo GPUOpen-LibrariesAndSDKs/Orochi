@@ -1850,6 +1850,21 @@ oroError_t OROAPI oroGraphicsUnregisterResource(oroGraphicsResource_t resource)
 		hipGraphicsUnregisterResource(resource)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroGraphicsGLRegisterBuffer(oroGraphicsResource** resource, GLuint buffer, unsigned int flags)
+{
+//	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterBuffer_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource_t, resource ), buffer, flags ), 
+	if( s_api == ORO_API_HIP )
+		return hip2oro( hipGraphicsGLRegisterBuffer( resource, buffer, flags ) );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphicsGLRegisterImage(oroGraphicsResource** resource, GLuint image, GLenum target, unsigned int flags)
+{
+//	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterImage_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource_t, resource ), image, target, flags ), 
+	if( s_api == ORO_API_HIP )
+		return hip2oro( hipGraphicsGLRegisterImage( resource, image, target, flags ) );
+	return oroErrorUnknown;
+}
+
 oroError_t OROAPI oroHostAlloc(void ** ptr, size_t size, unsigned int flags)
 {
 	__ORO_FUNC(
