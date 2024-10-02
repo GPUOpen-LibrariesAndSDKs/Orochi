@@ -791,7 +791,9 @@ tcudaUserObjectCreate *cudaUserObjectCreate_oro = nullptr;
 tcudaUserObjectRelease *cudaUserObjectRelease_oro = nullptr;
 tcudaUserObjectRetain *cudaUserObjectRetain_oro = nullptr;
 tcudaWaitExternalSemaphoresAsync_v2 *cudaWaitExternalSemaphoresAsync_v2_oro = nullptr;
-tnvrtcAddNameExpression *nvrtcAddNameExpression_oro = nullptr;
+tcudaGraphicsGLRegisterImage* cudaGraphicsGLRegisterImage_oro = nullptr;
+tcudaGraphicsGLRegisterBuffer* cudaGraphicsGLRegisterBuffer_oro = nullptr;
+tnvrtcAddNameExpression* nvrtcAddNameExpression_oro = nullptr;
 tnvrtcCompileProgram *nvrtcCompileProgram_oro = nullptr;
 tnvrtcCreateProgram *nvrtcCreateProgram_oro = nullptr;
 tnvrtcDestroyProgram *nvrtcDestroyProgram_oro = nullptr;
@@ -1597,6 +1599,8 @@ _LIBRARY_FIND( cudart_lib, cudaUserObjectCreate );
 _LIBRARY_FIND( cudart_lib, cudaUserObjectRelease );
 _LIBRARY_FIND( cudart_lib, cudaUserObjectRetain );
 _LIBRARY_FIND( cudart_lib, cudaWaitExternalSemaphoresAsync_v2 );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsGLRegisterImage );
+_LIBRARY_FIND( cudart_lib, cudaGraphicsGLRegisterBuffer );
 
 
 ///// END REGION: OROCHI_SUMMONER_REGION_cuew_cpp_2
