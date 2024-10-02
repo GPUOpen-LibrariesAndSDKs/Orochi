@@ -608,6 +608,8 @@ namespace CU4ORO
 #define cudaGraphicsSubResourceGetMappedArray cudaGraphicsSubResourceGetMappedArray_oro
 #define cudaGraphicsUnmapResources cudaGraphicsUnmapResources_oro
 #define cudaGraphicsUnregisterResource cudaGraphicsUnregisterResource_oro
+#define cudaGraphicsGLRegisterImage cudaGraphicsGLRegisterImage_oro
+#define cudaGraphicsGLRegisterBuffer cudaGraphicsGLRegisterBuffer_oro
 #define cudaHostAlloc cudaHostAlloc_oro
 #define cudaHostGetDevicePointer cudaHostGetDevicePointer_oro
 #define cudaHostGetFlags cudaHostGetFlags_oro
@@ -1852,16 +1854,14 @@ oroError_t OROAPI oroGraphicsUnregisterResource(oroGraphicsResource_t resource)
 }
 oroError_t OROAPI oroGraphicsGLRegisterBuffer(oroGraphicsResource** resource, GLuint buffer, unsigned int flags)
 {
-//	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterBuffer_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource_t, resource ), buffer, flags ), 
-	if( s_api == ORO_API_HIP )
-		return hip2oro( hipGraphicsGLRegisterBuffer( resource, buffer, flags ) );
+	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterBuffer_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource**, resource ), buffer, flags ), 
+		hipGraphicsGLRegisterBuffer( resource, buffer, flags ) );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsGLRegisterImage(oroGraphicsResource** resource, GLuint image, GLenum target, unsigned int flags)
 {
-//	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterImage_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource_t, resource ), image, target, flags ), 
-	if( s_api == ORO_API_HIP )
-		return hip2oro( hipGraphicsGLRegisterImage( resource, image, target, flags ) );
+	__ORO_FUNC( CU4ORO::hipGraphicsGLRegisterImage_cu4oro( __ORO_FORCE_CAST( CU4ORO::hipGraphicsResource**, resource ), image, target, flags ), 
+		hipGraphicsGLRegisterImage( resource, image, target, flags ) );
 	return oroErrorUnknown;
 }
 
