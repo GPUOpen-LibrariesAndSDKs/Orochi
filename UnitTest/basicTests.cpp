@@ -23,6 +23,10 @@
 #include "basicTests.h"
 #include "common.h"
 
+#define GLEW_STATIC
+#include "contrib/glew/include/glew/glew.h"
+#include "contrib/glfw/include/GLFW/glfw3.h"
+
 TEST_F( OroTestBase, init )
 { 
 
@@ -971,5 +975,60 @@ TEST_F( OroTestBase, ManagedMemory )
 	o.unloadKernelCache();
 }
 
+TEST_F( OroTestBase, glRegisterBuffer )
+{
+	ASSERT_EQ( glfwInit(), GLFW_TRUE );
+	GLFWwindow* window = glfwCreateWindow( 1, 1, "glRegisterBuffer", nullptr, nullptr );
+	glfwMakeContextCurrent( window );
+	ASSERT_EQ( glewInit(), GLEW_OK );
 
+	const uint32_t dataSize = 1024u;
+	GLuint buf = 0;
+	oroGraphicsResource* oroResource = nullptr;
+
+	// Create buffer object
+	glGenBuffers( 1, &buf );
+	glBindBuffer( GL_ARRAY_BUFFER, buf );
+	glBufferData( GL_ARRAY_BUFFER, dataSize, NULL, GL_DYNAMIC_DRAW );
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+	OROCHECK( oroGraphicsGLRegisterBuffer( &oroResource, buf, oroGraphicsRegisterFlagsNone ) );
+	OROCHECK( oroGraphicsUnregisterResource( oroResource ) );
+
+	glDeleteBuffers( 1, &buf );
+	buf = 0;
+
+	glfwDestroyWindow( window );
+	window = nullptr;
+	glfwTerminate();
+}
+
+TEST_F( OroTestBase, glRegisterImage )
+{
+	ASSERT_EQ( glfwInit(), GLFW_TRUE );
+	GLFWwindow* window = glfwCreateWindow( 1, 1, "glRegisterImage", nullptr, nullptr );
+	glfwMakeContextCurrent( window );
+	ASSERT_EQ( glewInit(), GLEW_OK );
+
+	const uint32_t imageSize = 64u;
+	GLuint texture = 0;
+	oroGraphicsResource* oroResource = nullptr;
+
+	// Create texture object
+	glGenTextures( 1, &texture );
+	glBindTexture( GL_TEXTURE_2D, texture );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageSize, imageSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glBindTexture( GL_TEXTURE_2D, 0 );
+
+	OROCHECK( oroGraphicsGLRegisterImage( &oroResource, texture, GL_TEXTURE_2D, oroGraphicsRegisterFlagsNone ) );
+	OROCHECK( oroGraphicsUnregisterResource( oroResource ) );
+
+	glDeleteTextures( 1, &texture );
+
+	glfwDestroyWindow( window );
+	window = nullptr;
+	glfwTerminate();
+}
 

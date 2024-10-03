@@ -16,6 +16,8 @@ project "Unittest"
       removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
       files { "../UnitTest/contrib/**.h", "../UnitTest/contrib/**.cpp" }
+      libdirs{ "../UnitTest/contrib/glew", "../UnitTest/contrib/glfw/" }
+      links{ "glew32s", "glfw3", "opengl32" }
 
       files { "../UnitTest/contrib/gtest-1.6.0/gtest-all.cc" }
       externalincludedirs{ "../UnitTest/contrib/gtest-1.6.0/" }
