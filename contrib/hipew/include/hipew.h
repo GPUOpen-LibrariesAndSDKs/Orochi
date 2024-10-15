@@ -931,6 +931,8 @@ struct hipTextureDesc
 	float mipmapLevelBias;
 	float minMipmapLevelClamp;
 	float maxMipmapLevelClamp;
+	int disableTrilinearOptimization;
+	int seamlessCubemap;
 };
 typedef struct hipTextureDesc hipTextureDesc;
 struct __hip_surface;

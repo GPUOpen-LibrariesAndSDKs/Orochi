@@ -5,6 +5,8 @@ project "Unittest"
       location "../build/"
 
    if os.istarget("windows") then
+      libdirs{ "../contrib/glew", "../contrib/glfw/" }
+      links{ "glew32s", "glfw3", "opengl32" }
       links{ "version" }
    end
    if os.istarget("linux") then
@@ -15,12 +17,10 @@ project "Unittest"
       files { "*.cpp", "*.h" }
       removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
-      files { "../UnitTest/contrib/**.h", "../UnitTest/contrib/**.cpp" }
-      libdirs{ "../UnitTest/contrib/glew", "../UnitTest/contrib/glfw/" }
-      links{ "glew32s", "glfw3", "opengl32" }
+      files { "../contrib/**.h", "../contrib/**.cpp" }
 
-      files { "../UnitTest/contrib/gtest-1.6.0/gtest-all.cc" }
-      externalincludedirs{ "../UnitTest/contrib/gtest-1.6.0/" }
+      files { "../contrib/gtest-1.6.0/gtest-all.cc" }
+      externalincludedirs{ "../contrib/gtest-1.6.0/" }
       defines { "GTEST_HAS_TR1_TUPLE=0" }
       if _OPTIONS["kernelcompile"] then
         os.execute( "cd ./bitcodes/ && generate_bitcodes.bat" )

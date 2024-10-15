@@ -23,9 +23,11 @@
 #include "basicTests.h"
 #include "common.h"
 
+#if defined(_WIN32)
 #define GLEW_STATIC
 #include "contrib/glew/include/glew/glew.h"
 #include "contrib/glfw/include/GLFW/glfw3.h"
+#endif
 
 TEST_F( OroTestBase, init )
 { 
@@ -986,6 +988,15 @@ TEST_F( OroTestBase, glRegisterBuffer )
 	GLuint buf = 0;
 	oroGraphicsResource* oroResource = nullptr;
 
+	// Work around for AMD driver crash when calling `oroGLRegister*` functions
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+	if( isAmd )
+	{
+		uint32_t deviceCount = 16;
+		int glDevices[16];
+		OROCHECK( hipGLGetDevices( &deviceCount, glDevices, deviceCount, hipGLDeviceListAll ) );
+	}
+
 	// Create buffer object
 	glGenBuffers( 1, &buf );
 	glBindBuffer( GL_ARRAY_BUFFER, buf );
@@ -1002,7 +1013,7 @@ TEST_F( OroTestBase, glRegisterBuffer )
 	window = nullptr;
 	glfwTerminate();
 }
-
+#if defined( _WIN32 )
 TEST_F( OroTestBase, glRegisterImage )
 {
 	ASSERT_EQ( glfwInit(), GLFW_TRUE );
@@ -1014,12 +1025,19 @@ TEST_F( OroTestBase, glRegisterImage )
 	GLuint texture = 0;
 	oroGraphicsResource* oroResource = nullptr;
 
+	// Work around for AMD driver crash when calling `oroGLRegister*` functions
+	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
+	if( isAmd )
+	{
+		uint32_t deviceCount = 16;
+		int glDevices[16];
+		OROCHECK( hipGLGetDevices( &deviceCount, glDevices, deviceCount, hipGLDeviceListAll ) );
+	}
+
 	// Create texture object
 	glGenTextures( 1, &texture );
 	glBindTexture( GL_TEXTURE_2D, texture );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, imageSize, imageSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, imageSize, imageSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	OROCHECK( oroGraphicsGLRegisterImage( &oroResource, texture, GL_TEXTURE_2D, oroGraphicsRegisterFlagsNone ) );
@@ -1031,4 +1049,5 @@ TEST_F( OroTestBase, glRegisterImage )
 	window = nullptr;
 	glfwTerminate();
 }
+#endif
 
