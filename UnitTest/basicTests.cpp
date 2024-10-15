@@ -976,7 +976,7 @@ TEST_F( OroTestBase, ManagedMemory )
 	}
 	o.unloadKernelCache();
 }
-
+#if defined( _WIN32 )
 TEST_F( OroTestBase, glRegisterBuffer )
 {
 	ASSERT_EQ( glfwInit(), GLFW_TRUE );
@@ -1013,7 +1013,7 @@ TEST_F( OroTestBase, glRegisterBuffer )
 	window = nullptr;
 	glfwTerminate();
 }
-#if defined( _WIN32 )
+
 TEST_F( OroTestBase, glRegisterImage )
 {
 	ASSERT_EQ( glfwInit(), GLFW_TRUE );
