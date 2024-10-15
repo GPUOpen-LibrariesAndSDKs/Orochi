@@ -23,9 +23,11 @@
 #include "basicTests.h"
 #include "common.h"
 
+#if defined(_WIN32)
 #define GLEW_STATIC
 #include "contrib/glew/include/glew/glew.h"
 #include "contrib/glfw/include/GLFW/glfw3.h"
+#endif
 
 TEST_F( OroTestBase, init )
 { 
@@ -1011,7 +1013,7 @@ TEST_F( OroTestBase, glRegisterBuffer )
 	window = nullptr;
 	glfwTerminate();
 }
-
+#if defined( _WIN32 )
 TEST_F( OroTestBase, glRegisterImage )
 {
 	ASSERT_EQ( glfwInit(), GLFW_TRUE );
@@ -1047,4 +1049,5 @@ TEST_F( OroTestBase, glRegisterImage )
 	window = nullptr;
 	glfwTerminate();
 }
+#endif
 

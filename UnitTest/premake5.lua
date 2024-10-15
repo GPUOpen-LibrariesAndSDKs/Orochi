@@ -5,6 +5,8 @@ project "Unittest"
       location "../build/"
 
    if os.istarget("windows") then
+      libdirs{ "../contrib/glew", "../contrib/glfw/" }
+      links{ "glew32s", "glfw3", "opengl32" }
       links{ "version" }
    end
    if os.istarget("linux") then
@@ -16,8 +18,6 @@ project "Unittest"
       removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
       files { "../contrib/**.h", "../contrib/**.cpp" }
-      libdirs{ "../contrib/glew", "../contrib/glfw/" }
-      links{ "glew32s", "glfw3", "opengl32" }
 
       files { "../contrib/gtest-1.6.0/gtest-all.cc" }
       externalincludedirs{ "../contrib/gtest-1.6.0/" }
