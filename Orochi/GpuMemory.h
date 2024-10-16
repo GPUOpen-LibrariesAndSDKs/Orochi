@@ -28,7 +28,7 @@
 namespace Oro
 {
 
-/// @brief A helper function that casts an address of a pointer to the device memory to a void pointer to be used as an argument for kernel calls. 
+/// @brief A helper function that casts an address of a pointer to the device memory to a void pointer to be used as an argument for kernel calls.
 /// @tparam T The type of the element stored in the device memory.
 /// @param ptr The address of a pointer to the device memory.
 /// @return A void pointer.
@@ -44,8 +44,8 @@ class GpuMemory final
   public:
 	GpuMemory() = default;
 
-	/// @brief Allocate the device memory with the given size.
-	/// @param init_size The initial size which represents the number of elements.
+	/// @brief Allocate the elements on the device memory.
+	/// @param init_size The initial container size which represents the number of elements.
 	explicit GpuMemory( const size_t init_size )
 	{
 		OrochiUtils::malloc( m_data, init_size );
@@ -61,9 +61,9 @@ class GpuMemory final
 
 	GpuMemory& operator=( GpuMemory&& other ) noexcept
 	{
-		GpuMemory tmp( std::move( *this ) );
+		GpuMemory tmp( std::move( other ) );
 
-		swap( *this, other );
+		swap( *this, tmp );
 
 		return *this;
 	}
@@ -79,8 +79,8 @@ class GpuMemory final
 		m_capacity = 0ULL;
 	}
 
-	/// @brief  Get the size of the device memory.
-	/// @return The size of the device memory.
+	/// @brief  Get the container size which represents the number of elements.
+	/// @return The container size which represents the number of elements.
 	size_t size() const noexcept { return m_size; }
 
 	/// @brief Get the pointer to the device memory.
@@ -91,9 +91,9 @@ class GpuMemory final
 	/// @return The address of the pointer to the device memory.
 	T* const* address() const noexcept { return &m_data; }
 
-	/// @brief Resize the device memory. Its capacity is unchanged if the new size is smaller than the current one.
+	/// @brief Resize the container. Its capacity is unchanged if the new size is smaller than the current one.
 	/// The old data should be considered invalid to be used after the function is called unless @c copy is set to True.
-	/// @param new_size The new memory size after the function is called.
+	/// @param new_size The new container size which represents the number of elements after the function is called.
 	/// @param copy If true, the function will copy the data to the newly created memory space as well.
 	void resize( const size_t new_size, const bool copy = false ) noexcept
 	{
@@ -113,8 +113,8 @@ class GpuMemory final
 		*this = std::move( tmp );
 	}
 
-	/// @brief Asynchronous version of 'resize' using a given Orochi stream.
-	/// @param new_size The new memory size after the function is called.
+	/// @brief Asynchronous version of @c resize using a given Orochi stream.
+	/// @param new_size The new container size which represents the number of elements after the function is called.
 	/// @param copy If true, the function will copy the data to the newly created memory space as well.
 	/// @param stream The Orochi stream used for the underlying operations.
 	void resizeAsync( const size_t new_size, const bool copy = false, oroStream stream = 0 ) noexcept
@@ -138,7 +138,7 @@ class GpuMemory final
 	/// @brief Reset the memory space so that all bits inside are cleared to zero.
 	void reset() noexcept { OrochiUtils::memset( m_data, 0, m_size * sizeof( T ) ); }
 
-	/// @brief Asynchronous version of 'reset' using a given Orochi stream.
+	/// @brief Asynchronous version of @c reset using a given Orochi stream.
 	/// @param stream The Orochi stream used for the underlying operations.
 	void resetAsync( oroStream stream = 0 ) noexcept { OrochiUtils::memsetAsync( m_data, 0, m_size * sizeof( T ), stream ); }
 
