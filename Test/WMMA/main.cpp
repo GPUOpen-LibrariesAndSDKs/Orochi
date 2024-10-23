@@ -131,7 +131,7 @@ int main( int argc, char** argv )
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			printf("%3.1f ", (float)c[i * 16 + j]);
+			printf("%3.0f ", (float)c[i * 16 + j]);
 			if( c[i * 16 + j] != d[i * 16 + j] )
 			{
 				pass = false;

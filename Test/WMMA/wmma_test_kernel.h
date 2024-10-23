@@ -25,9 +25,21 @@
 
 // Use frag_type as an alias of the internal clang vector type of 16 fp16 values
 
-//#define ENABLE_TEST 1
 
-#if defined(ENABLE_TEST)
+#if __gfx1030__ || __gfx1031__ || __gfx1032__ || __gfx1033__ || __gfx1034__ || __gfx1035__ || __gfx1036__ 
+#define __gfx10__
+#endif
+
+#if __gfx1100__ || __gfx1101__ || __gfx1102__ || __gfx1103__ || __gfx1150__ || __gfx1151__
+#define __gfx11__
+#endif
+
+#if __gfx1200__ || __gfx1201__
+#define __gfx12__
+#endif
+
+
+#if defined(__gfx12__)
 #define WMMA_DATA_WIDTH 8
 typedef _Float16 frag_type __attribute__( ( ext_vector_type( 8 ) ) );
 #else
@@ -51,7 +63,7 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	const int lane = lIdx % 16;
 	const int laneGroup = lIdx / 16;
-#if defined( ENABLE_TEST )
+#if defined( __gfx12__ )
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		b_frag[ele] = b[16 * (ele+laneGroup * WMMA_DATA_WIDTH) + lane];
@@ -76,12 +88,12 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 	// more details available in the RDNA3 ISA guide - https://developer.amd.com/wp-content/resources/RDNA3_Shader_ISA_December2022.pdf
 	// the last parameter is called "OPSEL" which decides which half of the VGPRs of c_frag the results are stored into
 	// this will only compile on RDNA3
-#if defined( ENABLE_TEST )
+#if defined( __gfx12__ )
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32_gfx12( a_frag, b_frag, c_frag );
 #else
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32( a_frag, b_frag, c_frag, false );
 #endif
-#if defined( ENABLE_TEST )
+#if defined( __gfx12__ )
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		c[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + lane] = c_frag[ele];
