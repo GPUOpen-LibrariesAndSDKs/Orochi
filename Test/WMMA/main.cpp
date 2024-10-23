@@ -100,6 +100,17 @@ int main( int argc, char** argv )
 		}
 	}
 
+	__half d[16 * 16] = {};
+	for( int i = 0; i < 16; ++i )
+	{
+		for( int j = 0; j < 16; ++j )
+		{
+			__half& dst = d[i * 16 + j];
+			dst = 0.f;
+			for( int k = 0; k < 16; k++ ) dst += a[i * 16 + k] * b[k * 16 + j];
+		}
+	}
+
 	oroMemcpyHtoD((oroDeviceptr)a_gpu, (void*)a, (16*16) * sizeof(__half));
 	oroMemcpyHtoD((oroDeviceptr)b_gpu, (void*)b, (16*16) * sizeof(__half));
 	oroMemcpyHtoD((oroDeviceptr)c_gpu, (void*)c, (16*16) * sizeof(__half));
@@ -115,18 +126,21 @@ int main( int argc, char** argv )
 	oroFree((oroDeviceptr)c_gpu);
 
 	printf( "Output matrix:\n" );
+	bool pass = true;
 	for (int i = 0; i < 16; ++i)
 	{
 		for (int j = 0; j < 16; ++j)
 		{
 			printf("%3.1f ", (float)c[i * 16 + j]);
+			if( c[i * 16 + j] != d[i * 16 + j] )
+			{
+				pass = false;
+			}
 		}
 		printf("\n");
 	} 
-	printf( "Done!\n" );
+	printf( pass ? "Pass!\n" : "Failed!\n" );
 	e = oroCtxDestroy( ctx );
-
-
 
 	if ( testErrorFlag )
 		return OROCHI_TEST_RETCODE__ERROR;
