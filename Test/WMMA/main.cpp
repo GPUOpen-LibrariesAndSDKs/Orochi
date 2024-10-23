@@ -94,8 +94,9 @@ int main( int argc, char** argv )
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			a[i * 16 + j] = (__half)1.f;
-			b[i * 16 + j] = (__half)1.f;
+			a[i * 16 + j] = ( i < 8 && j < 8 ) ? (__half)0.f : (__half)1.f;
+			b[i * 16 + j] = ( i < 8 ) ? (__half)1.f : (__half)2.f;
+			if( j > 8 ) b[i * 16 + j] *= 2.f;
 		}
 	}
 
@@ -118,7 +119,7 @@ int main( int argc, char** argv )
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			printf("%f ", (float)c[i * 16 + j]);
+			printf("%3.1f ", (float)c[i * 16 + j]);
 		}
 		printf("\n");
 	} 
