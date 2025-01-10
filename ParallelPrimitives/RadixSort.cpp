@@ -27,13 +27,22 @@
 #include <iostream>
 #include <numeric>
 
-#if defined( ORO_PP_LOAD_FROM_STRING )
-
+// if ORO_PP_LOAD_FROM_STRING &&     ORO_PRECOMPILED -> we load the precompiled/baked kernels.
+// if ORO_PP_LOAD_FROM_STRING && NOT ORO_PRECOMPILED -> we load the baked source code kernels (from Kernels.h / KernelArgs.h)
+#if !defined( ORO_PRECOMPILED ) && defined( ORO_PP_LOAD_FROM_STRING )
 // Note: the include order must be in this particular form.
 // clang-format off
 #include <ParallelPrimitives/cache/Kernels.h>
 #include <ParallelPrimitives/cache/KernelArgs.h>
 // clang-format on
+#else
+// if Kernels.h / KernelArgs.h are not included, declare nullptr strings
+static const char* hip_RadixSortKernels = nullptr;
+namespace hip
+{
+static const char** RadixSortKernelsArgs = nullptr;
+static const char** RadixSortKernelsIncludes = nullptr;
+}
 #endif
 
 #if defined( __GNUC__ )
@@ -73,12 +82,6 @@ namespace
 	constexpr auto useBakeKernel = true; // this flag means we use the HIP source code embeded in the binary ( as a string ) 
 	#else
 	constexpr auto useBakeKernel = false;
-	static const char* hip_RadixSortKernels = nullptr;
-	namespace hip
-	{
-	static const char** RadixSortKernelsArgs = nullptr;
-	static const char** RadixSortKernelsIncludes = nullptr;
-	} // namespace hip
 	#endif
 
 #endif
