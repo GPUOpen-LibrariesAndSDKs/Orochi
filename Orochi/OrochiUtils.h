@@ -69,6 +69,10 @@ class OrochiUtils
 
 	oroFunction getFunctionFromPrecompiledBinary( const std::string& path, const std::string& funcName );
 
+	// this function is like 'getFunctionFromPrecompiledBinary' but instead of giving a path to a file, we give the data directly.
+	// ( use the script convert_binary_to_array.py to convert the .hipfb to a C-array. )
+	oroFunction getFunctionFromPrecompiledBinary_asData( const unsigned char* data, size_t dataSizeInBytes, const std::string& funcName );
+
 	oroFunction getFunctionFromFile( oroDevice device, const char* path, const char* funcName, std::vector<const char*>* opts );
 	oroFunction getFunctionFromString( oroDevice device, const char* source, const char* path, const char* funcName, std::vector<const char*>* opts, int numHeaders, const char** headers, const char** includeNames );
 	oroFunction getFunction( oroDevice device, const char* code, const char* path, const char* funcName, std::vector<const char*>* opts, int numHeaders = 0, const char** headers = 0, const char** includeNames = 0, oroModule* loadedModule = 0 );
