@@ -23,8 +23,29 @@
 // Wave Matrix Multiply Accumulate (WMMA) using HIP compiler intrinsic
 // Does a matrix multiplication of two 16x16, fp16 matrices, and stores them into a 16x16 fp16 result matrix
 
-// Use half16 as an alias of the internal clang vector type of 16 fp16 values
-typedef _Float16 half16 __attribute__( ( ext_vector_type( 16 ) ) );
+// Use frag_type as an alias of the internal clang vector type of 16 fp16 values
+
+
+#if __gfx1030__ || __gfx1031__ || __gfx1032__ || __gfx1033__ || __gfx1034__ || __gfx1035__ || __gfx1036__ 
+#define __gfx10__
+#endif
+
+#if __gfx1100__ || __gfx1101__ || __gfx1102__ || __gfx1103__ || __gfx1150__ || __gfx1151__
+#define __gfx11__
+#endif
+
+#if __gfx1200__ || __gfx1201__
+#define __gfx12__
+#endif
+
+
+#if defined(__gfx12__)
+#define WMMA_DATA_WIDTH 8
+typedef _Float16 frag_type __attribute__( ( ext_vector_type( 8 ) ) );
+#else
+#define WMMA_DATA_WIDTH 16
+typedef _Float16 frag_type __attribute__( ( ext_vector_type( 16 ) ) );
+#endif
 
 extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 {
@@ -34,30 +55,50 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 	// a and b fragments are stored in 8 VGPRs each, in packed format, so 16 elements each for a and b
 	// a_frag will store one column of the 16x16 matrix tile
 	// b_frag will store one row of the 16x16 matrix tile
-	half16 a_frag;
-	half16 b_frag;
+	frag_type a_frag;
+	frag_type b_frag;
 	// initialize c fragment to 0
-	half16 c_frag = {};
+	frag_type c_frag = {};
 
 	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	const int lane = lIdx % 16;
+	const int laneGroup = lIdx / 16;
+#if defined( __gfx12__ )
+	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
+	{
+		b_frag[ele] = b[16 * (ele+laneGroup * WMMA_DATA_WIDTH) + lane];
+	}
 
-	for( int ele = 0; ele < 16; ++ele )
+	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
+	{
+		a_frag[ele] = a[16 * lane + ele+laneGroup * WMMA_DATA_WIDTH];
+	}
+#else
+	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		b_frag[ele] = b[16 * ele + lane];
 	}
 
-	for( int ele = 0; ele < 16; ++ele )
+	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		a_frag[ele] = a[16 * lane + ele];
 	}
-
+#endif
 	// call the WMMA compiler intrinsic 
 	// more details available in the RDNA3 ISA guide - https://developer.amd.com/wp-content/resources/RDNA3_Shader_ISA_December2022.pdf
 	// the last parameter is called "OPSEL" which decides which half of the VGPRs of c_frag the results are stored into
 	// this will only compile on RDNA3
+#if defined( __gfx12__ )
+	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32_gfx12( a_frag, b_frag, c_frag );
+#else
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32( a_frag, b_frag, c_frag, false );
-
+#endif
+#if defined( __gfx12__ )
+	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
+	{
+		c[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + lane] = c_frag[ele];
+	}
+#else
 	for( int ele = 0; ele < 8; ++ele )
 	{
 		const int r = ele * 2 + ( lIdx / 16 );
@@ -66,4 +107,5 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 		// if OPSEL was set to "true", the line above would instead be
 		// c[16 * r + lane] = c_frag[ele*2 + 1];
 	}
+#endif
 }
