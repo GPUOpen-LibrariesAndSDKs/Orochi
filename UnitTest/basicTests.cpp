@@ -21,6 +21,12 @@
 //
 
 #include "basicTests.h"
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <utility>
 #include "common.h"
 
 TEST_F( OroTestBase, init )
@@ -93,6 +99,49 @@ TEST_F( OroTestBase, kernelExec )
 	OROASSERT( a_host == 2016 );
 	OROCHECK( oroFree( (oroDeviceptr)a_device ) );
 	o.unloadKernelCache();
+}
+
+TEST_F( OroTestBase, GpuMemoryAllocationTest )
+{
+	OrochiUtils o;
+
+	const auto testAllocation = [](const std::pair<size_t, std::string_view>& data)
+	{
+		const size_t size = data.first;
+		const std::string_view label = data.second;
+		std::cout << "  + Test " << label << " device memory allocation." << std::endl;
+		static_assert(sizeof(std::uint8_t) == 1);
+		std::uint8_t* memory = nullptr;
+		{
+			const oroError result = oroMalloc( reinterpret_cast<oroDeviceptr*>(&memory), size );
+			ASSERT_EQ( ORO_SUCCESS, result ) << "oroMalloc failed to allocate " << label << " device memory.";
+		}
+		{
+			const oroError result = oroMemset( reinterpret_cast<oroDeviceptr>(memory), 1, size );
+			ASSERT_EQ( ORO_SUCCESS, result ) << "oroMemset failed to fill " << label << " device memory.";
+		}
+		std::fill( memory, memory + size, 1 );
+		{
+			const oroError result = oroFree( reinterpret_cast<oroDeviceptr>(memory) );
+			ASSERT_EQ( ORO_SUCCESS, result ) << "oroFree failed to deallocate " << label << " device memory.";
+		}
+	};
+
+	const std::array<std::pair<size_t, std::string_view>, 12> memorySizeList = {{
+		{1, "1 B"},
+		{4, "4 B"},
+		{8, "8 B"},
+		{64, "64 B"},
+		{1024, "1 KB"},
+		{1024 * 1024, "1 MB"},
+		{512 * 1024 * 1024, "512 MB"},
+		{1024 * 1024 * 1024, "1 GB"},
+		{(1024 + 512) * 1024 * 1024, "1.5 GB"},
+		{2 * 1024 * 1024 * 1024, "2 GB"},
+		{3 * 1024 * 1024 * 1024, "3 GB"},
+		{4 * 1024 * 1024 * 1024, "4 GB"}
+	}};
+	std::for_each( memorySizeList.begin(), memorySizeList.end(), testAllocation );
 }
 
 TEST_F( OroTestBase, GpuMemoryTest )
