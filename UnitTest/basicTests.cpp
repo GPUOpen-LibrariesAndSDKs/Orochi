@@ -109,22 +109,22 @@ TEST_F( OroTestBase, GpuMemoryAllocationTest )
 	{
 		const size_t size = data.first;
 		const std::string_view label = data.second;
-		std::cout << "  + Test " << label << " device memory allocation." << std::endl;
+		std::cout << "  + Test " << label << " device memory allocation...";
 		static_assert(sizeof(std::uint8_t) == 1);
 		std::uint8_t* memory = nullptr;
 		{
 			const oroError result = oroMalloc( reinterpret_cast<oroDeviceptr*>(&memory), size );
-			ASSERT_EQ( ORO_SUCCESS, result ) << "oroMalloc failed to allocate " << label << " device memory.";
+			ASSERT_EQ( ORO_SUCCESS, result ) << "\noroMalloc failed to allocate " << label << " device memory.";
 		}
 		{
 			const oroError result = oroMemset( reinterpret_cast<oroDeviceptr>(memory), 1, size );
-			ASSERT_EQ( ORO_SUCCESS, result ) << "oroMemset failed to fill " << label << " device memory.";
+			ASSERT_EQ( ORO_SUCCESS, result ) << "\noroMemset failed to fill " << label << " device memory.";
 		}
-		std::fill( memory, memory + size, 1 );
 		{
 			const oroError result = oroFree( reinterpret_cast<oroDeviceptr>(memory) );
-			ASSERT_EQ( ORO_SUCCESS, result ) << "oroFree failed to deallocate " << label << " device memory.";
+			ASSERT_EQ( ORO_SUCCESS, result ) << "\noroFree failed to deallocate " << label << " device memory.";
 		}
+		std::cout << " done." << std::endl;
 	};
 
 	const std::array<std::pair<size_t, std::string_view>, 12> memorySizeList = {{
