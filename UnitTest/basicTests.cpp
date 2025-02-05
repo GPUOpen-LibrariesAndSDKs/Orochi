@@ -128,18 +128,18 @@ TEST_F( OroTestBase, GpuMemoryAllocationTest )
 	};
 
 	const std::array<std::pair<size_t, std::string_view>, 12> memorySizeList = {{
-		{1, "1 B"},
-		{4, "4 B"},
-		{8, "8 B"},
-		{64, "64 B"},
-		{1024, "1 KB"},
-		{1024 * 1024, "1 MB"},
-		{512 * 1024 * 1024, "512 MB"},
-		{1024 * 1024 * 1024, "1 GB"},
-		{(1024 + 512) * 1024 * 1024, "1.5 GB"},
-		{2 * 1024 * 1024 * 1024, "2 GB"},
-		{3 * 1024 * 1024 * 1024, "3 GB"},
-		{4 * 1024 * 1024 * 1024, "4 GB"}
+		{1ull, "1 B"},
+		{4ull, "4 B"},
+		{8ull, "8 B"},
+		{64ull, "64 B"},
+		{1024ull, "1 KB"},
+		{1024ull * 1024, "1 MB"},
+		{512ull * 1024 * 1024, "512 MB"},
+		{1024ull * 1024 * 1024, "1 GB"},
+		{(1024ull + 512ull) * 1024 * 1024, "1.5 GB"},
+		{2ull * 1024 * 1024 * 1024, "2 GB"},
+		{3ull * 1024 * 1024 * 1024, "3 GB"},
+		{4ull * 1024 * 1024 * 1024, "4 GB"}
 	}};
 	std::for_each( memorySizeList.begin(), memorySizeList.end(), testAllocation );
 }
