@@ -157,9 +157,11 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 		Kernel kernelType;
 	};
 
-	const std::vector<Record> records{
-		{ "SortSinglePassKernel", Kernel::SORT_SINGLE_PASS }, { "SortSinglePassKVKernel", Kernel::SORT_SINGLE_PASS_KV },
-	};
+	const std::vector<Record> records{ { "SortSinglePassKernel", Kernel::SORT_SINGLE_PASS },
+									   { "SortSinglePassKVKernel", Kernel::SORT_SINGLE_PASS_KV },
+									   { "GHistogram", Kernel::SORT_GHISTOGRAM },
+									   { "OnesweepReorderKey64", Kernel::SORT_ONESWEEP_REORDER_KEY_64 },
+									   { "OnesweepReorderKeyPair64", Kernel::SORT_ONESWEEP_REORDER_KEY_PAIR_64 } };
 
 
 	for( const auto& record : records )
@@ -186,13 +188,6 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 			printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );
 		}
 	}
-
-	// TODO: bit code support?
-#define LOAD_FUNC( var, kernel ) var = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), kernel, &opts );
-	LOAD_FUNC( m_gHistogram, "gHistogram" );
-	LOAD_FUNC( m_onesweep_reorderKey64, "onesweep_reorderKey64" );
-	LOAD_FUNC( m_onesweep_reorderKeyPair64, "onesweep_reorderKeyPair64" );
-#undef LOAD_FUNC
 
 }
 
@@ -245,11 +240,11 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 	// counter for gHistogram. 
 	{
 		int maxBlocksPerMP = 0;
-		oroError e = oroOccupancyMaxActiveBlocksPerMultiprocessor( &maxBlocksPerMP, m_gHistogram, GHISTOGRAM_THREADS_PER_BLOCK, 0 );
+		oroError e = oroOccupancyMaxActiveBlocksPerMultiprocessor( &maxBlocksPerMP, oroFunctions[Kernel::SORT_GHISTOGRAM], GHISTOGRAM_THREADS_PER_BLOCK, 0 );
 		const int nBlocks = e == oroSuccess ? maxBlocksPerMP * m_props.multiProcessorCount : 2048;
 
 		const void* args[] = { &src.key, &n, arg_cast( m_gpSumBuffer.address() ), &startBit, arg_cast( m_gpSumCounter.address() ) };
-		OrochiUtils::launch1D( m_gHistogram, nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );
+		OrochiUtils::launch1D( oroFunctions[Kernel::SORT_GHISTOGRAM], nBlocks * GHISTOGRAM_THREADS_PER_BLOCK, args, GHISTOGRAM_THREADS_PER_BLOCK, 0, stream );
 	}
 
 	auto s = src;
@@ -264,12 +259,12 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 		if( keyPair )
 		{
 			const void* args[] = { &s.key, &d.key, &s.value, &d.value, &n, arg_cast( m_gpSumBuffer.address() ), arg_cast( m_lookbackBuffer.address() ), arg_cast( m_tailIterator.address() ), &startBit, &i };
-			OrochiUtils::launch1D( m_onesweep_reorderKeyPair64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT_ONESWEEP_REORDER_KEY_PAIR_64], numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		else
 		{
 			const void* args[] = { &s.key, &d.key, &n, arg_cast( m_gpSumBuffer.address() ), arg_cast( m_lookbackBuffer.address() ), arg_cast( m_tailIterator.address() ), &startBit, &i };
-			OrochiUtils::launch1D( m_onesweep_reorderKey64, numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
+			OrochiUtils::launch1D( oroFunctions[Kernel::SORT_ONESWEEP_REORDER_KEY_64], numberOfBlocks * REORDER_NUMBER_OF_THREADS_PER_BLOCK, args, REORDER_NUMBER_OF_THREADS_PER_BLOCK, 0, stream );
 		}
 		std::swap( s, d );
 	}

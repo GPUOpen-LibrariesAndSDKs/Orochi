@@ -65,6 +65,9 @@ class RadixSort final
 	{
 		SORT_SINGLE_PASS,
 		SORT_SINGLE_PASS_KV,
+		SORT_GHISTOGRAM,
+		SORT_ONESWEEP_REORDER_KEY_64,
+		SORT_ONESWEEP_REORDER_KEY_PAIR_64
 	};
 
 	std::unordered_map<Kernel, oroFunction> oroFunctions;
