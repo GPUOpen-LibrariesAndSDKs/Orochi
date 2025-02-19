@@ -389,6 +389,8 @@ int main( int argc, char** argv )
 		break;
 	};
 
+	oroutils.unloadKernelCache();
+
 	printf( ">> done\n" );
 	return 0;
 }
