@@ -148,9 +148,6 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 		}
 		else
 		{
-			const auto includeArg{ "-I" + currentIncludeDir };
-			std::vector<const char*> opts;
-			opts.push_back( includeArg.c_str() );
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromFile( m_device, currentKernelPath.c_str(), record.kernelName.c_str(), &opts );
 		}
 
