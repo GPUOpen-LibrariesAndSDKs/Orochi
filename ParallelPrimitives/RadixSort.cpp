@@ -166,7 +166,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 
 	std::string binaryPath{};
 	std::string log{};
-	if constexpr( useBitCode )
+	if constexpr( usePrecompiledAndBakedKernel || useBitCode )
 	{
 		const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 		binaryPath = getCurrentDir();
