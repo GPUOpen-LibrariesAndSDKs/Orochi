@@ -217,15 +217,18 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 {
 	compileKernels( kernelPath, includeDir );
 
-	u64 gpSumBuffer = sizeof( u32 ) * BIN_SIZE * sizeof( u32 /* key type */ );
-	m_gpSumBuffer.resizeAsync( gpSumBuffer, false /*copy*/, stream );
+	constexpr bool enable_copying = false;
+	constexpr auto key_type_size = sizeof(std::remove_pointer_t<decltype(KeyValueSoA::key)>);
+
+	constexpr u64 gpSumBuffer = sizeof( u32 ) * BIN_SIZE * key_type_size;
+	m_gpSumBuffer.resizeAsync( gpSumBuffer, enable_copying /*copy*/, stream );
 
 	u64 lookBackBuffer = sizeof( u64 ) * ( BIN_SIZE * LOOKBACK_TABLE_SIZE );
-	m_lookbackBuffer.resizeAsync( lookBackBuffer, false /*copy*/, stream );
+	m_lookbackBuffer.resizeAsync( lookBackBuffer, enable_copying /*copy*/, stream );
 
-	m_tailIterator.resizeAsync( 1, false /*copy*/, stream );
+	m_tailIterator.resizeAsync( 1, enable_copying /*copy*/, stream );
 	m_tailIterator.resetAsync( stream );
-	m_gpSumCounter.resizeAsync( 1, false /*copy*/, stream );
+	m_gpSumCounter.resizeAsync( 1, enable_copying /*copy*/, stream );
 }
 void RadixSort::setFlag( Flag flag ) noexcept { m_flags = flag; }
 
