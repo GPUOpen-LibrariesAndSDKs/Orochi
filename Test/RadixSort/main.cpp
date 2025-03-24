@@ -68,6 +68,7 @@ class SortTest
 		OrochiUtils::malloc( dstGpu.key, testSize );
 
 		std::vector<u32> srcKey( testSize );
+
 		for( int i = 0; i < testSize; i++ )
 		{
 			srcKey[i] = getRandom( 0u, (u32)( ( 1ull << (u64)testBits ) - 1 ) );
@@ -85,7 +86,6 @@ class SortTest
 			}
 		}
 
-		Stopwatch sw;
 		for( int i = 0; i < nRuns; i++ )
 		{
 			OrochiUtils::copyHtoD( srcGpu.key, srcKey.data(), testSize );
@@ -97,7 +97,8 @@ class SortTest
 				OrochiUtils::waitForCompletion();
 			}
 
-			sw.start();
+			OroStopwatch oroStream( nullptr );
+			oroStream.start();
 
 			if constexpr( KEY_VALUE_PAIR )
 			{
@@ -108,9 +109,10 @@ class SortTest
 				m_sort.sort( srcGpu.key, dstGpu.key, testSize, 0, testBits );
 			}
 
+			oroStream.stop();
+
 			OrochiUtils::waitForCompletion();
-			sw.stop();
-			float ms = sw.getMs();
+			float ms = oroStream.getMs();
 			float gKeys_s = static_cast<float>( testSize ) / 1000.f / 1000.f / ms;
 			printf( "%5.2fms (%3.2fGKeys/s) sorting %3.1fMkeys [%s]\n", ms, gKeys_s, testSize / 1000.f / 1000.f, KEY_VALUE_PAIR ? "keyValue" : "key" );
 		}
@@ -290,6 +292,7 @@ enum TestType
 	TEST_SIMPLE,
 	TEST_PERF,
 	TEST_BITS,
+	TEST_CAPTURE,
 	TEST_MISC,
 };
 
@@ -370,7 +373,11 @@ int main( int argc, char** argv )
 		sort.test( testSize, 32, nRuns );
 	}
 	break;
-
+	case TEST_CAPTURE:
+	{
+		sort.test<false>( 1u << 27 /*2^29*/, 32, 9999999 );
+	}
+	break;
 	case TEST_MISC:
 	{
 		static constexpr auto file = "input.txt";
@@ -381,6 +388,8 @@ int main( int argc, char** argv )
 	default:
 		break;
 	};
+
+	oroutils.unloadKernelCache();
 
 	printf( ">> done\n" );
 	return 0;
