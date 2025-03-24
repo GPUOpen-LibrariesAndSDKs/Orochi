@@ -76,7 +76,7 @@ constexpr auto useBakeKernel = false;
 constexpr auto usePrecompiledAndBakedKernel = false;
 
 #if defined( ORO_PRECOMPILED )
-constexpr auto useBitCode = true;	 // this flag means we use the bitcode file
+constexpr auto useBitCode = true; // this flag means we use the bitcode file
 #else
 constexpr auto useBitCode = false;
 #endif
@@ -185,12 +185,11 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 									   { "OnesweepReorderKey64", Kernel::SORT_ONESWEEP_REORDER_KEY_64 },
 									   { "OnesweepReorderKeyPair64", Kernel::SORT_ONESWEEP_REORDER_KEY_PAIR_64 } };
 
-
 	for( const auto& record : records )
 	{
-		if constexpr( usePrecompiledAndBakedKernel ) 
-		{ 
-			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData( oro_compiled_kernels_h, oro_compiled_kernels_h_size, record.kernelName.c_str() ); 
+		if constexpr( usePrecompiledAndBakedKernel )
+		{
+			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData( oro_compiled_kernels_h, oro_compiled_kernels_h_size, record.kernelName.c_str() );
 		}
 		else if constexpr( useBakeKernel )
 		{
@@ -210,7 +209,6 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 			printKernelInfo( record.kernelName, oroFunctions[record.kernelType] );
 		}
 	}
-
 }
 
 void RadixSort::configure( const std::string& kernelPath, const std::string& includeDir, oroStream stream ) noexcept
@@ -218,7 +216,7 @@ void RadixSort::configure( const std::string& kernelPath, const std::string& inc
 	compileKernels( kernelPath, includeDir );
 
 	constexpr bool enable_copying = false;
-	constexpr auto key_type_size = sizeof(std::remove_pointer_t<decltype(KeyValueSoA::key)>);
+	constexpr auto key_type_size = sizeof( std::remove_pointer_t<decltype( KeyValueSoA::key )> );
 
 	constexpr u64 gpSumBuffer = sizeof( u32 ) * BIN_SIZE * key_type_size;
 	m_gpSumBuffer.resizeAsync( gpSumBuffer, enable_copying /*copy*/, stream );
@@ -257,14 +255,14 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 	constexpr uint64_t bit_per_iteration = 8ULL;
 
-	int nIteration = div_round_up64( endBit - startBit, bit_per_iteration);
+	int nIteration = div_round_up64( endBit - startBit, bit_per_iteration );
 	uint64_t numberOfBlocks = div_round_up64( n, RADIX_SORT_BLOCK_SIZE );
 
 	m_lookbackBuffer.resetAsync( stream );
 	m_gpSumCounter.resetAsync( stream );
 	m_gpSumBuffer.resetAsync( stream );
 
-	// counter for gHistogram. 
+	// counter for gHistogram.
 	{
 		int maxBlocksPerMP = 0;
 		oroError e = oroModuleOccupancyMaxActiveBlocksPerMultiprocessor( &maxBlocksPerMP, oroFunctions[Kernel::SORT_GHISTOGRAM], GHISTOGRAM_THREADS_PER_BLOCK, 0 );
@@ -298,17 +296,14 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 	if( s.key == src.key )
 	{
-		m_oroutils.copyDtoDAsync(dst.key, src.key, n, stream);
+		m_oroutils.copyDtoDAsync( dst.key, src.key, n, stream );
 
 		if( keyPair )
 		{
-			m_oroutils.copyDtoDAsync(dst.value, src.value, n, stream);
+			m_oroutils.copyDtoDAsync( dst.value, src.value, n, stream );
 		}
 	}
 }
 
-void RadixSort::sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept
-{
-	sort( KeyValueSoA{ src, nullptr }, KeyValueSoA{ dst, nullptr }, n, startBit, endBit, stream );
-}
+void RadixSort::sort( u32* src, u32* dst, uint32_t n, int startBit, int endBit, oroStream stream ) noexcept { sort( KeyValueSoA{ src, nullptr }, KeyValueSoA{ dst, nullptr }, n, startBit, endBit, stream ); }
 }; // namespace Oro
