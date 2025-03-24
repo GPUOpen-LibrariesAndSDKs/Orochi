@@ -255,7 +255,9 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 		return;
 	}
 
-	int nIteration = div_round_up64( endBit - startBit, 8 );
+	constexpr uint64_t bit_per_iteration = 8ULL;
+
+	int nIteration = div_round_up64( endBit - startBit, bit_per_iteration);
 	uint64_t numberOfBlocks = div_round_up64( n, RADIX_SORT_BLOCK_SIZE );
 
 	m_lookbackBuffer.resetAsync( stream );
@@ -274,7 +276,7 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 	auto s = src;
 	auto d = dst;
-	for( int i = 0; i < nIteration; i++ )
+	for( int i = 0; i < nIteration; ++i )
 	{
 		if( numberOfBlocks < LOOKBACK_TABLE_SIZE * 2 )
 		{
