@@ -298,11 +298,11 @@ void RadixSort::sort( const KeyValueSoA& src, const KeyValueSoA& dst, uint32_t n
 
 	if( s.key == src.key )
 	{
-		oroMemcpyDtoDAsync( (oroDeviceptr)dst.key, (oroDeviceptr)src.key, sizeof( uint32_t ) * n, stream );
+		m_oroutils.copyDtoDAsync(dst.key, src.key, n, stream);
 
 		if( keyPair )
 		{
-			oroMemcpyDtoDAsync( (oroDeviceptr)dst.value, (oroDeviceptr)src.value, sizeof( uint32_t ) * n, stream );
+			m_oroutils.copyDtoDAsync(dst.value, src.value, n, stream);
 		}
 	}
 }
