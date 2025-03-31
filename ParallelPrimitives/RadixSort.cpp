@@ -189,7 +189,9 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	{
 		if constexpr( usePrecompiledAndBakedKernel )
 		{
-			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData( oro_compiled_kernels_h, oro_compiled_kernels_h_size, record.kernelName.c_str() );
+			// Move the raw buffer into a std::vector, which avoids potential issues explained here:  github.com/GPUOpen-LibrariesAndSDKs/HIPRT/pull/38#issuecomment-2761698032
+			std::vector<unsigned char> binary(oro_compiled_kernels_h, oro_compiled_kernels_h + oro_compiled_kernels_h_size);
+			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData(binary.data(), binary.size(), record.kernelName.c_str() );
 		}
 		else if constexpr( useBakeKernel )
 		{
