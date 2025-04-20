@@ -83,6 +83,9 @@ class OrochiUtils
 	static void getModule( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, oroModule* moduleOut );
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
+	
+	// if 'uncompressed_sizeByte' is set to 0, it means the input value is not compressed and this function will output the raw buffer.
+	static void DecompressPrecompiled(std::vector<unsigned char>& out, const unsigned char* compressedInput, size_t compressedInput_sizeByte, size_t uncompressed_sizeByte);
 
 	template<typename T>
 	static void malloc( T*& ptr, size_t n )

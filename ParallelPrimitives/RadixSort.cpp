@@ -54,6 +54,7 @@ static const char** RadixSortKernelsIncludes = nullptr;
 #else
 const unsigned char oro_compiled_kernels_h[] = "";
 const size_t oro_compiled_kernels_h_size = 0;
+const size_t oro_compiled_kernels_h_size_uncompressed = 0;
 #endif
 
 constexpr uint64_t div_round_up64( uint64_t val, uint64_t divisor ) noexcept { return ( val + divisor - 1 ) / divisor; }
@@ -189,8 +190,8 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 	{
 		if constexpr( usePrecompiledAndBakedKernel )
 		{
-			// Move the raw buffer into a std::vector, which avoids potential issues explained here:  github.com/GPUOpen-LibrariesAndSDKs/HIPRT/pull/38#issuecomment-2761698032
-			std::vector<unsigned char> binary(oro_compiled_kernels_h, oro_compiled_kernels_h + oro_compiled_kernels_h_size);
+			std::vector<unsigned char> binary;
+			OrochiUtils::DecompressPrecompiled(binary, oro_compiled_kernels_h, oro_compiled_kernels_h_size, oro_compiled_kernels_h_size_uncompressed);
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData(binary.data(), binary.size(), record.kernelName.c_str() );
 		}
 		else if constexpr( useBakeKernel )
