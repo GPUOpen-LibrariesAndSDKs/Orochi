@@ -9,12 +9,13 @@
 
 
 if(DO_COMPRESS)
+	message("Compress ${INPUT_FILE} ...")
 	file(ARCHIVE_CREATE
 		OUTPUT            "${OUTPUT_FILE}"
 		PATHS             "${INPUT_FILE}"
 		FORMAT            raw
 		COMPRESSION       Zstd
-		COMPRESSION_LEVEL 19
+		COMPRESSION_LEVEL 9  #  0-9 for cmake >= 3.19   or  0-19 for cmake >= 3.26
 	)
 endif()
 
