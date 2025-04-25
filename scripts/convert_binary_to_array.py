@@ -10,9 +10,17 @@ def binary_to_c_array(bin_file, array_name, size_BeforeCompression, compression_
     c_array = f'const unsigned char {array_name}[] = {{\n    {hex_array}\n}};\n'
     c_array += f'const size_t {array_name}_size = sizeof({array_name}); // {len(binary_data)}\n'
     
-    if not compression_activated:
-        size_BeforeCompression = 0 # set value to 0 if we are not using compression.
-    c_array += f'const size_t {array_name}_size_uncompressed = {size_BeforeCompression}; // set to 0 if NOT using the ZSTD compression.\n'
+    c_array += f'const size_t {array_name}_size_uncompressed = '
+    if compression_activated:
+        c_array += f'{size_BeforeCompression}; // size of the data in bytes, once it has been uncompressed.\n'
+    else:
+        c_array += f'{array_name}_size; // same than raw buffer, because data is not compressed.\n'
+
+    c_array += f'const bool   {array_name}_isCompressed = '
+    if compression_activated:
+        c_array += f'true;\n'
+    else:
+        c_array += f'false;\n'
     return c_array
 
 if __name__ == "__main__":

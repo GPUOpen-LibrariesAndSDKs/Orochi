@@ -55,6 +55,7 @@ static const char** RadixSortKernelsIncludes = nullptr;
 const unsigned char oro_compiled_kernels_h[] = "";
 const size_t oro_compiled_kernels_h_size = 0;
 const size_t oro_compiled_kernels_h_size_uncompressed = 0;
+const bool oro_compiled_kernels_h_isCompressed = false;
 #endif
 
 constexpr uint64_t div_round_up64( uint64_t val, uint64_t divisor ) noexcept { return ( val + divisor - 1 ) / divisor; }
@@ -191,7 +192,7 @@ void RadixSort::compileKernels( const std::string& kernelPath, const std::string
 		if constexpr( usePrecompiledAndBakedKernel )
 		{
 			std::vector<unsigned char> binary;
-			OrochiUtils::DecompressPrecompiled(binary, oro_compiled_kernels_h, oro_compiled_kernels_h_size, oro_compiled_kernels_h_size_uncompressed);
+			OrochiUtils::HandlePrecompiled(binary, oro_compiled_kernels_h, oro_compiled_kernels_h_size, oro_compiled_kernels_h_isCompressed ? std::optional<size_t>{oro_compiled_kernels_h_size_uncompressed} : std::nullopt);
 			oroFunctions[record.kernelType] = m_oroutils.getFunctionFromPrecompiledBinary_asData(binary.data(), binary.size(), record.kernelName.c_str() );
 		}
 		else if constexpr( useBakeKernel )

@@ -794,35 +794,45 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 	OROASSERT( e == oroSuccess, 0 );
 }
 
-void OrochiUtils::DecompressPrecompiled(std::vector<unsigned char>& out, const unsigned char* compressedInput, size_t compressedInput_sizeByte, size_t uncompressed_sizeByte)
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const CompressedBuffer& buffer)
 {
-	if ( uncompressed_sizeByte > 0 ) // if the input data is actually compressed
-	{
 	#ifdef ORO_LINK_ZSTD
-		out.assign(uncompressed_sizeByte,0);
+		out.assign(buffer.uncompressedSize,0);
 
 		size_t decompressedSize = ZSTD_decompress(    
 			out.data(), // final uncompressed buffer
 			out.size(), // final size
-			compressedInput, // compressed buffer
-			compressedInput_sizeByte // compressed buffer - size
+			buffer.data, // compressed buffer
+			buffer.size // compressed buffer - size
 			);
 		
-		if ( decompressedSize != uncompressed_sizeByte )
+		if ( decompressedSize != buffer.uncompressedSize )
 			throw std::runtime_error( "ERROR: ZSTD_decompress FAILED." );
 	#else
-
 		throw std::runtime_error( "ERROR: ZSTD is not part of this build." );
-
 	#endif
-
-	}
-	else // if the input data is NOT compressed, buypass this decompress process.
-	{
-		out = std::vector<unsigned char>(compressedInput, compressedInput + compressedInput_sizeByte );
-	}
 	return;
 }
 
+
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const RawBuffer& buffer)
+{
+	out = std::vector<unsigned char>(buffer.data, buffer.data + buffer.size );
+	return;
+}
+
+
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const unsigned char* rawData, size_t rawData_sizeByte, std::optional<size_t> uncompressed_sizeByte)
+{
+	if (uncompressed_sizeByte.has_value()) {
+		// if the input buffer is compressed :
+		CompressedBuffer buffer{ rawData, rawData_sizeByte, uncompressed_sizeByte.value() };
+		HandlePrecompiled(out, buffer );
+	} else {
+		// if the input buffer is not compressed
+		RawBuffer buffer{ rawData, rawData_sizeByte };
+		HandlePrecompiled(out, buffer );
+	}
+}
 
 
