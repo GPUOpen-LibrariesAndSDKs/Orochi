@@ -36,6 +36,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef ORO_LINK_ZSTD
+#include <contrib/zstd/lib/zstd.h>
+#endif
+
 inline std::wstring utf8_to_wstring( const std::string& str )
 {
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> myconv;
@@ -789,4 +793,46 @@ void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args,
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
+
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const CompressedBuffer& buffer)
+{
+	#ifdef ORO_LINK_ZSTD
+		out.assign(buffer.uncompressedSize,0);
+
+		size_t decompressedSize = ZSTD_decompress(    
+			out.data(), // final uncompressed buffer
+			out.size(), // final size
+			buffer.data, // compressed buffer
+			buffer.size // compressed buffer - size
+			);
+		
+		if ( decompressedSize != buffer.uncompressedSize )
+			throw std::runtime_error( "ERROR: ZSTD_decompress FAILED." );
+	#else
+		throw std::runtime_error( "ERROR: ZSTD is not part of this build." );
+	#endif
+	return;
+}
+
+
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const RawBuffer& buffer)
+{
+	out = std::vector<unsigned char>(buffer.data, buffer.data + buffer.size );
+	return;
+}
+
+
+void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const unsigned char* rawData, size_t rawData_sizeByte, std::optional<size_t> uncompressed_sizeByte)
+{
+	if (uncompressed_sizeByte.has_value()) {
+		// if the input buffer is compressed :
+		CompressedBuffer buffer{ rawData, rawData_sizeByte, uncompressed_sizeByte.value() };
+		HandlePrecompiled(out, buffer );
+	} else {
+		// if the input buffer is not compressed
+		RawBuffer buffer{ rawData, rawData_sizeByte };
+		HandlePrecompiled(out, buffer );
+	}
+}
+
 

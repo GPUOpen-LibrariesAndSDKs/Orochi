@@ -27,6 +27,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 #if defined( GNUC )
 #include <signal.h>
@@ -83,6 +84,20 @@ class OrochiUtils
 	static void getModule( oroDevice device, const char* code, const char* path, std::vector<const char*>* optsIn, const char* funcName, oroModule* moduleOut );
 	static void launch1D( oroFunction func, int nx, const void** args, int wgSize = 64, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
 	static void launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX = 8, int wgSizeY = 8, unsigned int sharedMemBytes = 0, oroStream stream = 0 );
+	
+
+	struct CompressedBuffer {
+		const unsigned char* data = nullptr; // compressed data
+		size_t size = 0; // size in byte of 'data'
+		size_t uncompressedSize = 0; // size of byte of the uncompressed data.
+	};
+	struct RawBuffer {
+		const unsigned char* data = nullptr;
+		size_t size = 0;
+	};
+	static void HandlePrecompiled(std::vector<unsigned char>& out, const CompressedBuffer& buffer);
+	static void HandlePrecompiled(std::vector<unsigned char>& out, const RawBuffer& buffer);
+	static void HandlePrecompiled(std::vector<unsigned char>& out, const unsigned char* rawData, size_t rawData_sizeByte, std::optional<size_t> uncompressed_sizeByte=std::nullopt);
 
 	template<typename T>
 	static void malloc( T*& ptr, size_t n )
