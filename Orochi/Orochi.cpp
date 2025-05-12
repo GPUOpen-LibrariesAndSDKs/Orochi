@@ -2627,11 +2627,11 @@ oroError_t OROAPI oroModuleLaunchCooperativeKernelMultiDevice(oroFunctionLaunchP
 		hipModuleLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams, void ** extra)
+oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, const void* const* kernelParams, const void* const* extra)
 {
 	__ORO_FUNC(
 		CU4ORO::hipModuleLaunchKernel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(void **,extra)),
-		hipModuleLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams, extra)     );
+		hipModuleLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, __ORO_FORCE_CAST(void**, kernelParams), __ORO_FORCE_CAST(void**, extra))     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLoad(oroModule_t * module, const char * fname)
