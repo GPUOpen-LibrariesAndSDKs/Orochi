@@ -991,7 +991,7 @@ oroError_t OROAPI oroModuleGetGlobal(oroDeviceptr_t * dptr, size_t * bytes, oroM
 oroError_t OROAPI oroModuleGetTexRef(textureReference ** texRef, oroModule_t hmod, const char * name);
 oroError_t OROAPI oroModuleLaunchCooperativeKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams);
 oroError_t OROAPI oroModuleLaunchCooperativeKernelMultiDevice(oroFunctionLaunchParams * launchParamsList, unsigned int numDevices, unsigned int flags);
-oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams, void ** extra);
+oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, const void* const* kernelParams, const void* const* extra);
 oroError_t OROAPI oroModuleLoad(oroModule_t * module, const char * fname);
 oroError_t OROAPI oroModuleLoadData(oroModule_t * module, const void * image);
 oroError_t OROAPI oroModuleLoadDataEx(oroModule_t * module, const void * image, unsigned int numOptions, oroJitOption * options, void ** optionValues);
