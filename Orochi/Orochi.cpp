@@ -1219,6 +1219,21 @@ oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 		if ( e != hipSuccess )
 			return hip2oro(e);
 	}
+
+	// externally initialized context 
+	if( s_oroCtxs.count( ctxt->m_ptr ) == 0 && ctxt->m_ptr )
+	{
+		ioroCtx_t* c = new ioroCtx_t;
+		c->m_ptr = ctxt->m_ptr;
+		c->setApi( s_api );
+		s_oroCtxs[ctxt->m_ptr] = c;
+	}
+
+	if (s_oroCtxs.count(ctxt->m_ptr) == 0)
+	{
+		return oroErrorNotReady;
+	}
+
 	( *pctx ) = s_oroCtxs[ctxt->m_ptr];
 	delete ctxt;
 	return oroSuccess;
