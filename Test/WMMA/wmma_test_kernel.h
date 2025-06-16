@@ -41,15 +41,18 @@
 
 #if defined(__gfx12__)
 #define WMMA_DATA_WIDTH 8
-typedef _Float16 frag_type __attribute__( ( ext_vector_type( 8 ) ) );
+typedef __fp16 frag_type __attribute__( ( ext_vector_type( 8 ) ) );
 typedef float frag_type_c __attribute__( ( ext_vector_type( 8 ) ) );
+typedef __fp16 half_2 __attribute__( ( ext_vector_type( 2 ) ) );
 #else
 #define WMMA_DATA_WIDTH 16
-typedef _Float16 frag_type __attribute__( ( ext_vector_type( 16 ) ) );
-typedef _Float16 frag_type_c __attribute__( ( ext_vector_type( 16 ) ) );
+typedef __fp16 frag_type __attribute__( ( ext_vector_type( 16 ) ) );
+typedef __fp16 frag_type_c __attribute__( ( ext_vector_type( 16 ) ) );
 #endif
 
-extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
+__device__ half_2 packFp32s( float a, float b ) { return __builtin_amdgcn_cvt_pkrtz( a, b ); }
+
+extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 {
 	const int gIdx = blockIdx.x * blockDim.x + threadIdx.x;
 	const int lIdx = threadIdx.x;
@@ -65,11 +68,25 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 	const int lane = lIdx % 16;
 	const int laneGroup = lIdx / 16;
 #if defined( __gfx12__ )
+#if 1
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
-		b_frag[ele] = b[16 * (ele+laneGroup * WMMA_DATA_WIDTH) + lane];
-		a_frag[ele] = a[16 * lane + (ele+laneGroup * WMMA_DATA_WIDTH)];
+		b_frag[ele] = b[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + lane];
+		a_frag[ele] = a[16 * lane + ( ele + laneGroup * WMMA_DATA_WIDTH )];
 	}
+#else
+	{//with __builtin_amdgcn_cvt_pkrtz
+		half_2* a_ptr = reinterpret_cast<half_2*>( &a_frag );
+		half_2* b_ptr = reinterpret_cast<half_2*>( &b_frag );
+		for( int ele = 0; ele < WMMA_DATA_WIDTH / 2; ++ele )
+		{
+			const int e0 = ele * 2 + 0;
+			const int e1 = ele * 2 + 1;
+			b_ptr[ele] = packFp32s( b[16 * ( e0 + laneGroup * WMMA_DATA_WIDTH ) + lane], b[16 * ( e1 + laneGroup * WMMA_DATA_WIDTH ) + lane] );
+			a_ptr[ele] = packFp32s( a[16 * lane + ( e0 + laneGroup * WMMA_DATA_WIDTH )], a[16 * lane + ( e1 + laneGroup * WMMA_DATA_WIDTH )] );
+		}
+	}
+#endif
 #else
 	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
