@@ -42,9 +42,11 @@
 #if defined(__gfx12__)
 #define WMMA_DATA_WIDTH 8
 typedef _Float16 frag_type __attribute__( ( ext_vector_type( 8 ) ) );
+typedef float frag_type_c __attribute__( ( ext_vector_type( 8 ) ) );
 #else
 #define WMMA_DATA_WIDTH 16
 typedef _Float16 frag_type __attribute__( ( ext_vector_type( 16 ) ) );
+typedef _Float16 frag_type_c __attribute__( ( ext_vector_type( 16 ) ) );
 #endif
 
 extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
@@ -58,38 +60,30 @@ extern "C" __global__ void wmma_matmul( __half* a, __half* b, __half* c )
 	frag_type a_frag;
 	frag_type b_frag;
 	// initialize c fragment to 0
-	frag_type c_frag = {};
+	frag_type_c c_frag = {};
 
-	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	const int lane = lIdx % 16;
 	const int laneGroup = lIdx / 16;
 #if defined( __gfx12__ )
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		b_frag[ele] = b[16 * (ele+laneGroup * WMMA_DATA_WIDTH) + lane];
-	}
-
-	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
-	{
-		a_frag[ele] = a[16 * lane + ele+laneGroup * WMMA_DATA_WIDTH];
+		a_frag[ele] = a[16 * lane + (ele+laneGroup * WMMA_DATA_WIDTH)];
 	}
 #else
+	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
 		b_frag[ele] = b[16 * ele + lane];
-	}
-
-	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
-	{
 		a_frag[ele] = a[16 * lane + ele];
 	}
 #endif
 	// call the WMMA compiler intrinsic 
 	// more details available in the RDNA3 ISA guide - https://developer.amd.com/wp-content/resources/RDNA3_Shader_ISA_December2022.pdf
+	// more details available in the RDNA4 ISA guide - https://www.amd.com/content/dam/amd/en/documents/radeon-tech-docs/instruction-set-architectures/rdna4-instruction-set-architecture.pdf
 	// the last parameter is called "OPSEL" which decides which half of the VGPRs of c_frag the results are stored into
-	// this will only compile on RDNA3
 #if defined( __gfx12__ )
-	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32_gfx12( a_frag, b_frag, c_frag );
+	c_frag = __builtin_amdgcn_wmma_f32_16x16x16_f16_w32_gfx12( a_frag, b_frag, c_frag );
 #else
 	c_frag = __builtin_amdgcn_wmma_f16_16x16x16_f16_w32( a_frag, b_frag, c_frag, false );
 #endif
