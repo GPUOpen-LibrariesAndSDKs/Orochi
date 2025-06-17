@@ -54,7 +54,6 @@ __device__ half_2 packFp32s( float a, float b ) { return __builtin_amdgcn_cvt_pk
 
 extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 {
-	const int gIdx = blockIdx.x * blockDim.x + threadIdx.x;
 	const int lIdx = threadIdx.x;
 
 	// a and b fragments are stored in 8 VGPRs each, in packed format, so 16 elements each for a and b
@@ -65,14 +64,14 @@ extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 	// initialize c fragment to 0
 	frag_type_c c_frag = {};
 
-	const int lane = lIdx % 16;
+	const int laneWrapped = lIdx % 16;
 	const int laneGroup = lIdx / 16;
 #if defined( __gfx12__ )
 #if 1
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
-		b_frag[ele] = b[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + lane];
-		a_frag[ele] = a[16 * lane + ( ele + laneGroup * WMMA_DATA_WIDTH )];
+		b_frag[ele] = b[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + laneWrapped];
+		a_frag[ele] = a[16 * laneWrapped + ( ele + laneGroup * WMMA_DATA_WIDTH )];
 	}
 #else
 	{//with __builtin_amdgcn_cvt_pkrtz
@@ -82,8 +81,8 @@ extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 		{
 			const int e0 = ele * 2 + 0;
 			const int e1 = ele * 2 + 1;
-			b_ptr[ele] = packFp32s( b[16 * ( e0 + laneGroup * WMMA_DATA_WIDTH ) + lane], b[16 * ( e1 + laneGroup * WMMA_DATA_WIDTH ) + lane] );
-			a_ptr[ele] = packFp32s( a[16 * lane + ( e0 + laneGroup * WMMA_DATA_WIDTH )], a[16 * lane + ( e1 + laneGroup * WMMA_DATA_WIDTH )] );
+			b_ptr[ele] = packFp32s( b[16 * ( e0 + laneGroup * WMMA_DATA_WIDTH ) + laneWrapped], b[16 * ( e1 + laneGroup * WMMA_DATA_WIDTH ) + laneWrapped] );
+			a_ptr[ele] = packFp32s( a[16 * laneWrapped + ( e0 + laneGroup * WMMA_DATA_WIDTH )], a[16 * laneWrapped + ( e1 + laneGroup * WMMA_DATA_WIDTH )] );
 		}
 	}
 #endif
@@ -91,8 +90,8 @@ extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 	// lane is (0-31) mod 16 instead of 0-31 due to matrix replication in RDNA3
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
-		b_frag[ele] = b[16 * ele + lane];
-		a_frag[ele] = a[16 * lane + ele];
+		b_frag[ele] = b[16 * ele + laneWrapped];
+		a_frag[ele] = a[16 * laneWrapped + ele];
 	}
 #endif
 	// call the WMMA compiler intrinsic 
@@ -107,16 +106,16 @@ extern "C" __global__ void wmma_matmul( __fp16* a, __fp16* b, __fp16* c )
 #if defined( __gfx12__ )
 	for( int ele = 0; ele < WMMA_DATA_WIDTH; ++ele )
 	{
-		c[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + lane] = c_frag[ele];
+		c[16 * ( ele + laneGroup * WMMA_DATA_WIDTH ) + laneWrapped] = c_frag[ele];
 	}
 #else
 	for( int ele = 0; ele < 8; ++ele )
 	{
 		const int r = ele * 2 + ( lIdx / 16 );
 		// store results from unpacked c_frag output
-		c[16 * r + lane] = c_frag[ele * 2];
+		c[16 * r + laneWrapped] = c_frag[ele * 2];
 		// if OPSEL was set to "true", the line above would instead be
-		// c[16 * r + lane] = c_frag[ele*2 + 1];
+		// c[16 * r + laneWrapped] = c_frag[ele*2 + 1];
 	}
 #endif
 }
