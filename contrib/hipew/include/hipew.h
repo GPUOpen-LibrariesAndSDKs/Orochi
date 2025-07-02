@@ -59,9 +59,9 @@ extern "C" {
 
 
 // defines:
-#define DEPRECATED(msg) __declspec(deprecated(msg))
-#define DEPRECATED_MSG "This API is marked as deprecated and may not be supported in future releases. For more details please refer https://github.com/ROCm-Developer-Tools/HIP/blob/master/docs/markdown/hip_deprecated_api_list.md"
 #define GENERIC_GRID_LAUNCH 1
+#define HIP_DEPRECATED(msg) __declspec(deprecated(msg))
+#define HIP_DEPRECATED_MSG "This API is marked as deprecated and might not be supported in future releases. For more details please refer https://github.com/ROCm/HIP/blob/develop/docs/reference/deprecated_api_list.md"
 #define HIP_INCLUDE_HIP_HIP_RUNTIME_API_H 
 #define HIP_IPC_HANDLE_SIZE 64
 #define HIP_LAUNCH_PARAM_BUFFER_POINTER ((void*)0x01)
@@ -70,11 +70,11 @@ extern "C" {
 #define HIP_VERSION (HIP_VERSION_MAJOR * 10000000 + HIP_VERSION_MINOR * 100000 + HIP_VERSION_PATCH)
 #define HIP_VERSION_BUILD_ID 0
 #define HIP_VERSION_BUILD_NAME ""
-#define HIP_VERSION_GITHASH "326dd5fe4"
+#define HIP_VERSION_GITHASH ""
 #define HIP_VERSION_H 
-#define HIP_VERSION_MAJOR 6
+#define HIP_VERSION_MAJOR 7
 #define HIP_VERSION_MINOR 0
-#define HIP_VERSION_PATCH 33231
+#define HIP_VERSION_PATCH 51700
 #define USE_PEER_NON_UNIFIED 1
 #define __HIP_HAS_GET_PCH 0
 #define __HIP_NODISCARD 
@@ -89,6 +89,7 @@ extern "C" {
 #define hipCooperativeLaunchMultiDeviceNoPreSync 0x01
 #define hipCpuDeviceId ((int)-1)
 #define hipDeviceLmemResizeToMax 0x10
+#define hipDeviceMallocContiguous 0x4
 #define hipDeviceMallocDefault 0x0
 #define hipDeviceMallocFinegrained 0x1
 #define hipDeviceMallocUncached 0x3
@@ -99,17 +100,30 @@ extern "C" {
 #define hipDeviceScheduleMask 0x7
 #define hipDeviceScheduleSpin 0x1
 #define hipDeviceScheduleYield 0x2
+#define hipDrvLaunchAttribute hipLaunchAttribute
+#define hipDrvLaunchAttributeCooperative hipLaunchAttributeCooperative
+#define hipDrvLaunchAttributeID hipLaunchAttributeID
+#define hipDrvLaunchAttributeValue hipLaunchAttributeValue
 #define hipEventBlockingSync 0x1
 #define hipEventDefault 0x0
 #define hipEventDisableSystemFence 0x20000000
 #define hipEventDisableTiming 0x2
 #define hipEventInterprocess 0x4
+#define hipEventRecordDefault 0x00
+#define hipEventRecordExternal 0x01
 #define hipEventReleaseToDevice 0x40000000
 #define hipEventReleaseToSystem 0x80000000
 #define hipExtAnyOrderLaunch 0x01
 #define hipExtHostRegisterCoarseGrained 0x8
 #define hipExternalMemoryDedicated 0x1
 #define hipGetDeviceProperties hipGetDevicePropertiesR0600
+#define hipGraphKernelNodePortDefault 0
+#define hipGraphKernelNodePortLaunchCompletion 2
+#define hipGraphKernelNodePortProgrammatic 1
+#define hipHostAllocDefault 0x0
+#define hipHostAllocMapped 0x2
+#define hipHostAllocPortable 0x1
+#define hipHostAllocWriteCombined 0x4
 #define hipHostMallocCoherent 0x40000000
 #define hipHostMallocDefault 0x0
 #define hipHostMallocMapped 0x2
@@ -124,6 +138,11 @@ extern "C" {
 #define hipHostRegisterReadOnly 0x08
 #define hipInvalidDeviceId ((int)-2)
 #define hipIpcMemLazyEnablePeerAccess 0x01
+#define hipKernelNodeAttrID hipLaunchAttributeID
+#define hipKernelNodeAttrValue hipLaunchAttributeValue
+#define hipKernelNodeAttributeAccessPolicyWindow hipLaunchAttributeAccessPolicyWindow
+#define hipKernelNodeAttributeCooperative hipLaunchAttributeCooperative
+#define hipKernelNodeAttributePriority hipLaunchAttributePriority
 #define hipMallocSignalMemory 0x2
 #define hipMemAttachGlobal 0x01
 #define hipMemAttachHost 0x02
@@ -131,6 +150,7 @@ extern "C" {
 #define hipOccupancyDefault 0x00
 #define hipOccupancyDisableCachingOverride 0x01
 #define hipStreamDefault 0x00
+#define hipStreamLegacy ((hipStream_t)1)
 #define hipStreamNonBlocking 0x01
 #define hipStreamPerThread ((hipStream_t)2)
 #define hipStreamWaitValueAnd 0x2
@@ -379,6 +399,8 @@ enum hipError_t
 	hipErrorCapturedEvent = 907,
 	hipErrorStreamCaptureWrongThread = 908,
 	hipErrorGraphExecUpdateFailure = 910,
+	hipErrorInvalidChannelDescriptor = 911,
+	hipErrorInvalidTexture = 912,
 	hipErrorUnknown = 999,
 	hipErrorRuntimeMemory = 1052,
 	hipErrorRuntimeOther = 1053,
@@ -479,6 +501,7 @@ enum hipDeviceAttribute_t
 	hipDeviceAttributeMemoryPoolsSupported = 88,
 	hipDeviceAttributeVirtualMemoryManagementSupported = 89,
 	hipDeviceAttributeHostRegisterSupported = 90,
+	hipDeviceAttributeMemoryPoolSupportedHandleTypes = 91,
 	hipDeviceAttributeCudaCompatibleEnd = 9999,
 	hipDeviceAttributeAmdSpecificBegin = 10000,
 	hipDeviceAttributeClockInstructionRate = 10000,
@@ -503,6 +526,13 @@ enum hipDeviceAttribute_t
 	hipDeviceAttributeVendorSpecificBegin = 20000,
 };
 typedef enum hipDeviceAttribute_t hipDeviceAttribute_t;
+enum hipDriverProcAddressQueryResult
+{
+	HIP_GET_PROC_ADDRESS_SUCCESS = 0,
+	HIP_GET_PROC_ADDRESS_SYMBOL_NOT_FOUND = 1,
+	HIP_GET_PROC_ADDRESS_VERSION_NOT_SUFFICIENT = 2,
+};
+typedef enum hipDriverProcAddressQueryResult hipDriverProcAddressQueryResult;
 enum hipComputeMode
 {
 	hipComputeModeDefault = 0,
@@ -831,6 +861,7 @@ enum hipMemcpyKind
 	hipMemcpyDeviceToHost = 2,
 	hipMemcpyDeviceToDevice = 3,
 	hipMemcpyDefault = 4,
+	hipMemcpyDeviceToDeviceNoCU = 1024,
 };
 typedef enum hipMemcpyKind hipMemcpyKind;
 struct hipPitchedPtr
@@ -1046,6 +1077,68 @@ enum hipLimit_t
 	hipLimitMallocHeapSize = 2,
 	hipLimitRange = 3,
 };
+enum hipStreamBatchMemOpType
+{
+	hipStreamMemOpWaitValue32 = 1,
+	hipStreamMemOpWriteValue32 = 2,
+	hipStreamMemOpWaitValue64 = 4,
+	hipStreamMemOpWriteValue64 = 5,
+	hipStreamMemOpBarrier = 6,
+	hipStreamMemOpFlushRemoteWrites = 3,
+};
+typedef enum hipStreamBatchMemOpType hipStreamBatchMemOpType;
+union hipStreamBatchMemOpParams_union
+{
+	hipStreamBatchMemOpType operation;
+	struct hipStreamMemOpWaitValueParams_t
+	{
+		hipStreamBatchMemOpType operation;
+		hipDeviceptr_t address;
+		union 
+		{
+			uint32_t value;
+			uint64_t value64;
+		};
+		unsigned int flags;
+		hipDeviceptr_t alias;
+	};
+	struct hipStreamMemOpWaitValueParams_t waitValue;
+	struct hipStreamMemOpWriteValueParams_t
+	{
+		hipStreamBatchMemOpType operation;
+		hipDeviceptr_t address;
+		union 
+		{
+			uint32_t value;
+			uint64_t value64;
+		};
+		unsigned int flags;
+		hipDeviceptr_t alias;
+	};
+	struct hipStreamMemOpWriteValueParams_t writeValue;
+	struct hipStreamMemOpFlushRemoteWritesParams_t
+	{
+		hipStreamBatchMemOpType operation;
+		unsigned int flags;
+	};
+	struct hipStreamMemOpFlushRemoteWritesParams_t flushRemoteWrites;
+	struct hipStreamMemOpMemoryBarrierParams_t
+	{
+		hipStreamBatchMemOpType operation;
+		unsigned int flags;
+	};
+	struct hipStreamMemOpMemoryBarrierParams_t memoryBarrier;
+	uint64_t pad[6];
+};
+typedef union hipStreamBatchMemOpParams_union hipStreamBatchMemOpParams;
+struct hipBatchMemOpNodeParams
+{
+	hipCtx_t ctx;
+	unsigned int count;
+	hipStreamBatchMemOpParams * paramArray;
+	unsigned int flags;
+};
+typedef struct hipBatchMemOpNodeParams hipBatchMemOpNodeParams;
 enum hipMemoryAdvise
 {
 	hipMemAdviseSetReadMostly = 1,
@@ -1132,7 +1225,8 @@ struct hipMemPoolProps
 	hipMemAllocationHandleType handleTypes;
 	hipMemLocation location;
 	void * win32SecurityAttributes;
-	unsigned char reserved[64];
+	size_t maxSize;
+	unsigned char reserved[56];
 };
 typedef struct hipMemPoolProps hipMemPoolProps;
 struct hipMemPoolPtrExportData
@@ -1378,7 +1472,8 @@ enum hipGraphNodeType
 	hipGraphNodeTypeMemFree = 11,
 	hipGraphNodeTypeMemcpyFromSymbol = 12,
 	hipGraphNodeTypeMemcpyToSymbol = 13,
-	hipGraphNodeTypeCount = 14,
+	hipGraphNodeTypeBatchMemOp = 14,
+	hipGraphNodeTypeCount = 15,
 };
 typedef enum hipGraphNodeType hipGraphNodeType;
 typedef void (*hipHostFn_t)(void *);
@@ -1417,12 +1512,6 @@ struct hipMemAllocNodeParams
 	void * dptr;
 };
 typedef struct hipMemAllocNodeParams hipMemAllocNodeParams;
-enum hipKernelNodeAttrID
-{
-	hipKernelNodeAttributeAccessPolicyWindow = 1,
-	hipKernelNodeAttributeCooperative = 2,
-};
-typedef enum hipKernelNodeAttrID hipKernelNodeAttrID;
 enum hipAccessProperty
 {
 	hipAccessPropertyNormal = 0,
@@ -1439,22 +1528,20 @@ struct hipAccessPolicyWindow
 	size_t num_bytes;
 };
 typedef struct hipAccessPolicyWindow hipAccessPolicyWindow;
-union hipKernelNodeAttrValue
+enum hipLaunchAttributeID
+{
+	hipLaunchAttributeAccessPolicyWindow = 1,
+	hipLaunchAttributeCooperative = 2,
+	hipLaunchAttributePriority = 8,
+};
+typedef enum hipLaunchAttributeID hipLaunchAttributeID;
+union hipLaunchAttributeValue
 {
 	hipAccessPolicyWindow accessPolicyWindow;
 	int cooperative;
+	int priority;
 };
-typedef union hipKernelNodeAttrValue hipKernelNodeAttrValue;
-struct HIP_MEMSET_NODE_PARAMS
-{
-	hipDeviceptr_t dst;
-	size_t pitch;
-	unsigned int value;
-	unsigned int elementSize;
-	size_t width;
-	size_t height;
-};
-typedef struct HIP_MEMSET_NODE_PARAMS HIP_MEMSET_NODE_PARAMS;
+typedef union hipLaunchAttributeValue hipLaunchAttributeValue;
 enum hipGraphExecUpdateResult
 {
 	hipGraphExecUpdateSuccess = 0,
@@ -1526,6 +1613,23 @@ enum hipGraphDebugDotFlags
 	hipGraphDebugDotFlagsKernelNodeAttributes = 512,
 	hipGraphDebugDotFlagsHandles = 1024,
 };
+enum hipGraphInstantiateResult
+{
+	hipGraphInstantiateSuccess = 0,
+	hipGraphInstantiateError = 1,
+	hipGraphInstantiateInvalidStructure = 2,
+	hipGraphInstantiateNodeOperationNotSupported = 3,
+	hipGraphInstantiateMultipleDevicesNotSupported = 4,
+};
+typedef enum hipGraphInstantiateResult hipGraphInstantiateResult;
+struct hipGraphInstantiateParams
+{
+	hipGraphNode_t errNode_out;
+	unsigned long long flags;
+	hipGraphInstantiateResult result_out;
+	hipStream_t uploadStream;
+};
+typedef struct hipGraphInstantiateParams hipGraphInstantiateParams;
 struct hipMemAllocationProp
 {
 	hipMemAllocationType type;
@@ -1620,6 +1724,69 @@ struct hipArrayMapInfo
 	unsigned int reserved[2];
 };
 typedef struct hipArrayMapInfo hipArrayMapInfo;
+struct hipMemcpyNodeParams
+{
+	int flags;
+	int reserved[3];
+	hipMemcpy3DParms copyParams;
+};
+typedef struct hipMemcpyNodeParams hipMemcpyNodeParams;
+struct hipChildGraphNodeParams
+{
+	hipGraph_t graph;
+};
+typedef struct hipChildGraphNodeParams hipChildGraphNodeParams;
+struct hipEventWaitNodeParams
+{
+	hipEvent_t event;
+};
+typedef struct hipEventWaitNodeParams hipEventWaitNodeParams;
+struct hipEventRecordNodeParams
+{
+	hipEvent_t event;
+};
+typedef struct hipEventRecordNodeParams hipEventRecordNodeParams;
+struct hipMemFreeNodeParams
+{
+	void * dptr;
+};
+typedef struct hipMemFreeNodeParams hipMemFreeNodeParams;
+struct hipGraphNodeParams
+{
+	hipGraphNodeType type;
+	int reserved0[3];
+	union 
+	{
+		long long reserved1[29];
+		hipKernelNodeParams kernel;
+		hipMemcpyNodeParams memcpy;
+		hipMemsetParams memset;
+		hipHostNodeParams host;
+		hipChildGraphNodeParams graph;
+		hipEventWaitNodeParams eventWait;
+		hipEventRecordNodeParams eventRecord;
+		hipExternalSemaphoreSignalNodeParams extSemSignal;
+		hipExternalSemaphoreWaitNodeParams extSemWait;
+		hipMemAllocNodeParams alloc;
+		hipMemFreeNodeParams free;
+	};
+	long long reserved2;
+};
+typedef struct hipGraphNodeParams hipGraphNodeParams;
+enum hipGraphDependencyType
+{
+	hipGraphDependencyTypeDefault = 0,
+	hipGraphDependencyTypeProgrammatic = 1,
+};
+typedef enum hipGraphDependencyType hipGraphDependencyType;
+struct hipGraphEdgeData
+{
+	unsigned char from_port;
+	unsigned char reserved[5];
+	unsigned char to_port;
+	unsigned char type;
+};
+typedef struct hipGraphEdgeData hipGraphEdgeData;
 typedef void (*hipStreamCallback_t)(hipStream_t, hipError_t, void *);
 enum hiprtcResult
 {
@@ -1712,7 +1879,7 @@ typedef hipError_t HIPAPI thipCtxCreate(hipCtx_t * ctx, unsigned int flags, hipD
 typedef hipError_t HIPAPI thipCtxDestroy(hipCtx_t ctx);
 typedef hipError_t HIPAPI thipCtxDisablePeerAccess(hipCtx_t peerCtx);
 typedef hipError_t HIPAPI thipCtxEnablePeerAccess(hipCtx_t peerCtx, unsigned int flags);
-typedef hipError_t HIPAPI thipCtxGetApiVersion(hipCtx_t ctx, int * apiVersion);
+typedef hipError_t HIPAPI thipCtxGetApiVersion(hipCtx_t ctx, unsigned int * apiVersion);
 typedef hipError_t HIPAPI thipCtxGetCacheConfig(hipFuncCache_t * cacheConfig);
 typedef hipError_t HIPAPI thipCtxGetCurrent(hipCtx_t * ctx);
 typedef hipError_t HIPAPI thipCtxGetDevice(hipDevice_t * device);
@@ -1745,6 +1912,7 @@ typedef hipError_t HIPAPI thipDeviceGetP2PAttribute(int * value, hipDeviceP2PAtt
 typedef hipError_t HIPAPI thipDeviceGetPCIBusId(char * pciBusId, int len, int device);
 typedef hipError_t HIPAPI thipDeviceGetSharedMemConfig(hipSharedMemConfig * pConfig);
 typedef hipError_t HIPAPI thipDeviceGetStreamPriorityRange(int * leastPriority, int * greatestPriority);
+typedef hipError_t HIPAPI thipDeviceGetTexture1DLinearMaxWidth(hipMemPool_t * mem_pool, int device);
 typedef hipError_t HIPAPI thipDeviceGetUuid(hipUUID * uuid, hipDevice_t device);
 typedef hipError_t HIPAPI thipDeviceGraphMemTrim(int device);
 typedef hipError_t HIPAPI thipDevicePrimaryCtxGetState(hipDevice_t dev, unsigned int * flags, int * active);
@@ -1763,7 +1931,13 @@ typedef hipError_t HIPAPI thipDeviceTotalMem(size_t * bytes, hipDevice_t device)
 typedef hipError_t HIPAPI thipDriverGetVersion(int * driverVersion);
 typedef hipError_t HIPAPI thipDrvGetErrorName(hipError_t hipError, const char ** errorString);
 typedef hipError_t HIPAPI thipDrvGetErrorString(hipError_t hipError, const char ** errorString);
+typedef hipError_t HIPAPI thipDrvGraphAddMemFreeNode(hipGraphNode_t * phGraphNode, hipGraph_t hGraph, const hipGraphNode_t * dependencies, size_t numDependencies, hipDeviceptr_t dptr);
 typedef hipError_t HIPAPI thipDrvGraphAddMemcpyNode(hipGraphNode_t * phGraphNode, hipGraph_t hGraph, const hipGraphNode_t * dependencies, size_t numDependencies, const HIP_MEMCPY3D * copyParams, hipCtx_t ctx);
+typedef hipError_t HIPAPI thipDrvGraphAddMemsetNode(hipGraphNode_t * phGraphNode, hipGraph_t hGraph, const hipGraphNode_t * dependencies, size_t numDependencies, const hipMemsetParams * memsetParams, hipCtx_t ctx);
+typedef hipError_t HIPAPI thipDrvGraphExecMemcpyNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const HIP_MEMCPY3D * copyParams, hipCtx_t ctx);
+typedef hipError_t HIPAPI thipDrvGraphExecMemsetNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipMemsetParams * memsetParams, hipCtx_t ctx);
+typedef hipError_t HIPAPI thipDrvGraphMemcpyNodeGetParams(hipGraphNode_t hNode, HIP_MEMCPY3D * nodeParams);
+typedef hipError_t HIPAPI thipDrvGraphMemcpyNodeSetParams(hipGraphNode_t hNode, const HIP_MEMCPY3D * nodeParams);
 typedef hipError_t HIPAPI thipDrvMemcpy2DUnaligned(const hip_Memcpy2D * pCopy);
 typedef hipError_t HIPAPI thipDrvMemcpy3D(const HIP_MEMCPY3D * pCopy);
 typedef hipError_t HIPAPI thipDrvMemcpy3DAsync(const HIP_MEMCPY3D * pCopy, hipStream_t stream);
@@ -1774,6 +1948,7 @@ typedef hipError_t HIPAPI thipEventDestroy(hipEvent_t event);
 typedef hipError_t HIPAPI thipEventElapsedTime(float * ms, hipEvent_t start, hipEvent_t stop);
 typedef hipError_t HIPAPI thipEventQuery(hipEvent_t event);
 typedef hipError_t HIPAPI thipEventRecord(hipEvent_t event, hipStream_t stream);
+typedef hipError_t HIPAPI thipEventRecordWithFlags(hipEvent_t event, hipStream_t stream, unsigned int flags);
 typedef hipError_t HIPAPI thipEventRecord_spt(hipEvent_t event, hipStream_t stream);
 typedef hipError_t HIPAPI thipEventSynchronize(hipEvent_t event);
 typedef hipError_t HIPAPI thipExtGetLastError();
@@ -1802,8 +1977,10 @@ typedef hipError_t HIPAPI thipGetDeviceFlags(unsigned int * flags);
 typedef hipError_t HIPAPI thipGetDevicePropertiesR0600(hipDeviceProp_tR0600 * prop, int deviceId);
 typedef const char * HIPAPI thipGetErrorName(hipError_t hip_error);
 typedef const char * HIPAPI thipGetErrorString(hipError_t hipError);
+typedef hipError_t HIPAPI thipGetFuncBySymbol(hipFunction_t * functionPtr, const void * symbolPtr);
 typedef hipError_t HIPAPI thipGetLastError();
 typedef hipError_t HIPAPI thipGetMipmappedArrayLevel(hipArray_t * levelArray, hipMipmappedArray_const_t mipmappedArray, unsigned int level);
+typedef hipError_t HIPAPI thipGetProcAddress(const char * symbol, void ** pfn, int hipVersion, uint64_t flags, hipDriverProcAddressQueryResult * symbolStatus);
 typedef int HIPAPI thipGetStreamDeviceId(hipStream_t stream);
 typedef hipError_t HIPAPI thipGetSymbolAddress(void ** devPtr, const void * symbol);
 typedef hipError_t HIPAPI thipGetSymbolSize(size_t * size, const void * symbol);
@@ -1812,11 +1989,14 @@ typedef hipError_t HIPAPI thipGetTextureObjectResourceDesc(hipResourceDesc * pRe
 typedef hipError_t HIPAPI thipGetTextureObjectResourceViewDesc(struct hipResourceViewDesc * pResViewDesc, hipTextureObject_t textureObject);
 typedef hipError_t HIPAPI thipGetTextureObjectTextureDesc(hipTextureDesc * pTexDesc, hipTextureObject_t textureObject);
 typedef hipError_t HIPAPI thipGetTextureReference(const textureReference ** texref, const void * symbol);
+typedef hipError_t HIPAPI thipGraphAddBatchMemOpNode(hipGraphNode_t * phGraphNode, hipGraph_t hGraph, const hipGraphNode_t * dependencies, size_t numDependencies, const hipBatchMemOpNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphAddChildGraphNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipGraph_t childGraph);
 typedef hipError_t HIPAPI thipGraphAddDependencies(hipGraph_t graph, const hipGraphNode_t * from, const hipGraphNode_t * to, size_t numDependencies);
 typedef hipError_t HIPAPI thipGraphAddEmptyNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies);
 typedef hipError_t HIPAPI thipGraphAddEventRecordNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipEvent_t event);
 typedef hipError_t HIPAPI thipGraphAddEventWaitNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphAddExternalSemaphoresSignalNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphAddExternalSemaphoresWaitNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipExternalSemaphoreWaitNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphAddHostNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipHostNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphAddKernelNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipKernelNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphAddMemAllocNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipMemAllocNodeParams * pNodeParams);
@@ -1826,6 +2006,9 @@ typedef hipError_t HIPAPI thipGraphAddMemcpyNode1D(hipGraphNode_t * pGraphNode, 
 typedef hipError_t HIPAPI thipGraphAddMemcpyNodeFromSymbol(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, void * dst, const void * symbol, size_t count, size_t offset, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipGraphAddMemcpyNodeToSymbol(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const void * symbol, const void * src, size_t count, size_t offset, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipGraphAddMemsetNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, const hipMemsetParams * pMemsetParams);
+typedef hipError_t HIPAPI thipGraphAddNode(hipGraphNode_t * pGraphNode, hipGraph_t graph, const hipGraphNode_t * pDependencies, size_t numDependencies, hipGraphNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphBatchMemOpNodeGetParams(hipGraphNode_t hNode, hipBatchMemOpNodeParams * nodeParams_out);
+typedef hipError_t HIPAPI thipGraphBatchMemOpNodeSetParams(hipGraphNode_t hNode, hipBatchMemOpNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphChildGraphNodeGetGraph(hipGraphNode_t node, hipGraph_t * pGraph);
 typedef hipError_t HIPAPI thipGraphClone(hipGraph_t * pGraphClone, hipGraph_t originalGraph);
 typedef hipError_t HIPAPI thipGraphCreate(hipGraph_t * pGraph, unsigned int flags);
@@ -1836,10 +2019,14 @@ typedef hipError_t HIPAPI thipGraphEventRecordNodeGetEvent(hipGraphNode_t node, 
 typedef hipError_t HIPAPI thipGraphEventRecordNodeSetEvent(hipGraphNode_t node, hipEvent_t event);
 typedef hipError_t HIPAPI thipGraphEventWaitNodeGetEvent(hipGraphNode_t node, hipEvent_t * event_out);
 typedef hipError_t HIPAPI thipGraphEventWaitNodeSetEvent(hipGraphNode_t node, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphExecBatchMemOpNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipBatchMemOpNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphExecChildGraphNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, hipGraph_t childGraph);
 typedef hipError_t HIPAPI thipGraphExecDestroy(hipGraphExec_t graphExec);
 typedef hipError_t HIPAPI thipGraphExecEventRecordNodeSetEvent(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, hipEvent_t event);
 typedef hipError_t HIPAPI thipGraphExecEventWaitNodeSetEvent(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, hipEvent_t event);
+typedef hipError_t HIPAPI thipGraphExecExternalSemaphoresSignalNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExecExternalSemaphoresWaitNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, const hipExternalSemaphoreWaitNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExecGetFlags(hipGraphExec_t graphExec, unsigned long long * flags);
 typedef hipError_t HIPAPI thipGraphExecHostNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipHostNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphExecKernelNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipKernelNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, hipMemcpy3DParms * pNodeParams);
@@ -1847,7 +2034,12 @@ typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParams1D(hipGraphExec_t hGra
 typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParamsFromSymbol(hipGraphExec_t hGraphExec, hipGraphNode_t node, void * dst, const void * symbol, size_t count, size_t offset, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipGraphExecMemcpyNodeSetParamsToSymbol(hipGraphExec_t hGraphExec, hipGraphNode_t node, const void * symbol, const void * src, size_t count, size_t offset, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipGraphExecMemsetNodeSetParams(hipGraphExec_t hGraphExec, hipGraphNode_t node, const hipMemsetParams * pNodeParams);
+typedef hipError_t HIPAPI thipGraphExecNodeSetParams(hipGraphExec_t graphExec, hipGraphNode_t node, hipGraphNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphExecUpdate(hipGraphExec_t hGraphExec, hipGraph_t hGraph, hipGraphNode_t * hErrorNode_out, hipGraphExecUpdateResult * updateResult_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresSignalNodeGetParams(hipGraphNode_t hNode, hipExternalSemaphoreSignalNodeParams * params_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresSignalNodeSetParams(hipGraphNode_t hNode, const hipExternalSemaphoreSignalNodeParams * nodeParams);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresWaitNodeGetParams(hipGraphNode_t hNode, hipExternalSemaphoreWaitNodeParams * params_out);
+typedef hipError_t HIPAPI thipGraphExternalSemaphoresWaitNodeSetParams(hipGraphNode_t hNode, const hipExternalSemaphoreWaitNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphGetEdges(hipGraph_t graph, hipGraphNode_t * from, hipGraphNode_t * to, size_t * numEdges);
 typedef hipError_t HIPAPI thipGraphGetNodes(hipGraph_t graph, hipGraphNode_t * nodes, size_t * numNodes);
 typedef hipError_t HIPAPI thipGraphGetRootNodes(hipGraph_t graph, hipGraphNode_t * pRootNodes, size_t * pNumRootNodes);
@@ -1855,10 +2047,11 @@ typedef hipError_t HIPAPI thipGraphHostNodeGetParams(hipGraphNode_t node, hipHos
 typedef hipError_t HIPAPI thipGraphHostNodeSetParams(hipGraphNode_t node, const hipHostNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphInstantiate(hipGraphExec_t * pGraphExec, hipGraph_t graph, hipGraphNode_t * pErrorNode, char * pLogBuffer, size_t bufferSize);
 typedef hipError_t HIPAPI thipGraphInstantiateWithFlags(hipGraphExec_t * pGraphExec, hipGraph_t graph, unsigned long long flags);
+typedef hipError_t HIPAPI thipGraphInstantiateWithParams(hipGraphExec_t * pGraphExec, hipGraph_t graph, hipGraphInstantiateParams * instantiateParams);
 typedef hipError_t HIPAPI thipGraphKernelNodeCopyAttributes(hipGraphNode_t hSrc, hipGraphNode_t hDst);
-typedef hipError_t HIPAPI thipGraphKernelNodeGetAttribute(hipGraphNode_t hNode, hipKernelNodeAttrID attr, hipKernelNodeAttrValue * value);
+typedef hipError_t HIPAPI thipGraphKernelNodeGetAttribute(hipGraphNode_t hNode, hipLaunchAttributeID attr, hipLaunchAttributeValue * value);
 typedef hipError_t HIPAPI thipGraphKernelNodeGetParams(hipGraphNode_t node, hipKernelNodeParams * pNodeParams);
-typedef hipError_t HIPAPI thipGraphKernelNodeSetAttribute(hipGraphNode_t hNode, hipKernelNodeAttrID attr, const hipKernelNodeAttrValue * value);
+typedef hipError_t HIPAPI thipGraphKernelNodeSetAttribute(hipGraphNode_t hNode, hipLaunchAttributeID attr, const hipLaunchAttributeValue * value);
 typedef hipError_t HIPAPI thipGraphKernelNodeSetParams(hipGraphNode_t node, const hipKernelNodeParams * pNodeParams);
 typedef hipError_t HIPAPI thipGraphLaunch(hipGraphExec_t graphExec, hipStream_t stream);
 typedef hipError_t HIPAPI thipGraphLaunch_spt(hipGraphExec_t graphExec, hipStream_t stream);
@@ -1877,6 +2070,7 @@ typedef hipError_t HIPAPI thipGraphNodeGetDependentNodes(hipGraphNode_t node, hi
 typedef hipError_t HIPAPI thipGraphNodeGetEnabled(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, unsigned int * isEnabled);
 typedef hipError_t HIPAPI thipGraphNodeGetType(hipGraphNode_t node, hipGraphNodeType * pType);
 typedef hipError_t HIPAPI thipGraphNodeSetEnabled(hipGraphExec_t hGraphExec, hipGraphNode_t hNode, unsigned int isEnabled);
+typedef hipError_t HIPAPI thipGraphNodeSetParams(hipGraphNode_t node, hipGraphNodeParams * nodeParams);
 typedef hipError_t HIPAPI thipGraphReleaseUserObject(hipGraph_t graph, hipUserObject_t object, unsigned int count);
 typedef hipError_t HIPAPI thipGraphRemoveDependencies(hipGraph_t graph, const hipGraphNode_t * from, const hipGraphNode_t * to, size_t numDependencies);
 typedef hipError_t HIPAPI thipGraphRetainUserObject(hipGraph_t graph, hipUserObject_t object, unsigned int count, unsigned int flags);
@@ -1957,6 +2151,7 @@ typedef hipError_t HIPAPI thipMemSetAccess(void * ptr, size_t size, const hipMem
 typedef hipError_t HIPAPI thipMemUnmap(void * ptr, size_t size);
 typedef hipError_t HIPAPI thipMemcpy(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipMemcpy2D(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind);
+typedef hipError_t HIPAPI thipMemcpy2DArrayToArray(hipArray_t dst, size_t wOffsetDst, size_t hOffsetDst, hipArray_const_t src, size_t wOffsetSrc, size_t hOffsetSrc, size_t width, size_t height, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipMemcpy2DAsync(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpy2DAsync_spt(void * dst, size_t dpitch, const void * src, size_t spitch, size_t width, size_t height, hipMemcpyKind kind, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpy2DFromArray(void * dst, size_t dpitch, hipArray_const_t src, size_t wOffset, size_t hOffset, size_t width, size_t height, hipMemcpyKind kind);
@@ -1974,7 +2169,11 @@ typedef hipError_t HIPAPI thipMemcpy3DAsync_spt(const hipMemcpy3DParms * p, hipS
 typedef hipError_t HIPAPI thipMemcpy3D_spt(const struct hipMemcpy3DParms * p);
 typedef hipError_t HIPAPI thipMemcpyAsync(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpyAsync_spt(void * dst, const void * src, size_t sizeBytes, hipMemcpyKind kind, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyAtoA(hipArray_t dstArray, size_t dstOffset, hipArray_t srcArray, size_t srcOffset, size_t ByteCount);
+typedef hipError_t HIPAPI thipMemcpyAtoD(hipDeviceptr_t dstDevice, hipArray_t srcArray, size_t srcOffset, size_t ByteCount);
 typedef hipError_t HIPAPI thipMemcpyAtoH(void * dst, hipArray_t srcArray, size_t srcOffset, size_t count);
+typedef hipError_t HIPAPI thipMemcpyAtoHAsync(void * dstHost, hipArray_t srcArray, size_t srcOffset, size_t ByteCount, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyDtoA(hipArray_t dstArray, size_t dstOffset, hipDeviceptr_t srcDevice, size_t ByteCount);
 typedef hipError_t HIPAPI thipMemcpyDtoD(hipDeviceptr_t dst, hipDeviceptr_t src, size_t sizeBytes);
 typedef hipError_t HIPAPI thipMemcpyDtoDAsync(hipDeviceptr_t dst, hipDeviceptr_t src, size_t sizeBytes, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpyDtoH(void * dst, hipDeviceptr_t src, size_t sizeBytes);
@@ -1986,8 +2185,9 @@ typedef hipError_t HIPAPI thipMemcpyFromSymbolAsync(void * dst, const void * sym
 typedef hipError_t HIPAPI thipMemcpyFromSymbolAsync_spt(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpyFromSymbol_spt(void * dst, const void * symbol, size_t sizeBytes, size_t offset, hipMemcpyKind kind);
 typedef hipError_t HIPAPI thipMemcpyHtoA(hipArray_t dstArray, size_t dstOffset, const void * srcHost, size_t count);
-typedef hipError_t HIPAPI thipMemcpyHtoD(hipDeviceptr_t dst, void * src, size_t sizeBytes);
-typedef hipError_t HIPAPI thipMemcpyHtoDAsync(hipDeviceptr_t dst, void * src, size_t sizeBytes, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyHtoAAsync(hipArray_t dstArray, size_t dstOffset, const void * srcHost, size_t ByteCount, hipStream_t stream);
+typedef hipError_t HIPAPI thipMemcpyHtoD(hipDeviceptr_t dst, const void * src, size_t sizeBytes);
+typedef hipError_t HIPAPI thipMemcpyHtoDAsync(hipDeviceptr_t dst, const void * src, size_t sizeBytes, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpyParam2D(const hip_Memcpy2D * pCopy);
 typedef hipError_t HIPAPI thipMemcpyParam2DAsync(const hip_Memcpy2D * pCopy, hipStream_t stream);
 typedef hipError_t HIPAPI thipMemcpyPeer(void * dst, int dstDeviceId, const void * src, int srcDeviceId, size_t sizeBytes);
@@ -2046,12 +2246,15 @@ typedef hipError_t HIPAPI thipProfilerStop();
 typedef hipError_t HIPAPI thipRuntimeGetVersion(int * runtimeVersion);
 typedef hipError_t HIPAPI thipSetDevice(int deviceId);
 typedef hipError_t HIPAPI thipSetDeviceFlags(unsigned int flags);
+typedef hipError_t HIPAPI thipSetValidDevices(int * device_arr, int len);
 typedef hipError_t HIPAPI thipSetupArgument(const void * arg, size_t size, size_t offset);
 typedef hipError_t HIPAPI thipSignalExternalSemaphoresAsync(const hipExternalSemaphore_t * extSemArray, const hipExternalSemaphoreSignalParams * paramsArray, unsigned int numExtSems, hipStream_t stream);
 typedef hipError_t HIPAPI thipStreamAddCallback(hipStream_t stream, hipStreamCallback_t callback, void * userData, unsigned int flags);
 typedef hipError_t HIPAPI thipStreamAddCallback_spt(hipStream_t stream, hipStreamCallback_t callback, void * userData, unsigned int flags);
 typedef hipError_t HIPAPI thipStreamAttachMemAsync(hipStream_t stream, void * dev_ptr, size_t length, unsigned int flags);
+typedef hipError_t HIPAPI thipStreamBatchMemOp(hipStream_t stream, unsigned int count, hipStreamBatchMemOpParams * paramArray, unsigned int flags);
 typedef hipError_t HIPAPI thipStreamBeginCapture(hipStream_t stream, hipStreamCaptureMode mode);
+typedef hipError_t HIPAPI thipStreamBeginCaptureToGraph(hipStream_t stream, hipGraph_t graph, const hipGraphNode_t * dependencies, const hipGraphEdgeData * dependencyData, size_t numDependencies, hipStreamCaptureMode mode);
 typedef hipError_t HIPAPI thipStreamBeginCapture_spt(hipStream_t stream, hipStreamCaptureMode mode);
 typedef hipError_t HIPAPI thipStreamCreate(hipStream_t * stream);
 typedef hipError_t HIPAPI thipStreamCreateWithFlags(hipStream_t * stream, unsigned int flags);
@@ -2088,6 +2291,8 @@ typedef hipError_t HIPAPI thipTexObjectGetResourceViewDesc(HIP_RESOURCE_VIEW_DES
 typedef hipError_t HIPAPI thipTexObjectGetTextureDesc(HIP_TEXTURE_DESC * pTexDesc, hipTextureObject_t texObject);
 typedef hipError_t HIPAPI thipTexRefGetAddress(hipDeviceptr_t * dev_ptr, const textureReference * texRef);
 typedef hipError_t HIPAPI thipTexRefGetAddressMode(enum hipTextureAddressMode * pam, const textureReference * texRef, int dim);
+typedef hipError_t HIPAPI thipTexRefGetArray(hipArray_t * pArray, const textureReference * texRef);
+typedef hipError_t HIPAPI thipTexRefGetBorderColor(float * pBorderColor, const textureReference * texRef);
 typedef hipError_t HIPAPI thipTexRefGetFilterMode(enum hipTextureFilterMode * pfm, const textureReference * texRef);
 typedef hipError_t HIPAPI thipTexRefGetFlags(unsigned int * pFlags, const textureReference * texRef);
 typedef hipError_t HIPAPI thipTexRefGetFormat(hipArray_Format * pFormat, int * pNumChannels, const textureReference * texRef);
@@ -2116,8 +2321,8 @@ typedef hipError_t HIPAPI thipUserObjectRelease(hipUserObject_t object, unsigned
 typedef hipError_t HIPAPI thipUserObjectRetain(hipUserObject_t object, unsigned int count);
 typedef hipError_t HIPAPI thipWaitExternalSemaphoresAsync(const hipExternalSemaphore_t * extSemArray, const hipExternalSemaphoreWaitParams * paramsArray, unsigned int numExtSems, hipStream_t stream);
 typedef hiprtcResult HIPAPI thiprtcAddNameExpression(hiprtcProgram prog, const char * name_expression);
-typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char ** options);
-typedef hiprtcResult HIPAPI thiprtcCreateProgram(hiprtcProgram * prog, const char * src, const char * name, int numHeaders, const char ** headers, const char ** includeNames);
+typedef hiprtcResult HIPAPI thiprtcCompileProgram(hiprtcProgram prog, int numOptions, const char *const * options);
+typedef hiprtcResult HIPAPI thiprtcCreateProgram(hiprtcProgram * prog, const char * src, const char * name, int numHeaders, const char *const * headers, const char *const * includeNames);
 typedef hiprtcResult HIPAPI thiprtcDestroyProgram(hiprtcProgram * prog);
 typedef hiprtcResult HIPAPI thiprtcGetBitcode(hiprtcProgram prog, char * bitcode);
 typedef hiprtcResult HIPAPI thiprtcGetBitcodeSize(hiprtcProgram prog, size_t * bitcode_size);
@@ -2192,6 +2397,7 @@ extern thipDeviceGetP2PAttribute *hipDeviceGetP2PAttribute;
 extern thipDeviceGetPCIBusId *hipDeviceGetPCIBusId;
 extern thipDeviceGetSharedMemConfig *hipDeviceGetSharedMemConfig;
 extern thipDeviceGetStreamPriorityRange *hipDeviceGetStreamPriorityRange;
+extern thipDeviceGetTexture1DLinearMaxWidth *hipDeviceGetTexture1DLinearMaxWidth;
 extern thipDeviceGetUuid *hipDeviceGetUuid;
 extern thipDeviceGraphMemTrim *hipDeviceGraphMemTrim;
 extern thipDevicePrimaryCtxGetState *hipDevicePrimaryCtxGetState;
@@ -2210,7 +2416,13 @@ extern thipDeviceTotalMem *hipDeviceTotalMem;
 extern thipDriverGetVersion *hipDriverGetVersion;
 extern thipDrvGetErrorName *hipDrvGetErrorName;
 extern thipDrvGetErrorString *hipDrvGetErrorString;
+extern thipDrvGraphAddMemFreeNode *hipDrvGraphAddMemFreeNode;
 extern thipDrvGraphAddMemcpyNode *hipDrvGraphAddMemcpyNode;
+extern thipDrvGraphAddMemsetNode *hipDrvGraphAddMemsetNode;
+extern thipDrvGraphExecMemcpyNodeSetParams *hipDrvGraphExecMemcpyNodeSetParams;
+extern thipDrvGraphExecMemsetNodeSetParams *hipDrvGraphExecMemsetNodeSetParams;
+extern thipDrvGraphMemcpyNodeGetParams *hipDrvGraphMemcpyNodeGetParams;
+extern thipDrvGraphMemcpyNodeSetParams *hipDrvGraphMemcpyNodeSetParams;
 extern thipDrvMemcpy2DUnaligned *hipDrvMemcpy2DUnaligned;
 extern thipDrvMemcpy3D *hipDrvMemcpy3D;
 extern thipDrvMemcpy3DAsync *hipDrvMemcpy3DAsync;
@@ -2221,6 +2433,7 @@ extern thipEventDestroy *hipEventDestroy;
 extern thipEventElapsedTime *hipEventElapsedTime;
 extern thipEventQuery *hipEventQuery;
 extern thipEventRecord *hipEventRecord;
+extern thipEventRecordWithFlags *hipEventRecordWithFlags;
 extern thipEventRecord_spt *hipEventRecord_spt;
 extern thipEventSynchronize *hipEventSynchronize;
 extern thipExtGetLastError *hipExtGetLastError;
@@ -2249,8 +2462,10 @@ extern thipGetDeviceFlags *hipGetDeviceFlags;
 extern thipGetDevicePropertiesR0600 *hipGetDevicePropertiesR0600;
 extern thipGetErrorName *hipGetErrorName;
 extern thipGetErrorString *hipGetErrorString;
+extern thipGetFuncBySymbol *hipGetFuncBySymbol;
 extern thipGetLastError *hipGetLastError;
 extern thipGetMipmappedArrayLevel *hipGetMipmappedArrayLevel;
+extern thipGetProcAddress *hipGetProcAddress;
 extern thipGetStreamDeviceId *hipGetStreamDeviceId;
 extern thipGetSymbolAddress *hipGetSymbolAddress;
 extern thipGetSymbolSize *hipGetSymbolSize;
@@ -2259,11 +2474,14 @@ extern thipGetTextureObjectResourceDesc *hipGetTextureObjectResourceDesc;
 extern thipGetTextureObjectResourceViewDesc *hipGetTextureObjectResourceViewDesc;
 extern thipGetTextureObjectTextureDesc *hipGetTextureObjectTextureDesc;
 extern thipGetTextureReference *hipGetTextureReference;
+extern thipGraphAddBatchMemOpNode *hipGraphAddBatchMemOpNode;
 extern thipGraphAddChildGraphNode *hipGraphAddChildGraphNode;
 extern thipGraphAddDependencies *hipGraphAddDependencies;
 extern thipGraphAddEmptyNode *hipGraphAddEmptyNode;
 extern thipGraphAddEventRecordNode *hipGraphAddEventRecordNode;
 extern thipGraphAddEventWaitNode *hipGraphAddEventWaitNode;
+extern thipGraphAddExternalSemaphoresSignalNode *hipGraphAddExternalSemaphoresSignalNode;
+extern thipGraphAddExternalSemaphoresWaitNode *hipGraphAddExternalSemaphoresWaitNode;
 extern thipGraphAddHostNode *hipGraphAddHostNode;
 extern thipGraphAddKernelNode *hipGraphAddKernelNode;
 extern thipGraphAddMemAllocNode *hipGraphAddMemAllocNode;
@@ -2273,6 +2491,9 @@ extern thipGraphAddMemcpyNode1D *hipGraphAddMemcpyNode1D;
 extern thipGraphAddMemcpyNodeFromSymbol *hipGraphAddMemcpyNodeFromSymbol;
 extern thipGraphAddMemcpyNodeToSymbol *hipGraphAddMemcpyNodeToSymbol;
 extern thipGraphAddMemsetNode *hipGraphAddMemsetNode;
+extern thipGraphAddNode *hipGraphAddNode;
+extern thipGraphBatchMemOpNodeGetParams *hipGraphBatchMemOpNodeGetParams;
+extern thipGraphBatchMemOpNodeSetParams *hipGraphBatchMemOpNodeSetParams;
 extern thipGraphChildGraphNodeGetGraph *hipGraphChildGraphNodeGetGraph;
 extern thipGraphClone *hipGraphClone;
 extern thipGraphCreate *hipGraphCreate;
@@ -2283,10 +2504,14 @@ extern thipGraphEventRecordNodeGetEvent *hipGraphEventRecordNodeGetEvent;
 extern thipGraphEventRecordNodeSetEvent *hipGraphEventRecordNodeSetEvent;
 extern thipGraphEventWaitNodeGetEvent *hipGraphEventWaitNodeGetEvent;
 extern thipGraphEventWaitNodeSetEvent *hipGraphEventWaitNodeSetEvent;
+extern thipGraphExecBatchMemOpNodeSetParams *hipGraphExecBatchMemOpNodeSetParams;
 extern thipGraphExecChildGraphNodeSetParams *hipGraphExecChildGraphNodeSetParams;
 extern thipGraphExecDestroy *hipGraphExecDestroy;
 extern thipGraphExecEventRecordNodeSetEvent *hipGraphExecEventRecordNodeSetEvent;
 extern thipGraphExecEventWaitNodeSetEvent *hipGraphExecEventWaitNodeSetEvent;
+extern thipGraphExecExternalSemaphoresSignalNodeSetParams *hipGraphExecExternalSemaphoresSignalNodeSetParams;
+extern thipGraphExecExternalSemaphoresWaitNodeSetParams *hipGraphExecExternalSemaphoresWaitNodeSetParams;
+extern thipGraphExecGetFlags *hipGraphExecGetFlags;
 extern thipGraphExecHostNodeSetParams *hipGraphExecHostNodeSetParams;
 extern thipGraphExecKernelNodeSetParams *hipGraphExecKernelNodeSetParams;
 extern thipGraphExecMemcpyNodeSetParams *hipGraphExecMemcpyNodeSetParams;
@@ -2294,7 +2519,12 @@ extern thipGraphExecMemcpyNodeSetParams1D *hipGraphExecMemcpyNodeSetParams1D;
 extern thipGraphExecMemcpyNodeSetParamsFromSymbol *hipGraphExecMemcpyNodeSetParamsFromSymbol;
 extern thipGraphExecMemcpyNodeSetParamsToSymbol *hipGraphExecMemcpyNodeSetParamsToSymbol;
 extern thipGraphExecMemsetNodeSetParams *hipGraphExecMemsetNodeSetParams;
+extern thipGraphExecNodeSetParams *hipGraphExecNodeSetParams;
 extern thipGraphExecUpdate *hipGraphExecUpdate;
+extern thipGraphExternalSemaphoresSignalNodeGetParams *hipGraphExternalSemaphoresSignalNodeGetParams;
+extern thipGraphExternalSemaphoresSignalNodeSetParams *hipGraphExternalSemaphoresSignalNodeSetParams;
+extern thipGraphExternalSemaphoresWaitNodeGetParams *hipGraphExternalSemaphoresWaitNodeGetParams;
+extern thipGraphExternalSemaphoresWaitNodeSetParams *hipGraphExternalSemaphoresWaitNodeSetParams;
 extern thipGraphGetEdges *hipGraphGetEdges;
 extern thipGraphGetNodes *hipGraphGetNodes;
 extern thipGraphGetRootNodes *hipGraphGetRootNodes;
@@ -2302,6 +2532,7 @@ extern thipGraphHostNodeGetParams *hipGraphHostNodeGetParams;
 extern thipGraphHostNodeSetParams *hipGraphHostNodeSetParams;
 extern thipGraphInstantiate *hipGraphInstantiate;
 extern thipGraphInstantiateWithFlags *hipGraphInstantiateWithFlags;
+extern thipGraphInstantiateWithParams *hipGraphInstantiateWithParams;
 extern thipGraphKernelNodeCopyAttributes *hipGraphKernelNodeCopyAttributes;
 extern thipGraphKernelNodeGetAttribute *hipGraphKernelNodeGetAttribute;
 extern thipGraphKernelNodeGetParams *hipGraphKernelNodeGetParams;
@@ -2324,6 +2555,7 @@ extern thipGraphNodeGetDependentNodes *hipGraphNodeGetDependentNodes;
 extern thipGraphNodeGetEnabled *hipGraphNodeGetEnabled;
 extern thipGraphNodeGetType *hipGraphNodeGetType;
 extern thipGraphNodeSetEnabled *hipGraphNodeSetEnabled;
+extern thipGraphNodeSetParams *hipGraphNodeSetParams;
 extern thipGraphReleaseUserObject *hipGraphReleaseUserObject;
 extern thipGraphRemoveDependencies *hipGraphRemoveDependencies;
 extern thipGraphRetainUserObject *hipGraphRetainUserObject;
@@ -2404,6 +2636,7 @@ extern thipMemSetAccess *hipMemSetAccess;
 extern thipMemUnmap *hipMemUnmap;
 extern thipMemcpy *hipMemcpy;
 extern thipMemcpy2D *hipMemcpy2D;
+extern thipMemcpy2DArrayToArray *hipMemcpy2DArrayToArray;
 extern thipMemcpy2DAsync *hipMemcpy2DAsync;
 extern thipMemcpy2DAsync_spt *hipMemcpy2DAsync_spt;
 extern thipMemcpy2DFromArray *hipMemcpy2DFromArray;
@@ -2421,7 +2654,11 @@ extern thipMemcpy3DAsync_spt *hipMemcpy3DAsync_spt;
 extern thipMemcpy3D_spt *hipMemcpy3D_spt;
 extern thipMemcpyAsync *hipMemcpyAsync;
 extern thipMemcpyAsync_spt *hipMemcpyAsync_spt;
+extern thipMemcpyAtoA *hipMemcpyAtoA;
+extern thipMemcpyAtoD *hipMemcpyAtoD;
 extern thipMemcpyAtoH *hipMemcpyAtoH;
+extern thipMemcpyAtoHAsync *hipMemcpyAtoHAsync;
+extern thipMemcpyDtoA *hipMemcpyDtoA;
 extern thipMemcpyDtoD *hipMemcpyDtoD;
 extern thipMemcpyDtoDAsync *hipMemcpyDtoDAsync;
 extern thipMemcpyDtoH *hipMemcpyDtoH;
@@ -2433,6 +2670,7 @@ extern thipMemcpyFromSymbolAsync *hipMemcpyFromSymbolAsync;
 extern thipMemcpyFromSymbolAsync_spt *hipMemcpyFromSymbolAsync_spt;
 extern thipMemcpyFromSymbol_spt *hipMemcpyFromSymbol_spt;
 extern thipMemcpyHtoA *hipMemcpyHtoA;
+extern thipMemcpyHtoAAsync *hipMemcpyHtoAAsync;
 extern thipMemcpyHtoD *hipMemcpyHtoD;
 extern thipMemcpyHtoDAsync *hipMemcpyHtoDAsync;
 extern thipMemcpyParam2D *hipMemcpyParam2D;
@@ -2493,12 +2731,15 @@ extern thipProfilerStop *hipProfilerStop;
 extern thipRuntimeGetVersion *hipRuntimeGetVersion;
 extern thipSetDevice *hipSetDevice;
 extern thipSetDeviceFlags *hipSetDeviceFlags;
+extern thipSetValidDevices *hipSetValidDevices;
 extern thipSetupArgument *hipSetupArgument;
 extern thipSignalExternalSemaphoresAsync *hipSignalExternalSemaphoresAsync;
 extern thipStreamAddCallback *hipStreamAddCallback;
 extern thipStreamAddCallback_spt *hipStreamAddCallback_spt;
 extern thipStreamAttachMemAsync *hipStreamAttachMemAsync;
+extern thipStreamBatchMemOp *hipStreamBatchMemOp;
 extern thipStreamBeginCapture *hipStreamBeginCapture;
+extern thipStreamBeginCaptureToGraph *hipStreamBeginCaptureToGraph;
 extern thipStreamBeginCapture_spt *hipStreamBeginCapture_spt;
 extern thipStreamCreate *hipStreamCreate;
 extern thipStreamCreateWithFlags *hipStreamCreateWithFlags;
@@ -2535,6 +2776,8 @@ extern thipTexObjectGetResourceViewDesc *hipTexObjectGetResourceViewDesc;
 extern thipTexObjectGetTextureDesc *hipTexObjectGetTextureDesc;
 extern thipTexRefGetAddress *hipTexRefGetAddress;
 extern thipTexRefGetAddressMode *hipTexRefGetAddressMode;
+extern thipTexRefGetArray *hipTexRefGetArray;
+extern thipTexRefGetBorderColor *hipTexRefGetBorderColor;
 extern thipTexRefGetFilterMode *hipTexRefGetFilterMode;
 extern thipTexRefGetFlags *hipTexRefGetFlags;
 extern thipTexRefGetFormat *hipTexRefGetFormat;

@@ -55,6 +55,12 @@ namespace CU4ORO
 #define cuArrayGetMemoryRequirements cuArrayGetMemoryRequirements_oro
 #define cuArrayGetPlane cuArrayGetPlane_oro
 #define cuArrayGetSparseProperties cuArrayGetSparseProperties_oro
+#define cuCheckpointProcessCheckpoint cuCheckpointProcessCheckpoint_oro
+#define cuCheckpointProcessGetRestoreThreadId cuCheckpointProcessGetRestoreThreadId_oro
+#define cuCheckpointProcessGetState cuCheckpointProcessGetState_oro
+#define cuCheckpointProcessLock cuCheckpointProcessLock_oro
+#define cuCheckpointProcessRestore cuCheckpointProcessRestore_oro
+#define cuCheckpointProcessUnlock cuCheckpointProcessUnlock_oro
 #define cuCoredumpGetAttribute cuCoredumpGetAttribute_oro
 #define cuCoredumpGetAttributeGlobal cuCoredumpGetAttributeGlobal_oro
 #define cuCoredumpSetAttribute cuCoredumpSetAttribute_oro
@@ -62,13 +68,16 @@ namespace CU4ORO
 #define cuCtxAttach cuCtxAttach_oro
 #define cuCtxCreate_v2 cuCtxCreate_v2_oro
 #define cuCtxCreate_v3 cuCtxCreate_v3_oro
+#define cuCtxCreate_v4 cuCtxCreate_v4_oro
 #define cuCtxDestroy_v2 cuCtxDestroy_v2_oro
 #define cuCtxDetach cuCtxDetach_oro
 #define cuCtxDisablePeerAccess cuCtxDisablePeerAccess_oro
 #define cuCtxEnablePeerAccess cuCtxEnablePeerAccess_oro
+#define cuCtxFromGreenCtx cuCtxFromGreenCtx_oro
 #define cuCtxGetApiVersion cuCtxGetApiVersion_oro
 #define cuCtxGetCacheConfig cuCtxGetCacheConfig_oro
 #define cuCtxGetCurrent cuCtxGetCurrent_oro
+#define cuCtxGetDevResource cuCtxGetDevResource_oro
 #define cuCtxGetDevice cuCtxGetDevice_oro
 #define cuCtxGetExecAffinity cuCtxGetExecAffinity_oro
 #define cuCtxGetFlags cuCtxGetFlags_oro
@@ -78,6 +87,7 @@ namespace CU4ORO
 #define cuCtxGetStreamPriorityRange cuCtxGetStreamPriorityRange_oro
 #define cuCtxPopCurrent_v2 cuCtxPopCurrent_v2_oro
 #define cuCtxPushCurrent_v2 cuCtxPushCurrent_v2_oro
+#define cuCtxRecordEvent cuCtxRecordEvent_oro
 #define cuCtxResetPersistingL2Cache cuCtxResetPersistingL2Cache_oro
 #define cuCtxSetCacheConfig cuCtxSetCacheConfig_oro
 #define cuCtxSetCurrent cuCtxSetCurrent_oro
@@ -85,8 +95,11 @@ namespace CU4ORO
 #define cuCtxSetLimit cuCtxSetLimit_oro
 #define cuCtxSetSharedMemConfig cuCtxSetSharedMemConfig_oro
 #define cuCtxSynchronize cuCtxSynchronize_oro
+#define cuCtxWaitEvent cuCtxWaitEvent_oro
 #define cuDestroyExternalMemory cuDestroyExternalMemory_oro
 #define cuDestroyExternalSemaphore cuDestroyExternalSemaphore_oro
+#define cuDevResourceGenerateDesc cuDevResourceGenerateDesc_oro
+#define cuDevSmResourceSplitByCount cuDevSmResourceSplitByCount_oro
 #define cuDeviceCanAccessPeer cuDeviceCanAccessPeer_oro
 #define cuDeviceComputeCapability cuDeviceComputeCapability_oro
 #define cuDeviceGet cuDeviceGet_oro
@@ -94,6 +107,7 @@ namespace CU4ORO
 #define cuDeviceGetByPCIBusId cuDeviceGetByPCIBusId_oro
 #define cuDeviceGetCount cuDeviceGetCount_oro
 #define cuDeviceGetDefaultMemPool cuDeviceGetDefaultMemPool_oro
+#define cuDeviceGetDevResource cuDeviceGetDevResource_oro
 #define cuDeviceGetExecAffinitySupport cuDeviceGetExecAffinitySupport_oro
 #define cuDeviceGetGraphMemAttribute cuDeviceGetGraphMemAttribute_oro
 #define cuDeviceGetLuid cuDeviceGetLuid_oro
@@ -112,13 +126,16 @@ namespace CU4ORO
 #define cuDevicePrimaryCtxReset_v2 cuDevicePrimaryCtxReset_v2_oro
 #define cuDevicePrimaryCtxRetain cuDevicePrimaryCtxRetain_oro
 #define cuDevicePrimaryCtxSetFlags_v2 cuDevicePrimaryCtxSetFlags_v2_oro
+#define cuDeviceRegisterAsyncNotification cuDeviceRegisterAsyncNotification_oro
 #define cuDeviceSetGraphMemAttribute cuDeviceSetGraphMemAttribute_oro
 #define cuDeviceSetMemPool cuDeviceSetMemPool_oro
 #define cuDeviceTotalMem_v2 cuDeviceTotalMem_v2_oro
+#define cuDeviceUnregisterAsyncNotification cuDeviceUnregisterAsyncNotification_oro
 #define cuDriverGetVersion cuDriverGetVersion_oro
 #define cuEventCreate cuEventCreate_oro
 #define cuEventDestroy_v2 cuEventDestroy_v2_oro
 #define cuEventElapsedTime cuEventElapsedTime_oro
+#define cuEventElapsedTime_v2 cuEventElapsedTime_v2_oro
 #define cuEventQuery cuEventQuery_oro
 #define cuEventRecord cuEventRecord_oro
 #define cuEventRecordWithFlags cuEventRecordWithFlags_oro
@@ -128,6 +145,10 @@ namespace CU4ORO
 #define cuFlushGPUDirectRDMAWrites cuFlushGPUDirectRDMAWrites_oro
 #define cuFuncGetAttribute cuFuncGetAttribute_oro
 #define cuFuncGetModule cuFuncGetModule_oro
+#define cuFuncGetName cuFuncGetName_oro
+#define cuFuncGetParamInfo cuFuncGetParamInfo_oro
+#define cuFuncIsLoaded cuFuncIsLoaded_oro
+#define cuFuncLoad cuFuncLoad_oro
 #define cuFuncSetAttribute cuFuncSetAttribute_oro
 #define cuFuncSetBlockShape cuFuncSetBlockShape_oro
 #define cuFuncSetCacheConfig cuFuncSetCacheConfig_oro
@@ -140,6 +161,7 @@ namespace CU4ORO
 #define cuGraphAddBatchMemOpNode cuGraphAddBatchMemOpNode_oro
 #define cuGraphAddChildGraphNode cuGraphAddChildGraphNode_oro
 #define cuGraphAddDependencies cuGraphAddDependencies_oro
+#define cuGraphAddDependencies_v2 cuGraphAddDependencies_v2_oro
 #define cuGraphAddEmptyNode cuGraphAddEmptyNode_oro
 #define cuGraphAddEventRecordNode cuGraphAddEventRecordNode_oro
 #define cuGraphAddEventWaitNode cuGraphAddEventWaitNode_oro
@@ -152,10 +174,12 @@ namespace CU4ORO
 #define cuGraphAddMemcpyNode cuGraphAddMemcpyNode_oro
 #define cuGraphAddMemsetNode cuGraphAddMemsetNode_oro
 #define cuGraphAddNode cuGraphAddNode_oro
+#define cuGraphAddNode_v2 cuGraphAddNode_v2_oro
 #define cuGraphBatchMemOpNodeGetParams cuGraphBatchMemOpNodeGetParams_oro
 #define cuGraphBatchMemOpNodeSetParams cuGraphBatchMemOpNodeSetParams_oro
 #define cuGraphChildGraphNodeGetGraph cuGraphChildGraphNodeGetGraph_oro
 #define cuGraphClone cuGraphClone_oro
+#define cuGraphConditionalHandleCreate cuGraphConditionalHandleCreate_oro
 #define cuGraphCreate cuGraphCreate_oro
 #define cuGraphDebugDotPrint cuGraphDebugDotPrint_oro
 #define cuGraphDestroy cuGraphDestroy_oro
@@ -183,6 +207,7 @@ namespace CU4ORO
 #define cuGraphExternalSemaphoresWaitNodeGetParams cuGraphExternalSemaphoresWaitNodeGetParams_oro
 #define cuGraphExternalSemaphoresWaitNodeSetParams cuGraphExternalSemaphoresWaitNodeSetParams_oro
 #define cuGraphGetEdges cuGraphGetEdges_oro
+#define cuGraphGetEdges_v2 cuGraphGetEdges_v2_oro
 #define cuGraphGetNodes cuGraphGetNodes_oro
 #define cuGraphGetRootNodes cuGraphGetRootNodes_oro
 #define cuGraphHostNodeGetParams cuGraphHostNodeGetParams_oro
@@ -203,13 +228,16 @@ namespace CU4ORO
 #define cuGraphMemsetNodeSetParams cuGraphMemsetNodeSetParams_oro
 #define cuGraphNodeFindInClone cuGraphNodeFindInClone_oro
 #define cuGraphNodeGetDependencies cuGraphNodeGetDependencies_oro
+#define cuGraphNodeGetDependencies_v2 cuGraphNodeGetDependencies_v2_oro
 #define cuGraphNodeGetDependentNodes cuGraphNodeGetDependentNodes_oro
+#define cuGraphNodeGetDependentNodes_v2 cuGraphNodeGetDependentNodes_v2_oro
 #define cuGraphNodeGetEnabled cuGraphNodeGetEnabled_oro
 #define cuGraphNodeGetType cuGraphNodeGetType_oro
 #define cuGraphNodeSetEnabled cuGraphNodeSetEnabled_oro
 #define cuGraphNodeSetParams cuGraphNodeSetParams_oro
 #define cuGraphReleaseUserObject cuGraphReleaseUserObject_oro
 #define cuGraphRemoveDependencies cuGraphRemoveDependencies_oro
+#define cuGraphRemoveDependencies_v2 cuGraphRemoveDependencies_v2_oro
 #define cuGraphRetainUserObject cuGraphRetainUserObject_oro
 #define cuGraphUpload cuGraphUpload_oro
 #define cuGraphicsMapResources cuGraphicsMapResources_oro
@@ -219,6 +247,12 @@ namespace CU4ORO
 #define cuGraphicsSubResourceGetMappedArray cuGraphicsSubResourceGetMappedArray_oro
 #define cuGraphicsUnmapResources cuGraphicsUnmapResources_oro
 #define cuGraphicsUnregisterResource cuGraphicsUnregisterResource_oro
+#define cuGreenCtxCreate cuGreenCtxCreate_oro
+#define cuGreenCtxDestroy cuGreenCtxDestroy_oro
+#define cuGreenCtxGetDevResource cuGreenCtxGetDevResource_oro
+#define cuGreenCtxRecordEvent cuGreenCtxRecordEvent_oro
+#define cuGreenCtxStreamCreate cuGreenCtxStreamCreate_oro
+#define cuGreenCtxWaitEvent cuGreenCtxWaitEvent_oro
 #define cuImportExternalMemory cuImportExternalMemory_oro
 #define cuImportExternalSemaphore cuImportExternalSemaphore_oro
 #define cuInit cuInit_oro
@@ -229,6 +263,9 @@ namespace CU4ORO
 #define cuIpcOpenMemHandle_v2 cuIpcOpenMemHandle_v2_oro
 #define cuKernelGetAttribute cuKernelGetAttribute_oro
 #define cuKernelGetFunction cuKernelGetFunction_oro
+#define cuKernelGetLibrary cuKernelGetLibrary_oro
+#define cuKernelGetName cuKernelGetName_oro
+#define cuKernelGetParamInfo cuKernelGetParamInfo_oro
 #define cuKernelSetAttribute cuKernelSetAttribute_oro
 #define cuKernelSetCacheConfig cuKernelSetCacheConfig_oro
 #define cuLaunch cuLaunch_oro
@@ -239,8 +276,10 @@ namespace CU4ORO
 #define cuLaunchHostFunc cuLaunchHostFunc_oro
 #define cuLaunchKernel cuLaunchKernel_oro
 #define cuLaunchKernelEx cuLaunchKernelEx_oro
+#define cuLibraryEnumerateKernels cuLibraryEnumerateKernels_oro
 #define cuLibraryGetGlobal cuLibraryGetGlobal_oro
 #define cuLibraryGetKernel cuLibraryGetKernel_oro
+#define cuLibraryGetKernelCount cuLibraryGetKernelCount_oro
 #define cuLibraryGetManaged cuLibraryGetManaged_oro
 #define cuLibraryGetModule cuLibraryGetModule_oro
 #define cuLibraryGetUnifiedFunction cuLibraryGetUnifiedFunction_oro
@@ -252,6 +291,11 @@ namespace CU4ORO
 #define cuLinkComplete cuLinkComplete_oro
 #define cuLinkCreate_v2 cuLinkCreate_v2_oro
 #define cuLinkDestroy cuLinkDestroy_oro
+#define cuLogsCurrent cuLogsCurrent_oro
+#define cuLogsDumpToFile cuLogsDumpToFile_oro
+#define cuLogsDumpToMemory cuLogsDumpToMemory_oro
+#define cuLogsRegisterCallback cuLogsRegisterCallback_oro
+#define cuLogsUnregisterCallback cuLogsUnregisterCallback_oro
 #define cuMemAddressFree cuMemAddressFree_oro
 #define cuMemAddressReserve cuMemAddressReserve_oro
 #define cuMemAdvise cuMemAdvise_oro
@@ -262,6 +306,7 @@ namespace CU4ORO
 #define cuMemAllocManaged cuMemAllocManaged_oro
 #define cuMemAllocPitch_v2 cuMemAllocPitch_v2_oro
 #define cuMemAlloc_v2 cuMemAlloc_v2_oro
+#define cuMemBatchDecompressAsync cuMemBatchDecompressAsync_oro
 #define cuMemCreate cuMemCreate_oro
 #define cuMemExportToShareableHandle cuMemExportToShareableHandle_oro
 #define cuMemFreeAsync cuMemFreeAsync_oro
@@ -305,6 +350,7 @@ namespace CU4ORO
 #define cuMemcpy2DUnaligned_v2 cuMemcpy2DUnaligned_v2_oro
 #define cuMemcpy2D_v2 cuMemcpy2D_v2_oro
 #define cuMemcpy3DAsync_v2 cuMemcpy3DAsync_v2_oro
+#define cuMemcpy3DBatchAsync cuMemcpy3DBatchAsync_oro
 #define cuMemcpy3DPeer cuMemcpy3DPeer_oro
 #define cuMemcpy3DPeerAsync cuMemcpy3DPeerAsync_oro
 #define cuMemcpy3D_v2 cuMemcpy3D_v2_oro
@@ -313,6 +359,7 @@ namespace CU4ORO
 #define cuMemcpyAtoD_v2 cuMemcpyAtoD_v2_oro
 #define cuMemcpyAtoHAsync_v2 cuMemcpyAtoHAsync_v2_oro
 #define cuMemcpyAtoH_v2 cuMemcpyAtoH_v2_oro
+#define cuMemcpyBatchAsync cuMemcpyBatchAsync_oro
 #define cuMemcpyDtoA_v2 cuMemcpyDtoA_v2_oro
 #define cuMemcpyDtoDAsync_v2 cuMemcpyDtoDAsync_v2_oro
 #define cuMemcpyDtoD_v2 cuMemcpyDtoD_v2_oro
@@ -341,7 +388,9 @@ namespace CU4ORO
 #define cuMipmappedArrayGetLevel cuMipmappedArrayGetLevel_oro
 #define cuMipmappedArrayGetMemoryRequirements cuMipmappedArrayGetMemoryRequirements_oro
 #define cuMipmappedArrayGetSparseProperties cuMipmappedArrayGetSparseProperties_oro
+#define cuModuleEnumerateFunctions cuModuleEnumerateFunctions_oro
 #define cuModuleGetFunction cuModuleGetFunction_oro
+#define cuModuleGetFunctionCount cuModuleGetFunctionCount_oro
 #define cuModuleGetGlobal_v2 cuModuleGetGlobal_v2_oro
 #define cuModuleGetLoadingMode cuModuleGetLoadingMode_oro
 #define cuModuleGetSurfRef cuModuleGetSurfRef_oro
@@ -376,6 +425,7 @@ namespace CU4ORO
 #define cuStreamAddCallback cuStreamAddCallback_oro
 #define cuStreamAttachMemAsync cuStreamAttachMemAsync_oro
 #define cuStreamBatchMemOp_v2 cuStreamBatchMemOp_v2_oro
+#define cuStreamBeginCaptureToGraph cuStreamBeginCaptureToGraph_oro
 #define cuStreamBeginCapture_v2 cuStreamBeginCapture_v2_oro
 #define cuStreamCopyAttributes cuStreamCopyAttributes_oro
 #define cuStreamCreate cuStreamCreate_oro
@@ -384,8 +434,12 @@ namespace CU4ORO
 #define cuStreamEndCapture cuStreamEndCapture_oro
 #define cuStreamGetAttribute cuStreamGetAttribute_oro
 #define cuStreamGetCaptureInfo_v2 cuStreamGetCaptureInfo_v2_oro
+#define cuStreamGetCaptureInfo_v3 cuStreamGetCaptureInfo_v3_oro
 #define cuStreamGetCtx cuStreamGetCtx_oro
+#define cuStreamGetCtx_v2 cuStreamGetCtx_v2_oro
+#define cuStreamGetDevice cuStreamGetDevice_oro
 #define cuStreamGetFlags cuStreamGetFlags_oro
+#define cuStreamGetGreenCtx cuStreamGetGreenCtx_oro
 #define cuStreamGetId cuStreamGetId_oro
 #define cuStreamGetPriority cuStreamGetPriority_oro
 #define cuStreamIsCapturing cuStreamIsCapturing_oro
@@ -393,6 +447,7 @@ namespace CU4ORO
 #define cuStreamSetAttribute cuStreamSetAttribute_oro
 #define cuStreamSynchronize cuStreamSynchronize_oro
 #define cuStreamUpdateCaptureDependencies cuStreamUpdateCaptureDependencies_oro
+#define cuStreamUpdateCaptureDependencies_v2 cuStreamUpdateCaptureDependencies_v2_oro
 #define cuStreamWaitEvent cuStreamWaitEvent_oro
 #define cuStreamWaitValue32_v2 cuStreamWaitValue32_v2_oro
 #define cuStreamWaitValue64_v2 cuStreamWaitValue64_v2_oro
@@ -404,6 +459,7 @@ namespace CU4ORO
 #define cuSurfRefGetArray cuSurfRefGetArray_oro
 #define cuSurfRefSetArray cuSurfRefSetArray_oro
 #define cuTensorMapEncodeIm2col cuTensorMapEncodeIm2col_oro
+#define cuTensorMapEncodeIm2colWide cuTensorMapEncodeIm2colWide_oro
 #define cuTensorMapEncodeTiled cuTensorMapEncodeTiled_oro
 #define cuTensorMapReplaceAddress cuTensorMapReplaceAddress_oro
 #define cuTexObjectCreate cuTexObjectCreate_oro
@@ -474,6 +530,7 @@ namespace CU4ORO
 #define cudaDeviceGetStreamPriorityRange cudaDeviceGetStreamPriorityRange_oro
 #define cudaDeviceGetTexture1DLinearMaxWidth cudaDeviceGetTexture1DLinearMaxWidth_oro
 #define cudaDeviceGraphMemTrim cudaDeviceGraphMemTrim_oro
+#define cudaDeviceRegisterAsyncNotification cudaDeviceRegisterAsyncNotification_oro
 #define cudaDeviceReset cudaDeviceReset_oro
 #define cudaDeviceSetCacheConfig cudaDeviceSetCacheConfig_oro
 #define cudaDeviceSetGraphMemAttribute cudaDeviceSetGraphMemAttribute_oro
@@ -481,11 +538,13 @@ namespace CU4ORO
 #define cudaDeviceSetMemPool cudaDeviceSetMemPool_oro
 #define cudaDeviceSetSharedMemConfig cudaDeviceSetSharedMemConfig_oro
 #define cudaDeviceSynchronize cudaDeviceSynchronize_oro
+#define cudaDeviceUnregisterAsyncNotification cudaDeviceUnregisterAsyncNotification_oro
 #define cudaDriverGetVersion cudaDriverGetVersion_oro
 #define cudaEventCreate cudaEventCreate_oro
 #define cudaEventCreateWithFlags cudaEventCreateWithFlags_oro
 #define cudaEventDestroy cudaEventDestroy_oro
 #define cudaEventElapsedTime cudaEventElapsedTime_oro
+#define cudaEventElapsedTime_v2 cudaEventElapsedTime_v2_oro
 #define cudaEventQuery cudaEventQuery_oro
 #define cudaEventRecord cudaEventRecord_oro
 #define cudaEventRecordWithFlags cudaEventRecordWithFlags_oro
@@ -498,6 +557,8 @@ namespace CU4ORO
 #define cudaFreeHost cudaFreeHost_oro
 #define cudaFreeMipmappedArray cudaFreeMipmappedArray_oro
 #define cudaFuncGetAttributes cudaFuncGetAttributes_oro
+#define cudaFuncGetName cudaFuncGetName_oro
+#define cudaFuncGetParamInfo cudaFuncGetParamInfo_oro
 #define cudaFuncSetAttribute cudaFuncSetAttribute_oro
 #define cudaFuncSetCacheConfig cudaFuncSetCacheConfig_oro
 #define cudaFuncSetSharedMemConfig cudaFuncSetSharedMemConfig_oro
@@ -507,6 +568,7 @@ namespace CU4ORO
 #define cudaGetDeviceFlags cudaGetDeviceFlags_oro
 #define cudaGetDeviceProperties_v2 cudaGetDeviceProperties_v2_oro
 #define cudaGetDriverEntryPoint cudaGetDriverEntryPoint_oro
+#define cudaGetDriverEntryPointByVersion cudaGetDriverEntryPointByVersion_oro
 #define cudaGetErrorName cudaGetErrorName_oro
 #define cudaGetErrorString cudaGetErrorString_oro
 #define cudaGetExportTable cudaGetExportTable_oro
@@ -522,6 +584,7 @@ namespace CU4ORO
 #define cudaGetTextureObjectTextureDesc cudaGetTextureObjectTextureDesc_oro
 #define cudaGraphAddChildGraphNode cudaGraphAddChildGraphNode_oro
 #define cudaGraphAddDependencies cudaGraphAddDependencies_oro
+#define cudaGraphAddDependencies_v2 cudaGraphAddDependencies_v2_oro
 #define cudaGraphAddEmptyNode cudaGraphAddEmptyNode_oro
 #define cudaGraphAddEventRecordNode cudaGraphAddEventRecordNode_oro
 #define cudaGraphAddEventWaitNode cudaGraphAddEventWaitNode_oro
@@ -537,8 +600,10 @@ namespace CU4ORO
 #define cudaGraphAddMemcpyNodeToSymbol cudaGraphAddMemcpyNodeToSymbol_oro
 #define cudaGraphAddMemsetNode cudaGraphAddMemsetNode_oro
 #define cudaGraphAddNode cudaGraphAddNode_oro
+#define cudaGraphAddNode_v2 cudaGraphAddNode_v2_oro
 #define cudaGraphChildGraphNodeGetGraph cudaGraphChildGraphNodeGetGraph_oro
 #define cudaGraphClone cudaGraphClone_oro
+#define cudaGraphConditionalHandleCreate cudaGraphConditionalHandleCreate_oro
 #define cudaGraphCreate cudaGraphCreate_oro
 #define cudaGraphDebugDotPrint cudaGraphDebugDotPrint_oro
 #define cudaGraphDestroy cudaGraphDestroy_oro
@@ -568,6 +633,7 @@ namespace CU4ORO
 #define cudaGraphExternalSemaphoresWaitNodeGetParams cudaGraphExternalSemaphoresWaitNodeGetParams_oro
 #define cudaGraphExternalSemaphoresWaitNodeSetParams cudaGraphExternalSemaphoresWaitNodeSetParams_oro
 #define cudaGraphGetEdges cudaGraphGetEdges_oro
+#define cudaGraphGetEdges_v2 cudaGraphGetEdges_v2_oro
 #define cudaGraphGetNodes cudaGraphGetNodes_oro
 #define cudaGraphGetRootNodes cudaGraphGetRootNodes_oro
 #define cudaGraphHostNodeGetParams cudaGraphHostNodeGetParams_oro
@@ -592,13 +658,16 @@ namespace CU4ORO
 #define cudaGraphMemsetNodeSetParams cudaGraphMemsetNodeSetParams_oro
 #define cudaGraphNodeFindInClone cudaGraphNodeFindInClone_oro
 #define cudaGraphNodeGetDependencies cudaGraphNodeGetDependencies_oro
+#define cudaGraphNodeGetDependencies_v2 cudaGraphNodeGetDependencies_v2_oro
 #define cudaGraphNodeGetDependentNodes cudaGraphNodeGetDependentNodes_oro
+#define cudaGraphNodeGetDependentNodes_v2 cudaGraphNodeGetDependentNodes_v2_oro
 #define cudaGraphNodeGetEnabled cudaGraphNodeGetEnabled_oro
 #define cudaGraphNodeGetType cudaGraphNodeGetType_oro
 #define cudaGraphNodeSetEnabled cudaGraphNodeSetEnabled_oro
 #define cudaGraphNodeSetParams cudaGraphNodeSetParams_oro
 #define cudaGraphReleaseUserObject cudaGraphReleaseUserObject_oro
 #define cudaGraphRemoveDependencies cudaGraphRemoveDependencies_oro
+#define cudaGraphRemoveDependencies_v2 cudaGraphRemoveDependencies_v2_oro
 #define cudaGraphRetainUserObject cudaGraphRetainUserObject_oro
 #define cudaGraphUpload cudaGraphUpload_oro
 #define cudaGraphicsMapResources cudaGraphicsMapResources_oro
@@ -621,11 +690,21 @@ namespace CU4ORO
 #define cudaIpcGetMemHandle cudaIpcGetMemHandle_oro
 #define cudaIpcOpenEventHandle cudaIpcOpenEventHandle_oro
 #define cudaIpcOpenMemHandle cudaIpcOpenMemHandle_oro
+#define cudaKernelSetAttributeForDevice cudaKernelSetAttributeForDevice_oro
 #define cudaLaunchCooperativeKernel cudaLaunchCooperativeKernel_oro
 #define cudaLaunchCooperativeKernelMultiDevice cudaLaunchCooperativeKernelMultiDevice_oro
 #define cudaLaunchHostFunc cudaLaunchHostFunc_oro
 #define cudaLaunchKernel cudaLaunchKernel_oro
 #define cudaLaunchKernelExC cudaLaunchKernelExC_oro
+#define cudaLibraryEnumerateKernels cudaLibraryEnumerateKernels_oro
+#define cudaLibraryGetGlobal cudaLibraryGetGlobal_oro
+#define cudaLibraryGetKernel cudaLibraryGetKernel_oro
+#define cudaLibraryGetKernelCount cudaLibraryGetKernelCount_oro
+#define cudaLibraryGetManaged cudaLibraryGetManaged_oro
+#define cudaLibraryGetUnifiedFunction cudaLibraryGetUnifiedFunction_oro
+#define cudaLibraryLoadData cudaLibraryLoadData_oro
+#define cudaLibraryLoadFromFile cudaLibraryLoadFromFile_oro
+#define cudaLibraryUnload cudaLibraryUnload_oro
 #define cudaMalloc cudaMalloc_oro
 #define cudaMalloc3D cudaMalloc3D_oro
 #define cudaMalloc3DArray cudaMalloc3DArray_oro
@@ -664,10 +743,12 @@ namespace CU4ORO
 #define cudaMemcpy2DToArrayAsync cudaMemcpy2DToArrayAsync_oro
 #define cudaMemcpy3D cudaMemcpy3D_oro
 #define cudaMemcpy3DAsync cudaMemcpy3DAsync_oro
+#define cudaMemcpy3DBatchAsync cudaMemcpy3DBatchAsync_oro
 #define cudaMemcpy3DPeer cudaMemcpy3DPeer_oro
 #define cudaMemcpy3DPeerAsync cudaMemcpy3DPeerAsync_oro
 #define cudaMemcpyArrayToArray cudaMemcpyArrayToArray_oro
 #define cudaMemcpyAsync cudaMemcpyAsync_oro
+#define cudaMemcpyBatchAsync cudaMemcpyBatchAsync_oro
 #define cudaMemcpyFromArray cudaMemcpyFromArray_oro
 #define cudaMemcpyFromArrayAsync cudaMemcpyFromArrayAsync_oro
 #define cudaMemcpyFromSymbol cudaMemcpyFromSymbol_oro
@@ -705,6 +786,7 @@ namespace CU4ORO
 #define cudaStreamAddCallback cudaStreamAddCallback_oro
 #define cudaStreamAttachMemAsync cudaStreamAttachMemAsync_oro
 #define cudaStreamBeginCapture cudaStreamBeginCapture_oro
+#define cudaStreamBeginCaptureToGraph cudaStreamBeginCaptureToGraph_oro
 #define cudaStreamCopyAttributes cudaStreamCopyAttributes_oro
 #define cudaStreamCreate cudaStreamCreate_oro
 #define cudaStreamCreateWithFlags cudaStreamCreateWithFlags_oro
@@ -713,6 +795,8 @@ namespace CU4ORO
 #define cudaStreamEndCapture cudaStreamEndCapture_oro
 #define cudaStreamGetAttribute cudaStreamGetAttribute_oro
 #define cudaStreamGetCaptureInfo_v2 cudaStreamGetCaptureInfo_v2_oro
+#define cudaStreamGetCaptureInfo_v3 cudaStreamGetCaptureInfo_v3_oro
+#define cudaStreamGetDevice cudaStreamGetDevice_oro
 #define cudaStreamGetFlags cudaStreamGetFlags_oro
 #define cudaStreamGetId cudaStreamGetId_oro
 #define cudaStreamGetPriority cudaStreamGetPriority_oro
@@ -721,6 +805,7 @@ namespace CU4ORO
 #define cudaStreamSetAttribute cudaStreamSetAttribute_oro
 #define cudaStreamSynchronize cudaStreamSynchronize_oro
 #define cudaStreamUpdateCaptureDependencies cudaStreamUpdateCaptureDependencies_oro
+#define cudaStreamUpdateCaptureDependencies_v2 cudaStreamUpdateCaptureDependencies_v2_oro
 #define cudaStreamWaitEvent cudaStreamWaitEvent_oro
 #define cudaThreadExchangeStreamCaptureMode cudaThreadExchangeStreamCaptureMode_oro
 #define cudaThreadExit cudaThreadExit_oro
@@ -748,11 +833,16 @@ namespace CU4ORO
 #define nvrtcGetNumSupportedArchs nvrtcGetNumSupportedArchs_oro
 #define nvrtcGetOptiXIR nvrtcGetOptiXIR_oro
 #define nvrtcGetOptiXIRSize nvrtcGetOptiXIRSize_oro
+#define nvrtcGetPCHCreateStatus nvrtcGetPCHCreateStatus_oro
+#define nvrtcGetPCHHeapSize nvrtcGetPCHHeapSize_oro
+#define nvrtcGetPCHHeapSizeRequired nvrtcGetPCHHeapSizeRequired_oro
 #define nvrtcGetPTX nvrtcGetPTX_oro
 #define nvrtcGetPTXSize nvrtcGetPTXSize_oro
 #define nvrtcGetProgramLog nvrtcGetProgramLog_oro
 #define nvrtcGetProgramLogSize nvrtcGetProgramLogSize_oro
 #define nvrtcGetSupportedArchs nvrtcGetSupportedArchs_oro
+#define nvrtcSetFlowCallback nvrtcSetFlowCallback_oro
+#define nvrtcSetPCHHeapSize nvrtcSetPCHHeapSize_oro
 #define nvrtcVersion nvrtcVersion_oro
 
 
@@ -1239,7 +1329,7 @@ oroError OROAPI oroCtxGetCurrent(oroCtx* pctx)
 	return oroSuccess;
 }
 
-oroError OROAPI oroCtxGetApiVersion(oroCtx ctx, int* version)
+oroError OROAPI oroCtxGetApiVersion(oroCtx ctx, unsigned int* version)
 {
 	__ORO_FUNC(
 	CU4ORO::hipCtxGetApiVersion_cu4oro(*oroCtx2cu(&ctx),  version ),
@@ -1294,7 +1384,7 @@ orortcResult OROAPI orortcGetBitcodeSize(orortcProgram prog, size_t* bitcodeSize
 oroError_t OROAPI oroChooseDeviceR0600(int * device, const oroDeviceProp_tR0600 * prop)
 {
 	__ORO_FUNC(
-		CU4ORO::hipChooseDeviceR0600_cu4oro(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const CU4ORO::hipDeviceProp_t *,prop)),
+		CU4ORO::hipChooseDeviceR0600_cu4oro(__ORO_FORCE_CAST(int *,device), __ORO_FORCE_CAST(const CU4ORO::hipDeviceProp_tR0600 *,prop)),
 		hipChooseDeviceR0600(device, prop)     );
 	return oroErrorUnknown;
 }
@@ -1620,6 +1710,13 @@ oroError_t OROAPI oroDrvGetErrorString(oroError_t hipError, const char ** errorS
 		hipDrvGetErrorString(hipError, errorString)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroDrvMemcpy2DUnaligned(const oro_Memcpy2D * pCopy)
+{
+	__ORO_FUNC(
+		CU4ORO::hipDrvMemcpy2DUnaligned_cu4oro(__ORO_FORCE_CAST(const CU4ORO::hip_Memcpy2D *,pCopy)),
+		hipDrvMemcpy2DUnaligned(pCopy)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroDrvMemcpy3D(const ORO_MEMCPY3D * pCopy)
 {
 	__ORO_FUNC(
@@ -1681,6 +1778,13 @@ oroError_t OROAPI oroEventRecord(oroEvent_t event, oroStream_t stream)
 	__ORO_FUNC(
 		CU4ORO::hipEventRecord_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
 		hipEventRecord(event, stream)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroEventRecordWithFlags(oroEvent_t event, oroStream_t stream, unsigned int flags)
+{
+	__ORO_FUNC(
+		CU4ORO::hipEventRecordWithFlags_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipEvent_t,event), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(unsigned int,flags)),
+		hipEventRecordWithFlags(event, stream, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroEventSynchronize(oroEvent_t event)
@@ -1798,7 +1902,7 @@ oroError_t OROAPI oroGetDeviceFlags(unsigned int * flags)
 oroError_t OROAPI oroGetDevicePropertiesR0600(oroDeviceProp_tR0600 * prop, int deviceId)
 {
 	__ORO_FUNC(
-		CU4ORO::hipGetDevicePropertiesR0600_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceProp_t *,prop), __ORO_FORCE_CAST(int,deviceId)),
+		CU4ORO::hipGetDevicePropertiesR0600_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceProp_tR0600 *,prop), __ORO_FORCE_CAST(int,deviceId)),
 		hipGetDevicePropertiesR0600(prop, deviceId)     );
 	return oroErrorUnknown;
 }
@@ -1808,6 +1912,13 @@ const char * OROAPI oroGetErrorName(oroError_t hip_error)
 		CU4ORO::hipGetErrorName_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipError_t,hip_error)),
 		hipGetErrorName(hip_error)     );
 	return nullptr;
+}
+oroError_t OROAPI oroGetFuncBySymbol(oroFunction_t * functionPtr, const void * symbolPtr)
+{
+	__ORO_FUNC(
+		CU4ORO::hipGetFuncBySymbol_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t *,functionPtr), __ORO_FORCE_CAST(const void *,symbolPtr)),
+		hipGetFuncBySymbol(functionPtr, symbolPtr)     );
+	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetLastError()
 {
@@ -1821,6 +1932,13 @@ oroError_t OROAPI oroGetMipmappedArrayLevel(oroArray_t * levelArray, oroMipmappe
 	__ORO_FUNC(
 		CU4ORO::hipGetMipmappedArrayLevel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipArray_t *,levelArray), __ORO_FORCE_CAST(CU4ORO::hipMipmappedArray_t,mipmappedArray), __ORO_FORCE_CAST(unsigned int,level)),
 		hipGetMipmappedArrayLevel(levelArray, mipmappedArray, level)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGetProcAddress(const char * symbol, void ** pfn, int hipVersion, uint64_t flags, oroDriverProcAddressQueryResult * symbolStatus)
+{
+	__ORO_FUNC(
+		CU4ORO::hipGetProcAddress_cu4oro(__ORO_FORCE_CAST(const char *,symbol), __ORO_FORCE_CAST(void **,pfn), __ORO_FORCE_CAST(int,hipVersion), __ORO_FORCE_CAST(uint64_t,flags), __ORO_FORCE_CAST(CU4ORO::hipDriverProcAddressQueryResult *,symbolStatus)),
+		hipGetProcAddress(symbol, pfn, hipVersion, flags, symbolStatus)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetSymbolAddress(void ** devPtr, const void * symbol)
@@ -2432,14 +2550,14 @@ oroError_t OROAPI oroMemcpyHtoA(oroArray_t dstArray, size_t dstOffset, const voi
 		hipMemcpyHtoA(dstArray, dstOffset, srcHost, count)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroMemcpyHtoD(oroDeviceptr_t dst, void * src, size_t sizeBytes)
+oroError_t OROAPI oroMemcpyHtoD(oroDeviceptr_t dst, const void * src, size_t sizeBytes)
 {
 	__ORO_FUNC(
 		CU4ORO::hipMemcpyHtoD_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes)),
 		hipMemcpyHtoD(dst, src, sizeBytes)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroMemcpyHtoDAsync(oroDeviceptr_t dst, void * src, size_t sizeBytes, oroStream_t stream)
+oroError_t OROAPI oroMemcpyHtoDAsync(oroDeviceptr_t dst, const void * src, size_t sizeBytes, oroStream_t stream)
 {
 	__ORO_FUNC(
 		CU4ORO::hipMemcpyHtoDAsync_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipDeviceptr_t,dst), __ORO_FORCE_CAST(void *,src), __ORO_FORCE_CAST(size_t,sizeBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream)),
@@ -2642,11 +2760,11 @@ oroError_t OROAPI oroModuleLaunchCooperativeKernelMultiDevice(oroFunctionLaunchP
 		hipModuleLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, const void* const* kernelParams, const void* const* extra)
+oroError_t OROAPI oroModuleLaunchKernel(oroFunction_t f, unsigned int gridDimX, unsigned int gridDimY, unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY, unsigned int blockDimZ, unsigned int sharedMemBytes, oroStream_t stream, void ** kernelParams, void ** extra)
 {
 	__ORO_FUNC(
 		CU4ORO::hipModuleLaunchKernel_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipFunction_t,f), __ORO_FORCE_CAST(unsigned int,gridDimX), __ORO_FORCE_CAST(unsigned int,gridDimY), __ORO_FORCE_CAST(unsigned int,gridDimZ), __ORO_FORCE_CAST(unsigned int,blockDimX), __ORO_FORCE_CAST(unsigned int,blockDimY), __ORO_FORCE_CAST(unsigned int,blockDimZ), __ORO_FORCE_CAST(unsigned int,sharedMemBytes), __ORO_FORCE_CAST(CU4ORO::hipStream_t,stream), __ORO_FORCE_CAST(void **,kernelParams), __ORO_FORCE_CAST(void **,extra)),
-		hipModuleLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, __ORO_FORCE_CAST(void**, kernelParams), __ORO_FORCE_CAST(void**, extra))     );
+		hipModuleLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams, extra)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroModuleLoad(oroModule_t * module, const char * fname)
@@ -2880,14 +2998,14 @@ orortcResult OROAPI orortcAddNameExpression(orortcProgram prog, const char * nam
 		hiprtcAddNameExpression(prog, name_expression)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
-orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char ** options)
+orortcResult OROAPI orortcCompileProgram(orortcProgram prog, int numOptions, const char *const * options)
 {
 	__ORO_FUNC(
 		CU4ORO::hiprtcCompileProgram_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram,prog), __ORO_FORCE_CAST(int,numOptions), __ORO_FORCE_CAST(const char **,options)),
 		hiprtcCompileProgram(prog, numOptions, options)     );
 	return ORORTC_ERROR_INTERNAL_ERROR;
 }
-orortcResult OROAPI orortcCreateProgram(orortcProgram * prog, const char * src, const char * name, int numHeaders, const char ** headers, const char ** includeNames)
+orortcResult OROAPI orortcCreateProgram(orortcProgram * prog, const char * src, const char * name, int numHeaders, const char *const * headers, const char *const * includeNames)
 {
 	__ORO_FUNC(
 		CU4ORO::hiprtcCreateProgram_cu4oro(__ORO_FORCE_CAST(CU4ORO::hiprtcProgram *,prog), __ORO_FORCE_CAST(const char *,src), __ORO_FORCE_CAST(const char *,name), __ORO_FORCE_CAST(int,numHeaders), __ORO_FORCE_CAST(const char **,headers), __ORO_FORCE_CAST(const char **,includeNames)),
@@ -3013,6 +3131,13 @@ oroError_t OROAPI oroDeviceSetGraphMemAttribute(int device, oroGraphMemAttribute
 		hipDeviceSetGraphMemAttribute(device, attr, value)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroDrvGraphAddMemFreeNode(oroGraphNode_t * phGraphNode, oroGraph_t hGraph, const oroGraphNode_t * dependencies, size_t numDependencies, oroDeviceptr_t dptr)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphAddMemFreeNode((CU4ORO::CUgraphNode *)phGraphNode, (CU4ORO::CUgraph)hGraph, (const CU4ORO::CUgraphNode *)dependencies, (size_t)numDependencies, (CU4ORO::CUdeviceptr)dptr),
+		hipDrvGraphAddMemFreeNode(phGraphNode, hGraph, dependencies, numDependencies, dptr)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroDrvGraphAddMemcpyNode(oroGraphNode_t * phGraphNode, oroGraph_t hGraph, const oroGraphNode_t * dependencies, size_t numDependencies, const ORO_MEMCPY3D * copyParams, oroCtx_t ctx)
 {
 	__ORO_FUNC(
@@ -3020,11 +3145,39 @@ oroError_t OROAPI oroDrvGraphAddMemcpyNode(oroGraphNode_t * phGraphNode, oroGrap
 		hipDrvGraphAddMemcpyNode(phGraphNode, hGraph, dependencies, numDependencies, copyParams, ctx)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroDrvMemcpy2DUnaligned(const oro_Memcpy2D * pCopy)
+oroError_t OROAPI oroDrvGraphAddMemsetNode(oroGraphNode_t * phGraphNode, oroGraph_t hGraph, const oroGraphNode_t * dependencies, size_t numDependencies, const oroMemsetParams * memsetParams, oroCtx_t ctx)
 {
 	__ORO_FUNC(
-		CU4ORO::cuMemcpy2DUnaligned_v2((const CU4ORO::CUDA_MEMCPY2D *)pCopy),
-		hipDrvMemcpy2DUnaligned(pCopy)     );
+		CU4ORO::cuGraphAddMemsetNode((CU4ORO::CUgraphNode *)phGraphNode, (CU4ORO::CUgraph)hGraph, (const CU4ORO::CUgraphNode *)dependencies, (size_t)numDependencies, (const CU4ORO::CUDA_MEMSET_NODE_PARAMS *)memsetParams, (CU4ORO::CUcontext)ctx),
+		hipDrvGraphAddMemsetNode(phGraphNode, hGraph, dependencies, numDependencies, memsetParams, ctx)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroDrvGraphExecMemcpyNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t hNode, const ORO_MEMCPY3D * copyParams, oroCtx_t ctx)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphExecMemcpyNodeSetParams((CU4ORO::CUgraphExec)hGraphExec, (CU4ORO::CUgraphNode)hNode, (const CU4ORO::CUDA_MEMCPY3D *)copyParams, (CU4ORO::CUcontext)ctx),
+		hipDrvGraphExecMemcpyNodeSetParams(hGraphExec, hNode, copyParams, ctx)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroDrvGraphExecMemsetNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t hNode, const oroMemsetParams * memsetParams, oroCtx_t ctx)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphExecMemsetNodeSetParams((CU4ORO::CUgraphExec)hGraphExec, (CU4ORO::CUgraphNode)hNode, (const CU4ORO::CUDA_MEMSET_NODE_PARAMS *)memsetParams, (CU4ORO::CUcontext)ctx),
+		hipDrvGraphExecMemsetNodeSetParams(hGraphExec, hNode, memsetParams, ctx)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroDrvGraphMemcpyNodeGetParams(oroGraphNode_t hNode, ORO_MEMCPY3D * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphMemcpyNodeGetParams((CU4ORO::CUgraphNode)hNode, (CU4ORO::CUDA_MEMCPY3D *)nodeParams),
+		hipDrvGraphMemcpyNodeGetParams(hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroDrvGraphMemcpyNodeSetParams(oroGraphNode_t hNode, const ORO_MEMCPY3D * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphMemcpyNodeSetParams((CU4ORO::CUgraphNode)hNode, (const CU4ORO::CUDA_MEMCPY3D *)nodeParams),
+		hipDrvGraphMemcpyNodeSetParams(hNode, nodeParams)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGetTextureObjectResourceViewDesc( oroResourceViewDesc * pResViewDesc, oroTextureObject_t textureObject)
@@ -3039,6 +3192,13 @@ oroError_t OROAPI oroGetTextureObjectTextureDesc(oroTextureDesc * pTexDesc, oroT
 	__ORO_FUNC(
 		CU4ORO::cudaGetTextureObjectTextureDesc((struct CU4ORO::cudaTextureDesc *)pTexDesc, (CU4ORO::cudaTextureObject_t)textureObject),
 		hipGetTextureObjectTextureDesc(pTexDesc, textureObject)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphAddBatchMemOpNode(oroGraphNode_t * phGraphNode, oroGraph_t hGraph, const oroGraphNode_t * dependencies, size_t numDependencies, const oroBatchMemOpNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphAddBatchMemOpNode((CU4ORO::CUgraphNode *)phGraphNode, (CU4ORO::CUgraph)hGraph, (const CU4ORO::CUgraphNode *)dependencies, (size_t)numDependencies, (const CU4ORO::CUDA_BATCH_MEM_OP_NODE_PARAMS *)nodeParams),
+		hipGraphAddBatchMemOpNode(phGraphNode, hGraph, dependencies, numDependencies, nodeParams)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphAddChildGraphNode(oroGraphNode_t * pGraphNode, oroGraph_t graph, const oroGraphNode_t * pDependencies, size_t numDependencies, oroGraph_t childGraph)
@@ -3074,6 +3234,20 @@ oroError_t OROAPI oroGraphAddEventWaitNode(oroGraphNode_t * pGraphNode, oroGraph
 	__ORO_FUNC(
 		CU4ORO::cudaGraphAddEventWaitNode((CU4ORO::cudaGraphNode_t *)pGraphNode, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)pDependencies, (size_t)numDependencies, (CU4ORO::cudaEvent_t)event),
 		hipGraphAddEventWaitNode(pGraphNode, graph, pDependencies, numDependencies, event)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphAddExternalSemaphoresSignalNode(oroGraphNode_t * pGraphNode, oroGraph_t graph, const oroGraphNode_t * pDependencies, size_t numDependencies, const oroExternalSemaphoreSignalNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphAddExternalSemaphoresSignalNode((CU4ORO::cudaGraphNode_t *)pGraphNode, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)pDependencies, (size_t)numDependencies, (const struct CU4ORO::cudaExternalSemaphoreSignalNodeParams *)nodeParams),
+		hipGraphAddExternalSemaphoresSignalNode(pGraphNode, graph, pDependencies, numDependencies, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphAddExternalSemaphoresWaitNode(oroGraphNode_t * pGraphNode, oroGraph_t graph, const oroGraphNode_t * pDependencies, size_t numDependencies, const oroExternalSemaphoreWaitNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphAddExternalSemaphoresWaitNode((CU4ORO::cudaGraphNode_t *)pGraphNode, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)pDependencies, (size_t)numDependencies, (const struct CU4ORO::cudaExternalSemaphoreWaitNodeParams *)nodeParams),
+		hipGraphAddExternalSemaphoresWaitNode(pGraphNode, graph, pDependencies, numDependencies, nodeParams)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphAddHostNode(oroGraphNode_t * pGraphNode, oroGraph_t graph, const oroGraphNode_t * pDependencies, size_t numDependencies, const oroHostNodeParams * pNodeParams)
@@ -3137,6 +3311,27 @@ oroError_t OROAPI oroGraphAddMemsetNode(oroGraphNode_t * pGraphNode, oroGraph_t 
 	__ORO_FUNC(
 		CU4ORO::cudaGraphAddMemsetNode((CU4ORO::cudaGraphNode_t *)pGraphNode, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)pDependencies, (size_t)numDependencies, (const struct CU4ORO::cudaMemsetParams *)pMemsetParams),
 		hipGraphAddMemsetNode(pGraphNode, graph, pDependencies, numDependencies, pMemsetParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphAddNode(oroGraphNode_t * pGraphNode, oroGraph_t graph, const oroGraphNode_t * pDependencies, size_t numDependencies, oroGraphNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphAddNode((CU4ORO::cudaGraphNode_t *)pGraphNode, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)pDependencies, (size_t)numDependencies, (struct CU4ORO::cudaGraphNodeParams *)nodeParams),
+		hipGraphAddNode(pGraphNode, graph, pDependencies, numDependencies, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphBatchMemOpNodeGetParams(oroGraphNode_t hNode, oroBatchMemOpNodeParams * nodeParams_out)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphBatchMemOpNodeGetParams((CU4ORO::CUgraphNode)hNode, (CU4ORO::CUDA_BATCH_MEM_OP_NODE_PARAMS *)nodeParams_out),
+		hipGraphBatchMemOpNodeGetParams(hNode, nodeParams_out)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphBatchMemOpNodeSetParams(oroGraphNode_t hNode, oroBatchMemOpNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphBatchMemOpNodeSetParams((CU4ORO::CUgraphNode)hNode, (const CU4ORO::CUDA_BATCH_MEM_OP_NODE_PARAMS *)nodeParams),
+		hipGraphBatchMemOpNodeSetParams(hNode, nodeParams)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphChildGraphNodeGetGraph(oroGraphNode_t node, oroGraph_t * pGraph)
@@ -3209,6 +3404,13 @@ oroError_t OROAPI oroGraphEventWaitNodeSetEvent(oroGraphNode_t node, oroEvent_t 
 		hipGraphEventWaitNodeSetEvent(node, event)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroGraphExecBatchMemOpNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t hNode, const oroBatchMemOpNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cuGraphExecBatchMemOpNodeSetParams((CU4ORO::CUgraphExec)hGraphExec, (CU4ORO::CUgraphNode)hNode, (const CU4ORO::CUDA_BATCH_MEM_OP_NODE_PARAMS *)nodeParams),
+		hipGraphExecBatchMemOpNodeSetParams(hGraphExec, hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroGraphExecChildGraphNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t node, oroGraph_t childGraph)
 {
 	__ORO_FUNC(
@@ -3235,6 +3437,27 @@ oroError_t OROAPI oroGraphExecEventWaitNodeSetEvent(oroGraphExec_t hGraphExec, o
 	__ORO_FUNC(
 		CU4ORO::cudaGraphExecEventWaitNodeSetEvent((CU4ORO::cudaGraphExec_t)hGraphExec, (CU4ORO::cudaGraphNode_t)hNode, (CU4ORO::cudaEvent_t)event),
 		hipGraphExecEventWaitNodeSetEvent(hGraphExec, hNode, event)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExecExternalSemaphoresSignalNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t hNode, const oroExternalSemaphoreSignalNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExecExternalSemaphoresSignalNodeSetParams((CU4ORO::cudaGraphExec_t)hGraphExec, (CU4ORO::cudaGraphNode_t)hNode, (const struct CU4ORO::cudaExternalSemaphoreSignalNodeParams *)nodeParams),
+		hipGraphExecExternalSemaphoresSignalNodeSetParams(hGraphExec, hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExecExternalSemaphoresWaitNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t hNode, const oroExternalSemaphoreWaitNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExecExternalSemaphoresWaitNodeSetParams((CU4ORO::cudaGraphExec_t)hGraphExec, (CU4ORO::cudaGraphNode_t)hNode, (const struct CU4ORO::cudaExternalSemaphoreWaitNodeParams *)nodeParams),
+		hipGraphExecExternalSemaphoresWaitNodeSetParams(hGraphExec, hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExecGetFlags(oroGraphExec_t graphExec, unsigned long long * flags)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExecGetFlags((CU4ORO::cudaGraphExec_t)graphExec, (unsigned long long *)flags),
+		hipGraphExecGetFlags(graphExec, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphExecHostNodeSetParams(oroGraphExec_t hGraphExec, oroGraphNode_t node, const oroHostNodeParams * pNodeParams)
@@ -3286,6 +3509,41 @@ oroError_t OROAPI oroGraphExecMemsetNodeSetParams(oroGraphExec_t hGraphExec, oro
 		hipGraphExecMemsetNodeSetParams(hGraphExec, node, pNodeParams)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroGraphExecNodeSetParams(oroGraphExec_t graphExec, oroGraphNode_t node, oroGraphNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExecNodeSetParams((CU4ORO::cudaGraphExec_t)graphExec, (CU4ORO::cudaGraphNode_t)node, (struct CU4ORO::cudaGraphNodeParams *)nodeParams),
+		hipGraphExecNodeSetParams(graphExec, node, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExternalSemaphoresSignalNodeGetParams(oroGraphNode_t hNode, oroExternalSemaphoreSignalNodeParams * params_out)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExternalSemaphoresSignalNodeGetParams((CU4ORO::cudaGraphNode_t)hNode, (struct CU4ORO::cudaExternalSemaphoreSignalNodeParams *)params_out),
+		hipGraphExternalSemaphoresSignalNodeGetParams(hNode, params_out)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExternalSemaphoresSignalNodeSetParams(oroGraphNode_t hNode, const oroExternalSemaphoreSignalNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExternalSemaphoresSignalNodeSetParams((CU4ORO::cudaGraphNode_t)hNode, (const struct CU4ORO::cudaExternalSemaphoreSignalNodeParams *)nodeParams),
+		hipGraphExternalSemaphoresSignalNodeSetParams(hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExternalSemaphoresWaitNodeGetParams(oroGraphNode_t hNode, oroExternalSemaphoreWaitNodeParams * params_out)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExternalSemaphoresWaitNodeGetParams((CU4ORO::cudaGraphNode_t)hNode, (struct CU4ORO::cudaExternalSemaphoreWaitNodeParams *)params_out),
+		hipGraphExternalSemaphoresWaitNodeGetParams(hNode, params_out)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphExternalSemaphoresWaitNodeSetParams(oroGraphNode_t hNode, const oroExternalSemaphoreWaitNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphExternalSemaphoresWaitNodeSetParams((CU4ORO::cudaGraphNode_t)hNode, (const struct CU4ORO::cudaExternalSemaphoreWaitNodeParams *)nodeParams),
+		hipGraphExternalSemaphoresWaitNodeSetParams(hNode, nodeParams)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroGraphGetEdges(oroGraph_t graph, oroGraphNode_t * from, oroGraphNode_t * to, size_t * numEdges)
 {
 	__ORO_FUNC(
@@ -3328,6 +3586,13 @@ oroError_t OROAPI oroGraphInstantiateWithFlags(oroGraphExec_t * pGraphExec, oroG
 		hipGraphInstantiateWithFlags(pGraphExec, graph, flags)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroGraphInstantiateWithParams(oroGraphExec_t * pGraphExec, oroGraph_t graph, oroGraphInstantiateParams * instantiateParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphInstantiateWithParams((CU4ORO::cudaGraphExec_t *)pGraphExec, (CU4ORO::cudaGraph_t)graph, (CU4ORO::cudaGraphInstantiateParams *)instantiateParams),
+		hipGraphInstantiateWithParams(pGraphExec, graph, instantiateParams)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroGraphKernelNodeCopyAttributes(oroGraphNode_t hSrc, oroGraphNode_t hDst)
 {
 	__ORO_FUNC(
@@ -3335,7 +3600,7 @@ oroError_t OROAPI oroGraphKernelNodeCopyAttributes(oroGraphNode_t hSrc, oroGraph
 		hipGraphKernelNodeCopyAttributes(hSrc, hDst)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroGraphKernelNodeGetAttribute(oroGraphNode_t hNode, oroKernelNodeAttrID attr, oroKernelNodeAttrValue * value)
+oroError_t OROAPI oroGraphKernelNodeGetAttribute(oroGraphNode_t hNode, oroLaunchAttributeID attr, oroLaunchAttributeValue * value)
 {
 	__ORO_FUNC(
 		CU4ORO::cudaGraphKernelNodeGetAttribute((CU4ORO::cudaGraphNode_t)hNode, (CU4ORO::cudaLaunchAttributeID)attr, (CU4ORO::cudaLaunchAttributeValue *)value),
@@ -3349,7 +3614,7 @@ oroError_t OROAPI oroGraphKernelNodeGetParams(oroGraphNode_t node, oroKernelNode
 		hipGraphKernelNodeGetParams(node, pNodeParams)     );
 	return oroErrorUnknown;
 }
-oroError_t OROAPI oroGraphKernelNodeSetAttribute(oroGraphNode_t hNode, oroKernelNodeAttrID attr, const oroKernelNodeAttrValue * value)
+oroError_t OROAPI oroGraphKernelNodeSetAttribute(oroGraphNode_t hNode, oroLaunchAttributeID attr, const oroLaunchAttributeValue * value)
 {
 	__ORO_FUNC(
 		CU4ORO::cudaGraphKernelNodeSetAttribute((CU4ORO::cudaGraphNode_t)hNode, (CU4ORO::cudaLaunchAttributeID)attr, (const CU4ORO::cudaLaunchAttributeValue *)value),
@@ -3475,6 +3740,13 @@ oroError_t OROAPI oroGraphNodeSetEnabled(oroGraphExec_t hGraphExec, oroGraphNode
 		hipGraphNodeSetEnabled(hGraphExec, hNode, isEnabled)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroGraphNodeSetParams(oroGraphNode_t node, oroGraphNodeParams * nodeParams)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaGraphNodeSetParams((CU4ORO::cudaGraphNode_t)node, (struct CU4ORO::cudaGraphNodeParams *)nodeParams),
+		hipGraphNodeSetParams(node, nodeParams)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroGraphReleaseUserObject(oroGraph_t graph, oroUserObject_t object, unsigned int count)
 {
 	__ORO_FUNC(
@@ -3510,6 +3782,48 @@ oroError_t OROAPI oroLaunchHostFunc(oroStream_t stream, oroHostFn_t fn, void * u
 		hipLaunchHostFunc(stream, fn, userData)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroMemcpy2DArrayToArray(oroArray_t dst, size_t wOffsetDst, size_t hOffsetDst, oroArray_const_t src, size_t wOffsetSrc, size_t hOffsetSrc, size_t width, size_t height, oroMemcpyKind kind)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaMemcpy2DArrayToArray((CU4ORO::cudaArray_t)dst, (size_t)wOffsetDst, (size_t)hOffsetDst, (CU4ORO::cudaArray_const_t)src, (size_t)wOffsetSrc, (size_t)hOffsetSrc, (size_t)width, (size_t)height, (enum CU4ORO::cudaMemcpyKind)kind),
+		hipMemcpy2DArrayToArray(dst, wOffsetDst, hOffsetDst, src, wOffsetSrc, hOffsetSrc, width, height, kind)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroMemcpyAtoA(oroArray_t dstArray, size_t dstOffset, oroArray_t srcArray, size_t srcOffset, size_t ByteCount)
+{
+	__ORO_FUNC(
+		CU4ORO::cuMemcpyAtoA_v2((CU4ORO::CUarray)dstArray, (size_t)dstOffset, (CU4ORO::CUarray)srcArray, (size_t)srcOffset, (size_t)ByteCount),
+		hipMemcpyAtoA(dstArray, dstOffset, srcArray, srcOffset, ByteCount)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroMemcpyAtoD(oroDeviceptr_t dstDevice, oroArray_t srcArray, size_t srcOffset, size_t ByteCount)
+{
+	__ORO_FUNC(
+		CU4ORO::cuMemcpyAtoD_v2((CU4ORO::CUdeviceptr)dstDevice, (CU4ORO::CUarray)srcArray, (size_t)srcOffset, (size_t)ByteCount),
+		hipMemcpyAtoD(dstDevice, srcArray, srcOffset, ByteCount)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroMemcpyAtoHAsync(void * dstHost, oroArray_t srcArray, size_t srcOffset, size_t ByteCount, oroStream_t stream)
+{
+	__ORO_FUNC(
+		CU4ORO::cuMemcpyAtoHAsync_v2((void *)dstHost, (CU4ORO::CUarray)srcArray, (size_t)srcOffset, (size_t)ByteCount, (CU4ORO::CUstream)stream),
+		hipMemcpyAtoHAsync(dstHost, srcArray, srcOffset, ByteCount, stream)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroMemcpyDtoA(oroArray_t dstArray, size_t dstOffset, oroDeviceptr_t srcDevice, size_t ByteCount)
+{
+	__ORO_FUNC(
+		CU4ORO::cuMemcpyDtoA_v2((CU4ORO::CUarray)dstArray, (size_t)dstOffset, (CU4ORO::CUdeviceptr)srcDevice, (size_t)ByteCount),
+		hipMemcpyDtoA(dstArray, dstOffset, srcDevice, ByteCount)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroMemcpyHtoAAsync(oroArray_t dstArray, size_t dstOffset, const void * srcHost, size_t ByteCount, oroStream_t stream)
+{
+	__ORO_FUNC(
+		CU4ORO::cuMemcpyHtoAAsync_v2((CU4ORO::CUarray)dstArray, (size_t)dstOffset, (const void *)srcHost, (size_t)ByteCount, (CU4ORO::CUstream)stream),
+		hipMemcpyHtoAAsync(dstArray, dstOffset, srcHost, ByteCount, stream)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroPointerSetAttribute(const void * value, oroPointer_attribute attribute, oroDeviceptr_t ptr)
 {
 	__ORO_FUNC(
@@ -3517,11 +3831,32 @@ oroError_t OROAPI oroPointerSetAttribute(const void * value, oroPointer_attribut
 		hipPointerSetAttribute(value, attribute, ptr)     );
 	return oroErrorUnknown;
 }
+oroError_t OROAPI oroSetValidDevices(int * device_arr, int len)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaSetValidDevices((int *)device_arr, (int)len),
+		hipSetValidDevices(device_arr, len)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroStreamBatchMemOp(oroStream_t stream, unsigned int count, oroStreamBatchMemOpParams * paramArray, unsigned int flags)
+{
+	__ORO_FUNC(
+		CU4ORO::cuStreamBatchMemOp_v2((CU4ORO::CUstream)stream, (unsigned int)count, (CU4ORO::CUstreamBatchMemOpParams *)paramArray, (unsigned int)flags),
+		hipStreamBatchMemOp(stream, count, paramArray, flags)     );
+	return oroErrorUnknown;
+}
 oroError_t OROAPI oroStreamBeginCapture(oroStream_t stream, oroStreamCaptureMode mode)
 {
 	__ORO_FUNC(
 		CU4ORO::cudaStreamBeginCapture((CU4ORO::cudaStream_t)stream, (enum CU4ORO::cudaStreamCaptureMode)mode),
 		hipStreamBeginCapture(stream, mode)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroStreamBeginCaptureToGraph(oroStream_t stream, oroGraph_t graph, const oroGraphNode_t * dependencies, const oroGraphEdgeData * dependencyData, size_t numDependencies, oroStreamCaptureMode mode)
+{
+	__ORO_FUNC(
+		CU4ORO::cudaStreamBeginCaptureToGraph((CU4ORO::cudaStream_t)stream, (CU4ORO::cudaGraph_t)graph, (const CU4ORO::cudaGraphNode_t *)dependencies, (const CU4ORO::cudaGraphEdgeData *)dependencyData, (size_t)numDependencies, (enum CU4ORO::cudaStreamCaptureMode)mode),
+		hipStreamBeginCaptureToGraph(stream, graph, dependencies, dependencyData, numDependencies, mode)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroStreamEndCapture(oroStream_t stream, oroGraph_t * pGraph)
@@ -3599,6 +3934,20 @@ oroError_t OROAPI oroTexRefGetAddressMode( oroTextureAddressMode * pam, const te
 	__ORO_FUNC(
 		CU4ORO::cuTexRefGetAddressMode((CU4ORO::CUaddress_mode *)pam, (CU4ORO::CUtexref)texRef, (int)dim),
 		hipTexRefGetAddressMode(pam, texRef, dim)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroTexRefGetArray(oroArray_t * pArray, const textureReference * texRef)
+{
+	__ORO_FUNC(
+		CU4ORO::cuTexRefGetArray((CU4ORO::CUarray *)pArray, (CU4ORO::CUtexref)texRef),
+		hipTexRefGetArray(pArray, texRef)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroTexRefGetBorderColor(float * pBorderColor, const textureReference * texRef)
+{
+	__ORO_FUNC(
+		CU4ORO::cuTexRefGetBorderColor((float *)pBorderColor, (CU4ORO::CUtexref)texRef),
+		hipTexRefGetBorderColor(pBorderColor, texRef)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroTexRefGetFilterMode( oroTextureFilterMode * pfm, const textureReference * texRef)
