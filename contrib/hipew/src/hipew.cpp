@@ -625,6 +625,12 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
       "amdhip64.dll",   // <- hip '5.x' DLL.
       NULL };
   const char* hiprtc_paths[] = {
+      "hiprtc0707.dll",
+      "hiprtc0706.dll",
+      "hiprtc0705.dll",
+      "hiprtc0704.dll",
+      "hiprtc0703.dll",
+      "hiprtc0702.dll",
       "hiprtc0701.dll",
       "hiprtc0700.dll",
       "hiprtc0605.dll",
