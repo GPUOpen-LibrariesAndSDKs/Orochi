@@ -59,6 +59,8 @@ extern "C" {
 
 
 
+typedef unsigned int GLuint;
+typedef unsigned int GLenum;
 
 
 
@@ -762,6 +764,8 @@ typedef cudaError_t CUDAAPI tcudaUserObjectCreate(cudaUserObject_t * object_out,
 typedef cudaError_t CUDAAPI tcudaUserObjectRelease(cudaUserObject_t object, unsigned int count);
 typedef cudaError_t CUDAAPI tcudaUserObjectRetain(cudaUserObject_t object, unsigned int count);
 typedef cudaError_t CUDAAPI tcudaWaitExternalSemaphoresAsync_v2(const cudaExternalSemaphore_t * extSemArray, const struct cudaExternalSemaphoreWaitParams * paramsArray, unsigned int numExtSems, cudaStream_t stream);
+typedef cudaError_t CUDAAPI tcudaGraphicsGLRegisterImage( struct cudaGraphicsResource** resource, GLuint image, GLenum target, unsigned int flags );
+typedef cudaError_t CUDAAPI tcudaGraphicsGLRegisterBuffer( struct cudaGraphicsResource** resource, GLuint buffer, unsigned int flags );
 typedef nvrtcResult CUDAAPI tnvrtcAddNameExpression(nvrtcProgram prog, const char *const name_expression);
 typedef nvrtcResult CUDAAPI tnvrtcCompileProgram(nvrtcProgram prog, int numOptions, const char *const * options);
 typedef nvrtcResult CUDAAPI tnvrtcCreateProgram(nvrtcProgram * prog, const char * src, const char * name, int numHeaders, const char *const * headers, const char *const * includeNames);
@@ -1470,7 +1474,9 @@ extern tcudaUserObjectCreate *cudaUserObjectCreate_oro;
 extern tcudaUserObjectRelease *cudaUserObjectRelease_oro;
 extern tcudaUserObjectRetain *cudaUserObjectRetain_oro;
 extern tcudaWaitExternalSemaphoresAsync_v2 *cudaWaitExternalSemaphoresAsync_v2_oro;
-extern tnvrtcAddNameExpression *nvrtcAddNameExpression_oro;
+extern tcudaGraphicsGLRegisterImage* cudaGraphicsGLRegisterImage_oro;
+extern tcudaGraphicsGLRegisterBuffer* cudaGraphicsGLRegisterBuffer_oro;
+extern tnvrtcAddNameExpression* nvrtcAddNameExpression_oro;
 extern tnvrtcCompileProgram *nvrtcCompileProgram_oro;
 extern tnvrtcCreateProgram *nvrtcCreateProgram_oro;
 extern tnvrtcDestroyProgram *nvrtcDestroyProgram_oro;
