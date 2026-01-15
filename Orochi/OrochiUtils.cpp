@@ -642,7 +642,8 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	std::vector<const char*> opts;
-	SetupCompileOptions(device, optsIn, nullptr, opts);
+	std::string architectureTarget;
+	SetupCompileOptions(device, optsIn, &architectureTarget, opts);
 
 	oroFunction function;
 	std::vector<char> codec;
