@@ -93,35 +93,35 @@ workspace "YamatanoOrochi"
     targetdir      "dist/bin/%{cfg.buildcfg}"
     startproject   "Unittest"
 
-    -- Apply warning level
-    local warnLevel = _OPTIONS["warning"] or "on"
-    if warnLevel == "off" then
+    -- Warning level (default: on)
+    warnings "Default"
+    filter "options:warning=off"
         warnings "Off"
-    elseif warnLevel == "extra" then
+    filter "options:warning=extra"
         warnings "Extra"
-    else
-        warnings "Default"
-    end
+    filter {}
 
-    -- Apply Clang toolset if --clang option is specified
+    -- Toolset selection (clangcl is Windows-only; must use Lua if, not filter)
+    filter "system:macosx"
+        toolset "clang"
+        linker  "LLD"
+    filter {}
+
     if _OPTIONS["clang"] then
         if os.istarget("windows") then
             toolset "clangcl"
-            linker "LLD"
+            linker  "LLD"
         else
             toolset "clang"
-            linker "LLD"
+            linker  "LLD"
         end
     end
 
     -- Platform-specific settings
     filter "system:windows"
-        defines     { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+        defines      { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
         characterset "MBCS"
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
-    filter "system:macosx"
-        toolset "clang"
-        linker "LLD"
     filter "system:linux"
         links { "dl" }
     filter {}
@@ -129,12 +129,12 @@ workspace "YamatanoOrochi"
     -- Common defines
     defines { "_CRT_SECURE_NO_WARNINGS" }
 
-    -- Platforms
-    filter { "platforms:x64" }
+    -- Platform architecture
+    filter "platforms:x64"
         architecture "amd64"
     filter {}
 
-    -- Build configurations
+    -- Build-wide compiler settings
     linktimeoptimization "Fast"
     multiprocessorcompile "On"
     pic "On"
@@ -161,25 +161,28 @@ workspace "YamatanoOrochi"
         runtime      "Release"
     filter {}
 
-    -- Copy contrib binaries (Windows only)
-    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
-    copydir("./contrib/bin/win64", "./dist/bin/Release/")
-    copydir("./contrib/bin/win64", "./dist/bin/RelWithDebInfo/")
-
-    -- Bake kernels if requested
-    if _OPTIONS["bakeKernel"] then
+    -- Bake kernels if requested (os.execute runs at script time, not build time)
+    filter "options:bakeKernel"
         defines { "ORO_PP_LOAD_FROM_STRING" }
+    filter {}
+
+    if _OPTIONS["bakeKernel"] then
         if os.ishost("windows") then
-            os.execute(".\\tools\\bakeKernel.bat")
+            os.execute("%[./tools/bakeKernel.bat]")
         else
-            os.execute("./tools/bakeKernel.sh")
+            os.execute("%[./tools/bakeKernel.sh]")
         end
     end
 
     -- Precompiled kernels
-    if _OPTIONS["precompiled"] then
+    filter "options:precompiled"
         defines { "ORO_PRECOMPILED" }
-    end
+    filter {}
+
+    -- Copy contrib binaries (Windows only)
+    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
+    copydir("./contrib/bin/win64", "./dist/bin/RelWithDebInfo/")
+    copydir("./contrib/bin/win64", "./dist/bin/Release/")
 
     -- CUDA support (auto-detected or forced)
     include "./Orochi/enable_cuew"

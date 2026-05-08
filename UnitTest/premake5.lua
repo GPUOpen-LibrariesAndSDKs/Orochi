@@ -3,12 +3,11 @@ project "Unittest"
 
     location "%{wks.location}/%{prj.name}"
  
-    if os.istarget("windows") then
+    filter "system:windows"
         links { "version" }
-    end
-    if os.istarget("linux") then
+    filter "system:linux"
         links { "pthread" }
-    end
+    filter {}
 
     includedirs { "../" }
     files { "../Orochi/**.h", "../Orochi/**.cpp" }

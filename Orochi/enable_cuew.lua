@@ -8,14 +8,6 @@
 -- Utility functions
 -- -----------------------------------------------------------------------------
 
-local function joinPaths(basePath, additionalPath)
-    local sep = package.config:sub(1, 1)
-    if basePath:sub(-1) ~= sep then
-        basePath = basePath .. sep
-    end
-    return basePath .. additionalPath
-end
-
 local function isValidPath(p)
     return p ~= nil and p ~= "" and os.isdir(p)
 end
@@ -25,14 +17,14 @@ end
 -- -----------------------------------------------------------------------------
 
 -- Preferred CUDA version for this Orochi build
-local cudaVersionName    = "12.2"
-local cudaEnvVar         = "CUDA_PATH_V12_2"
-local cudaPathLinux      = "/usr/local/cuda-12.2"
-local cudaPathWindows    = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2"
+local cudaVersionName = "12.2"
+local cudaEnvVar      = "CUDA_PATH_V12_2"
+local cudaPathLinux   = "/usr/local/cuda-12.2"
+local cudaPathWindows = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2"
 
 -- Fallback paths
-local backupCudaEnvVar   = "CUDA_PATH"
-local backupCudaLinux    = "/usr/local/cuda"
+local backupCudaEnvVar  = "CUDA_PATH"
+local backupCudaLinux   = "/usr/local/cuda"
 
 -- Resolve CUDA SDK path (preferred version first, then fallback)
 local cuda_path = os.getenv(cudaEnvVar)
@@ -75,5 +67,5 @@ if not isValidPath(cuda_path) then
     end
 else
     print("CUDA SDK install folder found: " .. cuda_path)
-    externalincludedirs { joinPaths(cuda_path, "include") }
+    externalincludedirs { path.join(cuda_path, "include") }
 end

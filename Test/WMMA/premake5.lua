@@ -3,9 +3,9 @@ project "WMMA"
 
     location "%{wks.location}/%{prj.name}"
 
-    if os.istarget("windows") then
+    filter "system:windows"
         links { "version" }
-    end
+    filter {}
 
     includedirs { "../../" }
     files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
