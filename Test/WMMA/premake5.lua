@@ -1,15 +1,15 @@
 project "WMMA"
-      kind "ConsoleApp"
+   kind "ConsoleApp"
 
-      targetdir "../../dist/bin/%{cfg.buildcfg}"
-      location "../../build/"
+   targetdir "../../dist/bin/%{cfg.buildcfg}"
+   location ("../../" .. buildDir)
 
    if os.istarget("windows") then
-      links{ "version" }
+      links { "version" }
    end
 
-      includedirs { "../../" }
-      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
-      files { "../../contrib/**.h", "../../contrib/**.cpp" }
-      files { "*.h", "*.cpp" }
-	  files { "half.hpp" }
+   includedirs { "../../" }
+   files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
+   files { "../../contrib/**.h", "../../contrib/**.cpp" }
+   files { "*.h", "*.cpp" }
+   files { "half.hpp" }

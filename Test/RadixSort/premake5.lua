@@ -1,15 +1,15 @@
 project "RadixSort"
-      kind "ConsoleApp"
+   kind "ConsoleApp"
 
-      targetdir "../../dist/bin/%{cfg.buildcfg}"
-      location "../../build/"
+   targetdir "../../dist/bin/%{cfg.buildcfg}"
+   location ("../../" .. buildDir)
 
    if os.istarget("windows") then
-      links{ "version" }
+      links { "version" }
    end
 
-      includedirs { "../../" }
-      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
-      files { "../../contrib/**.h", "../../contrib/**.cpp" }
-      files { "*.cpp" }
-      files { "../../ParallelPrimitives/**.h", "../../ParallelPrimitives/**.cpp" }
+   includedirs { "../../" }
+   files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
+   files { "../../contrib/**.h", "../../contrib/**.cpp" }
+   files { "*.cpp" }
+   files { "../../ParallelPrimitives/**.h", "../../ParallelPrimitives/**.cpp" }

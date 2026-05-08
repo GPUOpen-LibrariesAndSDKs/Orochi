@@ -1,56 +1,74 @@
 #!/usr/bin/env python
+"""Generate kernel argument headers from HIP kernel source files.
+
+Reads #include directives from a kernel header and produces a C++ array
+of argument file references for runtime kernel compilation.
+
+Usage:
+    python genArgs.py <kernel_header.h>
+"""
 from __future__ import print_function
 
-import sys
 import os
+import sys
 
-def genArgs( fileName, api, includes ):
-    with open(fileName) as f:
-        iName = os.path.basename( fileName ).split('.')[0]
-        
-        print( '#if !defined(ORO_PP_LOAD_FROM_STRING)' )
-        print( '	static const char** '+iName+'Args = 0;' )
-        print( '#else' )
-        print( '	static const char* '+iName+'Args[] = {' )
-        includes += iName +'Includes[] = {'
+
+def gen_args(filename, api, includes):
+    """Parse a kernel header and emit argument array declarations."""
+    with open(filename) as f:
+        base_name = os.path.basename(filename).split('.')[0]
+
+        print('#if !defined(ORO_PP_LOAD_FROM_STRING)')
+        print('\tstatic const char** ' + base_name + 'Args = 0;')
+        print('#else')
+        print('\tstatic const char* ' + base_name + 'Args[] = {')
+
+        includes += base_name + 'Includes[] = {'
+
         for line in f.readlines():
-            a = line.strip('\r\n')
-            if a.find('#include') == -1:
+            line = line.strip('\r\n')
+
+            if '#include' not in line:
                 continue
-            if a.find('#include') != -1 and a.find('inl.' + api) != -1:
+            if '#include' in line and 'inl.' + api in line:
                 continue
-            if (api == 'cl' or api == 'metal') and a.find('.cu') != -1:
+            if api in ('cl', 'metal') and '.cu' in line:
                 continue
-            if (a.find('"') != -1 and a.find('#include') != -1):
+            if '"' in line and '#include' in line:
                 continue
 
-            filename = os.path.basename(a.split('<')[1].split('>')[0])
-            includes += '"' + a.split('<')[1].split('>')[0] + '",'
-            name = filename.split('.' + api)[0]
+            header = os.path.basename(line.split('<')[1].split('>')[0])
+            includes += '"' + line.split('<')[1].split('>')[0] + '",'
+            name = header.split('.' + api)[0]
             name = name.split('.h')[0]
-            name = api + '_'+name
-            print ( name + ',' )
-        print( api + '_'+iName+'};' )
-        print( '#endif' )
-        return includes
+            name = api + '_' + name
+            print(name + ',')
 
-argvs = sys.argv
+        print(api + '_' + base_name + '};')
+        print('#endif')
 
-files = []
-if len(argvs) >= 2:
-    files.append( argvs[1] )
-
-print( '#pragma once' )
+    return includes
 
 
-api = 'hip'
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: {} <kernel_header.h>".format(sys.argv[0]), file=sys.stderr)
+        sys.exit(1)
 
-# Visit each file
-print( 'namespace ' + api + ' {')
+    files = [sys.argv[1]]
+    api = 'hip'
 
-includes = 'static const char* '
-for s in files:
-    includes = genArgs(s, api, includes)
-includes += '};'
-print( includes )
-print( '}\t//namespace ' + api)
+    print('#pragma once')
+    print('namespace ' + api + ' {')
+
+    includes = 'static const char* '
+    for source_file in files:
+        includes = gen_args(source_file, api, includes)
+    includes += '};'
+
+    print(includes)
+    print('}\t//namespace ' + api)
+
+
+if __name__ == '__main__':
+    main()

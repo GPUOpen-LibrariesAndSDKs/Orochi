@@ -1,14 +1,14 @@
 project "DeviceEnum"
-      kind "ConsoleApp"
+   kind "ConsoleApp"
 
-      targetdir "../../dist/bin/%{cfg.buildcfg}"
-      location "../../build/"
+   targetdir "../../dist/bin/%{cfg.buildcfg}"
+   location ("../../" .. buildDir)
 
    if os.istarget("windows") then
-      links{ "version" }
+      links { "version" }
    end
 
-      includedirs { "../../" }
-      files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
-      files { "../../contrib/**.h", "../../contrib/**.cpp" }
-      files { "*.cpp" }
+   includedirs { "../../" }
+   files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
+   files { "../../contrib/**.h", "../../contrib/**.cpp" }
+   files { "*.cpp" }

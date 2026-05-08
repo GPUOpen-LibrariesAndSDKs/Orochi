@@ -1,3 +1,6 @@
+@echo off
+REM Run Orochi unit tests for gfx1100 (Windows)
+
 rd /s /q cache
 cd ..\UnitTest\bitcodes
 call generate_bitcodes_gfx1100.bat

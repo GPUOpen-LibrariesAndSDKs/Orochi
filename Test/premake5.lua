@@ -1,13 +1,14 @@
 project "SimpleDemo"
-      kind "ConsoleApp"
+   kind "ConsoleApp"
 
-      targetdir "../dist/bin/%{cfg.buildcfg}"
-      location "../build/"
+   targetdir "../dist/bin/%{cfg.buildcfg}"
+   location ("../" .. buildDir)
 
    if os.istarget("windows") then
-      links{ "version" }
+      links { "version" }
    end
-      includedirs { "../" }
-      files { "../Orochi/Orochi.h", "../Orochi/Orochi.cpp" }
-      files { "*.cpp" }
-      files { "../contrib/**.h", "../contrib/**.cpp" }
+
+   includedirs { "../" }
+   files { "../Orochi/Orochi.h", "../Orochi/Orochi.cpp" }
+   files { "*.cpp" }
+   files { "../contrib/**.h", "../contrib/**.cpp" }

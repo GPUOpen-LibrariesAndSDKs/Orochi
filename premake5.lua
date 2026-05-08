@@ -1,125 +1,188 @@
+-- =============================================================================
+-- Orochi (YamatanoOrochi) — Premake5 Build Configuration
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- Command-line Options
+-- -----------------------------------------------------------------------------
+
 newoption {
-    trigger = "bakeKernel",
-    description = "bakeKernel"
+   trigger     = "clang",
+   description = "Use Clang toolset instead of the default (GCC on Linux, MSVC on Windows)"
 }
 
 newoption {
-   trigger = "precompiled",
+   trigger     = "bakeKernel",
+   description = "Bake GPU kernels into source as string literals"
+}
+
+newoption {
+   trigger     = "precompiled",
    description = "Use precompiled kernels"
 }
 
 newoption {
-   trigger = "kernelcompile",
+   trigger     = "kernelcompile",
    description = "Compile kernels used for unit test"
 }
 
 newoption {
-   trigger = "forceCuda",
-   description = "By default, CUDA backend is enabled at compile-time only if the CUDA_PATH exists. Using this argument forces the activation of CUDA backend. However your project may have compilation errors."
+   trigger     = "forceCuda",
+   description = "Force CUDA backend even if CUDA_PATH is not found (may cause compilation errors)"
 }
 
+newoption {
+   trigger     = "builddir",
+   value       = "PATH",
+   description = "Directory for generated build files (default: build)"
+}
 
+newoption {
+   trigger     = "warning",
+   value       = "LEVEL",
+   description = "Compiler warning level: off, on, extra (default: on)",
+   allowed     = {
+      { "off",   "Disable warnings" },
+      { "on",    "Default warnings" },
+      { "extra", "Extra warnings" }
+   }
+}
+
+-- Resolve build output directory (global for subprojects)
+buildDir = _OPTIONS["builddir"] or "build"
+
+-- -----------------------------------------------------------------------------
+-- Utility Functions
+-- -----------------------------------------------------------------------------
+
+-- Copy files from src_dir to dst_dir with optional glob filter
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
-	if not os.isdir(src_dir) then
-		print("copydir FAILED: " .. src_dir .. " is not an existing directory!" )
-		return nil
-	end
-	filter = filter or "**"
-	src_dir = src_dir .. "/"
---	print("copy '%s' to '%s'.", src_dir .. filter, dst_dir)
-	dst_dir = dst_dir .. "/"
-	local dir = path.rebase(".",path.getabsolute("."), src_dir) -- root dir, relative from src_dir
+   if not os.isdir(src_dir) then
+      print("copydir FAILED: " .. src_dir .. " is not an existing directory!")
+      return nil
+   end
 
-	os.chdir( src_dir ) -- change current directory to src_dir
-		local matches = os.matchfiles(filter)
-	os.chdir( dir ) -- change current directory back to root
+   filter = filter or "**"
+   src_dir = src_dir .. "/"
+   dst_dir = dst_dir .. "/"
 
-	local counter = 0
-	for k, v in ipairs(matches) do
-		local target = iif(single_dst_dir, path.getname(v), v)
-		--make sure, that directory exists or os.copyfile() fails
-		os.mkdir( path.getdirectory(dst_dir .. target))
-		if os.copyfile( src_dir .. v, dst_dir .. target) then
-			counter = counter + 1
-		end
-	end
+   local dir = path.rebase(".", path.getabsolute("."), src_dir)
+   os.chdir(src_dir)
+   local matches = os.matchfiles(filter)
+   os.chdir(dir)
 
-	if counter == #matches then
---		print("    %d files copied.", counter)
-		return true
-	else
---		print("    %d/%d files copied.", counter, #matches)
-		return nil
-	end
+   local counter = 0
+   for _, v in ipairs(matches) do
+      local target = iif(single_dst_dir, path.getname(v), v)
+      os.mkdir(path.getdirectory(dst_dir .. target))
+      if os.copyfile(src_dir .. v, dst_dir .. target) then
+         counter = counter + 1
+      end
+   end
+
+   return counter == #matches or nil
 end
+
+-- -----------------------------------------------------------------------------
+-- Workspace Definition
+-- -----------------------------------------------------------------------------
 
 workspace "YamatanoOrochi"
    configurations { "Debug", "Release" }
-   language "C++"
-   platforms "x64"
-   architecture "x86_64"
-   cppdialect "C++17"
+   platforms      { "x64" }
+   architecture   "x86_64"
+   language       "C++"
+   cppdialect     "C++20"
+   location       (buildDir)
+   startproject   "Unittest"
 
-   if os.istarget("windows") then
-     defines{ "__WINDOWS__" }
-     characterset ("MBCS")
-     defines{ "_WIN32" }
-   end
-   if os.istarget("macosx") then
-      buildToolset = "clang"
-   end
-   if os.istarget("linux") then
-      links { "dl" }
+   -- Apply warning level
+   local warnLevel = _OPTIONS["warning"] or "on"
+   if warnLevel == "off" then
+      warnings "Off"
+   elseif warnLevel == "extra" then
+      warnings "Extra"
+   else
+      warnings "Default"
    end
 
-  filter {"platforms:x64", "configurations:Debug"}
-     targetsuffix "64D"
-     defines { "DEBUG" }
-     symbols "On"
-
-  filter {"platforms:x64", "configurations:Release"}
-     targetsuffix "64"
-     defines { "NDEBUG" }
-     optimize "On"
-   filter {}
-   if os.istarget("windows") then
-      buildoptions { "/wd4244", "/wd4305", "/wd4018", "/wd4244" }
-   end
-   -- buildoptions{ "-Wno-ignored-attributes" }
-   defines { "_CRT_SECURE_NO_WARNINGS" }
-   startproject "Unittest"
-
-    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
-    copydir("./contrib/bin/win64", "./dist/bin/Release/")
-	if _OPTIONS["bakeKernel"] then
-		defines { "ORO_PP_LOAD_FROM_STRING" }
-      if os.ishost("windows") then
-		   os.execute(".\\tools\\bakeKernel.bat")
+   -- Apply Clang toolset if --clang option is specified
+   if _OPTIONS["clang"] then
+      if os.istarget("windows") then
+         toolset "clangcl"
       else
-         os.execute(".\\tools\\bakeKernel.sh")
+         toolset "clang"
       end
-	end
+   end
 
+   -- Platform-specific settings
+   filter "system:windows"
+      defines     { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+      characterset "MBCS"
+      buildoptions { "/wd4244", "/wd4305", "/wd4018" }
+
+   filter "system:macosx"
+      toolset "clang"
+
+   filter "system:linux"
+      links { "dl" }
+
+   filter {}
+
+   -- Common defines
+   defines { "_CRT_SECURE_NO_WARNINGS" }
+
+   -- Configuration: Debug
+   filter { "platforms:x64", "configurations:Debug" }
+      targetsuffix "64D"
+      defines      { "DEBUG" }
+      symbols      "On"
+      optimize     "Off"
+
+   -- Configuration: Release
+   filter { "platforms:x64", "configurations:Release" }
+      targetsuffix "64"
+      defines      { "NDEBUG" }
+      optimize     "Full"
+
+   filter {}
+
+   -- Copy contrib binaries (Windows only)
+   copydir("./contrib/bin/win64", "./dist/bin/Debug/")
+   copydir("./contrib/bin/win64", "./dist/bin/Release/")
+
+   -- Bake kernels if requested
+   if _OPTIONS["bakeKernel"] then
+      defines { "ORO_PP_LOAD_FROM_STRING" }
+      if os.ishost("windows") then
+         os.execute(".\\tools\\bakeKernel.bat")
+      else
+         os.execute("./tools/bakeKernel.sh")
+      end
+   end
+
+   -- Precompiled kernels
    if _OPTIONS["precompiled"] then
-		defines {"ORO_PRECOMPILED"}
-	end
+      defines { "ORO_PRECOMPILED" }
+   end
 
+   -- CUDA support (auto-detected or forced)
+   include "./Orochi/enable_cuew"
 
-	-- try to enable CUDA if possible.
-	include "./Orochi/enable_cuew"
-
-
-
+-- -----------------------------------------------------------------------------
+-- Projects
+-- -----------------------------------------------------------------------------
 
    include "./UnitTest"
+
    group "Demos"
-   	include "./Test"
-   	include "./Test/DeviceEnum"
-	include "./Test/WMMA"
-	include "./Test/Texture"
-   
-     if os.istarget("windows") then
-        include "./Test/VulkanComputeSimple"
-        include "./Test/RadixSort"
-        include "./Test/simpleD3D12"
-     end
+      include "./Test"
+      include "./Test/DeviceEnum"
+      include "./Test/WMMA"
+      include "./Test/Texture"
+
+      if os.istarget("windows") then
+         include "./Test/VulkanComputeSimple"
+         include "./Test/RadixSort"
+         include "./Test/simpleD3D12"
+      end

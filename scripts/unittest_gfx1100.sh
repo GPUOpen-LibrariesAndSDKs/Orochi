@@ -1,3 +1,8 @@
+#!/bin/sh
+# Run Orochi unit tests for gfx1100 (Linux)
+
+set -e
+
 rm -rf cache
 cd ../UnitTest/bitcodes && ./generate_bitcodes_gfx1100.sh
 cd ../../scripts
