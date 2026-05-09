@@ -66,7 +66,7 @@ void RunSineWaveKernel1(oroDevice gOroDevice, size_t mesh_width, size_t mesh_hei
       return;
   }
   dim3 block = { 16, 16, 1 };
-  dim3 grid = { mesh_width / 16, mesh_height / 16, 1 };
+  dim3 grid = { (int)( mesh_width / 16 ), (int)( mesh_height / 16 ), 1 };
   Vertex* vertices = (Vertex*)oroDevVertptr;
   void* args[] = { &vertices, &mesh_width, &mesh_height, &AnimTime };
 
@@ -396,10 +396,12 @@ void DX12OroInterop::LoadAssets() {
     vertBufHeight = m_height / 2;
     const UINT vertexBufferSize = sizeof(Vertex) * vertBufWidth * vertBufHeight;
 
+    auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
     ThrowIfFailed(m_device->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+      &heapProps,
       D3D12_HEAP_FLAG_SHARED,
-      &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize),
+      &bufferDesc,
       D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr,
       IID_PPV_ARGS(&m_vertexBuffer)));
 
@@ -416,8 +418,9 @@ void DX12OroInterop::LoadAssets() {
       &sharedHandle));
 
     D3D12_RESOURCE_ALLOCATION_INFO d3d12ResourceAllocationInfo;
+    auto allocInfoDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
     d3d12ResourceAllocationInfo = m_device->GetResourceAllocationInfo(
-      m_nodeMask, 1, &CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize));
+      m_nodeMask, 1, &allocInfoDesc);
     size_t actualSize = d3d12ResourceAllocationInfo.SizeInBytes;
     size_t alignment = d3d12ResourceAllocationInfo.Alignment;
 
@@ -536,10 +539,10 @@ void DX12OroInterop::PopulateCommandList() {
   m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
   // Indicate that the back buffer will be used as a render target.
-  m_commandList->ResourceBarrier(
-    1, &CD3DX12_RESOURCE_BARRIER::Transition(
-      m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT,
-      D3D12_RESOURCE_STATE_RENDER_TARGET));
+  auto barrierToRT = CD3DX12_RESOURCE_BARRIER::Transition(
+    m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT,
+    D3D12_RESOURCE_STATE_RENDER_TARGET);
+  m_commandList->ResourceBarrier(1, &barrierToRT);
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
     m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex,
@@ -554,10 +557,10 @@ void DX12OroInterop::PopulateCommandList() {
   m_commandList->DrawInstanced(vertBufHeight * vertBufWidth, 1, 0, 0);
 
   // Indicate that the back buffer will now be used to present.
-  m_commandList->ResourceBarrier(
-    1, &CD3DX12_RESOURCE_BARRIER::Transition(
-      m_renderTargets[m_frameIndex].Get(),
-      D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+  auto barrierToPresent = CD3DX12_RESOURCE_BARRIER::Transition(
+    m_renderTargets[m_frameIndex].Get(),
+    D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+  m_commandList->ResourceBarrier(1, &barrierToPresent);
 
   ThrowIfFailed(m_commandList->Close());
 }

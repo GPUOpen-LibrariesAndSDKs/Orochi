@@ -1,0 +1,33 @@
+CompileFlags:
+  # Strip flags that premake emits for the Unix clang toolset but are invalid
+  # in the bundled clang++ driver on Windows MSVC target:
+  #   -fPIC      → "unsupported option for target x86_64-pc-windows-msvc"
+  #   /wd<id>    → in clang++ driver, leading-slash args are parsed as paths
+  #                ("no such file or directory: /wd4244"); these are MSVC-only
+  Remove:
+    - -fPIC
+    - /wd*
+  # premake's compile_commands exporter ignores `externalincludedirs`, so the
+  # UnitTest project's gtest path never appears in compile_commands.json.
+  # Adding it globally is harmless: clangd ignores -I paths that don't resolve.
+  # -Wno-unused-command-line-argument: quiet noise from the JSON's leftover
+  #   `-c` / `-o foo.o` that clangd doesn't actually emit object files for.
+  # -Wno-deprecated: silence the "treating 'c-header' input as 'c++-header'"
+  #   warning that clang++ emits for every .h opened (we want .h as C++).
+  Add:
+    - -isystemUnitTest/contrib/gtest-1.6.0
+    - -Wno-unused-command-line-argument
+    - -Wno-deprecated
+
+# Fallback for headers without an entry in compile_commands.json (e.g.
+# Test/Common.h — Test/premake5.lua only globs *.cpp, not *.h). clangd
+# normally guesses from a sibling .cpp; force C++20 + workspace -I when
+# that heuristic fails.
+---
+If:
+  PathMatch: .*\.h$
+CompileFlags:
+  Add:
+    - -xc++-header
+    - -std=c++20
+    - -I.

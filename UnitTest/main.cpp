@@ -20,10 +20,9 @@
 // THE SOFTWARE.
 //
 
-
 #include "common.h"
 
-int main( int argc, char* argv[] ) 
+int main( int argc, char* argv[] )
 {
 	::testing::InitGoogleTest( &argc, argv );
 	int retCode = RUN_ALL_TESTS();

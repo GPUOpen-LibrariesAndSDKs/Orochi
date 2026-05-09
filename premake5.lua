@@ -108,13 +108,8 @@ workspace "YamatanoOrochi"
     filter {}
 
     if _OPTIONS["clang"] then
-        if os.istarget("windows") then
-            toolset "clangcl"
-            linker  "LLD"
-        else
-            toolset "clang"
-            linker  "LLD"
-        end
+        toolset "clang"
+        linker  "LLD"
     end
 
     -- Platform-specific settings
@@ -150,6 +145,7 @@ workspace "YamatanoOrochi"
         targetsuffix "64"
         defines      { "NDEBUG", "BUILD_CONFIG=\"RelWithDebInfo\"" }
         symbols      "On"
+        editandcontinue "Off"
         optimize     "Debug"
         linktimeoptimization "Fast"
         runtime      "Release"
