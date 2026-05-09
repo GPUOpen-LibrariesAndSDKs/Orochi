@@ -135,29 +135,30 @@ workspace "YamatanoOrochi"
     filter {}
 
     -- Build-wide compiler settings
-    linktimeoptimization "Fast"
     multiprocessorcompile "On"
     pic "On"
 
     -- Configuration: Debug
     filter { "platforms:x64", "configurations:Debug" }
         targetsuffix "64D"
-        defines      { "DEBUG" }
+        defines      { "DEBUG", "_DEBUG", "BUILD_CONFIG=\"Debug\"" }
         symbols      "On"
         optimize     "Off"
         runtime      "Debug"
     -- Configuration: RelWithDebInfo
     filter { "platforms:x64", "configurations:RelWithDebInfo" }
         targetsuffix "64"
-        defines      { "NDEBUG" }
+        defines      { "NDEBUG", "BUILD_CONFIG=\"RelWithDebInfo\"" }
         symbols      "On"
         optimize     "Debug"
+        linktimeoptimization "Fast"
         runtime      "Release"
     -- Configuration: Release
     filter { "platforms:x64", "configurations:Release" }
         targetsuffix "64"
-        defines      { "NDEBUG" }
+        defines      { "NDEBUG", "BUILD_CONFIG=\"Release\"" }
         optimize     "Full"
+        linktimeoptimization "Fast"
         runtime      "Release"
     filter {}
 

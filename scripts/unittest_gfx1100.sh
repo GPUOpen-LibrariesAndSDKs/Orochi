@@ -1,9 +1,16 @@
 #!/bin/sh
 # Run Orochi unit tests for gfx1100 (Linux)
+# Usage: ./unittest_gfx1100.sh [Release|Debug|RelWithDebInfo]
 
 set -e
+
+CONFIG=${1:-Release}
+SUFFIX=""
+if [ "$CONFIG" = "Debug" ]; then
+    SUFFIX="D"
+fi
 
 rm -rf cache
 cd ../UnitTest/bitcodes && ./generate_bitcodes_gfx1100.sh
 cd ../../scripts
-../dist/bin/Release/Unittest64 --gtest_filter=-*link*:*getErrorString* --gtest_output=xml:../result.xml
+../dist/bin/${CONFIG}/Unittest64${SUFFIX} --gtest_filter=-*link*:*getErrorString* --gtest_output=xml:../result.xml

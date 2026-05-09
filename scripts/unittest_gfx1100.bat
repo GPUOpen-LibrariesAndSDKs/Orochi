@@ -1,8 +1,14 @@
 @echo off
 REM Run Orochi unit tests for gfx1100 (Windows)
+REM Usage: unittest_gfx1100.bat [Release|Debug|RelWithDebInfo]
+
+set CONFIG=%1
+if "%CONFIG%"=="" set CONFIG=Release
+set SUFFIX=
+if "%CONFIG%"=="Debug" set SUFFIX=D
 
 rd /s /q cache
 cd ..\UnitTest\bitcodes
 call generate_bitcodes_gfx1100.bat
 cd ..\..\scripts
-..\dist\bin\Release\Unittest64 --gtest_filter=-*getErrorString* --gtest_output=xml:../result.xml
+..\dist\bin\%CONFIG%\Unittest64%SUFFIX% --gtest_filter=-*getErrorString* --gtest_output=xml:../result.xml
