@@ -438,24 +438,39 @@ OrochiUtils::~OrochiUtils()
 
 // setup a base option list used in OrochiUtils 
 void SetupCompileOptions(
-	oroDevice device, 
-	const std::vector<const char*>* optsIn, 
+	oroDevice device,
+	const std::vector<const char*>* optsIn,
 	std::string* optionalArchitectureTarget, // if this string is given, it must stay alive until it's used into orortcCompileProgram. ( otherwise its "c_str()" becomes an invalid pointer )
+	std::string* optionalDeviceLibPath,
 	std::vector<const char*>& opts
 	)
 {
 	opts.push_back( "-std=c++17" );
 
-	if( optionalArchitectureTarget && oroGetCurAPI( 0 ) == ORO_API_HIP )
+	if( oroGetCurAPI( 0 ) == ORO_API_HIP )
 	{
-		oroDeviceProp props;
-		::memset(&props,0,sizeof(props));
-		oroGetDeviceProperties( &props, device );
-		if ( props.gcnArchName && props.gcnArchName[0] != '\0' )
+		if( optionalArchitectureTarget )
 		{
-			*optionalArchitectureTarget = "--gpu-architecture=";
-			*optionalArchitectureTarget += props.gcnArchName;
-			opts.push_back( optionalArchitectureTarget->c_str() );
+			oroDeviceProp props;
+			::memset(&props,0,sizeof(props));
+			oroGetDeviceProperties( &props, device );
+			if ( props.gcnArchName[0] != '\0' )
+			{
+				*optionalArchitectureTarget = "--gpu-architecture=";
+				*optionalArchitectureTarget += props.gcnArchName;
+				opts.push_back( optionalArchitectureTarget->c_str() );
+			}
+		}
+
+		if( optionalDeviceLibPath )
+		{
+			const char* envPath = std::getenv( "HIP_DEVICE_LIB_PATH" );
+			if( envPath && envPath[0] != '\0' )
+			{
+				*optionalDeviceLibPath = "--rocm-device-lib-path=";
+				*optionalDeviceLibPath += envPath;
+				opts.push_back( optionalDeviceLibPath->c_str() );
+			}
 		}
 	}
 
@@ -642,7 +657,9 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
 	std::vector<const char*> opts;
-	SetupCompileOptions(device, optsIn, nullptr, opts);
+	std::string architectureTarget;
+	std::string deviceLibPath;
+	SetupCompileOptions(device, optsIn, &architectureTarget, &deviceLibPath, opts);
 
 	oroFunction function;
 	std::vector<char> codec;
@@ -672,14 +689,26 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 			return nullptr;
 		}
 
-		size_t codeSize;
+		size_t codeSize = 0;
 		orortcResult e;
 		e = orortcGetCodeSize( prog, &codeSize );
-		OROASSERT( e == ORORTC_SUCCESS, 0 );
+		if( e != ORORTC_SUCCESS || codeSize == 0 )
+		{
+			printf( "WARNING: orortcGetCodeSize failed (error=%d, codeSize=%zu).\n", e, codeSize );
+			if( prog )
+				orortcDestroyProgram( &prog );
+			return nullptr;
+		}
 
 		codec.resize( codeSize );
 		e = orortcGetCode( prog, codec.data() );
-		OROASSERT( e == ORORTC_SUCCESS, 0 );
+		if( e != ORORTC_SUCCESS )
+		{
+			printf( "WARNING: orortcGetCode failed (error=%d).\n", e );
+			if( prog )
+				orortcDestroyProgram( &prog );
+			return nullptr;
+		}
 		e = orortcDestroyProgram( &prog );
 		OROASSERT( e == ORORTC_SUCCESS, 0 );
 
@@ -689,9 +718,17 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	}
 	oroModule module;
 	oroError ee = oroModuleLoadData( &module, codec.data() );
-	OROASSERT( ee == oroSuccess, 0 );
+	if( ee != oroSuccess )
+	{
+		printf( "WARNING: oroModuleLoadData failed (error=%d).\n", ee );
+		return nullptr;
+	}
 	ee = oroModuleGetFunction( &function, module, funcName );
-	OROASSERT( ee == oroSuccess, 0 );
+	if( ee != oroSuccess )
+	{
+		printf( "WARNING: oroModuleGetFunction failed (error=%d) for '%s'.\n", ee, funcName );
+		return nullptr;
+	}
 
 	if ( loadedModule ) 
 	{
@@ -738,7 +775,8 @@ int OrochiUtils::getProgram( oroDevice device, const char* code, const char* pat
 {
 	std::vector<const char*> opts;
 	std::string architectureTarget;
-	SetupCompileOptions(device, optsIn, &architectureTarget, opts);
+	std::string deviceLibPath;
+	SetupCompileOptions(device, optsIn, &architectureTarget, &deviceLibPath, opts);
 	int createProgramErrorCode = CreateAndCompileProgram(code, path, opts, funcName, 0, nullptr, nullptr, prog);
 	return createProgramErrorCode;
 }
@@ -769,12 +807,22 @@ void OrochiUtils::getModule( oroDevice device, const char* code, const char* pat
 
 	codec.resize( codeSize );
 	e = orortcGetCode( prog, codec.data() );
-	OROASSERT( e == ORORTC_SUCCESS, 0 );
+	if( e != ORORTC_SUCCESS )
+	{
+		printf( "WARNING: orortcGetCode failed (error=%d).\n", e );
+		if( prog )
+			orortcDestroyProgram( &prog );
+		return;
+	}
 	e = orortcDestroyProgram( &prog );
 	OROASSERT( e == ORORTC_SUCCESS, 0 );
 
 	oroError ee = oroModuleLoadData( moduleOut, codec.data() );
-	OROASSERT( ee == oroSuccess, 0 );
+	if( ee != oroSuccess )
+	{
+		printf( "WARNING: oroModuleLoadData failed (error=%d).\n", ee );
+		return;
+	}
 	return;
 }
 
