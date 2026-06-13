@@ -1,7 +1,7 @@
 project "simpleD3D12"
     kind "WindowedApp"
 
-    location "%{wks.location}/%{prj.name}"
+    location "%{wks.location}/Test/%{prj.name}"
     debugdir "."
 
     buildoptions { "/wd4244" }

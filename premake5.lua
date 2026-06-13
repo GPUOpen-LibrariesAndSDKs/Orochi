@@ -34,7 +34,7 @@ newoption {
 newoption {
     trigger     = "builddir",
     value       = "PATH",
-    description = "Directory for generated build files (default: build)"
+    description = "Directory for generated build files (default: project root)"
 }
 
 newoption {
@@ -89,7 +89,7 @@ workspace "YamatanoOrochi"
     platforms      { "x64" }
     language       "C++"
     cppdialect     "C++20"
-    location       (_OPTIONS["builddir"] or "build")
+    location       (_OPTIONS["builddir"] or ".")
     targetdir      "dist/bin/%{cfg.buildcfg}"
     startproject   "Unittest"
 

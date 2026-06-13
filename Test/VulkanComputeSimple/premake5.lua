@@ -1,7 +1,7 @@
 project "VulkanComputeSimple"
     kind "ConsoleApp"
 
-    location "%{wks.location}/%{prj.name}"
+    location "%{wks.location}/Test/%{prj.name}"
 
     filter "system:windows"
         buildoptions { "/wd4244" }
