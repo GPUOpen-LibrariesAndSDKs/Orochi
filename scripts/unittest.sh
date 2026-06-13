@@ -14,4 +14,4 @@ fi
 rm -rf cache
 cd ../UnitTest/bitcodes && ./generate_bitcodes.sh
 cd ../../scripts
-../dist/bin/${CONFIG}/Unittest64${SUFFIX} --gtest_filter=-*link_bundledBc* --gtest_output=xml:../result.xml
+../dist/bin/${CONFIG}/UnitTest64${SUFFIX} --gtest_filter=-*link_bundledBc* --gtest_output=xml:../result.xml

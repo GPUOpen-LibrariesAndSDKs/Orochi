@@ -91,7 +91,7 @@ workspace "YamatanoOrochi"
     cppdialect     "C++20"
     location       (_OPTIONS["builddir"] or ".")
     targetdir      "dist/bin/%{cfg.buildcfg}"
-    startproject   "Unittest"
+    startproject   "UnitTest"
 
     -- Warning level (default: on)
     warnings "Default"

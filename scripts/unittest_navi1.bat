@@ -8,4 +8,4 @@ set SUFFIX=
 if "%CONFIG%"=="Debug" set SUFFIX=D
 
 rd /s /q cache
-..\dist\bin\%CONFIG%\Unittest64%SUFFIX%.exe --gtest_filter=-*getErrorString*:*link_bundledBc_with_bc_loweredName* --gtest_output=xml:../result.xml
+..\dist\bin\%CONFIG%\UnitTest64%SUFFIX%.exe --gtest_filter=-*getErrorString*:*link_bundledBc_with_bc_loweredName* --gtest_output=xml:../result.xml
