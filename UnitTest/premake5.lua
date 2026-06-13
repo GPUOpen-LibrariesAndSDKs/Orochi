@@ -1,4 +1,4 @@
-project "UnitTest"
+project "Unittest"
     kind "ConsoleApp"
 
     location "%{wks.location}/%{prj.name}"
