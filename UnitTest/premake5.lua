@@ -3,8 +3,7 @@ project "UnitTest"
 
     location "%{wks.location}/%{prj.name}"
  
-    filter "system:windows"
-        links { "version" }
+    linkVersionLib()
     filter "system:linux"
         links { "pthread" }
     filter {}

@@ -52,7 +52,9 @@ newoption {
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
--- Copy files from src_dir to dst_dir with optional glob filter
+-- Copy files matching `filter` (default "**") from `src_dir` into `dst_dir`.
+-- With `single_dst_dir`, flatten the tree so every file lands directly in
+-- `dst_dir`. Returns true on success, nil if any matched file failed to copy.
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
     if not os.isdir(src_dir) then
         print("copydir FAILED: " .. src_dir .. " is not an existing directory!")
@@ -68,6 +70,10 @@ function copydir(src_dir, dst_dir, filter, single_dst_dir)
     local matches = os.matchfiles(filter)
     os.chdir(dir)
 
+    if #matches == 0 then
+        return true
+    end
+
     local counter = 0
     for _, v in ipairs(matches) do
         local target = iif(single_dst_dir, path.getname(v), v)
@@ -80,12 +86,22 @@ function copydir(src_dir, dst_dir, filter, single_dst_dir)
     return counter == #matches or nil
 end
 
+-- Link the Windows "version" library, required by every Orochi test target.
+-- Wrapped so the per-project filter block is not copy-pasted into each one.
+function linkVersionLib()
+    filter "system:windows"
+        links { "version" }
+    filter {}
+end
+
 -- -----------------------------------------------------------------------------
 -- Workspace Definition
 -- -----------------------------------------------------------------------------
 
+local buildConfigs = { "Debug", "RelWithDebInfo", "Release" }
+
 workspace "YamatanoOrochi"
-    configurations { "Debug", "RelWithDebInfo", "Release" }
+    configurations (buildConfigs)
     platforms      { "x64" }
     language       "C++"
     cppdialect     "C++20"
@@ -93,15 +109,11 @@ workspace "YamatanoOrochi"
     targetdir      "dist/bin/%{cfg.buildcfg}"
     startproject   "UnitTest"
 
-    -- Warning level (default: on)
-    warnings "Default"
-    filter "options:warning=off"
-        warnings "Off"
-    filter "options:warning=extra"
-        warnings "Extra"
-    filter {}
+    -- Build-wide compiler settings
+    multiprocessorcompile "On"
+    pic "On"
 
-    -- Toolset selection (clangcl is Windows-only; must use Lua if, not filter)
+    -- Toolset selection. macOS always uses clang; --clang opts in elsewhere.
     filter "system:macosx"
         toolset "clang"
         linker  "LLD"
@@ -112,6 +124,53 @@ workspace "YamatanoOrochi"
         linker  "LLD"
     end
 
+    -- Platform architecture
+    filter "platforms:x64"
+        architecture "amd64"
+    filter {}
+
+    -- Per-config target name suffix
+    filter { "platforms:x64", "configurations:Debug" }
+        targetsuffix "64D"
+    filter { "platforms:x64", "configurations:RelWithDebInfo or Release" }
+        targetsuffix "64"
+    filter {}
+
+    -- Configuration: Debug
+    filter { "configurations:Debug" }
+        defines      { "DEBUG", "_DEBUG", "BUILD_CONFIG=\"Debug\"" }
+        symbols      "Full"
+        optimize     "Off"
+        runtime      "Debug"
+        floatingpointexceptions "On"
+        editandcontinue "On"
+    -- Configuration: RelWithDebInfo
+    filter { "configurations:RelWithDebInfo" }
+        defines      { "NDEBUG", "BUILD_CONFIG=\"RelWithDebInfo\"" }
+        symbols      "On"
+        optimize     "Debug"
+        runtime      "Debug"
+        floatingpointexceptions "On"
+        editandcontinue "On"
+    -- Configuration: Release
+    filter { "configurations:Release" }
+        defines      { "NDEBUG", "BUILD_CONFIG=\"Release\"" }
+        symbols      "Off"
+        optimize     "Full"
+        runtime      "Release"
+        intrinsics   "On"
+        floatingpointexceptions "Off"
+        editandcontinue "Off"
+        linktimeoptimization "Fast"
+    filter { "configurations:Release", "toolset:msc-v*" }
+        buildoptions { "/favor:AMD64" }
+    filter {}
+
+    -- Warning level (default: on)
+    local warningLevels = { off = "Off", on = "Default", extra = "Extra" }
+    externalwarnings "Off"
+    warnings (warningLevels[_OPTIONS["warning"]] or "Default")
+
     -- Platform-specific settings
     filter "system:windows"
         defines      { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
@@ -119,43 +178,6 @@ workspace "YamatanoOrochi"
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
     filter "system:linux"
         links { "dl" }
-    filter {}
-
-    -- Common defines
-    defines { "_CRT_SECURE_NO_WARNINGS" }
-
-    -- Platform architecture
-    filter "platforms:x64"
-        architecture "amd64"
-    filter {}
-
-    -- Build-wide compiler settings
-    multiprocessorcompile "On"
-    pic "On"
-
-    -- Configuration: Debug
-    filter { "platforms:x64", "configurations:Debug" }
-        targetsuffix "64D"
-        defines      { "DEBUG", "_DEBUG", "BUILD_CONFIG=\"Debug\"" }
-        symbols      "On"
-        optimize     "Off"
-        runtime      "Debug"
-    -- Configuration: RelWithDebInfo
-    filter { "platforms:x64", "configurations:RelWithDebInfo" }
-        targetsuffix "64"
-        defines      { "NDEBUG", "BUILD_CONFIG=\"RelWithDebInfo\"" }
-        symbols      "On"
-        editandcontinue "Off"
-        optimize     "Debug"
-        linktimeoptimization "Fast"
-        runtime      "Release"
-    -- Configuration: Release
-    filter { "platforms:x64", "configurations:Release" }
-        targetsuffix "64"
-        defines      { "NDEBUG", "BUILD_CONFIG=\"Release\"" }
-        optimize     "Full"
-        linktimeoptimization "Fast"
-        runtime      "Release"
     filter {}
 
     -- Bake kernels if requested (os.execute runs at script time, not build time)
@@ -177,9 +199,11 @@ workspace "YamatanoOrochi"
     filter {}
 
     -- Copy contrib binaries (Windows only)
-    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
-    copydir("./contrib/bin/win64", "./dist/bin/RelWithDebInfo/")
-    copydir("./contrib/bin/win64", "./dist/bin/Release/")
+    if os.istarget("windows") then
+        for _, cfg in ipairs(buildConfigs) do
+            copydir("./contrib/bin/win64", "./dist/bin/" .. cfg .. "/")
+        end
+    end
 
     -- CUDA support (auto-detected or forced)
     include "./Orochi/enable_cuew"

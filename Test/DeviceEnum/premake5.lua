@@ -3,9 +3,7 @@ project "DeviceEnum"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    filter "system:windows"
-        links { "version" }
-    filter {}
+    linkVersionLib()
 
     includedirs { "../../" }
     files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }

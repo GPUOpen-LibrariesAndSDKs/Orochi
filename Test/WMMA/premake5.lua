@@ -3,9 +3,7 @@ project "WMMA"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    filter "system:windows"
-        links { "version" }
-    filter {}
+    linkVersionLib()
 
     includedirs { "../../" }
     files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
