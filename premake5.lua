@@ -52,40 +52,6 @@ newoption {
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
--- Copy files matching `filter` (default "**") from `src_dir` into `dst_dir`.
--- With `single_dst_dir`, flatten the tree so every file lands directly in
--- `dst_dir`. Returns true on success, nil if any matched file failed to copy.
-function copydir(src_dir, dst_dir, filter, single_dst_dir)
-    if not os.isdir(src_dir) then
-        print("copydir FAILED: " .. src_dir .. " is not an existing directory!")
-        return nil
-    end
-
-    filter = filter or "**"
-    src_dir = src_dir .. "/"
-    dst_dir = dst_dir .. "/"
-
-    local dir = path.rebase(".", path.getabsolute("."), src_dir)
-    os.chdir(src_dir)
-    local matches = os.matchfiles(filter)
-    os.chdir(dir)
-
-    if #matches == 0 then
-        return true
-    end
-
-    local counter = 0
-    for _, v in ipairs(matches) do
-        local target = iif(single_dst_dir, path.getname(v), v)
-        os.mkdir(path.getdirectory(dst_dir .. target))
-        if os.copyfile(src_dir .. v, dst_dir .. target) then
-            counter = counter + 1
-        end
-    end
-
-    return counter == #matches or nil
-end
-
 -- Link the Windows "version" library, required by every Orochi test target.
 -- Wrapped so the per-project filter block is not copy-pasted into each one.
 function linkVersionLib()
@@ -198,12 +164,14 @@ workspace "YamatanoOrochi"
         defines { "ORO_PRECOMPILED" }
     filter {}
 
-    -- Copy contrib binaries (Windows only)
-    if os.istarget("windows") then
-        for _, cfg in ipairs(buildConfigs) do
-            copydir("./contrib/bin/win64", "./dist/bin/" .. cfg .. "/")
-        end
-    end
+    -- Copy contrib binaries next to each build's output (Windows only)
+    -- Absolute source so the path is not rebased per-project by the command token
+    local contribBinDir = path.getabsolute("contrib/bin/win64")
+    filter "system:windows"
+        postbuildcommands {
+            "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\""
+        }
+    filter {}
 
     -- CUDA support (auto-detected or forced)
     include "./Orochi/enable_cuew"
@@ -223,5 +191,5 @@ workspace "YamatanoOrochi"
         if os.istarget("windows") then
             include "./Test/VulkanComputeSimple"
             include "./Test/RadixSort"
-            include "./Test/simpleD3D12"
+            include "./Test/SimpleD3D12"
         end
