@@ -9,4 +9,4 @@ set SUFFIX=
 if "%CONFIG%"=="Debug" set SUFFIX=D
 
 rd /s /q cache
-..\dist\bin\Release\UnitTest64.exe --gtest_filter=-*link_bundledBc*:*VulkanComputeSimple64* --gtest_output=xml:../result.xml
+..\dist\bin\%CONFIG%\UnitTest64%SUFFIX%.exe --gtest_filter=-*link_bundledBc*:*VulkanComputeSimple64* --gtest_output=xml:../result.xml
