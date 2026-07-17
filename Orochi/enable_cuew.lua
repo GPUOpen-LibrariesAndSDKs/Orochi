@@ -2,7 +2,6 @@
 -- Orochi CUDA/CUEW Configuration
 -- =============================================================================
 -- Enables CUEW (CUDA Extension Wrangler) when the CUDA SDK is available.
--- Include this file from the root premake5.lua to auto-detect CUDA.
 
 -- -----------------------------------------------------------------------------
 -- Utility functions
@@ -16,38 +15,45 @@ end
 -- CUDA path detection
 -- -----------------------------------------------------------------------------
 
--- Preferred CUDA version for this Orochi build
-local cudaVersionName = "12.2"
-local cudaEnvVar      = "CUDA_PATH_V12_2"
-local cudaPathLinux   = "/usr/local/cuda-12.2"
-local cudaPathWindows = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.2"
+-- Candidate CUDA versions, most preferred first.
+local cudaVersions = { "12.2" }
 
--- Fallback paths
-local backupCudaEnvVar  = "CUDA_PATH"
-local backupCudaLinux   = "/usr/local/cuda"
-
--- Resolve CUDA SDK path (preferred version first, then fallback)
-local cuda_path = os.getenv(cudaEnvVar)
-
-if not isValidPath(cuda_path) and os.isdir(cudaPathLinux) then
-    cuda_path = cudaPathLinux
+-- Return the first existing SDK path for a given version.
+local function findCudaVersion(version)
+    local envVar = "CUDA_PATH_V" .. version:gsub("%.", "_")
+    local candidates = {
+        os.getenv(envVar),
+        "/usr/local/cuda-" .. version,
+        "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v" .. version,
+    }
+    for _, p in ipairs(candidates) do
+        if isValidPath(p) then
+            return p
+        end
+    end
+    return nil
 end
 
-if not isValidPath(cuda_path) and os.isdir(cudaPathWindows) then
-    cuda_path = cudaPathWindows
+-- Resolve CUDA SDK path: preferred versions first, then fallbacks.
+local cuda_path = nil
+for _, version in ipairs(cudaVersions) do
+    cuda_path = findCudaVersion(version)
+    if isValidPath(cuda_path) then
+        break
+    end
 end
 
 if not isValidPath(cuda_path) then
-    print("The required version of CUDA for this Orochi is not found: " .. cudaVersionName .. ". It's advised that you install this version.")
+    print("The required version of CUDA for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". It's advised that you install one of these versions.")
 end
 
 -- Try fallback paths
 if not isValidPath(cuda_path) then
-    cuda_path = os.getenv(backupCudaEnvVar)
+    cuda_path = os.getenv("CUDA_PATH")
 end
 
-if not isValidPath(cuda_path) and os.isdir(backupCudaLinux) then
-    cuda_path = backupCudaLinux
+if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
+    cuda_path = "/usr/local/cuda"
 end
 
 -- -----------------------------------------------------------------------------

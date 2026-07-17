@@ -52,12 +52,28 @@ newoption {
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
+-- Absolute path to the repo root.
+local rootDir = _MAIN_SCRIPT_DIR
+
 -- Link the Windows "version" library, required by every Orochi test target.
--- Wrapped so the per-project filter block is not copy-pasted into each one.
 function linkVersionLib()
     filter "system:windows"
         links { "version" }
     filter {}
+end
+
+-- Include the repo root and link the Orochi core static library.
+function useOrochi()
+    includedirs { rootDir }
+    links { "Orochi" }
+end
+
+-- Run a helper script, aborting generation if it fails.
+function runScript(command)
+    local ok, _, code = os.execute(command)
+    if not ok then
+        error("command failed (exit " .. tostring(code) .. "): " .. command)
+    end
 end
 
 -- -----------------------------------------------------------------------------
@@ -146,16 +162,16 @@ workspace "YamatanoOrochi"
         links { "dl" }
     filter {}
 
-    -- Bake kernels if requested (os.execute runs at script time, not build time)
+    -- Bake kernels if requested
     filter "options:bakeKernel"
         defines { "ORO_PP_LOAD_FROM_STRING" }
     filter {}
 
     if _OPTIONS["bakeKernel"] then
         if os.ishost("windows") then
-            os.execute("%[./tools/bakeKernel.bat]")
+            runScript(path.getabsolute("tools/bakeKernel.bat"))
         else
-            os.execute("%[./tools/bakeKernel.sh]")
+            runScript("sh " .. path.getabsolute("tools/bakeKernel.sh"))
         end
     end
 
@@ -165,13 +181,14 @@ workspace "YamatanoOrochi"
     filter {}
 
     -- Copy contrib binaries next to each build's output (Windows only)
-    -- Absolute source so the path is not rebased per-project by the command token
     local contribBinDir = path.getabsolute("contrib/bin/win64")
-    filter "system:windows"
-        postbuildcommands {
-            "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\""
-        }
-    filter {}
+    if os.isdir(contribBinDir) then
+        filter "system:windows"
+            postbuildcommands {
+                "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\""
+            }
+        filter {}
+    end
 
     -- CUDA support (auto-detected or forced)
     include "./Orochi/enable_cuew"
@@ -180,6 +197,7 @@ workspace "YamatanoOrochi"
 -- Projects
 -- -----------------------------------------------------------------------------
 
+    include "./Orochi"
     include "./UnitTest"
 
     group "Demos"

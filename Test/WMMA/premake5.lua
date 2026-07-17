@@ -3,10 +3,8 @@ project "WMMA"
 
     location "%{wks.location}/Test/%{prj.name}"
 
+    useOrochi()
     linkVersionLib()
 
-    includedirs { "../../" }
-    files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
-    files { "../../contrib/**.h", "../../contrib/**.cpp" }
     files { "*.h", "*.cpp" }
     files { "half.hpp" }

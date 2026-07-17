@@ -3,9 +3,7 @@ project "DeviceEnum"
 
     location "%{wks.location}/Test/%{prj.name}"
 
+    useOrochi()
     linkVersionLib()
 
-    includedirs { "../../" }
-    files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
-    files { "../../contrib/**.h", "../../contrib/**.cpp" }
     files { "*.cpp" }
