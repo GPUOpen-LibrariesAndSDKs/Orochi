@@ -5,16 +5,16 @@ project "simpleD3D12"
     debugdir "."
 
     systemversion "latest"
-    defines { "GTEST_HAS_TR1_TUPLE=0" }
 
     links {
         "d3d12", "d3dcompiler", "dxgi",
         "kernel32", "user32", "gdi32", "winspool", "comdlg32",
         "advapi32", "shell32", "ole32", "oleaut32", "uuid",
-        "odbc32", "odbccp32", "Version"
+        "odbc32", "odbccp32"
     }
 
     useOrochi()
+    linkVersionLib()
     includedirs { "./" }
 
     files {

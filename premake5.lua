@@ -156,7 +156,7 @@ workspace "YamatanoOrochi"
     -- Platform-specific settings
     filter "system:windows"
         defines      { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
-        characterset "MBCS"
+        characterset "Unicode"
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
     filter "system:linux"
         links { "dl" }
