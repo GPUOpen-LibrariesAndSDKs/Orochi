@@ -42,10 +42,7 @@ for _, version in ipairs(cudaVersions) do
         break
     end
 end
-
-if not isValidPath(cuda_path) then
-    print("The required version of CUDA for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". It's advised that you install one of these versions.")
-end
+local foundPreferredCudaVersion = isValidPath(cuda_path)
 
 -- Try fallback paths
 if not isValidPath(cuda_path) then
@@ -66,12 +63,16 @@ if _OPTIONS["forceCuda"] or isValidPath(cuda_path) then
 end
 
 if not isValidPath(cuda_path) then
+    print("The required version of CUDA for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". It's advised that you install one of these versions.")
     if _OPTIONS["forceCuda"] then
         print("WARNING: CUEW is enabled but it may not compile because CUDA SDK folder (CUDA_PATH) not found. You should install the CUDA SDK, or set CUDA_PATH.")
     else
         print("WARNING: CUEW is automatically disabled because CUDA SDK folder (CUDA_PATH) not found. You can force CUEW with the --forceCuda argument.")
     end
 else
+    if not foundPreferredCudaVersion then
+        print("The preferred CUDA version for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". Using a fallback CUDA SDK install folder instead.")
+    end
     print("CUDA SDK install folder found: " .. cuda_path)
     externalincludedirs { path.join(cuda_path, "include") }
 end
