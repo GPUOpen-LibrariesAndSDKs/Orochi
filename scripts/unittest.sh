@@ -1,13 +1,13 @@
 #!/bin/sh
 # Run Orochi unit tests (Linux)
 # Cleans cache, generates bitcodes, and runs the test suite.
-# Usage: ./unittest.sh [Release|Debug|RelWithDebInfo]
+# Usage: ./unittest.sh [Release|Debug|DebugFast|RelWithDebInfo]
 
 set -e
 
 CONFIG=${1:-Release}
 SUFFIX=""
-if [ "$CONFIG" = "Debug" ]; then
+if [ "$CONFIG" = "Debug" ] || [ "$CONFIG" = "DebugFast" ]; then
     SUFFIX="D"
 fi
 

@@ -6,15 +6,11 @@ project "simpleD3D12"
 
     systemversion "latest"
 
-    links {
-        "d3d12", "d3dcompiler", "dxgi",
-        "kernel32", "user32", "gdi32", "winspool", "comdlg32",
-        "advapi32", "shell32", "ole32", "oleaut32", "uuid",
-        "odbc32", "odbccp32"
-    }
+    links { "d3d12", "d3dcompiler", "dxgi" }
 
     useOrochi()
     linkVersionLib()
+    linkWin32SystemLibs()
     includedirs { "./" }
 
     files {

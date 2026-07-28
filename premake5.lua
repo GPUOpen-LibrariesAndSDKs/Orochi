@@ -1,6 +1,4 @@
--- =============================================================================
--- Orochi (YamatanoOrochi) — Premake5 Build Configuration
--- =============================================================================
+-- Orochi (YamatanoOrochi) workspace definition, build options, and helpers.
 
 -- -----------------------------------------------------------------------------
 -- Command-line Options
@@ -45,27 +43,35 @@ newoption {
         { "off",   "Disable warnings" },
         { "on",    "Default warnings" },
         { "extra", "Extra warnings" }
-    }
+    },
+    default     = "on"
 }
 
 -- -----------------------------------------------------------------------------
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
--- Absolute path to the repo root.
 local rootDir = _MAIN_SCRIPT_DIR
 
--- Link the Windows "version" library, required by every Orochi test target.
 function linkVersionLib()
     filter "system:windows"
         links { "version" }
     filter {}
 end
 
--- Include the repo root and link the Orochi core static library.
 function useOrochi()
     includedirs { rootDir }
     links { "Orochi" }
+end
+
+function linkWin32SystemLibs()
+    filter "system:windows"
+        links {
+            "kernel32", "user32", "gdi32", "winspool", "comdlg32",
+            "advapi32", "shell32", "ole32", "oleaut32", "uuid",
+            "odbc32", "odbccp32"
+        }
+    filter {}
 end
 
 -- Run a helper script, aborting generation if it fails.
@@ -80,25 +86,24 @@ end
 -- Workspace Definition
 -- -----------------------------------------------------------------------------
 
-local buildConfigs = { "Debug", "RelWithDebInfo", "Release" }
+local buildConfigs = { "Debug", "DebugFast", "RelWithDebInfo", "Release" }
 
 workspace "YamatanoOrochi"
     configurations (buildConfigs)
     platforms      { "x64" }
     language       "C++"
     cppdialect     "C++20"
+    architecture   "amd64"
     location       (_OPTIONS["builddir"] or ".")
     targetdir      "dist/bin/%{cfg.buildcfg}"
     startproject   "UnitTest"
 
-    -- Build-wide compiler settings
     multiprocessorcompile "On"
     pic "On"
 
-    -- Toolset selection. macOS always uses clang; --clang opts in elsewhere.
+    -- LLD's Mach-O support is deprecated, so keep the macOS default linker.
     filter "system:macosx"
         toolset "clang"
-        linker  "LLD"
     filter {}
 
     if _OPTIONS["clang"] then
@@ -106,37 +111,39 @@ workspace "YamatanoOrochi"
         linker  "LLD"
     end
 
-    -- Platform architecture
-    filter "platforms:x64"
-        architecture "amd64"
-    filter {}
+    -- Read by the tests to locate built binaries.
+    defines { 'ORO_BUILD_CONFIG="%{cfg.buildcfg}"' }
 
-    -- Per-config target name suffix
-    filter { "platforms:x64", "configurations:Debug" }
+    filter "configurations:Debug or DebugFast"
         targetsuffix "64D"
-    filter { "platforms:x64", "configurations:RelWithDebInfo or Release" }
+    filter "configurations:RelWithDebInfo or Release"
         targetsuffix "64"
     filter {}
 
-    -- Configuration: Debug
-    filter { "configurations:Debug" }
-        defines      { "DEBUG", "_DEBUG", "BUILD_CONFIG=\"Debug\"" }
+    filter "configurations:Debug"
+        defines      { "DEBUG", "_DEBUG" }
         symbols      "Full"
         optimize     "Off"
         runtime      "Debug"
         floatingpointexceptions "On"
         editandcontinue "On"
-    -- Configuration: RelWithDebInfo
-    filter { "configurations:RelWithDebInfo" }
-        defines      { "NDEBUG", "BUILD_CONFIG=\"RelWithDebInfo\"" }
-        symbols      "On"
+    filter "configurations:DebugFast"
+        defines      { "DEBUG", "_DEBUG", "_DEBUGFAST" }
+        symbols      "Full"
         optimize     "Debug"
         runtime      "Debug"
         floatingpointexceptions "On"
         editandcontinue "On"
-    -- Configuration: Release
-    filter { "configurations:Release" }
-        defines      { "NDEBUG", "BUILD_CONFIG=\"Release\"" }
+    filter "configurations:RelWithDebInfo"
+        defines      { "NDEBUG" }
+        symbols      "On"
+        optimize     "On"
+        runtime      "Release"
+        intrinsics   "On"
+        floatingpointexceptions "Off"
+        editandcontinue "Off"
+    filter "configurations:Release"
+        defines      { "NDEBUG" }
         symbols      "Off"
         optimize     "Full"
         runtime      "Release"
@@ -148,21 +155,19 @@ workspace "YamatanoOrochi"
         buildoptions { "/favor:AMD64" }
     filter {}
 
-    -- Warning level (default: on)
     local warningLevels = { off = "Off", on = "Default", extra = "Extra" }
     externalwarnings "Off"
     warnings (warningLevels[_OPTIONS["warning"]] or "Default")
 
-    -- Platform-specific settings
     filter "system:windows"
-        defines      { "__WINDOWS__", "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+        defines      { "__WINDOWS__", "_CRT_SECURE_NO_WARNINGS" }
         characterset "Unicode"
+    filter { "system:windows", "toolset:msc-v*" }
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
     filter "system:linux"
         links { "dl" }
     filter {}
 
-    -- Bake kernels if requested
     filter "options:bakeKernel"
         defines { "ORO_PP_LOAD_FROM_STRING" }
     filter {}
@@ -175,12 +180,11 @@ workspace "YamatanoOrochi"
         end
     end
 
-    -- Precompiled kernels
     filter "options:precompiled"
         defines { "ORO_PRECOMPILED" }
     filter {}
 
-    -- Copy contrib binaries next to each build's output (Windows only)
+    -- Windows has no rpath, so runtime DLLs are staged next to the binaries.
     local contribBinDir = path.getabsolute("contrib/bin/win64")
     if os.isdir(contribBinDir) then
         filter "system:windows"
@@ -190,7 +194,6 @@ workspace "YamatanoOrochi"
         filter {}
     end
 
-    -- CUDA support (auto-detected or forced)
     include "./Orochi/enable_cuew"
 
 -- -----------------------------------------------------------------------------

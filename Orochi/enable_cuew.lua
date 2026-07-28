@@ -1,24 +1,12 @@
--- =============================================================================
--- Orochi CUDA/CUEW Configuration
--- =============================================================================
 -- Enables CUEW (CUDA Extension Wrangler) when the CUDA SDK is available.
-
--- -----------------------------------------------------------------------------
--- Utility functions
--- -----------------------------------------------------------------------------
 
 local function isValidPath(p)
     return p ~= nil and p ~= "" and os.isdir(p)
 end
 
--- -----------------------------------------------------------------------------
--- CUDA path detection
--- -----------------------------------------------------------------------------
-
--- Candidate CUDA versions, most preferred first.
+-- Most preferred first.
 local cudaVersions = { "12.2" }
 
--- Return the first existing SDK path for a given version.
 local function findCudaVersion(version)
     local envVar = "CUDA_PATH_V" .. version:gsub("%.", "_")
     local candidates = {
@@ -34,7 +22,7 @@ local function findCudaVersion(version)
     return nil
 end
 
--- Resolve CUDA SDK path: preferred versions first, then fallbacks.
+-- Preferred versions first, then CUDA_PATH, then the default install dir.
 local cuda_path = nil
 for _, version in ipairs(cudaVersions) do
     cuda_path = findCudaVersion(version)
@@ -44,35 +32,23 @@ for _, version in ipairs(cudaVersions) do
 end
 local foundPreferredCudaVersion = isValidPath(cuda_path)
 
--- Try fallback paths
 if not isValidPath(cuda_path) then
     cuda_path = os.getenv("CUDA_PATH")
 end
-
 if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
     cuda_path = "/usr/local/cuda"
 end
 
--- -----------------------------------------------------------------------------
--- Apply CUDA configuration
--- -----------------------------------------------------------------------------
-
-if _OPTIONS["forceCuda"] or isValidPath(cuda_path) then
-    print("CUEW is enabled.")
+if isValidPath(cuda_path) then
+    print("CUEW is enabled. CUDA SDK found: " .. cuda_path)
     defines { "OROCHI_ENABLE_CUEW" }
-end
-
-if not isValidPath(cuda_path) then
-    print("The required version of CUDA for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". It's advised that you install one of these versions.")
-    if _OPTIONS["forceCuda"] then
-        print("WARNING: CUEW is enabled but it may not compile because CUDA SDK folder (CUDA_PATH) not found. You should install the CUDA SDK, or set CUDA_PATH.")
-    else
-        print("WARNING: CUEW is automatically disabled because CUDA SDK folder (CUDA_PATH) not found. You can force CUEW with the --forceCuda argument.")
-    end
-else
     if not foundPreferredCudaVersion then
-        print("The preferred CUDA version for this Orochi is not found: " .. table.concat(cudaVersions, ", ") .. ". Using a fallback CUDA SDK install folder instead.")
+        print("WARNING: preferred CUDA version not found (" .. table.concat(cudaVersions, ", ") .. "); using a fallback CUDA SDK install folder.")
     end
-    print("CUDA SDK install folder found: " .. cuda_path)
     externalincludedirs { path.join(cuda_path, "include") }
+elseif _OPTIONS["forceCuda"] then
+    print("WARNING: CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
+    defines { "OROCHI_ENABLE_CUEW" }
+else
+    print("WARNING: CUEW disabled; CUDA SDK not found (preferred: " .. table.concat(cudaVersions, ", ") .. "). Use --forceCuda to override.")
 end

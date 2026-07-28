@@ -1,7 +1,3 @@
--- =============================================================================
--- Orochi core — static library
--- =============================================================================
-
 project "Orochi"
     kind "StaticLib"
 
@@ -12,3 +8,8 @@ project "Orochi"
     files { "../Orochi/**.h", "../Orochi/**.cpp" }
     files { "../contrib/cuew/**.h",  "../contrib/cuew/**.cpp" }
     files { "../contrib/hipew/**.h", "../contrib/hipew/**.cpp" }
+
+    -- Silence vendored CUEW/HIPEW so --warning=extra targets only our sources.
+    filter "files:../contrib/**"
+        warnings "Off"
+    filter {}
