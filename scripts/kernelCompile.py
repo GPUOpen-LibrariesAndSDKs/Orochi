@@ -4,8 +4,8 @@ Compiles ParallelPrimitives radix sort kernels into fatbin/hipfb files
 for use with precompiled kernel loading.
 """
 import json
-import os
 import subprocess
+import sys
 from enumArch import enumArch
 
 
@@ -13,6 +13,15 @@ def get_gpu_list():
     """Load the AMD GPU list from the JSON configuration file."""
     with open("amdGpuList.json") as f:
         return json.load(f)
+
+
+def get_amd_arches(min_arch):
+    """Return the AMD arches to build, falling back to the JSON list."""
+    arches = enumArch(min_arch)
+    if not arches:
+        print("llc unavailable; falling back to amdGpuList.json")
+        arches = get_gpu_list()["amd"]
+    return arches
 
 
 def compile_kernels(target_index):
@@ -27,7 +36,7 @@ def compile_kernels(target_index):
             "-I../", "-include", "hip/hip_runtime.h",
             "-parallel-jobs=15"
         ]
-        for arch in enumArch("gfx900"):
+        for arch in get_amd_arches("gfx900"):
             command.append("--offload-arch=" + arch)
         command += ["-o", "../bitcodes/oro_compiled_kernels.hipfb"]
     else:
@@ -43,18 +52,21 @@ def compile_kernels(target_index):
 
     print(" ".join(command))
 
-    use_shell = (os.name == 'nt')
-    return subprocess.Popen(command, shell=use_shell)
+    return subprocess.Popen(command)
 
 
 def main():
-    processes = [
-        compile_kernels(0),
-        compile_kernels(1),
-    ]
+    targets = {0: "hipcc", 1: "nvcc"}
+    processes = [(name, compile_kernels(index)) for index, name in targets.items()]
 
-    for proc in processes:
-        proc.wait()
+    failed = []
+    for name, proc in processes:
+        if proc.wait() != 0:
+            failed.append("{} (exit {})".format(name, proc.returncode))
+
+    if failed:
+        print("compile failed: " + ", ".join(failed), file=sys.stderr)
+        sys.exit(1)
 
     print("compile done.")
 

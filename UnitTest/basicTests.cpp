@@ -23,6 +23,8 @@
 #include "basicTests.h"
 #include "common.h"
 
+#include <cstdint>
+
 TEST_F( OroTestBase, init )
 { 
 
@@ -242,7 +244,7 @@ TEST_F( OroTestBase, linkBc )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary;
 		size_t binarySize = 0;
@@ -254,8 +256,8 @@ TEST_F( OroTestBase, linkBc )
 
 		oroFunction function;
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
+		OROCHECK( oroModuleGetFunction( &function, module, "testKernel" ) );
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -322,7 +324,7 @@ TEST_F( OroTestBase, link )
 		option_vals[4] = static_cast<void*>( &log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -339,9 +341,9 @@ TEST_F( OroTestBase, link )
 
 		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
 		OrochiUtils::waitForCompletion();
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROCHECK( oroModuleGetFunction( &function, module, "testKernel" ) );
 		OROASSERT(function != nullptr);
 
 		int x_host = -1;
@@ -400,7 +402,7 @@ TEST_F( OroTestBase, link_addFile )
 		option_vals[4] = (void*)( log_size );//todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary;
 		size_t binarySize;
@@ -416,9 +418,9 @@ TEST_F( OroTestBase, link_addFile )
 
 		oroFunction function;
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
 		OrochiUtils::waitForCompletion();
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROCHECK( oroModuleGetFunction( &function, module, "testKernel" ) );
 		int x_host = -1;
 		int* x_device = nullptr;
 		OROCHECK( oroMalloc( (oroDeviceptr*)&x_device, sizeof( int ) ) );
@@ -476,8 +478,8 @@ TEST_F( OroTestBase, link_null_name )
 
 		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
-		ee = oroModuleGetFunction( &function, module, "testKernel" );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
+		OROCHECK( oroModuleGetFunction( &function, module, "testKernel" ) );
 		OROASSERT(function != nullptr);
 
 		int x_host = -1;
@@ -541,7 +543,7 @@ TEST_F( OroTestBase, link_bundledBc )
 		option_vals[4] =  static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -555,7 +557,7 @@ TEST_F( OroTestBase, link_bundledBc )
 
 		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
 		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
 		OROASSERT(function != nullptr);
 
@@ -623,7 +625,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -638,7 +640,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 
 		oroFunction function = static_cast<oroFunction>(nullptr);
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
 		ORORTCCHECK(oroModuleGetFunction( &function, module, "testKernel" ));
 		OROASSERT(function != nullptr);
 
@@ -722,7 +724,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 		option_vals[4] = static_cast<void*>( &log_size ); // todo. behavior difference
 
 		options[5] = ORORTC_JIT_LOG_VERBOSE;
-		option_vals[5] = (void*)m_jitLogVerbose;;
+		option_vals[5] = reinterpret_cast<void*>( static_cast<uintptr_t>( m_jitLogVerbose ) );
 
 		void* binary = nullptr;
 		size_t binarySize = 0;
@@ -737,8 +739,8 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 
 		oroFunction function = static_cast<oroFunction>(nullptr);;
 		oroModule module;
-		oroError ee = oroModuleLoadData( &module, binary );
-		oroError e =  oroModuleGetFunction( &function, module, loweredNameStr.c_str() );
+		OROCHECK( oroModuleLoadData( &module, binary ) );
+		OROCHECK( oroModuleGetFunction( &function, module, loweredNameStr.c_str() ) );
 		OROASSERT(function != nullptr);
 
 		int x_host = -1;

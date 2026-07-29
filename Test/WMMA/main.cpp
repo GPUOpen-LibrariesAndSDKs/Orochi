@@ -30,7 +30,7 @@
 #include "half.hpp"
 using __half = half_float::half;
 
-int main( int argc, char** argv )
+int main( int /*argc*/, char** /*argv*/ )
 {
 	printf("Program starts.\n");
 

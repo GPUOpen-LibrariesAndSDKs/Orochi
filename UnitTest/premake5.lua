@@ -2,12 +2,16 @@ project "UnitTest"
     kind "ConsoleApp"
 
     location "%{wks.location}/%{prj.name}"
- 
+
     useOrochi()
     linkVersionLib()
+    stageWindowsRuntimeDlls()
     filter "system:linux"
         links { "pthread" }
     filter {}
+
+    -- Read by demosTest.cpp to locate the demo binaries.
+    defines { 'ORO_BUILD_CONFIG="%{cfg.buildcfg}"' }
 
     files { "*.cpp", "*.h" }
     removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
@@ -24,10 +28,10 @@ project "UnitTest"
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")
         if os.ishost("windows") then
-            runScript('cd "' .. bitcodes .. '" && generate_bitcodes.bat')
-            runScript('cd "' .. bitcodes .. '" && generate_bitcodes_nvidia.bat')
+            runScriptIn(bitcodes, "generate_bitcodes.bat")
+            runScriptIn(bitcodes, "generate_bitcodes_nvidia.bat")
         else
-            runScript('cd "' .. bitcodes .. '" && sh generate_bitcodes.sh')
-            runScript('cd "' .. bitcodes .. '" && sh generate_bitcodes_nvidia.sh')
+            runScriptIn(bitcodes, "sh generate_bitcodes.sh")
+            runScriptIn(bitcodes, "sh generate_bitcodes_nvidia.sh")
         end
     end

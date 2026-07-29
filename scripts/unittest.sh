@@ -1,17 +1,15 @@
 #!/bin/sh
 # Run Orochi unit tests (Linux)
 # Cleans cache, generates bitcodes, and runs the test suite.
-# Usage: ./unittest.sh [Release|Debug|DebugFast|RelWithDebInfo]
+# Usage: ./unittest.sh [Debug|DebugFast|RelWithDebInfo|Release]
 
 set -e
 
-CONFIG=${1:-Release}
-SUFFIX=""
-if [ "$CONFIG" = "Debug" ] || [ "$CONFIG" = "DebugFast" ]; then
-    SUFFIX="D"
-fi
+# Every path below is relative to this script's directory.
+cd "$(dirname "$0")"
+. ./_config.sh "$1"
 
 rm -rf cache
 cd ../UnitTest/bitcodes && ./generate_bitcodes.sh
 cd ../../scripts
-../dist/bin/${CONFIG}/UnitTest64${SUFFIX} --gtest_filter=-*link_bundledBc* --gtest_output=xml:../result.xml
+"${UNITTEST_BIN}" --gtest_filter=-*link_bundledBc* --gtest_output=xml:../result.xml

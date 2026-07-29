@@ -5,30 +5,12 @@ Reads kernel source files and converts them into C++ const char* variables
 that can be compiled directly into the binary.
 
 Usage:
-    python stringify.py <kernel_file> [encryption_key]
+    python stringify.py <kernel_file>
 """
 from __future__ import print_function
 
 import os
 import sys
-
-# Module-level state for define expansion
-defines = {}
-replaced = []
-
-
-def register_defines(line):
-    """Register #define macros for later substitution (currently disabled)."""
-    return 0
-
-
-def replace_defines(line):
-    """Expand previously registered #define macros in a line."""
-    for key, value in defines.items():
-        if key in line:
-            line = line.replace(key, value)
-            replaced.append(line)
-    return line
 
 
 def print_file(filename, output, api, base_dir='./'):
@@ -49,13 +31,6 @@ def print_file(filename, output, api, base_dir='./'):
             if '#include' in line and api != 'hip':
                 continue
 
-            if line.startswith('#define'):
-                if register_defines(line) == 1:
-                    continue
-
-            if '#undef' not in line:
-                line = replace_defines(line)
-
             # Escape for C++ string literal
             escaped = '"' + line.replace('"', '\\"').replace("'", "\\'") + '\\n"'
             output += escaped + '\n'
@@ -72,30 +47,22 @@ def stringify(filename, string_name, api, base_dir='./'):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: {} <kernel_file> [encryption_key]".format(sys.argv[0]), file=sys.stderr)
+        print("Usage: {} <kernel_file>".format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
 
     files = [sys.argv[1]]
     api = 'hip'
 
     # Process Math files first, then the rest
-    for source_file in files:
-        if 'Math.' not in source_file:
-            continue
-        if not any(ext in source_file for ext in ('.cl', '.cu', '.metal', '.h')):
-            continue
-        string_name = source_file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
-        string_name = api + '_' + string_name.split('/')[-1]
-        stringify('./' + source_file, string_name, api)
-
-    for source_file in files:
-        if 'Math.' in source_file:
-            continue
-        if not any(ext in source_file for ext in ('.cl', '.cu', '.metal', '.h')):
-            continue
-        string_name = source_file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
-        string_name = api + '_' + string_name.split('/')[-1]
-        stringify('./' + source_file, string_name, api)
+    for math_first in (True, False):
+        for source_file in files:
+            if ('Math.' in source_file) != math_first:
+                continue
+            if not any(ext in source_file for ext in ('.cl', '.cu', '.metal', '.h')):
+                continue
+            string_name = source_file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
+            string_name = api + '_' + string_name.split('/')[-1]
+            stringify('./' + source_file, string_name, api)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ project "Orochi"
 
     includedirs { "../" }
 
-    files { "../Orochi/**.h", "../Orochi/**.cpp" }
+    files { "**.h", "**.cpp" }
     files { "../contrib/cuew/**.h",  "../contrib/cuew/**.cpp" }
     files { "../contrib/hipew/**.h", "../contrib/hipew/**.cpp" }
 

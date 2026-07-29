@@ -1,16 +1,14 @@
 #!/bin/sh
 # Run Orochi unit tests for gfx1102 (Linux)
-# Usage: ./unittest_gfx1102.sh [Release|Debug|RelWithDebInfo]
+# Usage: ./unittest_gfx1102.sh [Debug|DebugFast|RelWithDebInfo|Release]
 
 set -e
 
-CONFIG=${1:-Release}
-SUFFIX=""
-if [ "$CONFIG" = "Debug" ]; then
-    SUFFIX="D"
-fi
+# Every path below is relative to this script's directory.
+cd "$(dirname "$0")"
+. ./_config.sh "$1"
 
 rm -rf cache
 cd ../UnitTest/bitcodes && ./generate_bitcodes_gfx1102.sh
 cd ../../scripts
-../dist/bin/${CONFIG}/UnitTest64${SUFFIX} --gtest_filter=-*link*:*getErrorString* --gtest_output=xml:../result.xml
+"${UNITTEST_BIN}" --gtest_filter=-*link*:*getErrorString* --gtest_output=xml:../result.xml

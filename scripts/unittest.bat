@@ -1,12 +1,12 @@
 @echo off
 REM Run Orochi unit tests (Windows)
 REM Cleans cache and runs the test suite excluding known-failing tests.
-REM Usage: unittest.bat [Release|Debug|RelWithDebInfo]
+REM Usage: unittest.bat [Debug|DebugFast|RelWithDebInfo|Release]
 
-set CONFIG=%1
-if "%CONFIG%"=="" set CONFIG=Release
-set SUFFIX=
-if "%CONFIG%"=="Debug" set SUFFIX=D
+REM Every path below is relative to this script's directory.
+cd /d "%~dp0"
+call _config.bat %1
+if errorlevel 1 exit /b 1
 
 rd /s /q cache
-..\dist\bin\%CONFIG%\UnitTest64%SUFFIX%.exe --gtest_filter=-*link_bundledBc*:*VulkanComputeSimple64* --gtest_output=xml:../result.xml
+"%UNITTEST_BIN%" --gtest_filter=-*link_bundledBc*:*VulkanComputeSimple64* --gtest_output=xml:../result.xml

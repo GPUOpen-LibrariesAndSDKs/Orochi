@@ -32,7 +32,7 @@ newoption {
 newoption {
     trigger     = "builddir",
     value       = "PATH",
-    description = "Directory for generated build files (default: project root)"
+    description = "Directory for generated build files (default: build)"
 }
 
 newoption {
@@ -82,6 +82,28 @@ function runScript(command)
     end
 end
 
+-- Run a helper script from a given directory. On Windows plain `cd` does not
+-- change drive, so `/d` is required when the repository lives off C:.
+function runScriptIn(directory, command)
+    if os.ishost("windows") then
+        runScript('cd /d "' .. directory .. '" && ' .. command)
+    else
+        runScript('cd "' .. directory .. '" && ' .. command)
+    end
+end
+
+-- Windows has no rpath, so runtime DLLs are staged next to the binaries.
+-- Called from a single project because every configuration shares one targetdir.
+function stageWindowsRuntimeDlls()
+    local contribBinDir = path.join(rootDir, "contrib/bin/win64")
+    if not os.isdir(contribBinDir) then
+        return
+    end
+    filter "system:windows"
+        postbuildcommands { "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\"" }
+    filter {}
+end
+
 -- -----------------------------------------------------------------------------
 -- Workspace Definition
 -- -----------------------------------------------------------------------------
@@ -94,12 +116,16 @@ workspace "YamatanoOrochi"
     language       "C++"
     cppdialect     "C++20"
     architecture   "amd64"
-    location       (_OPTIONS["builddir"] or ".")
+    location       (_OPTIONS["builddir"] or "build")
     targetdir      "dist/bin/%{cfg.buildcfg}"
     startproject   "UnitTest"
 
     multiprocessorcompile "On"
-    pic "On"
+    systemversion "latest"
+
+    filter "kind:StaticLib or SharedLib"
+        pic "On"
+    filter {}
 
     -- LLD's Mach-O support is deprecated, so keep the macOS default linker.
     filter "system:macosx"
@@ -110,9 +136,6 @@ workspace "YamatanoOrochi"
         toolset "clang"
         linker  "LLD"
     end
-
-    -- Read by the tests to locate built binaries.
-    defines { 'ORO_BUILD_CONFIG="%{cfg.buildcfg}"' }
 
     filter "configurations:Debug or DebugFast"
         targetsuffix "64D"
@@ -125,14 +148,12 @@ workspace "YamatanoOrochi"
         symbols      "Full"
         optimize     "Off"
         runtime      "Debug"
-        floatingpointexceptions "On"
         editandcontinue "On"
     filter "configurations:DebugFast"
         defines      { "DEBUG", "_DEBUG", "_DEBUGFAST" }
         symbols      "Full"
         optimize     "Debug"
         runtime      "Debug"
-        floatingpointexceptions "On"
         editandcontinue "On"
     filter "configurations:RelWithDebInfo"
         defines      { "NDEBUG" }
@@ -140,7 +161,6 @@ workspace "YamatanoOrochi"
         optimize     "On"
         runtime      "Release"
         intrinsics   "On"
-        floatingpointexceptions "Off"
         editandcontinue "Off"
     filter "configurations:Release"
         defines      { "NDEBUG" }
@@ -148,8 +168,10 @@ workspace "YamatanoOrochi"
         optimize     "Full"
         runtime      "Release"
         intrinsics   "On"
-        floatingpointexceptions "Off"
         editandcontinue "Off"
+    -- LTO is skipped for StaticLib: an IR-only libOrochi cannot be consumed by
+    -- projects that link without LTO, and Orochi ships as a static library.
+    filter { "configurations:Release", "kind:not StaticLib" }
         linktimeoptimization "Fast"
     filter { "configurations:Release", "toolset:msc-v*" }
         buildoptions { "/favor:AMD64" }
@@ -161,7 +183,7 @@ workspace "YamatanoOrochi"
 
     filter "system:windows"
         defines      { "__WINDOWS__", "_CRT_SECURE_NO_WARNINGS" }
-        characterset "Unicode"
+        characterset "MBCS"
     filter { "system:windows", "toolset:msc-v*" }
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
     filter "system:linux"
@@ -170,28 +192,18 @@ workspace "YamatanoOrochi"
 
     filter "options:bakeKernel"
         defines { "ORO_PP_LOAD_FROM_STRING" }
-    filter {}
-
-    if _OPTIONS["bakeKernel"] then
-        if os.ishost("windows") then
-            runScript(path.getabsolute("tools/bakeKernel.bat"))
-        else
-            runScript("sh " .. path.getabsolute("tools/bakeKernel.sh"))
-        end
-    end
-
     filter "options:precompiled"
         defines { "ORO_PRECOMPILED" }
     filter {}
 
-    -- Windows has no rpath, so runtime DLLs are staged next to the binaries.
-    local contribBinDir = path.getabsolute("contrib/bin/win64")
-    if os.isdir(contribBinDir) then
-        filter "system:windows"
-            postbuildcommands {
-                "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\""
-            }
-        filter {}
+    -- The bake scripts write to paths relative to the repository root, which is
+    -- premake's working directory.
+    if _OPTIONS["bakeKernel"] then
+        if os.ishost("windows") then
+            runScript('"' .. path.join(rootDir, "tools/bakeKernel.bat") .. '"')
+        else
+            runScript('sh "' .. path.join(rootDir, "tools/bakeKernel.sh") .. '"')
+        end
     end
 
     include "./Orochi/enable_cuew"

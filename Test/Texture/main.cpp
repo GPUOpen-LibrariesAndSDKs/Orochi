@@ -47,7 +47,7 @@ void writeImageToPNG(const IMG_PIXEL_UCHAR4* image, int width, int height, const
 	unsigned char *rgbImage = (unsigned char *)malloc(width * height * 3);
 
 	// Convert uchar4 to RGB format
-	for (size_t i = 0; i < width * height; ++i) {
+	for (int i = 0; i < width * height; ++i) {
 		rgbImage[i * 3] = image[i].x; // R
 		rgbImage[i * 3 + 1] = image[i].y; // G
 		rgbImage[i * 3 + 2] = image[i].z; // B
@@ -184,7 +184,7 @@ int main()
 		channelDesc.f = oroChannelFormatKindUnsigned;
 
 		status = oroMallocArray(&oroArray, &channelDesc, width, height, oroArrayDefault);
-		if (status != ORO_SUCCESS) 
+		if (status != oroSuccess) 
 		{
 			std::cerr << "Failed to allocate array" << std::endl;
 			return OROCHI_TEST_RETCODE__ERROR;
@@ -199,7 +199,7 @@ int main()
 
 		// Create the surface object
 		status = oroCreateSurfaceObject(&surfObj, &resDesc);
-		if (status != ORO_SUCCESS) 
+		if (status != oroSuccess) 
 		{
 			oroArrayDestroy(oroArray); // Cleanup array if surface creation fails
 			e = oroCtxDestroy( ctx ); 
@@ -236,7 +236,7 @@ int main()
 
 	size_t dpitch = width * sizeof(IMG_PIXEL_UCHAR4); // Destination pitch
 	status = oroMemcpy2DFromArray(hostImage, dpitch, oroArray, 0, 0, width * sizeof(IMG_PIXEL_UCHAR4), height, oroMemcpyDeviceToHost);
-	if (status != ORO_SUCCESS) 
+	if (status != oroSuccess) 
 	{
 		std::cerr << "Failed to copy data from array to host" << std::endl;
 	}

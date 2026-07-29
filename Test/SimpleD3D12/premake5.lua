@@ -4,8 +4,6 @@ project "simpleD3D12"
     location "%{wks.location}/Test/%{prj.name}"
     debugdir "."
 
-    systemversion "latest"
-
     links { "d3d12", "d3dcompiler", "dxgi" }
 
     useOrochi()

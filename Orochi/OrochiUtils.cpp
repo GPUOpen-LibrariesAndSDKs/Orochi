@@ -180,7 +180,7 @@ struct OrochiUtilsImpl
 		return false;
 	}
 
-	static void getCacheFileName( oroDevice device, const char* moduleName, const char* functionName, const char* options, std::string& binFileName, const std::string& cacheDirectory )
+	static void getCacheFileName( oroDevice device, const char* moduleName, [[maybe_unused]] const char* functionName, const char* options, std::string& binFileName, const std::string& cacheDirectory )
 	{
 		auto hashBin = []( const char* s, const size_t size )
 		{
@@ -325,7 +325,8 @@ struct OrochiUtilsImpl
 #endif
 			if( csfile )
 			{
-				fread( &checksumValue, sizeof( long long ), 1, csfile );
+				// A truncated checksum file leaves the value at 0, treated as a cache miss below.
+				if( fread( &checksumValue, sizeof( long long ), 1, csfile ) != 1 ) checksumValue = 0;
 				fclose( csfile );
 			}
 		}
@@ -345,10 +346,13 @@ struct OrochiUtilsImpl
 			rewind( file );
 
 			binaryOut.resize( binarySize );
-			size_t dummy = fread( const_cast<char*>( binaryOut.data() ), sizeof( char ), binarySize, file );
+			const size_t readSize = fread( const_cast<char*>( binaryOut.data() ), sizeof( char ), binarySize, file );
 			fclose( file );
 
-			long long s = checksum( binaryOut.data(), binarySize );
+			// A short read cannot match the checksum, so let the comparison below reject it.
+			binaryOut.resize( readSize );
+
+			long long s = checksum( binaryOut.data(), readSize );
 			if( s != checksumValue )
 			{
 				printf( "checksum doesn't match %llx : %llx\n", s, checksumValue );
@@ -476,8 +480,8 @@ void SetupCompileOptions(
 
 	if( optsIn )
 	{
-		for( int i = 0; i < optsIn->size(); i++ )
-			opts.push_back( ( *optsIn )[i] );
+		for( const char* opt : *optsIn )
+			opts.push_back( opt );
 	}
 }
 
@@ -577,7 +581,8 @@ oroFunction OrochiUtils::getFunctionFromString( oroDevice device, const char* so
 	return f;
 }
 
-oroFunction OrochiUtils::getFunctionFromPrecompiledBinary_asData( const unsigned char* precompData, size_t dataSizeInBytes, const std::string& funcName )
+// oroModuleLoadData reads the size from the fatbin header, so dataSizeInBytes is unused.
+oroFunction OrochiUtils::getFunctionFromPrecompiledBinary_asData( const unsigned char* precompData, [[maybe_unused]] size_t dataSizeInBytes, const std::string& funcName )
 {
 	std::lock_guard<std::recursive_mutex> lock( m_mutex );
 
@@ -667,8 +672,8 @@ oroFunction OrochiUtils::getFunction( oroDevice device, const char* code, const 
 	std::string cacheFile;
 	{
 		std::string o;
-		for( int i = 0; i < opts.size(); i++ )
-			o.append( opts[i] );
+		for( const char* opt : opts )
+			o.append( opt );
 		OrochiUtilsImpl::getCacheFileName( device, path, funcName, o.c_str(), cacheFile, m_cacheDirectory );
 	}
 	if( OrochiUtilsImpl::isFileUpToDate( cacheFile.c_str(), path ) )
@@ -828,21 +833,22 @@ void OrochiUtils::getModule( oroDevice device, const char* code, const char* pat
 
 void OrochiUtils::launch1D( oroFunction func, int nx, const void** args, int wgSize, unsigned int sharedMemBytes, oroStream stream ) 
 {
-	int4 tpb = { wgSize, 1, 0 };
-	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, 1, 0 };
+	int4 tpb = { wgSize, 1, 0, 0 };
+	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, 1, 0, 0 };
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
 
 void OrochiUtils::launch2D( oroFunction func, int nx, int ny, const void** args, int wgSizeX, int wgSizeY, unsigned int sharedMemBytes, oroStream stream )
 {
-	int4 tpb = { wgSizeX, wgSizeY, 0 };
-	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0 };
+	int4 tpb = { wgSizeX, wgSizeY, 0, 0 };
+	int4 nb = { ( nx + tpb.x - 1 ) / tpb.x, ( ny + tpb.y - 1 ) / tpb.y, 0, 0 };
 	oroError e = oroModuleLaunchKernel( func, nb.x, nb.y, 1, tpb.x, tpb.y, 1, sharedMemBytes, stream, (void**)args, 0 );
 	OROASSERT( e == oroSuccess, 0 );
 }
 
-void OrochiUtils::HandlePrecompiled(std::vector<unsigned char>& out, const CompressedBuffer& buffer)
+// Both arguments go unused without ZSTD, where this overload only throws.
+void OrochiUtils::HandlePrecompiled( [[maybe_unused]] std::vector<unsigned char>& out, [[maybe_unused]] const CompressedBuffer& buffer )
 {
 	#ifdef ORO_LINK_ZSTD
 		out.assign(buffer.uncompressedSize,0);

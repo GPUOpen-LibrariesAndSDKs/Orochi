@@ -3,7 +3,6 @@
 Provides enumArch(minArch) which returns a list of supported gfx targets
 at or above the given minimum architecture.
 """
-import os
 import re
 import subprocess
 
@@ -15,14 +14,18 @@ def to_number(arch):
 
 def enumArch(min_arch):
     """Return list of AMD GPU architectures >= min_arch using llc."""
-    process = subprocess.Popen(
-        ['llc', '-march=amdgcn', '-mcpu=help'],
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    output, errors = process.communicate()
-    lines = output.decode('utf-8').splitlines() + errors.decode('utf-8').splitlines()
+    try:
+        result = subprocess.run(
+            ['llc', '-march=amdgcn', '-mcpu=help'],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+    except OSError as exc:
+        print("warning: could not run llc: {}".format(exc))
+        return []
+
+    lines = result.stdout.splitlines() + result.stderr.splitlines()
 
     min_value = to_number(min_arch)
     arches = []
