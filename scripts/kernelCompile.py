@@ -62,7 +62,7 @@ def main():
     failed = []
     for name, proc in processes:
         if proc.wait() != 0:
-            failed.append("{} (exit {})".format(name, proc.returncode))
+            failed.append(f"{name} (exit {proc.returncode})")
 
     if failed:
         print("compile failed: " + ", ".join(failed), file=sys.stderr)

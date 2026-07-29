@@ -12,6 +12,7 @@ def to_number(arch):
     return int(arch[3:], 16)
 
 
+# camelCase is kept because external build scripts import this name.
 def enumArch(min_arch):
     """Return list of AMD GPU architectures >= min_arch using llc."""
     try:
@@ -22,7 +23,7 @@ def enumArch(min_arch):
             check=False
         )
     except OSError as exc:
-        print("warning: could not run llc: {}".format(exc))
+        print(f"warning: could not run llc: {exc}")
         return []
 
     lines = result.stdout.splitlines() + result.stderr.splitlines()

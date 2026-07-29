@@ -1,14 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Generate kernel argument headers from HIP kernel source files.
 
 Reads #include directives from a kernel header and produces a C++ array
 of argument file references for runtime kernel compilation.
 
 Usage:
-    python genArgs.py <kernel_header.h>
+    python3 genArgs.py <kernel_header.h>
 """
-from __future__ import print_function
-
 import os
 import sys
 
@@ -52,7 +50,7 @@ def gen_args(filename, api, includes):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: {} <kernel_header.h>".format(sys.argv[0]), file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <kernel_header.h>", file=sys.stderr)
         sys.exit(1)
 
     files = [sys.argv[1]]

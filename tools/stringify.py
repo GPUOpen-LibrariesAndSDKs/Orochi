@@ -1,14 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Stringify GPU kernel source files into C++ string literals.
 
 Reads kernel source files and converts them into C++ const char* variables
 that can be compiled directly into the binary.
 
 Usage:
-    python stringify.py <kernel_file>
+    python3 stringify.py <kernel_file>
 """
-from __future__ import print_function
-
 import os
 import sys
 
@@ -47,7 +45,7 @@ def stringify(filename, string_name, api, base_dir='./'):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: {} <kernel_file>".format(sys.argv[0]), file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <kernel_file>", file=sys.stderr)
         sys.exit(1)
 
     files = [sys.argv[1]]

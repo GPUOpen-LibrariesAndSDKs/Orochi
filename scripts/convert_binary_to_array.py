@@ -4,7 +4,7 @@ Supports optional Zstd compression metadata. Generates a header with
 the binary data as a const unsigned char array plus size constants.
 
 Usage:
-    python convert_binary_to_array.py <input_before_compression> <input_after_compression> <output_header> <ON|OFF>
+    python3 convert_binary_to_array.py <input_before_compression> <input_after_compression> <output_header> <ON|OFF>
 """
 import sys
 from pathlib import Path
