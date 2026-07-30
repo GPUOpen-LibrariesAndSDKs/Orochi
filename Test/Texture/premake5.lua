@@ -1,15 +1,15 @@
 project "Texture"
-      kind "ConsoleApp"
+    kind "ConsoleApp"
 
-      targetdir "../../dist/bin/%{cfg.buildcfg}"
-      location "../../build/"
+    location "%{wks.location}/Test/%{prj.name}"
 
-   if os.istarget("windows") then
-      links{ "version" }
-   end
+    useOrochi()
+    linkVersionLib()
 
-      includedirs { "../../" }
-      files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
-      files { "../../contrib/**.h", "../../contrib/**.cpp" }
-      files { "../../UnitTest/contrib/**.h", "../../UnitTest/contrib/**.cpp" }
-      files { "texture_test_kernel.hpp", "*.cpp" }
+    files { "../../UnitTest/contrib/stb/**.h", "../../UnitTest/contrib/stb/**.cpp" }
+    files { "texture_test_kernel.hpp", "*.cpp" }
+
+    -- Silence vendored stb so --warning=extra targets only our sources.
+    filter "files:../../UnitTest/contrib/**"
+        warnings "Off"
+    filter {}

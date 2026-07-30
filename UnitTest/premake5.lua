@@ -1,26 +1,37 @@
-project "Unittest"
-      kind "ConsoleApp"
+project "UnitTest"
+    kind "ConsoleApp"
 
-      targetdir "../dist/bin/%{cfg.buildcfg}"
-      location "../build/"
+    location "%{wks.location}/%{prj.name}"
 
-   if os.istarget("windows") then
-      links{ "version" }
-   end
-   if os.istarget("linux") then
-      links { "pthread" }
-   end
-      includedirs { "../" }
-      files { "../Orochi/**.h", "../Orochi/**.cpp" }
-      files { "*.cpp", "*.h" }
-      removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
-      files { "../contrib/**.h", "../contrib/**.cpp" }
-      files { "../UnitTest/contrib/**.h", "../UnitTest/contrib/**.cpp" }
+    useOrochi()
+    linkVersionLib()
+    stageWindowsRuntimeDlls()
+    filter "system:linux"
+        links { "pthread" }
+    filter {}
 
-      files { "../UnitTest/contrib/gtest-1.6.0/gtest-all.cc" }
-      externalincludedirs{ "../UnitTest/contrib/gtest-1.6.0/" }
-      defines { "GTEST_HAS_TR1_TUPLE=0" }
-      if _OPTIONS["kernelcompile"] then
-        os.execute( "cd ./bitcodes/ && generate_bitcodes.bat" )
-        os.execute( "cd ./bitcodes/ && generate_bitcodes_nvidia.bat" )
-      end
+    -- Read by demosTest.cpp to locate the demo binaries.
+    defines { 'ORO_BUILD_CONFIG="%{cfg.buildcfg}"' }
+
+    files { "*.cpp", "*.h" }
+    removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
+    files { "contrib/**.h", "contrib/**.cpp", "contrib/**.cc" }
+
+    externalincludedirs { "contrib/gtest-1.6.0/" }
+    defines { "GTEST_HAS_TR1_TUPLE=0" }
+
+    -- Silence vendored gtest/stb so --warning=extra targets only our sources.
+    filter "files:contrib/**"
+        warnings "Off"
+    filter {}
+
+    if _OPTIONS["kernelcompile"] then
+        local bitcodes = path.getabsolute("bitcodes")
+        if os.ishost("windows") then
+            runScriptIn(bitcodes, "generate_bitcodes.bat")
+            runScriptIn(bitcodes, "generate_bitcodes_nvidia.bat")
+        else
+            runScriptIn(bitcodes, "sh generate_bitcodes.sh")
+            runScriptIn(bitcodes, "sh generate_bitcodes_nvidia.sh")
+        end
+    end

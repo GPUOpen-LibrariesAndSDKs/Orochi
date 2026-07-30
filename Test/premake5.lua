@@ -1,13 +1,9 @@
 project "SimpleDemo"
-      kind "ConsoleApp"
+    kind "ConsoleApp"
 
-      targetdir "../dist/bin/%{cfg.buildcfg}"
-      location "../build/"
+    location "%{wks.location}/Test/%{prj.name}"
 
-   if os.istarget("windows") then
-      links{ "version" }
-   end
-      includedirs { "../" }
-      files { "../Orochi/Orochi.h", "../Orochi/Orochi.cpp" }
-      files { "*.cpp" }
-      files { "../contrib/**.h", "../contrib/**.cpp" }
+    useOrochi()
+    linkVersionLib()
+
+    files { "*.cpp" }
