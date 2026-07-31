@@ -57,7 +57,16 @@ void ExecDemo(const std::string& testName)
 		ASSERT_TRUE(0);
 	}
 
-	int retCode = std::system(  std::string( "\"" + programName + "\"" ).c_str()  );
+	const std::string arguments = " --device=" + std::to_string( g_deviceIndex );
+
+	#ifdef _WIN32
+	// cmd.exe strips the outer quotes of a command line starting with a quote, so wrap the whole thing again.
+	const std::string commandLine = "\"\"" + programName + "\"" + arguments + "\"";
+	#else
+	const std::string commandLine = "\"" + programName + "\"" + arguments;
+	#endif
+
+	int retCode = std::system( commandLine.c_str() );
 
 	#ifdef _WIN32
 	if ( retCode != OROCHI_TEST_RETCODE__SUCCESS )

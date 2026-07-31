@@ -23,3 +23,6 @@
 #include "common.h"
 
 
+int g_deviceIndex = 0;
+
+

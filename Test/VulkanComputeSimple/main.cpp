@@ -304,7 +304,11 @@ int main(int argc, char **argv) {
 	oroError e;
 	e = oroInit(0);
 	oroDevice device;
-	e = oroDeviceGet(&device, 0);
+	const int deviceIndex = getDeviceIndex( argc, argv );
+	if( !checkDeviceIndex( deviceIndex ) )
+		return OROCHI_TEST_RETCODE__ERROR;
+	printf( ">> using device %d\n", deviceIndex );
+	e = oroDeviceGet(&device, deviceIndex);
 	oroCtx ctx;
 	e = oroCtxCreate(&ctx, 0, device);
 	oroDeviceProp props;

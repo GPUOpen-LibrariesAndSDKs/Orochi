@@ -60,12 +60,12 @@ void writeImageToPNG(const IMG_PIXEL_UCHAR4* image, int width, int height, const
 }
 
 
-int main()
+int main( int argc, char** argv )
 {
 	bool testErrorFlag = false;
 	OrochiUtils o;
 
-	oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
+	oroApi api = getApiType( argc, argv );
 	if( oroInitialize( api, 0 ) != 0 )
 	{
 		std::cerr << "Unable to initialize Orochi. Please check your HIP installation or create an issue at our github for assistance.\n";
@@ -77,8 +77,11 @@ int main()
 	
 	ERROR_CHECK( oroInit( 0 ) );
 
-	// Get the device at index 0
-	ERROR_CHECK( oroDeviceGet( &device, 0 ) );
+	const int deviceIndex = getDeviceIndex( argc, argv );
+	if( !checkDeviceIndex( deviceIndex ) )
+		return OROCHI_TEST_RETCODE__ERROR;
+	printf( "using device %d\n", deviceIndex );
+	ERROR_CHECK( oroDeviceGet( &device, deviceIndex ) );
 
 	static constexpr auto name_size = 128;
 	char name[name_size];

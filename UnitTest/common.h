@@ -38,14 +38,18 @@
 #define ORORTCCHECK( x ) { ASSERT_EQ( x , ORORTC_SUCCESS ); }
 
 
+// Orochi device index used by every test, set from the '--device <n>' command line argument.
+extern int g_deviceIndex;
+
+
 // Base class used by most of the unit test.
-// This class manages the usual initialization/destructions 
+// This class manages the usual initialization/destructions
 class OroTestBase : public ::testing::Test
 {
   public:
-	void SetUp() 
+	void SetUp()
 	{
-		const int deviceIndex = 0;
+		const int deviceIndex = g_deviceIndex;
 		oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
 		int a = oroInitialize( api, 0 );
 		OROASSERT( a == 0 );

@@ -22,10 +22,16 @@
 
 
 #include "common.h"
+#include <Test/Common.h>
 
-int main( int argc, char* argv[] ) 
+int main( int argc, char* argv[] )
 {
+	// gtest strips its own flags first, so only the Orochi options are left to parse here.
 	::testing::InitGoogleTest( &argc, argv );
+
+	g_deviceIndex = getDeviceIndex( argc, argv );
+	printf( "Running unit tests on Orochi device %d\n", g_deviceIndex );
+
 	int retCode = RUN_ALL_TESTS();
 	return retCode;
 }

@@ -47,7 +47,14 @@ int main( int argc, char** argv )
 	printf( "# of AMD devices: %d\n", nAMDDevices );
 	printf( "# of NV devices: %d\n\n", nNVIDIADevices );
 
-	for( int i = 0; i < nDevicesTotal; i++ )
+	// '--device <n>' restricts this Demo to a single device; without it every device is enumerated.
+	const int requestedDevice = getDeviceIndex( argc, argv, -1 );
+	if( requestedDevice >= 0 && !checkDeviceIndex( requestedDevice ) )
+		return OROCHI_TEST_RETCODE__ERROR;
+	const int firstDevice = ( requestedDevice < 0 ) ? 0 : requestedDevice;
+	const int lastDevice = ( requestedDevice < 0 ) ? nDevicesTotal : requestedDevice + 1;
+
+	for( int i = firstDevice; i < lastDevice; i++ )
 	{
 		oroDevice device;
 		e = oroDeviceGet( &device, i );
