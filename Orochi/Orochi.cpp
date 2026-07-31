@@ -835,16 +835,15 @@ oroApi getRawDeviceIndex( int& deviceId )
 }
 
 // description in the header
-int oroInitialize( oroApi api, oroU32 flags, 
+int oroInitialize( oroApi api, [[maybe_unused]] oroU32 flags,
 	const char** customPaths_Hip,
 	const char** customPaths_Hiprtc,
-	const char** customPaths_Cuda,
-	const char** customPaths_CudaRT,
-	const char** customPaths_NvRTC
+	[[maybe_unused]] const char** customPaths_Cuda,
+	[[maybe_unused]] const char** customPaths_CudaRT,
+	[[maybe_unused]] const char** customPaths_NvRTC
 	)
 {
 	s_api = api;
-	int e = 0;
 	s_loadedApis = 0;
 
 	if( api & ORO_API_CUDA )
@@ -905,7 +904,7 @@ oroApi oroLoadedAPI()
 {
 	return (oroApi)s_loadedApis;
 }
-oroApi oroGetCurAPI(oroU32 flags)
+oroApi oroGetCurAPI( [[maybe_unused]] oroU32 flags )
 {
 	return s_api;
 }

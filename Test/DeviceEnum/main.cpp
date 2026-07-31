@@ -29,7 +29,7 @@ int main( int argc, char** argv )
 {
 	bool testErrorFlag = false;
 
-	int a = oroInitialize( ( oroApi )( ORO_API_CUDA | ORO_API_HIP ), 0 );
+	oroInitialize( ( oroApi )( ORO_API_CUDA | ORO_API_HIP ), 0 );
 
 	oroError e;
 	e = oroInit( 0 );
@@ -108,17 +108,21 @@ int main( int argc, char** argv )
 			e = orortcGetCode( prog, codec.data() );
 			e = orortcDestroyProgram( &prog );
 			oroModule module;
-			oroError ee = oroModuleLoadData( &module, codec.data() );
-			ee = oroModuleGetFunction( &function, module, funcName );
+			oroError moduleError = oroModuleLoadData( &module, codec.data() );
+			ERROR_CHECK( moduleError );
+			moduleError = oroModuleGetFunction( &function, module, funcName );
+			ERROR_CHECK( moduleError );
 		}
 
 		void** args = {};
-		oroError e = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 ); 
+		oroError launchError = oroModuleLaunchKernel( function, 1, 1, 1, 32, 1, 1, 0, 0, args, 0 );
+		ERROR_CHECK( launchError );
 		oroDeviceSynchronize();
 
 		oroApi api = oroGetCurAPI( 0 );
 		printf( "executed on %s\n", api == ORO_API_HIP ? "AMD" : "NVIDIA" );
 		e = oroCtxDestroy( ctx );
+		ERROR_CHECK( e );
 	}
 
 	if ( testErrorFlag )

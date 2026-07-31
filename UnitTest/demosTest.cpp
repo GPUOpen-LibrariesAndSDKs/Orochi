@@ -24,13 +24,13 @@
 #include "common.h"
 #include <filesystem>
 
-void FormatPathForOS(std::string& path)
+void FormatPathForOS( [[maybe_unused]] std::string& path )
 {
 #ifdef _WIN32
-	for(int i=0; i<path.size(); i++)
+	for( char& c : path )
 	{
-		if ( path[i] == '/' )
-			path[i] = '\\';
+		if ( c == '/' )
+			c = '\\';
 	}
 #endif
 	return;

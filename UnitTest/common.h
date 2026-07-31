@@ -34,7 +34,7 @@
 	#undef OROASSERT
 #endif
 #define OROASSERT( x ) ASSERT_TRUE( x )
-#define OROCHECK( x ) { oroError e = x; ASSERT_EQ( e , ORO_SUCCESS ); }
+#define OROCHECK( x ) { oroError e = x; ASSERT_EQ( e , oroSuccess ); }
 #define ORORTCCHECK( x ) { ASSERT_EQ( x , ORORTC_SUCCESS ); }
 
 
