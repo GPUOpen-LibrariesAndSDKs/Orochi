@@ -10,6 +10,4 @@ project "Orochi"
     files { "../contrib/hipew/**.h", "../contrib/hipew/**.cpp" }
 
     -- Silence vendored CUEW/HIPEW so --warning=extra targets only our sources.
-    filter "files:../contrib/**"
-        warnings "Off"
-    filter {}
+    silenceVendoredWarnings("../contrib/**")

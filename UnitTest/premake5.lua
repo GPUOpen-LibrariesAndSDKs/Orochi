@@ -21,9 +21,7 @@ project "UnitTest"
     defines { "GTEST_HAS_TR1_TUPLE=0" }
 
     -- Silence vendored gtest/stb so --warning=extra targets only our sources.
-    filter "files:contrib/**"
-        warnings "Off"
-    filter {}
+    silenceVendoredWarnings("contrib/**")
 
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")

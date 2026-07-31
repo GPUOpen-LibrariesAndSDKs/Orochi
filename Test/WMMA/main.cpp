@@ -27,7 +27,7 @@
 #include "../../UnitTest/demoErrorCodes.h"
 
 // use a third-party library half.hpp to use the fp16 half dataype on the host side
-#include "half.hpp"
+#include <half.hpp>
 using __half = half_float::half;
 
 int main( int argc, char** argv )

@@ -7,4 +7,7 @@ project "WMMA"
     linkVersionLib()
 
     files { "*.h", "*.cpp" }
-    files { "half.hpp" }
+    files { "contrib/**.hpp" }
+
+    -- -isystem keeps vendored half.hpp out of the warning set.
+    externalincludedirs { "contrib" }

@@ -10,6 +10,4 @@ project "Texture"
     files { "texture_test_kernel.hpp", "*.cpp" }
 
     -- Silence vendored stb so --warning=extra targets only our sources.
-    filter "files:../../UnitTest/contrib/**"
-        warnings "Off"
-    filter {}
+    silenceVendoredWarnings("../../UnitTest/contrib/**")

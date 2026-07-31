@@ -74,6 +74,18 @@ function linkWin32SystemLibs()
     filter {}
 end
 
+-- Silence warnings for vendored sources matching a file pattern.
+-- The Ninja generator ignores per-file `warnings`, so the flag is also passed
+-- explicitly; MSVC is left to `warnings` alone because /w on top of /W* emits
+-- an override diagnostic.
+function silenceVendoredWarnings(pattern)
+    filter { "files:" .. pattern }
+        warnings "Off"
+    filter { "files:" .. pattern, "not toolset:msc-v*" }
+        buildoptions { "-w" }
+    filter {}
+end
+
 -- Run a helper script, aborting generation if it fails.
 function runScript(command)
     local ok, _, code = os.execute(command)

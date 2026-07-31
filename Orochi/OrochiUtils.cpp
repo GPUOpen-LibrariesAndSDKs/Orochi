@@ -209,14 +209,11 @@ struct OrochiUtilsImpl
 
 		auto strip = []( const char* name, const char* pattern )
 		{
-			size_t const patlen = strlen( pattern );
-			size_t patcnt = 0;
-			const char* oriptr;
-			const char* patloc;
-			// find how many times the pattern occurs in the original string
-			for( oriptr = name; ( patloc = strstr( oriptr, pattern ) ); oriptr = patloc + patlen )
+			const size_t patlen = strlen( pattern );
+			const char* oriptr = name;
+			// skip past the last occurrence of the pattern
+			for( const char* patloc = nullptr; ( patloc = strstr( oriptr, pattern ) ) != nullptr; oriptr = patloc + patlen )
 			{
-				patcnt++;
 			}
 			return oriptr;
 		};
