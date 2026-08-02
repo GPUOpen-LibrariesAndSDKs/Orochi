@@ -7,7 +7,6 @@ project "simpleD3D12"
     links { "d3d12", "d3dcompiler", "dxgi" }
 
     useOrochi()
-    linkVersionLib()
     linkWin32SystemLibs()
     includedirs { "./" }
 

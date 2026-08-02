@@ -4,7 +4,6 @@ project "UnitTest"
     location "%{wks.location}/%{prj.name}"
 
     useOrochi()
-    linkVersionLib()
     stageWindowsRuntimeDlls()
     filter "system:linux"
         links { "pthread" }

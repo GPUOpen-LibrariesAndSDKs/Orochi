@@ -4,7 +4,6 @@ project "WMMA"
     location "%{wks.location}/Test/%{prj.name}"
 
     useOrochi()
-    linkVersionLib()
 
     files { "*.h", "*.cpp" }
     files { "contrib/**.hpp" }
