@@ -25,11 +25,6 @@ newoption {
 }
 
 newoption {
-    trigger     = "forceCuda",
-    description = "Force CUDA backend even if CUDA_PATH is not found (may cause compilation errors)"
-}
-
-newoption {
     trigger     = "builddir",
     value       = "PATH",
     description = "Directory for generated build files (default: .)"
@@ -52,17 +47,6 @@ newoption {
 -- -----------------------------------------------------------------------------
 
 local rootDir = _MAIN_SCRIPT_DIR
-
-function linkVersionLib()
-    filter "system:windows"
-        links { "version" }
-    filter {}
-end
-
-function useOrochi()
-    includedirs { rootDir }
-    links { "Orochi" }
-end
 
 function linkWin32SystemLibs()
     filter "system:windows"
@@ -186,8 +170,6 @@ workspace "YamatanoOrochi"
         characterset "MBCS"
     filter { "system:windows", "toolset:msc-v*" }
         buildoptions { "/wd4244", "/wd4305", "/wd4018" }
-    filter "system:linux"
-        links { "dl" }
     filter {}
 
     filter "options:bakeKernel"
@@ -205,8 +187,6 @@ workspace "YamatanoOrochi"
             runScript('sh "' .. path.join(rootDir, "tools/bakeKernel.sh") .. '"')
         end
     end
-
-    include "./Orochi/enable_cuew"
 
 -- -----------------------------------------------------------------------------
 -- Projects
