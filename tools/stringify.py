@@ -1,123 +1,67 @@
-#!/usr/bin/env python
-from __future__ import print_function
-import sys
+#!/usr/bin/env python3
+"""Stringify GPU kernel source files into C++ string literals.
+
+Reads kernel source files and converts them into C++ const char* variables
+that can be compiled directly into the binary.
+
+Usage:
+    python3 stringify.py <kernel_file>
+"""
 import os
-import subprocess
-import platform
-
-dir = './'
-ekey = ''
-defines = {}
-replaced = []
+import sys
 
 
-def registerDefs(line):
-    global defines
-    return 0
-    # Changed to include leading whitespace, as this was causing issue with defines that contain 'TH_' inside the name.
-    if line.find(' TH_') == -1:
-        return 0
-    keys = line.split(' ',1)
-    keys = keys[1].split(' ',1)
-
-    if keys[0] in defines:
-      return 0
-    if len(keys) >= 2:
-      defines[keys[0]] = keys[1]
-      for i in range(2, len(keys)):
-        defines[keys[0]] += " " + keys[i]
-    return 1
-
-def replaceDefines( line ):
-    defKeys = defines.keys()
-    for key in defKeys:
-        if line.find(key) != -1:
-            line = line.replace(key, defines[key])
-            replaced.append( line )
-    return line
-
-def removeLeadingSpace( src ):
-    return src.lstrip(' ').rstrip(' ')
-
-def printfile(filename, ans, enablePrint, api):
+def print_file(filename, output, api, base_dir='./'):
+    """Recursively read a kernel file, inlining includes and escaping for C++."""
     with open(filename) as fh:
         for line in fh.readlines():
-            a = line.strip('\r\n')
-            a = removeLeadingSpace( a )
-            if a.startswith('//'):
+            line = line.strip('\r\n').strip()
+
+            if line.startswith('//'):
                 continue
-            if a.find('#include') != -1 and (a.find('inl.cl') != -1 or a.find('inl.metal') != -1 or a.find('inl.cu') != -1):
-                head, tail = os.path.split(a)
-                tail = dir + tail
-                tail = tail.replace( '>', '' )
-                printfile( tail, ans, 0, api )
-            if a.find('#include') != -1 and (api != 'hip'):
+
+            # Inline .inl includes
+            if '#include' in line and ('inl.cl' in line or 'inl.metal' in line or 'inl.cu' in line):
+                _, tail = os.path.split(line)
+                tail = base_dir + tail.replace('>', '')
+                output = print_file(tail, output, api, base_dir)
+
+            if '#include' in line and api != 'hip':
                 continue
-            if a.find('#define') == 0:
-                if registerDefs( a ) == 1:
-                    continue
-            if a.find('#undef') == -1:
-                a = replaceDefines( a )
-            if( ekey != '' ):
-                b = a
-            else:
-                b = ('"'+a.replace("\"", "\\\"").replace("'", "\\'") + '\\n"')
-            ans += ''+b+'\n'
-        return ans
 
-def stringify(filename, stringname, api):
-    print ('static const char* '+stringname+'= \\')
-    ans = ''
-    ans = printfile( filename, ans, 1, api )
-    if( ekey != '' ):
+            # Escape for C++ string literal
+            escaped = '"' + line.replace('"', '\\"').replace("'", "\\'") + '\\n"'
+            output += escaped + '\n'
 
-        # TODO: missing encrypt
-
-        chars_per_line = 255
-        for i in range(0, len(ans), chars_per_line):
-            print( '"'+ans[i:i+chars_per_line]+'"\\')
-        print(';')
-    else:
-        print( ans + ';' )
-
-argvs = sys.argv
-
-files = []
-if len(argvs) >= 2:
-    files.append( argvs[1] )
-
-if len(argvs) >= 3:
-    ekey = argvs[2]
+    return output
 
 
+def stringify(filename, string_name, api, base_dir='./'):
+    """Convert a kernel file to a C++ string literal variable."""
+    print('static const char* ' + string_name + '= \\')
+    output = print_file(filename, '', api, base_dir)
+    print(output + ';')
 
-api = 'hip'
 
-for file in files:
-    if file.find('Math.')==-1:
-        continue
-    if file.find('.cl') == -1 and file.find('.cu') == -1 and file.find('.metal') == -1 and file.find('.h') == -1:
-        continue
-    stringname = file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
-    stringname = api + '_'+stringname.split('/')[-1]
-    stringify( dir+file, stringname, api )
+def main():
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <kernel_file>", file=sys.stderr)
+        sys.exit(1)
 
-for file in files:
-    if file.find('Math.')!=-1:
-        continue
-    if file.find('.cl') == -1 and file.find('.cu') == -1 and file.find('.metal') == -1 and file.find('.h') == -1:
-        continue
-    stringname = file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
-    stringname = api + '_'+stringname.split('/')[-1]
-    stringify( dir+file, stringname, api )
-#
-log = open('tahoePy.log', 'w')
-log.write(">> Registerd Defs\n")
-defKeys = defines.keys()
-for key in defKeys:
-    log.write( "  #define {0}   => {1}\n".format(key, defines[key]) )
-log.write("\n")
-log.write(">> Replaced Defs\n")
-for r in replaced:
-    log.write( "  %s\n"%r )
-log.close()
+    files = [sys.argv[1]]
+    api = 'hip'
+
+    # Process Math files first, then the rest
+    for math_first in (True, False):
+        for source_file in files:
+            if ('Math.' in source_file) != math_first:
+                continue
+            if not any(ext in source_file for ext in ('.cl', '.cu', '.metal', '.h')):
+                continue
+            string_name = source_file.replace('.cl', '').replace('.cu', '').replace('.metal', '').replace('.h', '')
+            string_name = api + '_' + string_name.split('/')[-1]
+            stringify('./' + source_file, string_name, api)
+
+
+if __name__ == '__main__':
+    main()
