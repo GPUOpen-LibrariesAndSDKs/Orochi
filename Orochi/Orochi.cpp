@@ -794,9 +794,14 @@ namespace CU4ORO
 // public oroStreamGetCaptureInfo_v2 has no way to surface edge data anyway.
 inline static cudaError_t oroStreamGetCaptureInfoV2Compat( cudaStream_t stream, enum cudaStreamCaptureStatus* captureStatus_out, unsigned long long* id_out, cudaGraph_t* graph_out, const cudaGraphNode_t** dependencies_out, size_t* numDependencies_out )
 {
-	if( cudaStreamGetCaptureInfo_v3_oro == nullptr )
-		return cudaErrorNotSupported;
-	return cudaStreamGetCaptureInfo_v3_oro( stream, captureStatus_out, id_out, graph_out, dependencies_out, nullptr, numDependencies_out );
+	// The two entry points are mutually exclusive: only a CUDA 12 cudart exports the _v2 name, and only a
+	// CUDA 13 one exports the replacement. The _v2 spelling is reachable from a CUDA 13 build when the
+	// caller supplies its own runtime through customPaths_CudaRT, so prefer it when it resolved.
+	if( cudaStreamGetCaptureInfo_v2_oro != nullptr )
+		return cudaStreamGetCaptureInfo_v2_oro( stream, captureStatus_out, id_out, graph_out, dependencies_out, numDependencies_out );
+	if( cudaStreamGetCaptureInfo_v3_oro != nullptr )
+		return cudaStreamGetCaptureInfo_v3_oro( stream, captureStatus_out, id_out, graph_out, dependencies_out, nullptr, numDependencies_out );
+	return cudaErrorNotSupported;
 }
 #undef cudaStreamGetCaptureInfo_v2
 #define cudaStreamGetCaptureInfo_v2 oroStreamGetCaptureInfoV2Compat
