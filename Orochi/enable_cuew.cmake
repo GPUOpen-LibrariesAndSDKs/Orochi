@@ -50,11 +50,19 @@ set(BACKUP_CUDA_PATH_LINUX "/usr/local/cuda")
 
 # REGION_PREMAKE_END
 
-# First, try the supported CUDA majors, in order of preference
+# this file is include()d into the caller's scope, so start from a known state rather than inheriting
+# whatever the including project may have left in cuda_path.
+set(cuda_path "")
+
+# First, try the supported CUDA majors, in order of preference.
+# Every assignment below is validated, so cuda_path is always either empty or an existing directory.
 foreach(cuda_major IN LISTS SUPPORTED_CUDA_MAJORS)
 	# an envvar set by the installer wins, so a SDK outside the standard folders is still found
 	if(NOT cuda_path AND DEFINED ENV{CUDA_PATH_V${cuda_major}_0})
-		set(cuda_path $ENV{CUDA_PATH_V${cuda_major}_0})
+		path_ok(cuda_path_ok "$ENV{CUDA_PATH_V${cuda_major}_0}")
+		if(cuda_path_ok)
+			set(cuda_path "$ENV{CUDA_PATH_V${cuda_major}_0}")
+		endif()
 	endif()
 
 	# otherwise look for any installed minor of this major and keep the highest one
@@ -82,7 +90,10 @@ endif()
 # If CUDA still not found, search the "backup" paths
 if(NOT cuda_path)
 	if(DEFINED ENV{${BACKUP_CUDA_ENVVAR}})
-		set(cuda_path $ENV{${BACKUP_CUDA_ENVVAR}})
+		path_ok(cuda_path_ok "$ENV{${BACKUP_CUDA_ENVVAR}}")
+		if(cuda_path_ok)
+			set(cuda_path "$ENV{${BACKUP_CUDA_ENVVAR}}")
+		endif()
 	endif()
 endif()
 
