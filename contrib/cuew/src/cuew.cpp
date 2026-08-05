@@ -75,9 +75,12 @@ typedef void *DynamicLibrary;
 
 #define _LIBRARY_FIND(lib, name)  name##_oro = (t##name *)dynamic_library_find(lib, #name);
 
-// Resolves a wrangled pointer from an export whose name differs from the pointer's.
-// Needed where CUDA renamed a runtime entry point between major versions.
-#define _LIBRARY_FIND_AS(lib, name, symbol)  name##_oro = (t##name *)dynamic_library_find(lib, symbol);
+// Resolves a wrangled pointer from an export whose name differs from the pointer's, but only when the
+// pointer is still unresolved. Needed where CUDA renamed a runtime entry point between major versions:
+// an older runtime keeps exporting the original name with the older signature, so a pointer that was
+// already resolved from its own name must never be overwritten with it.
+#define _LIBRARY_FIND_FALLBACK_AS(lib, name, symbol) \
+        if (name##_oro == nullptr) { name##_oro = (t##name *)dynamic_library_find(lib, symbol); }
 
 
 static DynamicLibrary cuda_lib = NULL;
@@ -871,7 +874,13 @@ static int cuewCudaInit(const char** customPaths_Cuda, const char** customPaths_
 #ifdef _WIN32
   // Expected in c:/windows/system or similar, no path needed.
   const char *cuda_paths[] = {"nvcuda.dll", NULL};
-  const char *cudart_paths[] = {"cudart64_13.dll", "cudart64_12.dll", NULL};
+  // must match the major of the headers this was built against: cudaDeviceProp and the external
+  // semaphore parameter structs differ between CUDA 12 and 13, so a mismatched runtime is unsound.
+#if CUDART_VERSION >= 13000
+  const char *cudart_paths[] = {"cudart64_13.dll", NULL};
+#else
+  const char *cudart_paths[] = {"cudart64_12.dll", NULL};
+#endif
 #elif defined(__APPLE__)
   // Default installation path.
   const char *cuda_paths[] = {"/usr/local/cuda/lib/libcuda.dylib", NULL};
@@ -1616,12 +1625,26 @@ _LIBRARY_FIND( cudart_lib, cudaWaitExternalSemaphoresAsync_v2 );
   // CUDA 13 dropped these _v2 exports from cudart: the unsuffixed names became the current entry points,
   // with the signatures the _v2 ones had. The generated block above looked them up under their old names
   // and left the pointers null, so resolve them again from the names CUDA 13 actually exports.
-  _LIBRARY_FIND_AS( cudart_lib, cudaGetDeviceProperties_v2, "cudaGetDeviceProperties" );
-  _LIBRARY_FIND_AS( cudart_lib, cudaSignalExternalSemaphoresAsync_v2, "cudaSignalExternalSemaphoresAsync" );
-  _LIBRARY_FIND_AS( cudart_lib, cudaWaitExternalSemaphoresAsync_v2, "cudaWaitExternalSemaphoresAsync" );
+  //
+  // Only do this against a runtime that really is CUDA 13. A CUDA 12 cudart exports both the unsuffixed
+  // and the _v2 name, and its unsuffixed one is the older entry point: cudaGetDeviceProperties expects
+  // the pre-12 cudaDeviceProp, and cudaStreamGetCaptureInfo takes one argument fewer than the CUDA 13
+  // signature these pointers are typed with. The default cudart_paths above already match the header
+  // major, but a caller can still pass its own DLL through customPaths_CudaRT.
+  {
+    int cudart_runtime_version = 0;
+    if (cudaRuntimeGetVersion_oro) {
+      cudaRuntimeGetVersion_oro(&cudart_runtime_version);
+    }
+    if (cudart_runtime_version / 1000 >= 13) {
+      _LIBRARY_FIND_FALLBACK_AS( cudart_lib, cudaGetDeviceProperties_v2, "cudaGetDeviceProperties" );
+      _LIBRARY_FIND_FALLBACK_AS( cudart_lib, cudaSignalExternalSemaphoresAsync_v2, "cudaSignalExternalSemaphoresAsync" );
+      _LIBRARY_FIND_FALLBACK_AS( cudart_lib, cudaWaitExternalSemaphoresAsync_v2, "cudaWaitExternalSemaphoresAsync" );
 
-  // this one also gained an edgeData_out argument, so it gets its own pointer rather than reusing the _v2 one
-  _LIBRARY_FIND_AS( cudart_lib, cudaStreamGetCaptureInfo_v3, "cudaStreamGetCaptureInfo" );
+      // this one also gained an edgeData_out argument, so it gets its own pointer rather than reusing the _v2 one
+      _LIBRARY_FIND_FALLBACK_AS( cudart_lib, cudaStreamGetCaptureInfo_v3, "cudaStreamGetCaptureInfo" );
+    }
+  }
 #endif
 
 
