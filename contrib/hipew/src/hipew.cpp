@@ -620,11 +620,16 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
 #ifdef _WIN32
   // Expected in C:/Windows/System32 or similar, no path needed.
   const char* hip_paths[] = {
-      "amdhip64_7.dll", 
-      "amdhip64_6.dll", 
+      "amdhip64_8.dll",
+      "amdhip64_7.dll",
+      "amdhip64_6.dll",
       "amdhip64.dll",   // <- hip '5.x' DLL.
       NULL };
   const char* hiprtc_paths[] = {
+      "hiprtc0801.dll",
+      "hiprtc0800.dll",
+      "hiprtc07016.dll",
+      "hiprtc07015.dll",
       "hiprtc07014.dll",
       "hiprtc07013.dll",
       "hiprtc07012.dll",
@@ -657,9 +662,23 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   const char *hip_paths[] = {"", NULL};
   const char* hiprtc_paths[] = { NULL };
 #else
-  const char *hip_paths[] = { 
+  const char *hip_paths[] = {
 
-      // we first try the specific versions
+      // Each release is installed in its own '/opt/rocm/core-<MAJOR>.<MINOR>' directory,
+      "/opt/rocm/core-8.1/lib/libamdhip64.so.8",
+      "/opt/rocm/core-8.0/lib/libamdhip64.so.8",
+      "/opt/rocm/core-8/lib/libamdhip64.so.8",
+
+      "/opt/rocm/core-7.16/lib/libamdhip64.so.7",
+      "/opt/rocm/core-7.15/lib/libamdhip64.so.7",
+      "/opt/rocm/core-7.14/lib/libamdhip64.so.7",
+      "/opt/rocm/core-7/lib/libamdhip64.so.7",
+
+      // .. then the versioned libraries of the traditional layout.
+      "/opt/rocm/hip/lib/libamdhip64.so.8",
+      "/opt/rocm/lib/libamdhip64.so.8",
+      "libamdhip64.so.8",
+
       "/opt/rocm/hip/lib/libamdhip64.so.7",
       "/opt/rocm/lib/libamdhip64.so.7", 
       "libamdhip64.so.7",
@@ -673,15 +692,30 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
       "libamdhip64.so.5",
 
       // .. if it doesn't exist, we take the generic symbolic link.
+      "/opt/rocm/core/lib/libamdhip64.so",
       "/opt/rocm/hip/lib/libamdhip64.so",
-      "/opt/rocm/lib/libamdhip64.so", 
+      "/opt/rocm/lib/libamdhip64.so",
       "libamdhip64.so",
 
       NULL };
 
-  const char* hiprtc_paths[] = { 
+  const char* hiprtc_paths[] = {
 
-      // we first try the specific versions
+      // See the comment about the 'core-*' directories in 'hip_paths'.
+      "/opt/rocm/core-8.1/lib/libhiprtc.so.8",
+      "/opt/rocm/core-8.0/lib/libhiprtc.so.8",
+      "/opt/rocm/core-8/lib/libhiprtc.so.8",
+
+      "/opt/rocm/core-7.16/lib/libhiprtc.so.7",
+      "/opt/rocm/core-7.15/lib/libhiprtc.so.7",
+      "/opt/rocm/core-7.14/lib/libhiprtc.so.7",
+      "/opt/rocm/core-7/lib/libhiprtc.so.7",
+
+      // .. then the versioned libraries of the traditional layout.
+      "/opt/rocm/hip/lib/libhiprtc.so.8",
+      "/opt/rocm/lib/libhiprtc.so.8",
+      "libhiprtc.so.8",
+
       "/opt/rocm/hip/lib/libhiprtc.so.7",
       "/opt/rocm/lib/libhiprtc.so.7", 
       "libhiprtc.so.7",
@@ -695,8 +729,9 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
       "libhiprtc.so.5",
 
       // .. if it doesn't exist, we take the generic symbolic link.
+      "/opt/rocm/core/lib/libhiprtc.so",
       "/opt/rocm/hip/lib/libhiprtc.so",
-      "/opt/rocm/lib/libhiprtc.so", 
+      "/opt/rocm/lib/libhiprtc.so",
       "libhiprtc.so",
       NULL };
 
