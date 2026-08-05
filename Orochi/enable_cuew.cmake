@@ -82,11 +82,6 @@ foreach(cuda_major IN LISTS SUPPORTED_CUDA_MAJORS)
 	endif()
 endforeach()
 
-if(NOT cuda_path)
-	string(REPLACE ";" ".x or " supported_cuda_majors_pretty "${SUPPORTED_CUDA_MAJORS}")
-	message(WARNING "No supported version of CUDA for this Orochi is found: needs a ${supported_cuda_majors_pretty}.x SDK. It's advised that you install one of these versions.")
-endif()
-
 # If CUDA still not found, search the "backup" paths
 if(NOT cuda_path)
 	if(DEFINED ENV{${BACKUP_CUDA_ENVVAR}})
@@ -102,6 +97,13 @@ if(NOT cuda_path)
 	if(cuda_path_ok)
 		set(cuda_path ${BACKUP_CUDA_PATH_LINUX})
 	endif()
+endif()
+
+# warn only once the backup paths have been tried too, otherwise a SDK found through CUDA_PATH
+# or the default symlink would still be preceded by a "not found" message
+if(NOT cuda_path)
+	string(REPLACE ";" ".x or " supported_cuda_majors_pretty "${SUPPORTED_CUDA_MAJORS}")
+	message(WARNING "No supported version of CUDA for this Orochi is found: needs a ${supported_cuda_majors_pretty}.x SDK. It's advised that you install one of these versions.")
 endif()
 
 # Enable CUEW if CUDA is forced or if we find the CUDA SDK folder

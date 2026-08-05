@@ -74,10 +74,6 @@ for _, cuda_major in ipairs(supported_cuda_majors) do
 	end
 end
 
-if (not oropremake_PathOK(cuda_path)) then
-	print("No supported version of CUDA for this Orochi is found: needs a " .. table.concat(supported_cuda_majors, ".x or ") .. ".x SDK. It's advised that you install one of these versions.")
-end
-
 --
 -- If CUDA still not found, search the "backup" paths
 --
@@ -91,6 +87,12 @@ if (not oropremake_PathOK(cuda_path)) then
 	if ( os.isdir(backup_cuda_path_linux) ) then
 		cuda_path = backup_cuda_path_linux
 	end
+end
+
+-- warn only once the backup paths have been tried too, otherwise a SDK found through CUDA_PATH
+-- or the default symlink would still be preceded by a "not found" message
+if (not oropremake_PathOK(cuda_path)) then
+	print("No supported version of CUDA for this Orochi is found: needs a " .. table.concat(supported_cuda_majors, ".x or ") .. ".x SDK. It's advised that you install one of these versions.")
 end
 
 -- Enable CUEW if CUDA is forced or if we find the CUDA SDK folder

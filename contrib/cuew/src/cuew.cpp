@@ -104,7 +104,7 @@ static DynamicLibrary nvrtc_lib = NULL;
 // CUDA_VERSION = 12020
 // CUDART_VERSION = 12020
 // It's recommanded to use similar versions in the #include of CUDA SDK.
-// If this assert is wrong, it's advised either to install a CUDA SDK inside the supported major range, or search on the Orochi github a branch matching the CUDA SDK you are using.
+// If this assert is wrong, it's advised either to install a CUDA SDK inside the supported major range, or search on the Orochi GitHub a branch matching the CUDA SDK you are using.
 // checking the major-version number only:
 // CUDA 13 keeps every driver entry point this file wrangles, so the same generated tables serve both majors.
 static_assert(  ((int)CUDA_VERSION / (int)1000) >= 12 && ((int)CUDA_VERSION / (int)1000) <= 13  );
