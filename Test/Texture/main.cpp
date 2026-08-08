@@ -26,8 +26,8 @@
 #include <Orochi/Orochi.h>
 #include <Test/Common.h>
 #include <iostream>
-#include "../../UnitTest/contrib/stb/stb_image_write.h"
-#include "../../UnitTest/contrib/stb/stb_image.h"
+#include <contrib/stb/stb_image_write.h>
+#include <contrib/stb/stb_image.h>
 #include "../../UnitTest/demoErrorCodes.h"
 
 

@@ -3681,6 +3681,14 @@ inline static hipError_t hipGraphicsUnregisterResource_cu4oro(hipGraphicsResourc
   return hipCUDAErrorTohipError(cudaGraphicsUnregisterResource(resource));
 }
 
+inline static hipError_t hipGraphicsGLRegisterImage_cu4oro( hipGraphicsResource** resource, GLuint image, GLenum target, unsigned int flags ) {
+  return hipCUDAErrorTohipError(cudaGraphicsGLRegisterImage(resource,image,target,flags));
+}
+
+inline static hipError_t hipGraphicsGLRegisterBuffer_cu4oro( hipGraphicsResource** resource, GLuint buffer, unsigned int flags ) {
+  return hipCUDAErrorTohipError(cudaGraphicsGLRegisterBuffer(resource,buffer,flags));
+}
+
 #if CUDA_VERSION >= CUDA_11020
 // ========================== HIP Stream Ordered Memory Allocator =================================
 inline static hipError_t hipDeviceGetDefaultMemPool_cu4oro(hipMemPool_t* mem_pool, int device) {
