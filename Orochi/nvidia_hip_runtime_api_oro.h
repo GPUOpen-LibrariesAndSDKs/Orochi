@@ -2250,14 +2250,20 @@ inline static hipError_t hipChooseDeviceR0600_cu4oro(int* device, const hipDevic
     cdprop.regsPerBlock = prop->regsPerBlock;
     cdprop.warpSize = prop->warpSize;
     cdprop.maxThreadsPerBlock = prop->maxThreadsPerBlock;
+#if CUDART_VERSION < 13000
     cdprop.clockRate = prop->clockRate;
+#endif
     cdprop.totalConstMem = prop->totalConstMem;
     cdprop.multiProcessorCount = prop->multiProcessorCount;
     cdprop.l2CacheSize = prop->l2CacheSize;
     cdprop.maxThreadsPerMultiProcessor = prop->maxThreadsPerMultiProcessor;
+#if CUDART_VERSION < 13000
     cdprop.computeMode = prop->computeMode;
+#endif
     cdprop.canMapHostMemory = prop->canMapHostMemory;
+#if CUDART_VERSION < 13000
     cdprop.memoryClockRate = prop->memoryClockRate;
+#endif
     cdprop.memoryBusWidth = prop->memoryBusWidth;
     return hipCUDAErrorTohipError(cudaChooseDevice(device, &cdprop));
 }
@@ -2608,6 +2614,21 @@ inline static hipError_t hipMemset3DAsync_cu4oro(hipPitchedPtr pitchedDevPtr, in
     return hipCUDAErrorTohipError(cudaMemset3DAsync(pitchedDevPtr, value, extent, stream));
 }
 
+#if CUDART_VERSION >= 13000
+// CUDA 13 dropped a handful of fields from cudaDeviceProp. The underlying values are still reachable
+// through cudaDeviceGetAttribute, so query them individually to keep hipDeviceProp_t fully populated.
+inline static int hipDeviceAttrValue_cu4oro(cudaDeviceAttr attr, int device) {
+    int value = 0;
+    if (cudaDeviceGetAttribute(&value, attr, device) != cudaSuccess) {
+        return 0;
+    }
+    return value;
+}
+#define ORO_CUDA_PROP(field, attr) hipDeviceAttrValue_cu4oro(attr, device)
+#else
+#define ORO_CUDA_PROP(field, attr) cdprop.field
+#endif
+
 inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_prop, int device) {
     if (p_prop == NULL) {
        return hipErrorInvalidValue;
@@ -2635,21 +2656,21 @@ inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_p
     p_prop->maxGridSize[0] = cdprop.maxGridSize[0];
     p_prop->maxGridSize[1] = cdprop.maxGridSize[1];
     p_prop->maxGridSize[2] = cdprop.maxGridSize[2];
-    p_prop->clockRate = cdprop.clockRate;
+    p_prop->clockRate = ORO_CUDA_PROP(clockRate, cudaDevAttrClockRate);
     p_prop->totalConstMem = cdprop.totalConstMem;
     p_prop->major = cdprop.major;
     p_prop->minor = cdprop.minor;
     p_prop->textureAlignment = cdprop.textureAlignment;
     p_prop->texturePitchAlignment = cdprop.texturePitchAlignment;
-    p_prop->deviceOverlap = cdprop.deviceOverlap;
+    p_prop->deviceOverlap = ORO_CUDA_PROP(deviceOverlap, cudaDevAttrGpuOverlap);
     p_prop->multiProcessorCount = cdprop.multiProcessorCount;
-    p_prop->kernelExecTimeoutEnabled = cdprop.kernelExecTimeoutEnabled;
+    p_prop->kernelExecTimeoutEnabled = ORO_CUDA_PROP(kernelExecTimeoutEnabled, cudaDevAttrKernelExecTimeout);
     p_prop->integrated = cdprop.integrated;
     p_prop->canMapHostMemory = cdprop.canMapHostMemory;
-    p_prop->computeMode = cdprop.computeMode;
+    p_prop->computeMode = ORO_CUDA_PROP(computeMode, cudaDevAttrComputeMode);
     p_prop->maxTexture1D = cdprop.maxTexture1D;
     p_prop->maxTexture1DMipmap = cdprop.maxTexture1DMipmap;
-    p_prop->maxTexture1DLinear = cdprop.maxTexture1DLinear;
+    p_prop->maxTexture1DLinear = ORO_CUDA_PROP(maxTexture1DLinear, cudaDevAttrMaxTexture1DLinearWidth);
     p_prop->maxTexture2D[0] = cdprop.maxTexture2D[0];
     p_prop->maxTexture2D[1] = cdprop.maxTexture2D[1];
     p_prop->maxTexture2DMipmap[0] = cdprop.maxTexture2DMipmap[0];
@@ -2696,7 +2717,7 @@ inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_p
     p_prop->tccDriver = cdprop.tccDriver;
     p_prop->asyncEngineCount = cdprop.asyncEngineCount;
     p_prop->unifiedAddressing = cdprop.unifiedAddressing;
-    p_prop->memoryClockRate = cdprop.memoryClockRate;
+    p_prop->memoryClockRate = ORO_CUDA_PROP(memoryClockRate, cudaDevAttrMemoryClockRate);
     p_prop->memoryBusWidth = cdprop.memoryBusWidth;
     p_prop->l2CacheSize = cdprop.l2CacheSize;
     p_prop->maxThreadsPerMultiProcessor = cdprop.maxThreadsPerMultiProcessor;
@@ -2709,13 +2730,17 @@ inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_p
     p_prop->isMultiGpuBoard = cdprop.isMultiGpuBoard;
     p_prop->multiGpuBoardGroupID = cdprop.multiGpuBoardGroupID;
     p_prop->hostNativeAtomicSupported = cdprop.hostNativeAtomicSupported;
-    p_prop->singleToDoublePrecisionPerfRatio = cdprop.singleToDoublePrecisionPerfRatio;
+    p_prop->singleToDoublePrecisionPerfRatio = ORO_CUDA_PROP(singleToDoublePrecisionPerfRatio, cudaDevAttrSingleToDoublePrecisionPerfRatio);
     p_prop->pageableMemoryAccess = cdprop.pageableMemoryAccess;
     p_prop->concurrentManagedAccess = cdprop.concurrentManagedAccess;
     p_prop->computePreemptionSupported = cdprop.computePreemptionSupported;
     p_prop->canUseHostPointerForRegisteredMem = cdprop.canUseHostPointerForRegisteredMem;
     p_prop->cooperativeLaunch = cdprop.cooperativeLaunch;
+#if CUDART_VERSION >= 13000
+    p_prop->cooperativeMultiDeviceLaunch = 0; // removed in CUDA 13
+#else
     p_prop->cooperativeMultiDeviceLaunch = cdprop.cooperativeMultiDeviceLaunch;
+#endif
     p_prop->sharedMemPerBlockOptin = cdprop.sharedMemPerBlockOptin;
     p_prop->pageableMemoryAccessUsesHostPageTables = cdprop.pageableMemoryAccessUsesHostPageTables;
     p_prop->directManagedMemAccessFromHost = cdprop.directManagedMemAccessFromHost;
@@ -2747,6 +2772,8 @@ inline static hipError_t hipGetDevicePropertiesR0600_cu4oro(hipDeviceProp_t* p_p
 
     return error;
 }
+
+#undef ORO_CUDA_PROP
 
 inline static hipError_t hipDeviceGetAttribute_cu4oro(int* pi, hipDeviceAttribute_t attr, int device) {
     enum cudaDeviceAttr cdattr;
@@ -2870,9 +2897,13 @@ inline static hipError_t hipDeviceGetAttribute_cu4oro(int* pi, hipDeviceAttribut
         case hipDeviceAttributeCooperativeLaunch:
             cdattr = cudaDevAttrCooperativeLaunch;
             break;
+#if CUDART_VERSION < 13000
+        // cooperative multi-device launch was removed in CUDA 13; the query falls through to
+        // the default case below and reports cudaErrorInvalidValue.
         case hipDeviceAttributeCooperativeMultiDeviceLaunch:
             cdattr = cudaDevAttrCooperativeMultiDeviceLaunch;
             break;
+#endif
         case hipDeviceAttributeHostRegisterSupported:
             cdattr = cudaDevAttrHostRegisterSupported;
             break;
@@ -3331,7 +3362,7 @@ inline static hipError_t hipEventQuery_cu4oro(hipEvent_t event) {
 }
 
 inline static hipError_t hipCtxCreate_cu4oro(hipCtx_t* ctx, unsigned int flags, hipDevice_t device) {
-    return hipCUResultTohipError(cuCtxCreate(ctx, flags, device));
+    return hipCUResultTohipError(cuCtxCreate_v2(ctx, flags, device));
 }
 
 inline static hipError_t hipCtxDestroy_cu4oro(hipCtx_t ctx) {
@@ -3609,7 +3640,15 @@ inline static hipError_t hipModuleLaunchCooperativeKernel_cu4oro(hipFunction_t f
 
 inline static hipError_t hipLaunchCooperativeKernelMultiDevice_cu4oro(hipLaunchParams* launchParamsList,
                                                  int  numDevices, unsigned int  flags) {
+#if CUDART_VERSION >= 13000
+    // cudaLaunchCooperativeKernelMultiDevice and cudaLaunchParams were removed in CUDA 13
+    (void)launchParamsList;
+    (void)numDevices;
+    (void)flags;
+    return hipErrorNotSupported;
+#else
     return hipCUDAErrorTohipError(cudaLaunchCooperativeKernelMultiDevice(launchParamsList, numDevices, flags));
+#endif
 }
 
 inline static hipError_t hipModuleLaunchCooperativeKernelMultiDevice_cu4oro(
