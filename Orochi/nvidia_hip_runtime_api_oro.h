@@ -3699,6 +3699,14 @@ inline static hipError_t hipDestroyExternalMemory_cu4oro(hipExternalMemory_t ext
   return hipCUDAErrorTohipError(cudaDestroyExternalMemory(extMem));
 }
 
+inline static hipError_t hipGLGetDevices_cu4oro(unsigned int* pDeviceCount, int* pDevices, unsigned int deviceCount, unsigned int deviceList) {
+  return hipCUDAErrorTohipError(cudaGLGetDevices(pDeviceCount, pDevices, deviceCount, static_cast<enum cudaGLDeviceList>(deviceList)));
+}
+
+inline static hipError_t hipGraphicsGLRegisterBuffer_cu4oro(hipGraphicsResource_t* resource, unsigned int buffer, unsigned int flags) {
+  return hipCUDAErrorTohipError(cudaGraphicsGLRegisterBuffer(resource, buffer, flags));
+}
+
 inline static hipError_t hipGraphicsMapResources_cu4oro(int count, hipGraphicsResource_t* resources, hipStream_t stream  __dparm(0)) {
   return hipCUDAErrorTohipError(cudaGraphicsMapResources(count, resources, stream));
 }
