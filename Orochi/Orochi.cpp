@@ -629,6 +629,8 @@ namespace CU4ORO
 #define cudaGraphRemoveDependencies cudaGraphRemoveDependencies_oro
 #define cudaGraphRetainUserObject cudaGraphRetainUserObject_oro
 #define cudaGraphUpload cudaGraphUpload_oro
+#define cudaGLGetDevices cudaGLGetDevices_oro
+#define cudaGraphicsGLRegisterBuffer cudaGraphicsGLRegisterBuffer_oro
 #define cudaGraphicsMapResources cudaGraphicsMapResources_oro
 #define cudaGraphicsResourceGetMappedMipmappedArray cudaGraphicsResourceGetMappedMipmappedArray_oro
 #define cudaGraphicsResourceGetMappedPointer cudaGraphicsResourceGetMappedPointer_oro
@@ -1894,6 +1896,20 @@ oroError_t OROAPI oroGetTextureObjectResourceDesc(oroResourceDesc * pResDesc, or
 	__ORO_FUNC(
 		CU4ORO::hipGetTextureObjectResourceDesc_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipResourceDesc *,pResDesc), __ORO_FORCE_CAST(CU4ORO::hipTextureObject_t,textureObject)),
 		hipGetTextureObjectResourceDesc(pResDesc, textureObject)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGLGetDevices(unsigned int * pDeviceCount, int * pDevices, unsigned int deviceCount, unsigned int deviceList)
+{
+	__ORO_FUNC(
+		CU4ORO::hipGLGetDevices_cu4oro(pDeviceCount, pDevices, deviceCount, deviceList),
+		hipGLGetDevices(pDeviceCount, pDevices, deviceCount, deviceList)     );
+	return oroErrorUnknown;
+}
+oroError_t OROAPI oroGraphicsGLRegisterBuffer(oroGraphicsResource_t * resource, unsigned int buffer, unsigned int flags)
+{
+	__ORO_FUNC(
+		CU4ORO::hipGraphicsGLRegisterBuffer_cu4oro(__ORO_FORCE_CAST(CU4ORO::hipGraphicsResource_t *,resource), buffer, flags),
+		hipGraphicsGLRegisterBuffer(resource, buffer, flags)     );
 	return oroErrorUnknown;
 }
 oroError_t OROAPI oroGraphicsMapResources(int count, oroGraphicsResource_t * resources, oroStream_t stream)
