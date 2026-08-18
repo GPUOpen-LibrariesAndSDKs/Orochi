@@ -809,6 +809,65 @@ inline static cudaError_t oroStreamGetCaptureInfoV2Compat( cudaStream_t stream, 
 #define cudaStreamGetCaptureInfo_v2 oroStreamGetCaptureInfoV2Compat
 #endif
 
+// Orochi.h pulls in hipew.h, which defines the HIP-side spelling of these flag macros (hipEventDefault 0x0,
+// hipStreamPerThread ((hipStream_t)2), __dparm(x) empty, ...). The header below is the HIP SDK's CUDA
+// back-end and defines the same names in terms of their CUDA equivalents (cudaEventDefault,
+// ((cudaStream_t)2), ...). Same names, different replacement lists, so every one of them was a C4005
+// macro redefinition warning. The CUDA spellings are the ones this namespace needs, and they are what the
+// preprocessor ended up with anyway (last definition wins), so dropping the hipew mapping first is
+// behaviour-preserving and only removes the diagnostics. Nothing after this block uses the hipew spellings:
+// the public hipewInit declaration in Orochi.h uses hipew__dparm, not __dparm.
+#undef HIP_LAUNCH_PARAM_BUFFER_POINTER
+#undef HIP_LAUNCH_PARAM_BUFFER_SIZE
+#undef HIP_LAUNCH_PARAM_END
+#undef __dparm
+#undef hipArrayCubemap
+#undef hipArrayDefault
+#undef hipArrayLayered
+#undef hipArraySurfaceLoadStore
+#undef hipArrayTextureGather
+#undef hipCooperativeLaunchMultiDeviceNoPostSync
+#undef hipCooperativeLaunchMultiDeviceNoPreSync
+#undef hipCpuDeviceId
+#undef hipDeviceLmemResizeToMax
+#undef hipDeviceMapHost
+#undef hipDeviceScheduleAuto
+#undef hipDeviceScheduleBlockingSync
+#undef hipDeviceScheduleMask
+#undef hipDeviceScheduleSpin
+#undef hipDeviceScheduleYield
+#undef hipEventBlockingSync
+#undef hipEventDefault
+#undef hipEventDisableTiming
+#undef hipEventInterprocess
+#undef hipEventReleaseToDevice
+#undef hipEventReleaseToSystem
+#undef hipHostMallocCoherent
+#undef hipHostMallocDefault
+#undef hipHostMallocMapped
+#undef hipHostMallocNonCoherent
+#undef hipHostMallocPortable
+#undef hipHostMallocWriteCombined
+#undef hipHostRegisterDefault
+#undef hipHostRegisterIoMemory
+#undef hipHostRegisterMapped
+#undef hipHostRegisterPortable
+#undef hipHostRegisterReadOnly
+#undef hipInvalidDeviceId
+#undef hipIpcMemLazyEnablePeerAccess
+#undef hipMemAttachGlobal
+#undef hipMemAttachHost
+#undef hipMemAttachSingle
+#undef hipOccupancyDefault
+#undef hipOccupancyDisableCachingOverride
+#undef hipStreamDefault
+#undef hipStreamNonBlocking
+#undef hipStreamPerThread
+#undef hipStreamWaitValueAnd
+#undef hipStreamWaitValueEq
+#undef hipStreamWaitValueGte
+#undef hipStreamWaitValueNor
+
 #include "nvidia_hip_runtime_api_oro.h"
 #include "nvidia_hiprtc_oro.h"
 #endif
