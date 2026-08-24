@@ -3700,7 +3700,7 @@ inline static hipError_t hipDestroyExternalMemory_cu4oro(hipExternalMemory_t ext
 }
 
 inline static hipError_t hipGLGetDevices_cu4oro(unsigned int* pDeviceCount, int* pDevices, unsigned int deviceCount, unsigned int deviceList) {
-  return hipCUDAErrorTohipError(cudaGLGetDevices(pDeviceCount, pDevices, deviceCount, static_cast<enum cudaGLDeviceList>(deviceList)));
+  return hipCUDAErrorTohipError(cudaGLGetDevices(pDeviceCount, pDevices, deviceCount, deviceList));
 }
 
 inline static hipError_t hipGraphicsGLRegisterBuffer_cu4oro(hipGraphicsResource_t* resource, unsigned int buffer, unsigned int flags) {
