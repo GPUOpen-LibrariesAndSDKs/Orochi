@@ -18,21 +18,29 @@ local function isValidPath(p)
     return p ~= nil and p ~= "" and os.isdir(p)
 end
 
--- Supported CUDA SDK majors, in order of preference. Any minor of these majors is accepted:
--- the install directories are globbed, so a new 13.x or 12.x release is picked up without editing this list.
-local cudaMajors = { "13", "12" }
+-- Supported CUDA SDK majors, most preferred first. Any minor of these majors
+-- is accepted: the install directories are globbed, so a new 13.x or 12.x
+-- release is picked up without editing this list.
+local cudaMajors = { 13, 12 }
 
-local function findCudaVersion(major)
-    -- An envvar set by the installer wins, so a SDK outside the standard folders is still found.
-    local envPath = os.getenv("CUDA_PATH_V" .. major .. "_0")
-    if isValidPath(envPath) then
-        return envPath
+-- Globbed with forward slashes on every host; premake normalizes them.
+local cudaInstallRoots = {
+    "/usr/local/cuda-",
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v",
+}
+
+local function findCudaMajor(major)
+    -- An envvar set by the installer wins, so an SDK outside the standard
+    -- install folders is still found.
+    local fromEnv = os.getenv("CUDA_PATH_V" .. major .. "_0")
+    if isValidPath(fromEnv) then
+        return fromEnv
     end
 
-    -- Otherwise look for any installed minor of this major and keep the highest one.
+    -- Otherwise keep the highest installed minor of this major.
     local bestMinor = -1
     local bestPath = nil
-    for _, root in ipairs({ "/usr/local/cuda-", "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v" }) do
+    for _, root in ipairs(cudaInstallRoots) do
         for _, dir in ipairs(os.matchdirs(root .. major .. ".*")) do
             local minor = tonumber(dir:match("%.(%d+)$"))
             if minor ~= nil and minor > bestMinor then
@@ -44,10 +52,14 @@ local function findCudaVersion(major)
     return bestPath
 end
 
+local function cudaMajorsText()
+    return table.concat(cudaMajors, ".x or ") .. ".x"
+end
+
 -- Preferred majors first, then CUDA_PATH, then the default install dir.
 local cuda_path = nil
 for _, major in ipairs(cudaMajors) do
-    cuda_path = findCudaVersion(major)
+    cuda_path = findCudaMajor(major)
     if isValidPath(cuda_path) then
         break
     end
@@ -62,16 +74,15 @@ if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
 end
 
 -- Detection is reported once, at include time, rather than per project.
-local cudaVersionsText = table.concat(cudaMajors, ".x, ") .. ".x"
 if isValidPath(cuda_path) then
     print("CUEW is enabled. CUDA SDK found: " .. cuda_path)
     if not foundPreferredCudaVersion then
-        print("WARNING: preferred CUDA version not found (" .. cudaVersionsText .. "); using a fallback CUDA SDK install folder.")
+        print("WARNING: no supported CUDA version found (" .. cudaMajorsText() .. "); using a fallback CUDA SDK install folder.")
     end
 elseif _OPTIONS["forceCuda"] then
     print("WARNING: CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
 else
-    print("WARNING: CUEW disabled; CUDA SDK not found (preferred: " .. cudaVersionsText .. "). Use --forceCuda to override.")
+    print("WARNING: CUEW disabled; CUDA SDK not found (supported: " .. cudaMajorsText() .. "). Use --forceCuda to override.")
 end
 
 -- Applies the detected CUDA settings to the current project scope.
