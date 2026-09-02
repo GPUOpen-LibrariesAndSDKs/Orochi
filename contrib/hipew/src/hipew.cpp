@@ -665,11 +665,14 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   const char* hiprtc_paths[] = { NULL };
 #else
   const char *hip_paths[] = {
-
       // Each release is installed in its own '/opt/rocm/core-<MAJOR>.<MINOR>' directory,
-      "/opt/rocm/core-8.1/lib/libamdhip64.so.8",
-      "/opt/rocm/core-8.0/lib/libamdhip64.so.8",
-      "/opt/rocm/core-8/lib/libamdhip64.so.8",
+      "/opt/rocm/core-10.1/lib/libamdhip64.so.8",
+      "/opt/rocm/core-10.0/lib/libamdhip64.so.8",
+      "/opt/rocm/core-10/lib/libamdhip64.so.8",
+
+      "/opt/rocm/core-10.1/lib/libamdhip64.so.7",
+      "/opt/rocm/core-10.0/lib/libamdhip64.so.7",
+      "/opt/rocm/core-10/lib/libamdhip64.so.7",
 
       "/opt/rocm/core-7.16/lib/libamdhip64.so.7",
       "/opt/rocm/core-7.15/lib/libamdhip64.so.7",
@@ -704,9 +707,13 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   const char* hiprtc_paths[] = {
 
       // See the comment about the 'core-*' directories in 'hip_paths'.
-      "/opt/rocm/core-8.1/lib/libhiprtc.so.8",
-      "/opt/rocm/core-8.0/lib/libhiprtc.so.8",
-      "/opt/rocm/core-8/lib/libhiprtc.so.8",
+      "/opt/rocm/core-10.1/lib/libhiprtc.so.8",
+      "/opt/rocm/core-10.0/lib/libhiprtc.so.8",
+      "/opt/rocm/core-10/lib/libhiprtc.so.8",
+
+      "/opt/rocm/core-10.1/lib/libhiprtc.so.7",
+      "/opt/rocm/core-10.0/lib/libhiprtc.so.7",
+      "/opt/rocm/core-10/lib/libhiprtc.so.7",
 
       "/opt/rocm/core-7.16/lib/libhiprtc.so.7",
       "/opt/rocm/core-7.15/lib/libhiprtc.so.7",
