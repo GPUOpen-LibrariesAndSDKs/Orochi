@@ -1881,6 +1881,8 @@ typedef hipError_t HIPAPI thipGraphReleaseUserObject(hipGraph_t graph, hipUserOb
 typedef hipError_t HIPAPI thipGraphRemoveDependencies(hipGraph_t graph, const hipGraphNode_t * from, const hipGraphNode_t * to, size_t numDependencies);
 typedef hipError_t HIPAPI thipGraphRetainUserObject(hipGraph_t graph, hipUserObject_t object, unsigned int count, unsigned int flags);
 typedef hipError_t HIPAPI thipGraphUpload(hipGraphExec_t graphExec, hipStream_t stream);
+typedef hipError_t HIPAPI thipGLGetDevices(unsigned int * pHipDeviceCount, int * pHipDevices, unsigned int hipDeviceCount, unsigned int deviceList);
+typedef hipError_t HIPAPI thipGraphicsGLRegisterBuffer(hipGraphicsResource_t * resource, unsigned int buffer, unsigned int flags);
 typedef hipError_t HIPAPI thipGraphicsMapResources(int count, hipGraphicsResource_t * resources, hipStream_t stream);
 typedef hipError_t HIPAPI thipGraphicsResourceGetMappedPointer(void ** devPtr, size_t * size, hipGraphicsResource_t resource);
 typedef hipError_t HIPAPI thipGraphicsSubResourceGetMappedArray(hipArray_t * array, hipGraphicsResource_t resource, unsigned int arrayIndex, unsigned int mipLevel);
@@ -2328,6 +2330,8 @@ extern thipGraphReleaseUserObject *hipGraphReleaseUserObject;
 extern thipGraphRemoveDependencies *hipGraphRemoveDependencies;
 extern thipGraphRetainUserObject *hipGraphRetainUserObject;
 extern thipGraphUpload *hipGraphUpload;
+extern thipGLGetDevices *hipGLGetDevices;
+extern thipGraphicsGLRegisterBuffer *hipGraphicsGLRegisterBuffer;
 extern thipGraphicsMapResources *hipGraphicsMapResources;
 extern thipGraphicsResourceGetMappedPointer *hipGraphicsResourceGetMappedPointer;
 extern thipGraphicsSubResourceGetMappedArray *hipGraphicsSubResourceGetMappedArray;

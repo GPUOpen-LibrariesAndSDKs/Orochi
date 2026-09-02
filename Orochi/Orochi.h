@@ -877,6 +877,8 @@ oroError_t OROAPI oroGetMipmappedArrayLevel(oroArray_t * levelArray, oroMipmappe
 oroError_t OROAPI oroGetSymbolAddress(void ** devPtr, const void * symbol);
 oroError_t OROAPI oroGetSymbolSize(size_t * size, const void * symbol);
 oroError_t OROAPI oroGetTextureObjectResourceDesc(oroResourceDesc * pResDesc, oroTextureObject_t textureObject);
+oroError_t OROAPI oroGLGetDevices(unsigned int * pDeviceCount, int * pDevices, unsigned int deviceCount, unsigned int deviceList);
+oroError_t OROAPI oroGraphicsGLRegisterBuffer(oroGraphicsResource_t * resource, unsigned int buffer, unsigned int flags);
 oroError_t OROAPI oroGraphicsMapResources(int count, oroGraphicsResource_t * resources, oroStream_t stream);
 oroError_t OROAPI oroGraphicsResourceGetMappedPointer(void ** devPtr, size_t * size, oroGraphicsResource_t resource);
 oroError_t OROAPI oroGraphicsSubResourceGetMappedArray(oroArray_t * array, oroGraphicsResource_t resource, unsigned int arrayIndex, unsigned int mipLevel);

@@ -21,6 +21,8 @@ In order to enable the CUDA backend you need to:
  * Add the CUDA include folder to the Include Directories list of your project.
  * Add the define `OROCHI_ENABLE_CUEW` to your project
 
+This branch compiles against either a CUDA 12.x or a CUDA 13.x SDK. Be aware that CUDA 13 requires a r580 or newer driver, and that it drops offline compilation for GPUs below compute capability 7.5 (Maxwell, Pascal and Volta): build against a 12.x SDK if you need to support those GPUs. A few `hipDeviceProp_t` fields that CUDA 13 removed from `cudaDeviceProp` are repopulated through `cudaDeviceGetAttribute`, except `cooperativeMultiDeviceLaunch` which no longer exists and is always reported as 0.
+
 For the HIP backend: it's easier as everything needed is embedded in this project, thus you don't need to do anything.
 
 This library doesn't require you to link to CUDA nor HIP at build-time. This provides the benefit that the runtime works even if one of the two drivers, either CUDA or HIP, is installed.

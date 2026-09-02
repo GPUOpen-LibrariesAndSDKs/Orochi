@@ -9,29 +9,36 @@
 
 option(FORCE_CUDA "Force the CUDA backend even if the CUDA SDK is not found" OFF)
 
-# Most preferred first.
-set(OROCHI_CUDA_VERSIONS "12.2")
+# Supported CUDA SDK majors, in order of preference. Any minor of these majors is accepted:
+# the install directories are globbed, so a new 13.x or 12.x release is picked up without editing this list.
+set(OROCHI_CUDA_MAJORS "13" "12")
 
-function(_orochi_find_cuda_version result version)
-    string(REPLACE "." "_" versionSuffix "${version}")
-    set(candidates
-        "$ENV{CUDA_PATH_V${versionSuffix}}"
-        "/usr/local/cuda-${version}"
-        "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v${version}"
-    )
-    foreach(candidate IN LISTS candidates)
-        if(candidate AND IS_DIRECTORY "${candidate}")
-            set(${result} "${candidate}" PARENT_SCOPE)
-            return()
-        endif()
+function(_orochi_find_cuda_version result major)
+    # An envvar set by the installer wins, so a SDK outside the standard folders is still found.
+    if(DEFINED ENV{CUDA_PATH_V${major}_0} AND IS_DIRECTORY "$ENV{CUDA_PATH_V${major}_0}")
+        set(${result} "$ENV{CUDA_PATH_V${major}_0}" PARENT_SCOPE)
+        return()
+    endif()
+
+    # Otherwise look for any installed minor of this major and keep the highest one.
+    set(best_minor -1)
+    set(best_path "")
+    foreach(root "/usr/local/cuda-" "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v")
+        file(GLOB candidates "${root}${major}.*")
+        foreach(candidate IN LISTS candidates)
+            if(IS_DIRECTORY "${candidate}" AND candidate MATCHES "\\.([0-9]+)$" AND CMAKE_MATCH_1 GREATER best_minor)
+                set(best_minor "${CMAKE_MATCH_1}")
+                set(best_path "${candidate}")
+            endif()
+        endforeach()
     endforeach()
-    set(${result} "" PARENT_SCOPE)
+    set(${result} "${best_path}" PARENT_SCOPE)
 endfunction()
 
-# Preferred versions first, then CUDA_PATH, then the default install dir.
+# Preferred majors first, then CUDA_PATH, then the default install dir.
 set(cuda_path "")
-foreach(version IN LISTS OROCHI_CUDA_VERSIONS)
-    _orochi_find_cuda_version(cuda_path "${version}")
+foreach(major IN LISTS OROCHI_CUDA_MAJORS)
+    _orochi_find_cuda_version(cuda_path "${major}")
     if(cuda_path)
         break()
     endif()
@@ -45,7 +52,8 @@ if(NOT cuda_path AND IS_DIRECTORY "/usr/local/cuda")
     set(cuda_path "/usr/local/cuda")
 endif()
 
-string(REPLACE ";" ", " cudaVersionsText "${OROCHI_CUDA_VERSIONS}")
+string(REPLACE ";" ".x, " cudaVersionsText "${OROCHI_CUDA_MAJORS}")
+string(APPEND cudaVersionsText ".x")
 
 if(cuda_path)
     message(STATUS "CUEW is enabled. CUDA SDK found: ${cuda_path}")
