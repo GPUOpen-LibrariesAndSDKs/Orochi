@@ -51,6 +51,7 @@ dist/**
 *.sdf
 *.opendb
 *.def
+compile_commands.json
 
 # -----------------------------------------------------------------------------
 # Visual Studio
