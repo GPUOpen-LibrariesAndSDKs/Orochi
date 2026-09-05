@@ -51,6 +51,7 @@ project "cuew"
     warnings "Off"
     includedirs { orochiRoot }
     files { path.join(orochiRoot, "contrib/cuew/**.h"), path.join(orochiRoot, "contrib/cuew/**.cpp") }
+    orochiApplyCuew()
 
 project "hipew"
     kind "StaticLib"
