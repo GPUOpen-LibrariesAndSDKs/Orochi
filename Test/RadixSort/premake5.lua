@@ -4,6 +4,6 @@ project "RadixSort"
     location "%{wks.location}/Test/%{prj.name}"
 
     useOrochi()
+    links { "ParallelPrimitives" }
 
     files { "*.cpp" }
-    files { "../../ParallelPrimitives/**.h", "../../ParallelPrimitives/**.cpp" }

@@ -5,10 +5,6 @@ project "Texture"
 
     useOrochi()
 
-    files { "../../UnitTest/contrib/stb/**.h", "../../UnitTest/contrib/stb/**.cpp" }
-    files { "texture_test_kernel.hpp", "*.cpp" }
+    links { "stb" }
 
-    -- Silence vendored stb so --warning=extra targets only our sources.
-    filter "files:../../UnitTest/contrib/**"
-        warnings "Off"
-    filter {}
+    files { "texture_test_kernel.hpp", "*.cpp" }

@@ -1,10 +1,27 @@
+-- Vendored third-party code lives in its own projects so `warnings "Off"`
+-- applies at project scope: premake's per-file `warnings` is honoured only by
+-- the Visual Studio exporter, so a file filter would leave GCC/Clang unsilenced.
+project "gtest"
+    kind "StaticLib"
+    location "%{wks.location}/contrib/gtest"
+    warnings "Off"
+    includedirs { "contrib/gtest-1.6.0" }
+    defines { "GTEST_HAS_TR1_TUPLE=0" }
+    files { "contrib/gtest-1.6.0/**.h", "contrib/gtest-1.6.0/**.cc" }
+
+-- Consumed by the Texture demo, which includes the headers by relative path.
+project "stb"
+    kind "StaticLib"
+    location "%{wks.location}/contrib/stb"
+    warnings "Off"
+    files { "contrib/stb/**.h", "contrib/stb/**.cpp" }
+
 project "UnitTest"
     kind "ConsoleApp"
 
     location "%{wks.location}/%{prj.name}"
 
     useOrochi()
-    stageWindowsRuntimeDlls()
     filter "system:linux"
         links { "pthread" }
     filter {}
@@ -14,23 +31,14 @@ project "UnitTest"
 
     files { "*.cpp", "*.h" }
     removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
-    files { "contrib/**.h", "contrib/**.cpp", "contrib/**.cc" }
 
+    links { "gtest" }
     externalincludedirs { "contrib/gtest-1.6.0/" }
     defines { "GTEST_HAS_TR1_TUPLE=0" }
 
-    -- Silence vendored gtest/stb so --warning=extra targets only our sources.
-    filter "files:contrib/**"
-        warnings "Off"
-    filter {}
-
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")
-        if os.ishost("windows") then
-            runScriptIn(bitcodes, "generate_bitcodes.bat")
-            runScriptIn(bitcodes, "generate_bitcodes_nvidia.bat")
-        else
-            runScriptIn(bitcodes, "sh generate_bitcodes.sh")
-            runScriptIn(bitcodes, "sh generate_bitcodes_nvidia.sh")
-        end
+        prebuildScript(bitcodes,
+            "generate_bitcodes.bat && generate_bitcodes_nvidia.bat",
+            "sh generate_bitcodes.sh && sh generate_bitcodes_nvidia.sh")
     end

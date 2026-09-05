@@ -30,23 +30,23 @@ newoption {
     description = "Directory for generated build files (default: .)"
 }
 
+-- Values are premake's own `warnings` tokens; the API matches them
+-- case-insensitively, so the lowercase spelling here needs no translation.
 newoption {
     trigger     = "warning",
     value       = "LEVEL",
-    description = "Compiler warning level: off, on, extra (default: on)",
+    description = "Compiler warning level: off, default, extra",
     allowed     = {
-        { "off",   "Disable warnings" },
-        { "on",    "Default warnings" },
-        { "extra", "Extra warnings" }
+        { "off",     "Disable warnings" },
+        { "default", "Default warnings" },
+        { "extra",   "Extra warnings" }
     },
-    default     = "on"
+    default     = "default"
 }
 
 -- -----------------------------------------------------------------------------
 -- Utility Functions
 -- -----------------------------------------------------------------------------
-
-local rootDir = _MAIN_SCRIPT_DIR
 
 function linkWin32SystemLibs()
     filter "system:windows"
@@ -58,33 +58,14 @@ function linkWin32SystemLibs()
     filter {}
 end
 
--- Run a helper script, aborting generation if it fails.
-function runScript(command)
-    local ok, _, code = os.execute(command)
-    if not ok then
-        error("command failed (exit " .. tostring(code) .. "): " .. command)
-    end
-end
-
--- Run a helper script from a given directory. On Windows plain `cd` does not
--- change drive, so `/d` is required when the repository lives off C:.
-function runScriptIn(directory, command)
-    if os.ishost("windows") then
-        runScript('cd /d "' .. directory .. '" && ' .. command)
-    else
-        runScript('cd "' .. directory .. '" && ' .. command)
-    end
-end
-
--- Windows has no rpath, so runtime DLLs are staged next to the binaries.
--- Called from a single project because every configuration shares one targetdir.
-function stageWindowsRuntimeDlls()
-    local contribBinDir = path.join(rootDir, "contrib/bin/win64")
-    if not os.isdir(contribBinDir) then
-        return
-    end
+-- Adds a prebuild step running a helper script from `directory`. Branching on
+-- the target system rather than the generation host keeps cross-generation
+-- correct. On Windows plain `cd` does not change drive, hence `/d`.
+function prebuildScript(directory, windowsCommand, posixCommand)
     filter "system:windows"
-        postbuildcommands { "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\"" }
+        prebuildcommands { 'cd /d "' .. directory .. '" && ' .. windowsCommand }
+    filter "system:not windows"
+        prebuildcommands { 'cd "' .. directory .. '" && ' .. posixCommand }
     filter {}
 end
 
@@ -116,9 +97,12 @@ workspace "YamatanoOrochi"
         toolset "clang"
     filter {}
 
+    -- A StaticLib is assembled by `ar`, so a linker choice there is dead weight.
     if _OPTIONS["clang"] then
         toolset "clang"
-        linker  "LLD"
+        filter "kind:not StaticLib"
+            linker "LLD"
+        filter {}
     end
 
     filter "configurations:Debug or DebugFast"
@@ -161,15 +145,19 @@ workspace "YamatanoOrochi"
         buildoptions { "/favor:AMD64" }
     filter {}
 
-    local warningLevels = { off = "Off", on = "Default", extra = "Extra" }
     externalwarnings "Off"
-    warnings (warningLevels[_OPTIONS["warning"]] or "Default")
+    warnings (_OPTIONS["warning"])
+
+    -- Pinned rather than left to the toolset default so a consumer linking
+    -- Orochi cannot end up mixing /MD and /MT.
+    staticruntime "Off"
 
     filter "system:windows"
         defines      { "__WINDOWS__", "_CRT_SECURE_NO_WARNINGS" }
         characterset "MBCS"
     filter { "system:windows", "toolset:msc-v*" }
-        buildoptions { "/wd4244", "/wd4305", "/wd4018" }
+        conformancemode         "On"
+        usestandardpreprocessor "On"
     filter {}
 
     filter "options:bakeKernel"
@@ -178,21 +166,12 @@ workspace "YamatanoOrochi"
         defines { "ORO_PRECOMPILED" }
     filter {}
 
-    -- The bake scripts write to paths relative to the repository root, which is
-    -- premake's working directory.
-    if _OPTIONS["bakeKernel"] then
-        if os.ishost("windows") then
-            runScript('"' .. path.join(rootDir, "tools/bakeKernel.bat") .. '"')
-        else
-            runScript('sh "' .. path.join(rootDir, "tools/bakeKernel.sh") .. '"')
-        end
-    end
-
 -- -----------------------------------------------------------------------------
 -- Projects
 -- -----------------------------------------------------------------------------
 
     include "./Orochi"
+    include "./ParallelPrimitives"
     include "./UnitTest"
 
     group "Demos"

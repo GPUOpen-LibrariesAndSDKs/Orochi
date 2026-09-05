@@ -1,8 +1,9 @@
 -- Enables CUEW (CUDA Extension Wrangler) when the CUDA SDK is available.
 --
--- Including this file applies the settings to the current scope, as before.
--- Because premake runs a given `include` only once, the settings are also
--- exposed as orochiApplyCuew() so every project that needs them can re-apply.
+-- Including this file only runs the detection; it applies nothing on its own,
+-- because the including scope is usually the workspace and the settings would
+-- then leak into unrelated projects. Call orochiApplyCuew() from each project
+-- that needs them (useOrochi() already does).
 
 -- Declared here, not in the workspace, so external projects that include only
 -- this file still accept --forceCuda. Guarded because a host workspace may
@@ -73,16 +74,17 @@ if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
     cuda_path = "/usr/local/cuda"
 end
 
--- Detection is reported once, at include time, rather than per project.
-if isValidPath(cuda_path) then
-    print("CUEW is enabled. CUDA SDK found: " .. cuda_path)
-    if not foundPreferredCudaVersion then
-        print("WARNING: no supported CUDA version found (" .. cudaMajorsText() .. "); using a fallback CUDA SDK install folder.")
+if _ACTION then
+    if isValidPath(cuda_path) then
+        print("CUEW is enabled. CUDA SDK found: " .. cuda_path)
+        if not foundPreferredCudaVersion then
+            print("WARNING: no supported CUDA version found (" .. cudaMajorsText() .. "); using a fallback CUDA SDK install folder.")
+        end
+    elseif _OPTIONS["forceCuda"] then
+        print("WARNING: CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
+    else
+        print("WARNING: CUEW disabled; CUDA SDK not found (supported: " .. cudaMajorsText() .. "). Use --forceCuda to override.")
     end
-elseif _OPTIONS["forceCuda"] then
-    print("WARNING: CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
-else
-    print("WARNING: CUEW disabled; CUDA SDK not found (supported: " .. cudaMajorsText() .. "). Use --forceCuda to override.")
 end
 
 -- Applies the detected CUDA settings to the current project scope.
@@ -94,5 +96,3 @@ function orochiApplyCuew()
         defines { "OROCHI_ENABLE_CUEW" }
     end
 end
-
-orochiApplyCuew()
