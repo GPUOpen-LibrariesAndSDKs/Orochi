@@ -111,15 +111,27 @@ workspace "YamatanoOrochi"
 
 
 
+   -- Windows uses the bundled Vulkan headers, Linux needs libvulkan-dev or a LunarG SDK.
+   buildVulkanDemo = os.istarget("windows")
+      or os.getenv("VULKAN_SDK") ~= nil
+      or os.isfile("/usr/include/vulkan/vulkan_raii.hpp")
+
+   if not buildVulkanDemo then
+      print("Skipping Test/VulkanComputeSimple: no Vulkan headers found. Install libvulkan-dev or source a LunarG SDK's setup-env.sh.")
+   end
+
    include "./UnitTest"
    group "Demos"
    	include "./Test"
    	include "./Test/DeviceEnum"
 	include "./Test/WMMA"
 	include "./Test/Texture"
-   
-     if os.istarget("windows") then
+
+     if buildVulkanDemo then
         include "./Test/VulkanComputeSimple"
+     end
+
+     if os.istarget("windows") then
         include "./Test/RadixSort"
         include "./Test/simpleD3D12"
      end

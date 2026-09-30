@@ -110,11 +110,8 @@ TEST_F( OroDemoBase, DeviceEnum64 )
 //}
 
 
-//
-// Tests specific to Windows
-//
-#ifdef _WIN32 
-
+// only registered when the build produced the demo binary
+#ifdef ORO_HAS_VULKAN_DEMO
 
 TEST_F( OroDemoBase, VulkanComputeSimple64 )
 {
@@ -122,7 +119,6 @@ TEST_F( OroDemoBase, VulkanComputeSimple64 )
 	ExecDemo(testName);
 	return;
 }
-
 
 #endif
 
