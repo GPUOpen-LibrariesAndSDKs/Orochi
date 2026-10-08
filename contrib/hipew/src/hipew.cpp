@@ -630,8 +630,11 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   const char* hiprtc_paths[] = {
       "hiprtc0801.dll",
       "hiprtc0800.dll",
-      "hiprtc07016.dll",
-      "hiprtc07015.dll",
+      "hiprtc0717.dll",
+      "hiprtc0716.dll",
+      "hiprtc0715.dll",
+      "hiprtc0714.dll",
+      // Early 7.14 builds used this name before switching to hiprtc0714.dll.
       "hiprtc07014.dll",
       "hiprtc07013.dll",
       "hiprtc07012.dll",
@@ -1281,7 +1284,7 @@ _LIBRARY_FIND( rtcLib, hiprtcVersion );
 #pragma endregion
 
 
-	s_resultRtc = HIPEW_SUCCESS;
+	s_resultRtc = hiprtcCreateProgram ? HIPEW_SUCCESS : HIPEW_ERROR_OPEN_FAILED;
 	*resultRtc = s_resultRtc;
   }
   else
