@@ -5,14 +5,16 @@ project "ParallelPrimitives"
 
     location "%{wks.location}/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
 
     files { "*.h", "*.cpp" }
 
-    -- The bake scripts write into ParallelPrimitives/cache/, whose contents are
-    -- included only by this project, so the step belongs here rather than in the
-    -- workspace. Paths inside the scripts are relative to the repository root.
+    -- Bakes into ParallelPrimitives/cache/; the scripts expect the repository root as cwd.
     if _OPTIONS["bakeKernel"] then
-        prebuildScript(rootDir, '"' .. path.join(rootDir, "tools/bakeKernel.bat") .. '"',
-                                'sh "' .. path.join(rootDir, "tools/bakeKernel.sh") .. '"')
+        orochiPrebuildScript(rootDir, '"' .. path.join(rootDir, "tools/bakeKernel.bat") .. '"',
+                                      'sh "' .. path.join(rootDir, "tools/bakeKernel.sh") .. '"')
     end
+
+    usage "INTERFACE"
+        links { "ParallelPrimitives" }
+        uses { "Orochi" }

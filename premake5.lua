@@ -30,16 +30,23 @@ newoption {
     description = "Directory for generated build files (default: .)"
 }
 
--- Values are premake's own `warnings` tokens; the API matches them
--- case-insensitively, so the lowercase spelling here needs no translation.
+newoption {
+    trigger     = "distdir",
+    value       = "PATH",
+    description = "Directory for build products; binaries go to PATH/bin/<config> (default: dist)"
+}
+
+-- Values are premake `warnings` tokens, matched case-insensitively.
 newoption {
     trigger     = "warning",
     value       = "LEVEL",
-    description = "Compiler warning level: off, default, extra",
+    description = "Compiler warning level: off, default, high, extra, everything",
     allowed     = {
-        { "off",     "Disable warnings" },
-        { "default", "Default warnings" },
-        { "extra",   "Extra warnings" }
+        { "off",        "Disable warnings" },
+        { "default",    "Default warnings" },
+        { "high",       "High warnings" },
+        { "extra",      "Extra warnings" },
+        { "everything", "All warnings the compiler offers" }
     },
     default     = "default"
 }
@@ -48,6 +55,7 @@ newoption {
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
+-- Ends with `filter {}`, so call it at project scope, never inside a filter.
 function linkWin32SystemLibs()
     filter "system:windows"
         links {
@@ -55,17 +63,6 @@ function linkWin32SystemLibs()
             "advapi32", "shell32", "ole32", "oleaut32", "uuid",
             "odbc32", "odbccp32"
         }
-    filter {}
-end
-
--- Adds a prebuild step running a helper script from `directory`. Branching on
--- the target system rather than the generation host keeps cross-generation
--- correct. On Windows plain `cd` does not change drive, hence `/d`.
-function prebuildScript(directory, windowsCommand, posixCommand)
-    filter "system:windows"
-        prebuildcommands { 'cd /d "' .. directory .. '" && ' .. windowsCommand }
-    filter "system:not windows"
-        prebuildcommands { 'cd "' .. directory .. '" && ' .. posixCommand }
     filter {}
 end
 
@@ -78,15 +75,18 @@ local buildConfigs = { "Debug", "DebugFast", "RelWithDebInfo", "Release" }
 workspace "YamatanoOrochi"
     configurations (buildConfigs)
     platforms      { "x64" }
+    -- Otherwise premake's name sort makes DebugFast the default.
+    defaultconfiguration "Debug"
+    defaultplatform      "x64"
     language       "C++"
     cppdialect     "C++20"
-    architecture   "amd64"
+    architecture   "x86_64"
     location       (_OPTIONS["builddir"] or ".")
-    targetdir      "dist/bin/%{cfg.buildcfg}"
+    targetdir      (path.join(_OPTIONS["distdir"] or "dist", "bin/%{cfg.buildcfg}"))
     startproject   "UnitTest"
 
-    multiprocessorcompile "On"
-    systemversion "latest"
+    -- `uses` can list a static library before its dependents; GNU ld needs a group.
+    linkgroups "On"
 
     filter "kind:StaticLib or SharedLib"
         pic "On"
@@ -116,29 +116,22 @@ workspace "YamatanoOrochi"
         symbols      "Full"
         optimize     "Off"
         runtime      "Debug"
-        editandcontinue "On"
     filter "configurations:DebugFast"
         defines      { "DEBUG", "_DEBUG", "_DEBUGFAST" }
         symbols      "Full"
         optimize     "Debug"
         runtime      "Debug"
-        editandcontinue "On"
     filter "configurations:RelWithDebInfo"
         defines      { "NDEBUG" }
         symbols      "On"
         optimize     "On"
         runtime      "Release"
-        intrinsics   "On"
-        editandcontinue "Off"
     filter "configurations:Release"
         defines      { "NDEBUG" }
         symbols      "Off"
         optimize     "Full"
         runtime      "Release"
-        intrinsics   "On"
-        editandcontinue "Off"
-    -- LTO is skipped for StaticLib: an IR-only libOrochi cannot be consumed by
-    -- projects that link without LTO, and Orochi ships as a static library.
+    -- No LTO for StaticLib: consumers linking without LTO cannot read IR-only archives.
     filter { "configurations:Release", "kind:not StaticLib" }
         linktimeoptimization "Fast"
     filter { "configurations:Release", "toolset:msc-v*" }
@@ -148,13 +141,19 @@ workspace "YamatanoOrochi"
     externalwarnings "Off"
     warnings (_OPTIONS["warning"])
 
-    -- Pinned rather than left to the toolset default so a consumer linking
-    -- Orochi cannot end up mixing /MD and /MT.
+    -- Pinned so consumers linking Orochi cannot mix /MD and /MT.
     staticruntime "Off"
 
     filter "system:windows"
         defines      { "__WINDOWS__", "_CRT_SECURE_NO_WARNINGS" }
         characterset "MBCS"
+        multiprocessorcompile "On"
+        systemversion "latest"
+    filter { "system:windows", "configurations:Debug or DebugFast" }
+        editandcontinue "On"
+    filter { "system:windows", "configurations:RelWithDebInfo or Release" }
+        intrinsics      "On"
+        editandcontinue "Off"
     filter { "system:windows", "toolset:msc-v*" }
         conformancemode         "On"
         usestandardpreprocessor "On"

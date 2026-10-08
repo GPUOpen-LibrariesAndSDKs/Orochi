@@ -3,6 +3,6 @@ project "DeviceEnum"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
 
     files { "*.cpp" }

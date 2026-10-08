@@ -3,7 +3,6 @@ project "RadixSort"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    useOrochi()
-    links { "ParallelPrimitives" }
+    uses { "ParallelPrimitives" }
 
     files { "*.cpp" }

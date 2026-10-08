@@ -3,7 +3,7 @@ project "Texture"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
 
     links { "stb" }
 

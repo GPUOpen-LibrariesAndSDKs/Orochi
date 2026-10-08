@@ -1,17 +1,9 @@
-# Enables CUEW (CUDA Extension Wrangler) when the CUDA SDK is available.
-#
-# Mirrors the search policy of enable_cuew.lua -- keep both in sync.
-#
-# In order to have Orochi compiled with CUDA, you need to define
-# OROCHI_ENABLE_CUEW and add the CUDA include path to your Orochi project.
-# If your project is using cmake, this script can be included:
-#   include(${CMAKE_SOURCE_DIR}/contrib/Orochi/Orochi/enable_cuew.cmake)
+# Enables CUEW when the CUDA SDK is available; keep in sync with enable_cuew.lua.
+# Usage: include(${CMAKE_SOURCE_DIR}/contrib/Orochi/Orochi/enable_cuew.cmake)
 
 option(FORCE_CUDA "Force the CUDA backend even if the CUDA SDK is not found" OFF)
 
-# Supported CUDA SDK majors, most preferred first. Any minor of these majors is
-# accepted: the install directories are globbed, so a new 13.x or 12.x release
-# is picked up without editing this list.
+# Supported CUDA SDK majors, most preferred first; any installed minor is accepted.
 set(OROCHI_CUDA_MAJORS 13 12)
 
 set(OROCHI_CUDA_INSTALL_ROOTS
@@ -20,8 +12,7 @@ set(OROCHI_CUDA_INSTALL_ROOTS
 )
 
 function(_orochi_find_cuda_major result major)
-    # An envvar set by the installer wins, so an SDK outside the standard
-    # install folders is still found.
+    # The installer's envvar wins so SDKs outside the standard folders are found.
     set(fromEnv "$ENV{CUDA_PATH_V${major}_0}")
     if(fromEnv AND IS_DIRECTORY "${fromEnv}")
         set(${result} "${fromEnv}" PARENT_SCOPE)
@@ -44,8 +35,7 @@ function(_orochi_find_cuda_major result major)
 endfunction()
 
 # Preferred majors first, then CUDA_PATH, then the default install dir.
-# This file is include()d into the caller's scope, so start from a known state
-# rather than inheriting whatever the including project left in cuda_path.
+# Reset because this file runs in the caller's scope.
 set(cuda_path "")
 foreach(major IN LISTS OROCHI_CUDA_MAJORS)
     _orochi_find_cuda_major(cuda_path "${major}")

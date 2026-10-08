@@ -3,7 +3,6 @@ project "WMMA"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
 
-    files { "*.h", "*.cpp" }
-    files { "half.hpp" }
+    files { "*.h", "*.hpp", "*.cpp" }

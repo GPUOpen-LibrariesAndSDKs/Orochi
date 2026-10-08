@@ -1,28 +1,23 @@
--- Orochi static library. Self-contained so external projects can `include` this
--- directory directly without pulling in the Orochi workspace.
+-- Orochi static library; external workspaces `include` this directory and `uses { "Orochi" }`.
 
--- Repository root, resolved from this script's own location rather than the
--- including workspace, which may live anywhere.
 local orochiRoot = path.getabsolute("..", _SCRIPT_DIR)
 
--- Runs the CUDA SDK detection once; orochiApplyCuew() is callable afterwards.
+-- In-repo consumers need the root as a plain include dir, or -isystem hides first-party warnings.
+local isOrochiWorkspace = path.getabsolute(_MAIN_SCRIPT_DIR) == orochiRoot
+
 include(path.join(orochiRoot, "Orochi/enable_cuew"))
 
--- Applied to Orochi itself and re-applied to every consumer by useOrochi(),
--- so both sides agree on OROCHI_ENABLE_CUEW and the CUDA include path.
-local function orochiPlatformSettings()
-    filter "system:linux"
-        links { "dl" }
+-- The cd stays scoped: exporters append build-dir-relative commands (Ninja's stamp touch).
+-- Ends with `filter {}`, so call it at project scope.
+function orochiPrebuildScript(directory, windowsCommand, posixCommand)
     filter "system:windows"
-        links { "version" }
+        prebuildcommands { 'pushd "' .. directory .. '" && ' .. windowsCommand .. ' && popd' }
+    filter "system:not windows"
+        prebuildcommands { '( cd "' .. directory .. '" && ' .. posixCommand .. ' )' }
     filter {}
-
-    orochiApplyCuew()
 end
 
--- Windows has no rpath, so the HIP runtime DLLs are staged next to the
--- binaries. Attached to Orochi because every executable links it, which makes
--- the copy happen regardless of which projects the workspace builds.
+-- Windows has no rpath, so the HIP runtime DLLs are copied next to the binaries.
 local function stageWindowsRuntimeDlls()
     local contribBinDir = path.join(orochiRoot, "contrib/bin/win64")
     if not os.isdir(contribBinDir) then
@@ -33,18 +28,7 @@ local function stageWindowsRuntimeDlls()
     filter {}
 end
 
--- Call from a consuming project to compile and link against Orochi.
--- The wranglers are named explicitly because premake does not propagate a
--- static library's own links to its consumers; order matters for GNU ld.
-function useOrochi()
-    externalincludedirs { orochiRoot }
-    links { "Orochi", "cuew", "hipew" }
-    orochiPlatformSettings()
-end
-
--- Vendored wranglers live in their own projects so `warnings "Off"` applies at
--- project scope: premake's per-file `warnings` is honoured only by the Visual
--- Studio exporter, so a file filter would leave GCC/Clang unsilenced.
+-- Separate projects because per-file `warnings "Off"` only works in Visual Studio.
 project "cuew"
     kind "StaticLib"
     location "%{wks.location}/contrib/cuew"
@@ -71,5 +55,21 @@ project "Orochi"
 
     links { "cuew", "hipew" }
 
-    orochiPlatformSettings()
     stageWindowsRuntimeDlls()
+
+    usage "PUBLIC"
+        orochiApplyCuew()
+
+    -- A usage does not link its own project, so list the archives in GNU ld order.
+    usage "INTERFACE"
+        if isOrochiWorkspace then
+            includedirs { orochiRoot }
+        else
+            externalincludedirs { orochiRoot }
+        end
+        links { "Orochi", "cuew", "hipew" }
+        filter "system:linux"
+            links { "dl" }
+        filter "system:windows"
+            links { "version" }
+        filter {}

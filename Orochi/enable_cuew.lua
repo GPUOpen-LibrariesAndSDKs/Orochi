@@ -1,14 +1,7 @@
--- Enables CUEW (CUDA Extension Wrangler) when the CUDA SDK is available.
---
--- Including this file only runs the detection; it applies nothing on its own,
--- because the including scope is usually the workspace and the settings would
--- then leak into unrelated projects. Call orochiApplyCuew() from each project
--- that needs them (useOrochi() already does).
+-- Detects the CUDA SDK for CUEW; settings are applied per project via orochiApplyCuew().
 
--- Declared here, not in the workspace, so external projects that include only
--- this file still accept --forceCuda. Guarded because a host workspace may
--- have registered the same trigger already.
-if not premake.option.get("forceCuda") then
+-- premake keys options by lowercased trigger.
+if not premake.option.get("forcecuda") then
     newoption {
         trigger     = "forceCuda",
         description = "Force CUDA backend even if CUDA_PATH is not found (may cause compilation errors)"
@@ -19,9 +12,7 @@ local function isValidPath(p)
     return p ~= nil and p ~= "" and os.isdir(p)
 end
 
--- Supported CUDA SDK majors, most preferred first. Any minor of these majors
--- is accepted: the install directories are globbed, so a new 13.x or 12.x
--- release is picked up without editing this list.
+-- Supported CUDA SDK majors, most preferred first; any installed minor is accepted.
 local cudaMajors = { 13, 12 }
 
 -- Globbed with forward slashes on every host; premake normalizes them.
@@ -31,8 +22,7 @@ local cudaInstallRoots = {
 }
 
 local function findCudaMajor(major)
-    -- An envvar set by the installer wins, so an SDK outside the standard
-    -- install folders is still found.
+    -- The installer's envvar wins so SDKs outside the standard folders are found.
     local fromEnv = os.getenv("CUDA_PATH_V" .. major .. "_0")
     if isValidPath(fromEnv) then
         return fromEnv
@@ -57,33 +47,41 @@ local function cudaMajorsText()
     return table.concat(cudaMajors, ".x or ") .. ".x"
 end
 
+-- Host SDK paths are meaningless for a project generated with --os.
+local isCrossGeneration = os.target() ~= os.host()
+
 -- Preferred majors first, then CUDA_PATH, then the default install dir.
 local cuda_path = nil
-for _, major in ipairs(cudaMajors) do
-    cuda_path = findCudaMajor(major)
-    if isValidPath(cuda_path) then
-        break
+local foundPreferredCudaVersion = false
+if not isCrossGeneration then
+    for _, major in ipairs(cudaMajors) do
+        cuda_path = findCudaMajor(major)
+        if isValidPath(cuda_path) then
+            break
+        end
     end
-end
-local foundPreferredCudaVersion = isValidPath(cuda_path)
+    foundPreferredCudaVersion = isValidPath(cuda_path)
 
-if not isValidPath(cuda_path) then
-    cuda_path = os.getenv("CUDA_PATH")
-end
-if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
-    cuda_path = "/usr/local/cuda"
+    if not isValidPath(cuda_path) then
+        cuda_path = os.getenv("CUDA_PATH")
+    end
+    if not isValidPath(cuda_path) and os.isdir("/usr/local/cuda") then
+        cuda_path = "/usr/local/cuda"
+    end
 end
 
 if _ACTION then
     if isValidPath(cuda_path) then
-        print("CUEW is enabled. CUDA SDK found: " .. cuda_path)
+        premake.info("CUEW is enabled. CUDA SDK found: %s", cuda_path)
         if not foundPreferredCudaVersion then
-            print("WARNING: no supported CUDA version found (" .. cudaMajorsText() .. "); using a fallback CUDA SDK install folder.")
+            premake.warn("no supported CUDA version found (%s); using a fallback CUDA SDK install folder.", cudaMajorsText())
         end
     elseif _OPTIONS["forceCuda"] then
-        print("WARNING: CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
+        premake.warn("CUEW is force-enabled but CUDA SDK not found (set CUDA_PATH). Compilation may fail.")
+    elseif isCrossGeneration then
+        premake.warn("CUEW disabled; CUDA SDK detection is skipped when generating for another OS. Use --forceCuda to override.")
     else
-        print("WARNING: CUEW disabled; CUDA SDK not found (supported: " .. cudaMajorsText() .. "). Use --forceCuda to override.")
+        premake.warn("CUEW disabled; CUDA SDK not found (supported: %s). Use --forceCuda to override.", cudaMajorsText())
     end
 end
 

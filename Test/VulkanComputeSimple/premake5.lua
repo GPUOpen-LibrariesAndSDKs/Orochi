@@ -3,7 +3,7 @@ project "VulkanComputeSimple"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
     linkWin32SystemLibs()
     includedirs { "./" }
     files { "*.cpp" }

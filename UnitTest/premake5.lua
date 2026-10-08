@@ -1,6 +1,4 @@
--- Vendored third-party code lives in its own projects so `warnings "Off"`
--- applies at project scope: premake's per-file `warnings` is honoured only by
--- the Visual Studio exporter, so a file filter would leave GCC/Clang unsilenced.
+-- Separate projects because per-file `warnings "Off"` only works in Visual Studio.
 project "gtest"
     kind "StaticLib"
     location "%{wks.location}/contrib/gtest"
@@ -21,13 +19,13 @@ project "UnitTest"
 
     location "%{wks.location}/%{prj.name}"
 
-    useOrochi()
+    uses { "Orochi" }
     filter "system:linux"
         links { "pthread" }
     filter {}
 
-    -- Read by demosTest.cpp to locate the demo binaries.
-    defines { 'ORO_BUILD_CONFIG="%{cfg.buildcfg}"' }
+    -- Read by demosTest.cpp to locate the demo binaries; `!` keeps the path absolute.
+    defines { 'ORO_DEMO_BIN_DIR="%{!cfg.targetdir}"' }
 
     files { "*.cpp", "*.h" }
     removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
@@ -38,7 +36,7 @@ project "UnitTest"
 
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")
-        prebuildScript(bitcodes,
+        orochiPrebuildScript(bitcodes,
             "generate_bitcodes.bat && generate_bitcodes_nvidia.bat",
             "sh generate_bitcodes.sh && sh generate_bitcodes_nvidia.sh")
     end
