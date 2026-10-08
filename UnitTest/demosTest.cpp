@@ -24,110 +24,91 @@
 #include "common.h"
 #include <filesystem>
 
-void FormatPathForOS(std::string& path)
+void FormatPathForOS( std::string& path )
 {
 #ifdef _WIN32
-	for(int i=0; i<path.size(); i++)
+	for( int i = 0; i < path.size(); i++ )
 	{
-		if ( path[i] == '/' )
-			path[i] = '\\';
+		if( path[i] == '/' ) path[i] = '\\';
 	}
 #endif
 	return;
 }
 
-void ExecDemo(const std::string& testName)
+void ExecDemo( const std::string& testName )
 {
-	std::string programName = "../dist/bin/"
-		
-	#ifdef _DEBUG
-		+ std::string("Debug/")
-	#else
-		+ std::string("Release/")
-	#endif
-		
-		+ testName
+	std::string programName = std::string( ORO_DEMO_BIN_DIR ) + "/" + testName
 
-	#ifdef _DEBUG
-		+ std::string("D")
-	#endif
+#ifdef _DEBUG
+							  + std::string( "D" )
+#endif
 
-	#ifdef _WIN32
-		+ std::string(".exe")
-	#endif
+#ifdef _WIN32
+							  + std::string( ".exe" )
+#endif
 		;
 
-	FormatPathForOS(programName);
+	FormatPathForOS( programName );
 
-	if ( !std::filesystem::exists(programName) )
+	if( !std::filesystem::exists( programName ) )
 	{
 		std::cout << "Error: The Demo \"" << programName << "\" program file doesn't exist" << std::endl;
-		ASSERT_TRUE(0);
+		ASSERT_TRUE( 0 );
 	}
 
-	int retCode = std::system(  std::string( "\"" + programName + "\"" ).c_str()  );
+	int retCode = std::system( std::string( "\"" + programName + "\"" ).c_str() );
 
-	#ifdef _WIN32
-	if ( retCode != OROCHI_TEST_RETCODE__SUCCESS )
-	#else
-	if ( WEXITSTATUS(retCode) != OROCHI_TEST_RETCODE__SUCCESS ) // for Unix, return code needs to be processed to get the original return value.
-	#endif
+#ifdef _WIN32
+	if( retCode != OROCHI_TEST_RETCODE__SUCCESS )
+#else
+	if( WEXITSTATUS( retCode ) != OROCHI_TEST_RETCODE__SUCCESS ) // for Unix, return code needs to be processed to get the original return value.
+#endif
 	{
 		std::cout << "Error: The Demo \"" << programName << "\" program returned an error return code: " << retCode << std::endl;
-		ASSERT_TRUE(0);
+		ASSERT_TRUE( 0 );
 	}
 	return;
 }
 
-
 TEST_F( OroDemoBase, SimpleDemo64 )
 {
 	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-	ExecDemo(testName);
+	ExecDemo( testName );
 	return;
 }
 
 TEST_F( OroDemoBase, Texture64 )
 {
 	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-	ExecDemo(testName);
+	ExecDemo( testName );
 	return;
 }
 
 TEST_F( OroDemoBase, DeviceEnum64 )
 {
 	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-	ExecDemo(testName);
+	ExecDemo( testName );
 	return;
 }
 
 // for now, remove WMMA from test list.
-//TEST_F( OroDemoBase, WMMA64 )
+// TEST_F( OroDemoBase, WMMA64 )
 //{
 //	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
 //	ExecDemo(testName);
 //	return;
 //}
 
-
 //
 // Tests specific to Windows
 //
-#ifdef _WIN32 
-
+#ifdef _WIN32
 
 TEST_F( OroDemoBase, VulkanComputeSimple64 )
 {
 	std::string testName = ::testing::UnitTest::GetInstance()->current_test_info()->name();
-	ExecDemo(testName);
+	ExecDemo( testName );
 	return;
 }
 
-
 #endif
-
-
-
-
-
-
