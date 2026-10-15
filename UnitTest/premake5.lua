@@ -37,6 +37,6 @@ project "UnitTest"
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")
         orochiPrebuildScript(bitcodes,
-            "generate_bitcodes.bat && generate_bitcodes_nvidia.bat",
-            "sh generate_bitcodes.sh && sh generate_bitcodes_nvidia.sh")
+            "call generate_bitcodes.bat && call generate_bitcodes_nvidia.bat",
+            "sh generate_bitcodes.sh && sh generate_bitcodes_nvidia.sh"
     end
