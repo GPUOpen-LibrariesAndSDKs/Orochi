@@ -1,4 +1,4 @@
--- Detects the CUDA SDK for CUEW and applies the settings to the including scope.
+-- Detects the CUDA SDK for CUEW; settings are applied per project via orochiApplyCuew().
 
 -- premake keys options by lowercased trigger. The trigger is lower case because --help stops
 -- listing at a mixed-case one; --forceCuda and _OPTIONS["forceCuda"] keep working.
@@ -86,9 +86,12 @@ if _ACTION then
     end
 end
 
-if isValidPath(cuda_path) then
-    defines { "OROCHI_ENABLE_CUEW" }
-    externalincludedirs { path.join(cuda_path, "include") }
-elseif _OPTIONS["forceCuda"] then
-    defines { "OROCHI_ENABLE_CUEW" }
+-- Applies the detected CUDA settings to the current project scope.
+function orochiApplyCuew()
+    if isValidPath(cuda_path) then
+        defines { "OROCHI_ENABLE_CUEW" }
+        externalincludedirs { path.join(cuda_path, "include") }
+    elseif _OPTIONS["forceCuda"] then
+        defines { "OROCHI_ENABLE_CUEW" }
+    end
 end
