@@ -13,10 +13,6 @@ newoption {
    description = "Compile kernels used for unit test"
 }
 
-newoption {
-   trigger = "forceCuda",
-   description = "By default, CUDA backend is enabled at compile-time only if the CUDA_PATH exists. Using this argument forces the activation of CUDA backend. However your project may have compilation errors."
-}
 
 
 function copydir(src_dir, dst_dir, filter, single_dst_dir)
