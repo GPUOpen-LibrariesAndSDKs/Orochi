@@ -85,7 +85,7 @@ inline std::optional<int> getDeviceIndex( int argc, char** argv, int absentValue
 			}
 			value = argv[i + 1];
 		}
-		else if( arg.starts_with( deviceFlagWithValue ) )
+		else if( arg.substr( 0, deviceFlagWithValue.size() ) == deviceFlagWithValue )
 		{
 			value = arg.substr( deviceFlagWithValue.size() );
 		}
