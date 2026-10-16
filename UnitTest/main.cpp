@@ -22,10 +22,31 @@
 
 
 #include "common.h"
+#include <Test/CommandLine.h>
 
-int main( int argc, char* argv[] ) 
+int main( int argc, char* argv[] )
 {
+	// gtest strips its own flags first, so only the Orochi options are left to parse here.
 	::testing::InitGoogleTest( &argc, argv );
+
+	const std::optional<int> deviceIndex = getDeviceIndex( argc, argv );
+	if( !deviceIndex )
+		return OROCHI_TEST_RETCODE__ERROR;
+
+	// Validated up front: OroTestBase::SetUp() would otherwise turn a bad index into
+	// an assertion failure in every single test, hiding the actual cause.
+	const oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP );
+	if( oroInitialize( api, 0 ) != 0 || oroInit( 0 ) != oroSuccess )
+	{
+		printf( "ERROR: unable to initialize Orochi\n" );
+		return OROCHI_TEST_RETCODE__ERROR;
+	}
+	if( !checkDeviceIndex( *deviceIndex ) )
+		return OROCHI_TEST_RETCODE__ERROR;
+
+	g_deviceIndex = *deviceIndex;
+	printf( "Running unit tests on Orochi device %d\n", g_deviceIndex );
+
 	int retCode = RUN_ALL_TESTS();
 	return retCode;
 }

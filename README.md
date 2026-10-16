@@ -97,6 +97,19 @@ Test is a minimum application.
 
 The test applications run on HIP by default. If you want to run on CUDA, run the app with an arg `cuda`. 
 
+They also accept `--device <n>` (or `--device=<n>`) to select which Orochi device to run on, which is useful on a machine with several GPUs. The index is the Orochi ordinal, as printed by the `DeviceEnum` demo. Without the option, device `0` is used. `DeviceEnum` itself always lists every device and simply marks the selected one.
+
+```
+./dist/bin/Release/DeviceEnum64        # list the available devices
+./dist/bin/Release/Texture64 --device 1
+```
+
+The unit test program takes the same option, and the scripts in [`scripts/`](./scripts/) forward their arguments to it:
+
+```
+./scripts/unittest.sh --device 1
+```
+
 The source code for the test applications can be found [here](./Test/).
 
 ----
