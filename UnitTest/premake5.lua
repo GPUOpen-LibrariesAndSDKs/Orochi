@@ -10,6 +10,8 @@ project "Unittest"
    if os.istarget("linux") then
       links { "pthread" }
    end
+      -- Read by demosTest.cpp to locate the demo binaries; `!` keeps the path absolute.
+      defines { 'ORO_DEMO_BIN_DIR="%{!cfg.targetdir}"' }
       includedirs { "../" }
       files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp", "*.h" }

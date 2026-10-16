@@ -10,6 +10,6 @@ jobs:
     - name: chmod
       run: chmod +x ./tools/premake5/linux64/premake5
     - name: premake
-      run: ./tools/premake5/linux64/premake5 gmake
+      run: ./tools/premake5/linux64/premake5 gmake --builddir=build
     - name: make
-      run: make -j Test
+      run: make -C build -j all
