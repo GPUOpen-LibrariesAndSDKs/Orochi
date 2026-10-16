@@ -40,7 +40,8 @@ int main(int argc, char** argv )
 	printf(">> testing initialization\n");
 	ERROR_CHECK(oroInit( 0 ));
 	oroDevice device = 0;
-	ERROR_CHECK(oroDeviceGet( &device, 0 ));
+	if( !acquireDevice( argc, argv, device ) )
+		return OROCHI_TEST_RETCODE__ERROR;
 	oroCtx ctx = nullptr;
 	ERROR_CHECK(oroCtxCreate( &ctx, 0, device ));
 
