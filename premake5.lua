@@ -106,7 +106,7 @@ workspace "YamatanoOrochi"
     architecture   "x86_64"
     location       (_OPTIONS["builddir"] or ".")
     targetdir      (path.join(_OPTIONS["distdir"] or "dist", "bin/%{cfg.buildcfg}"))
-    startproject   "Unittest"
+    startproject   "UnitTest"
 
     filter "kind:StaticLib or SharedLib"
         pic "On"
