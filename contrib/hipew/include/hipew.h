@@ -2624,6 +2624,8 @@ enum {
 // Examples, for Windows:
 // customPaths_Hip[]    = {"amdhip64_6.dll", "amdhip64.dll", NULL};
 // customPaths_Hiprtc[] = {"hiprtc0600.dll", "hiprtc0507.dll", NULL};
+// When the arguments are not given, the environment variables ORO_AMDHIP64_PATH / ORO_HIPRTC_PATH (a list of library paths,
+// separated by ';' on Windows and ':' elsewhere) are searched first, followed by the default values defined in HIPEW.
 void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** customPaths_Hip hipew__dparm(0), const char** customPaths_Hiprtc hipew__dparm(0));
 
 const char *hipewErrorString(hipError_t result);
