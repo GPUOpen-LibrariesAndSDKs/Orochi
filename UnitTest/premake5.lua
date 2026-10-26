@@ -2,7 +2,7 @@
 project "gtest"
       kind "StaticLib"
       location "%{wks.location}/contrib/gtest"
-      warnings "Off"
+      tags { "thirdparty" }
       includedirs { "contrib/gtest-1.6.0" }
       defines { "GTEST_HAS_TR1_TUPLE=0" }
       files { "contrib/gtest-1.6.0/**.h", "contrib/gtest-1.6.0/**.cc" }
@@ -11,7 +11,7 @@ project "gtest"
 project "stb"
       kind "StaticLib"
       location "%{wks.location}/contrib/stb"
-      warnings "Off"
+      tags { "thirdparty" }
       files { "contrib/stb/**.h", "contrib/stb/**.cpp" }
 
 project "UnitTest"
