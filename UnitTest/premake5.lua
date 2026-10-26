@@ -7,6 +7,11 @@ project "gtest"
     defines { "GTEST_HAS_TR1_TUPLE=0" }
     files { "contrib/gtest-1.6.0/**.h", "contrib/gtest-1.6.0/**.cc" }
 
+    usage "INTERFACE"
+        links { "gtest" }
+        externalincludedirs { "contrib/gtest-1.6.0/" }
+        defines { "GTEST_HAS_TR1_TUPLE=0" }
+
 -- Consumed by the Texture demo, which includes the headers by relative path.
 project "stb"
     kind "StaticLib"
@@ -19,7 +24,7 @@ project "UnitTest"
 
     location "%{wks.location}/%{prj.name}"
 
-    uses { "Orochi" }
+    uses { "Orochi", "gtest" }
     filter "system:linux"
         links { "pthread" }
     filter {}
@@ -29,10 +34,6 @@ project "UnitTest"
 
     files { "*.cpp", "*.h" }
     removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
-
-    links { "gtest" }
-    externalincludedirs { "contrib/gtest-1.6.0/" }
-    defines { "GTEST_HAS_TR1_TUPLE=0" }
 
     if _OPTIONS["kernelcompile"] then
         local bitcodes = path.getabsolute("bitcodes")

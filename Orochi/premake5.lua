@@ -17,22 +17,21 @@ function orochiPrebuildScript(directory, windowsCommand, posixCommand)
     filter {}
 end
 
--- Windows has no rpath, so the HIP runtime DLLs are copied next to the binaries.
+-- Windows has no rpath, so the HIP runtime DLLs are copied next to the binaries (xcopy /D skips up-to-date files).
 local function stageWindowsRuntimeDlls()
-    local contribBinDir = path.join(orochiRoot, "contrib/bin/win64")
-    if not os.isdir(contribBinDir) then
-        return
-    end
     filter "system:windows"
-        postbuildcommands { "{COPYDIR} %[" .. contribBinDir .. "] \"%{cfg.targetdir}\"" }
+        for _, dll in ipairs(os.matchfiles(path.join(orochiRoot, "contrib/bin/win64/*.dll"))) do
+            postbuildcommands { "{COPYFILEIFNEWER} %[" .. dll .. "] %[%{!cfg.targetdir}]" }
+        end
     filter {}
 end
 
 -- Separate projects because per-file `warnings "Off"` only works in Visual Studio.
+-- The `thirdparty` tag turns warnings off in the workspace's tags filter.
 project "cuew"
     kind "StaticLib"
     location "%{wks.location}/contrib/cuew"
-    warnings "Off"
+    tags { "thirdparty" }
     includedirs { orochiRoot }
     files { path.join(orochiRoot, "contrib/cuew/**.h"), path.join(orochiRoot, "contrib/cuew/**.cpp") }
     orochiApplyCuew()
@@ -40,7 +39,7 @@ project "cuew"
 project "hipew"
     kind "StaticLib"
     location "%{wks.location}/contrib/hipew"
-    warnings "Off"
+    tags { "thirdparty" }
     includedirs { orochiRoot }
     files { path.join(orochiRoot, "contrib/hipew/**.h"), path.join(orochiRoot, "contrib/hipew/**.cpp") }
 
