@@ -3,8 +3,6 @@ project "Texture"
 
     location "%{wks.location}/Test/%{prj.name}"
 
-    uses { "Orochi" }
-
-    links { "stb" }
+    uses { "Orochi", "stb" }
 
     files { "texture_test_kernel.hpp", "*.cpp" }

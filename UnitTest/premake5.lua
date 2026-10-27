@@ -19,6 +19,9 @@ project "stb"
     tags { "thirdparty" }
     files { "contrib/stb/**.h", "contrib/stb/**.cpp" }
 
+    usage "INTERFACE"
+        links { "stb" }
+
 project "UnitTest"
     kind "ConsoleApp"
 
