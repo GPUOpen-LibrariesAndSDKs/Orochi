@@ -128,8 +128,11 @@ workspace "YamatanoOrochi"
     targetdir      (path.join(_OPTIONS["distdir"] or "dist", "bin/%{cfg.buildcfg}"))
     startproject   "UnitTest"
 
-    -- `uses` can list a static library before its dependents; GNU ld needs a group.
-    linkgroups "On"
+    -- `uses` can list a static library before its dependents; GNU ld needs a group. Apple ld
+    -- resolves static libraries in any order and rejects --start-group.
+    filter "system:not macosx"
+        linkgroups "On"
+    filter {}
 
     filter "kind:StaticLib or SharedLib"
         pic "On"
