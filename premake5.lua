@@ -15,8 +15,10 @@ newoption {
     description = "Use Clang toolset instead of the default (GCC on Linux, MSVC on Windows)"
 }
 
+-- Lower case: premake looks options up case-insensitively, but --help stops listing at a
+-- mixed-case trigger. --bakeKernel and _OPTIONS["bakeKernel"] keep working.
 newoption {
-    trigger     = "bakeKernel",
+    trigger     = "bakekernel",
     description = "Bake GPU kernels into source as string literals"
 }
 

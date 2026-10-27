@@ -1,9 +1,10 @@
 -- Detects the CUDA SDK for CUEW and applies the settings to the including scope.
 
--- premake keys options by lowercased trigger.
+-- premake keys options by lowercased trigger. The trigger is lower case because --help stops
+-- listing at a mixed-case one; --forceCuda and _OPTIONS["forceCuda"] keep working.
 if not premake.option.get("forcecuda") then
     newoption {
-        trigger     = "forceCuda",
+        trigger     = "forcecuda",
         description = "Force CUDA backend even if CUDA_PATH is not found (may cause compilation errors)"
     }
 end
