@@ -1,5 +1,8 @@
 -- Orochi (YamatanoOrochi) workspace definition, build options, and helpers.
 
+-- runtimechecks is a 5.0.0 API; older premake fails obscurely.
+require("premake", ">=5.0.0")
+
 -- Snapshot before newoption so validateFlagOptions can tell premake's own options apart.
 local builtinOptions = {}
 for trigger in pairs(premake.option.list) do
@@ -120,7 +123,7 @@ local function validateFlagOptions()
     for trigger, option in pairs(premake.option.list) do
         local given = _OPTIONS[trigger]
         if not builtinOptions[trigger] and option.value == nil and given ~= nil and given ~= "" then
-            error(string.format("--%s does not take a value (got '%s').", trigger, given), 0)
+            premake.error("--%s does not take a value (got '%s').", trigger, given)
         end
     end
 end
@@ -190,7 +193,7 @@ workspace "YamatanoOrochi"
     -- MSVC maps optimize "Debug" to /Od, so DebugFast would equal Debug. /RTC1 conflicts with /O2 (D8016).
     filter { "configurations:DebugFast", "toolset:msc-v*" }
         optimize     "Speed"
-        buildoptions { "/Ob1" }
+        inlining     "Explicit"
         runtimechecks "Off"
     filter "configurations:RelWithDebInfo"
         defines      { "NDEBUG" }
@@ -216,7 +219,7 @@ workspace "YamatanoOrochi"
     if sanitizeValue then
         -- MSVC ships only AddressSanitizer and would silently emit no instrumentation.
         if os.istarget("windows") and not _OPTIONS["clang"] and sanitizeValue ~= "Address" then
-            error("--sanitizer=" .. _OPTIONS["sanitizer"] .. " is not supported by MSVC. Use --sanitizer=address, or add --clang.", 0)
+            premake.error("--sanitizer=%s is not supported by MSVC. Use --sanitizer=address, or add --clang.", _OPTIONS["sanitizer"])
         end
         sanitize { sanitizeValue }
         omitframepointer "Off"
