@@ -44,19 +44,18 @@ newoption {
     description = "Directory for build products; binaries go to PATH/bin/<config> (default: dist)"
 }
 
--- Values are premake `warnings` tokens, matched case-insensitively.
+-- Same values as the Vkpt and Rtb workspaces.
 newoption {
     trigger     = "warning",
     value       = "LEVEL",
-    description = "Compiler warning level: off, default, high, extra, everything",
+    description = "Compiler warning level",
     allowed     = {
-        { "off",        "Disable warnings" },
-        { "default",    "Default warnings" },
-        { "high",       "High warnings" },
-        { "extra",      "Extra warnings" },
-        { "everything", "All warnings the compiler offers" }
+        { "off",   "Disable warnings" },
+        { "on",    "Use the toolset's default warning level" },
+        { "extra", "Enable the toolset's maximum warning level except trivial warnings" },
+        { "full",  "Enable every warning the toolset offers" }
     },
-    default     = "default"
+    default     = "on"
 }
 
 newoption {
@@ -224,7 +223,7 @@ workspace "YamatanoOrochi"
     end
 
     externalwarnings "Off"
-    warnings (_OPTIONS["warning"])
+    warnings (({ off = "Off", on = "Default", extra = "Extra", full = "Everything" })[_OPTIONS["warning"]])
 
     -- Pinned so consumers linking Orochi cannot mix /MD and /MT.
     staticruntime "Off"
