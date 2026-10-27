@@ -1,5 +1,8 @@
 -- Orochi (YamatanoOrochi) workspace definition, build options, and helpers.
 
+-- usage/uses, runtimechecks and {COPYFILEIFNEWER} are 5.0.0 APIs; older premake fails obscurely.
+require("premake", ">=5.0.0")
+
 -- Snapshot before newoption so validateFlagOptions can tell premake's own options apart.
 local builtinOptions = {}
 for trigger in pairs(premake.option.list) do
@@ -15,8 +18,10 @@ newoption {
     description = "Use Clang toolset instead of the default (GCC on Linux, MSVC on Windows)"
 }
 
+-- Lower case: premake looks options up case-insensitively, but --help stops listing at a
+-- mixed-case trigger. --bakeKernel and _OPTIONS["bakeKernel"] keep working.
 newoption {
-    trigger     = "bakeKernel",
+    trigger     = "bakekernel",
     description = "Bake GPU kernels into source as string literals"
 }
 
@@ -42,19 +47,18 @@ newoption {
     description = "Directory for build products; binaries go to PATH/bin/<config> (default: dist)"
 }
 
--- Values are premake `warnings` tokens, matched case-insensitively.
+-- Same values as the Vkpt and Rtb workspaces.
 newoption {
     trigger     = "warning",
     value       = "LEVEL",
-    description = "Compiler warning level: off, default, high, extra, everything",
+    description = "Compiler warning level",
     allowed     = {
-        { "off",        "Disable warnings" },
-        { "default",    "Default warnings" },
-        { "high",       "High warnings" },
-        { "extra",      "Extra warnings" },
-        { "everything", "All warnings the compiler offers" }
+        { "off",   "Disable warnings" },
+        { "on",    "Use the toolset's default warning level" },
+        { "extra", "Enable the toolset's maximum warning level except trivial warnings" },
+        { "full",  "Enable every warning the toolset offers" }
     },
-    default     = "default"
+    default     = "on"
 }
 
 newoption {
@@ -96,7 +100,7 @@ local function validateFlagOptions()
     for trigger, option in pairs(premake.option.list) do
         local given = _OPTIONS[trigger]
         if not builtinOptions[trigger] and option.value == nil and given ~= nil and given ~= "" then
-            error(string.format("--%s does not take a value (got '%s').", trigger, given), 0)
+            premake.error("--%s does not take a value (got '%s').", trigger, given)
         end
     end
 end
@@ -124,8 +128,11 @@ workspace "YamatanoOrochi"
     targetdir      (path.join(_OPTIONS["distdir"] or "dist", "bin/%{cfg.buildcfg}"))
     startproject   "UnitTest"
 
-    -- `uses` can list a static library before its dependents; GNU ld needs a group.
-    linkgroups "On"
+    -- `uses` can list a static library before its dependents; GNU ld needs a group. Apple ld
+    -- resolves static libraries in any order and rejects --start-group.
+    filter "system:not macosx"
+        linkgroups "On"
+    filter {}
 
     filter "kind:StaticLib or SharedLib"
         pic "On"
@@ -165,7 +172,7 @@ workspace "YamatanoOrochi"
     -- MSVC maps optimize "Debug" to /Od, so DebugFast would equal Debug. /RTC1 conflicts with /O2 (D8016).
     filter { "configurations:DebugFast", "toolset:msc-v*" }
         optimize     "Speed"
-        buildoptions { "/Ob1" }
+        inlining     "Explicit"
         runtimechecks "Off"
     filter "configurations:RelWithDebInfo"
         defines      { "NDEBUG" }
@@ -191,14 +198,14 @@ workspace "YamatanoOrochi"
     if sanitizeValue then
         -- MSVC ships only AddressSanitizer and would silently emit no instrumentation.
         if os.istarget("windows") and not _OPTIONS["clang"] and sanitizeValue ~= "Address" then
-            error("--sanitizer=" .. _OPTIONS["sanitizer"] .. " is not supported by MSVC. Use --sanitizer=address, or add --clang.", 0)
+            premake.error("--sanitizer=%s is not supported by MSVC. Use --sanitizer=address, or add --clang.", _OPTIONS["sanitizer"])
         end
         sanitize { sanitizeValue }
         omitframepointer "Off"
     end
 
     externalwarnings "Off"
-    warnings (_OPTIONS["warning"])
+    warnings (({ off = "Off", on = "Default", extra = "Extra", full = "Everything" })[_OPTIONS["warning"]])
 
     -- Pinned so consumers linking Orochi cannot mix /MD and /MT.
     staticruntime "Off"
