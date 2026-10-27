@@ -1,6 +1,6 @@
 -- Orochi (YamatanoOrochi) workspace definition, build options, and helpers.
 
--- runtimechecks is a 5.0.0 API; older premake fails obscurely.
+-- usage/uses, runtimechecks and {COPYFILEIFNEWER} are 5.0.0 APIs; older premake fails obscurely.
 require("premake", ">=5.0.0")
 
 -- Snapshot before newoption so validateFlagOptions can tell premake's own options apart.
