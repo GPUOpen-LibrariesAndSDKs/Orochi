@@ -17,11 +17,14 @@ function orochiPrebuildScript(directory, windowsCommand, posixCommand)
     filter {}
 end
 
--- Windows has no rpath, so the HIP runtime DLLs are copied next to the binaries (xcopy /D skips up-to-date files).
-local function stageWindowsRuntimeDlls()
+-- Windows has no rpath, so the HIP runtime DLLs are copied next to the current project's binaries
+-- (xcopy /D skips up-to-date files). Public for host workspaces that stage them for their own
+-- applications. Ends with `filter {}`, so call it at project scope. The trailing "/" makes premake
+-- append the file name; a bare directory becomes xcopy's "dir*", which names a file.
+function orochiStageRuntimeDlls()
     filter "system:windows"
         for _, dll in ipairs(os.matchfiles(path.join(orochiRoot, "contrib/bin/win64/*.dll"))) do
-            postbuildcommands { "{COPYFILEIFNEWER} %[" .. dll .. "] %[%{!cfg.targetdir}]" }
+            postbuildcommands { "{COPYFILEIFNEWER} %[" .. dll .. "] %[%{!cfg.targetdir}/]" }
         end
     filter {}
 end
@@ -54,7 +57,11 @@ project "Orochi"
 
     links { "cuew", "hipew" }
 
-    stageWindowsRuntimeDlls()
+    -- Here the binaries share this library's targetdir. A host workspace keeps its libraries
+    -- elsewhere and calls orochiStageRuntimeDlls() from its own applications instead.
+    if isOrochiWorkspace then
+        orochiStageRuntimeDlls()
+    end
 
     usage "PUBLIC"
         orochiApplyCuew()
