@@ -596,6 +596,7 @@ std::string lastLoadError() {
 
 #if defined(_WIN32)
 
+// Candidates are tried newest first: 'amdhip64_8.dll' .. 'amdhip64_6.dll' (HIP 8.x .. 6.x), then the unversioned DLL.
 PathList getHipBuiltinPaths() {
   PathList paths;
   for (int version = 8; version >= 6; --version) {
@@ -607,13 +608,16 @@ PathList getHipBuiltinPaths() {
 
 PathList getHiprtcBuiltinPaths() {
   // 'hiprtc<MAJOR><MINOR>.dll', with two digits each.
+  // Minor versions probed for one major release, inclusive: [minMinor, maxMinor].
   struct Range {
     int major, maxMinor, minMinor;
   };
+  // Newest major first: 8.1-8.0, 7.17-7.0, 6.5-6.0, 5.7-5.3 (earlier 5.x releases are not probed).
   constexpr Range ranges[] = {{8, 1, 0}, {7, 17, 0}, {6, 5, 0}, {5, 7, 3}};
 
   PathList paths;
   for (const Range &range : ranges) {
+    // Minors run from maxMinor down to minMinor so the newest installed DLL is found first.
     for (int minor = range.maxMinor; minor >= range.minMinor; --minor) {
       paths.push_back(std::format("hiprtc{:02}{:02}.dll", range.major, minor));
       // Early 7.1x builds used a three-digit minor ('hiprtc07014.dll') before switching to hiprtc0714.dll.
