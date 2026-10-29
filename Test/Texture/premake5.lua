@@ -11,5 +11,5 @@ project "Texture"
       includedirs { "../../" }
       files { "../../Orochi/**.h", "../../Orochi/**.cpp" }
       files { "../../contrib/**.h", "../../contrib/**.cpp" }
-      files { "../../UnitTest/contrib/**.h", "../../UnitTest/contrib/**.cpp" }
+      links { "stb" }
       files { "texture_test_kernel.hpp", "*.cpp" }
