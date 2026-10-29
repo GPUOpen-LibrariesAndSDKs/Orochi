@@ -43,7 +43,11 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <charconv>
 #include <filesystem>
+#include <format>
+#include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -559,12 +563,12 @@ constexpr char kPathListSeparator = ':';
 // Splits a path list such as the value of ORO_AMDHIP64_PATH. Empty entries are dropped.
 PathList splitPathList(std::string_view list) {
   PathList paths;
-  while (!list.empty()) {
-    const size_t end = list.find(kPathListSeparator);
-    if (end != 0) {
-      paths.emplace_back(list.substr(0, end));
+  for (size_t pos = 0; pos < list.size();) {
+    const size_t end = std::min(list.find(kPathListSeparator, pos), list.size());
+    if (end > pos) {
+      paths.emplace_back(list.substr(pos, end - pos));
     }
-    list = (end == std::string_view::npos) ? std::string_view() : list.substr(end + 1);
+    pos = end + 1;
   }
   return paths;
 }
@@ -581,7 +585,8 @@ PathList getEnvPaths(const char *name) {
 
 std::string lastLoadError() {
 #ifdef _WIN32
-  return "error code " + std::to_string(GetLastError());
+  const DWORD code = GetLastError();
+  return std::format("{} (error code {})", std::system_category().message(static_cast<int>(code)), code);
 #else
   const char *error = dlerror();
   return error ? error : "unknown error";
@@ -589,11 +594,6 @@ std::string lastLoadError() {
 }
 
 #if defined(_WIN32)
-
-std::string zeroPad(int value, size_t width) {
-  const std::string digits = std::to_string(value);
-  return std::string(width > digits.size() ? width - digits.size() : 0, '0') + digits;
-}
 
 PathList getHipBuiltinPaths() {
   PathList paths;
@@ -614,10 +614,10 @@ PathList getHiprtcBuiltinPaths() {
   PathList paths;
   for (const Range &range : ranges) {
     for (int minor = range.maxMinor; minor >= range.minMinor; --minor) {
-      paths.push_back("hiprtc" + zeroPad(range.major, 2) + zeroPad(minor, 2) + ".dll");
+      paths.push_back(std::format("hiprtc{:02}{:02}.dll", range.major, minor));
       // Early 7.1x builds used a three-digit minor ('hiprtc07014.dll') before switching to hiprtc0714.dll.
       if (range.major == 7 && minor >= 10 && minor <= 14) {
-        paths.push_back("hiprtc" + zeroPad(range.major, 2) + zeroPad(minor, 3) + ".dll");
+        paths.push_back(std::format("hiprtc{:02}{:03}.dll", range.major, minor));
       }
     }
   }
@@ -632,29 +632,49 @@ PathList getHiprtcBuiltinPaths() { return {}; }
 
 #else
 
+// Parses 'core-<MAJOR>[.<MINOR>]' into {MAJOR, MINOR}; anything else, including trailing characters, is rejected.
+std::optional<std::pair<int, int>> parseCoreVersion(std::string_view name) {
+  if (!name.starts_with("core-")) {
+    return std::nullopt;
+  }
+  const char *p = name.data() + 5;
+  const char *const end = name.data() + name.size();
+  int major = 0;
+  int minor = 0;
+  auto result = std::from_chars(p, end, major);
+  if (result.ec != std::errc()) {
+    return std::nullopt;
+  }
+  p = result.ptr;
+  if (p != end && *p == '.') {
+    result = std::from_chars(p + 1, end, minor);
+    if (result.ec != std::errc()) {
+      return std::nullopt;
+    }
+    p = result.ptr;
+  }
+  if (p != end) {
+    return std::nullopt;
+  }
+  return std::pair{major, minor};
+}
+
 // Each release is installed in its own '/opt/rocm/core-<MAJOR>[.<MINOR>]' directory; returns their 'lib' directories, newest first.
 PathList getRocmCoreLibDirs() {
-  struct Core {
-    int major, minor;
-    std::string libDir;
-  };
-  std::vector<Core> cores;
+  // The lib directory is part of the sort key, so equal versions (core-10 and core-10.0) have a deterministic order.
+  std::vector<std::pair<std::pair<int, int>, std::string>> cores;
 
   std::error_code error;
-  const std::filesystem::directory_iterator end;
-  for (std::filesystem::directory_iterator it("/opt/rocm", error); !error && it != end; it.increment(error)) {
-    const std::string name = it->path().filename().string();
-    int major = 0;
-    int minor = 0;
-    if (sscanf(name.c_str(), "core-%d.%d", &major, &minor) >= 1) {
-      cores.push_back({major, minor, (it->path() / "lib").string()});
+  for (const auto &entry : std::filesystem::directory_iterator("/opt/rocm", error)) {
+    if (const auto version = parseCoreVersion(entry.path().filename().string())) {
+      cores.emplace_back(*version, (entry.path() / "lib").string());
     }
   }
-  std::sort(cores.begin(), cores.end(), [](const Core &a, const Core &b) { return a.major != b.major ? a.major > b.major : a.minor > b.minor; });
+  std::ranges::sort(cores, std::greater<>());
 
   PathList dirs;
-  for (const Core &core : cores) {
-    dirs.push_back(core.libDir);
+  for (auto &core : cores) {
+    dirs.push_back(std::move(core.second));
   }
   return dirs;
 }
@@ -699,14 +719,14 @@ DynamicLibrary openFirst(const PathList &paths) {
 
 // Search order: 'customPaths' (NULL-terminated, replaces everything else), then the paths in the environment variable
 // 'envName', then 'getBuiltinPaths()'.
-template <typename GetBuiltinPaths>
-DynamicLibrary dynamic_library_open_find(const char **customPaths, const char *envName, GetBuiltinPaths getBuiltinPaths) {
+DynamicLibrary dynamic_library_open_find(const char **customPaths, const char *envName, PathList (*getBuiltinPaths)()) {
   if (customPaths != NULL) {
-    PathList paths;
-    for (int i = 0; customPaths[i] != NULL; ++i) {
-      paths.emplace_back(customPaths[i]);
+    for (; *customPaths != NULL; ++customPaths) {
+      if (DynamicLibrary lib = dynamic_library_open(*customPaths)) {
+        return lib;
+      }
     }
-    return openFirst(paths);
+    return NULL;
   }
 
   for (const std::string &path : getEnvPaths(envName)) {
