@@ -41,8 +41,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <algorithm>
+#include <charconv>
+#include <filesystem>
+#include <format>
+#include <functional>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <vector>
 
 #ifdef _WIN32
+#  define NOMINMAX
 #  define WIN32_LEAN_AND_MEAN
 #  define VC_EXTRALEAN
 #  include <windows.h>
@@ -539,17 +551,200 @@ tmake_hipPos *make_hipPos = nullptr;
 #pragma endregion
 
 
-static DynamicLibrary dynamic_library_open_find(const char **paths) {
-  int i = 0;
-  while (paths[i] != NULL) {
-      DynamicLibrary lib = dynamic_library_open(paths[i]);
-      if (lib != NULL) {
-        return lib;
+namespace {
+
+using PathList = std::vector<std::string>;
+
+#ifdef _WIN32
+constexpr char kPathListSeparator = ';';
+#else
+constexpr char kPathListSeparator = ':';
+#endif
+
+// Splits a path list such as the value of ORO_AMDHIP64_PATH. Empty entries are dropped.
+PathList splitPathList(std::string_view list) {
+  PathList paths;
+  for (size_t pos = 0; pos < list.size();) {
+    const size_t end = std::min(list.find(kPathListSeparator, pos), list.size());
+    if (end > pos) {
+      paths.emplace_back(list.substr(pos, end - pos));
+    }
+    pos = end + 1;
+  }
+  return paths;
+}
+
+PathList getEnvPaths(const char *name) {
+  // A library named by the environment is code execution, so setuid programs must not honor it.
+#if defined(__GLIBC__)
+  const char *value = secure_getenv(name);
+#else
+  const char *value = getenv(name);
+#endif
+  return value ? splitPathList(value) : PathList();
+}
+
+std::string lastLoadError() {
+#ifdef _WIN32
+  const DWORD code = GetLastError();
+  return std::format("{} (error code {})", std::system_category().message(static_cast<int>(code)), code);
+#else
+  const char *error = dlerror();
+  return error ? error : "unknown error";
+#endif
+}
+
+#if defined(_WIN32)
+
+// Candidates are tried newest first: 'amdhip64_8.dll' .. 'amdhip64_6.dll' (HIP 8.x .. 6.x), then the unversioned DLL.
+PathList getHipBuiltinPaths() {
+  PathList paths;
+  for (int version = 8; version >= 6; --version) {
+    paths.push_back("amdhip64_" + std::to_string(version) + ".dll");
+  }
+  paths.push_back("amdhip64.dll");  // <- hip '5.x' DLL.
+  return paths;
+}
+
+PathList getHiprtcBuiltinPaths() {
+  // 'hiprtc<MAJOR><MINOR>.dll', with two digits each.
+  // Minor versions probed for one major release, inclusive: [minMinor, maxMinor].
+  struct Range {
+    int major, maxMinor, minMinor;
+  };
+  // Newest major first: 8.1-8.0, 7.17-7.0, 6.5-6.0, 5.7-5.3 (earlier 5.x releases are not probed).
+  constexpr Range ranges[] = {{8, 1, 0}, {7, 17, 0}, {6, 5, 0}, {5, 7, 3}};
+
+  PathList paths;
+  for (const Range &range : ranges) {
+    // Minors run from maxMinor down to minMinor so the newest installed DLL is found first.
+    for (int minor = range.maxMinor; minor >= range.minMinor; --minor) {
+      paths.push_back(std::format("hiprtc{:02}{:02}.dll", range.major, minor));
+      // Early 7.1x builds used a three-digit minor ('hiprtc07014.dll') before switching to hiprtc0714.dll.
+      if (range.major == 7 && minor >= 10 && minor <= 14) {
+        paths.push_back(std::format("hiprtc{:02}{:03}.dll", range.major, minor));
       }
-      ++i;
+    }
+  }
+  return paths;
+}
+
+#elif defined(__APPLE__)
+
+// Default installation path.
+PathList getHipBuiltinPaths() { return {""}; }
+PathList getHiprtcBuiltinPaths() { return {}; }
+
+#else
+
+// Parses 'core-<MAJOR>[.<MINOR>]' into {MAJOR, MINOR}; anything else, including trailing characters, is rejected.
+std::optional<std::pair<int, int>> parseCoreVersion(std::string_view name) {
+  if (!name.starts_with("core-")) {
+    return std::nullopt;
+  }
+  const char *p = name.data() + 5;
+  const char *const end = name.data() + name.size();
+  int major = 0;
+  int minor = 0;
+  auto result = std::from_chars(p, end, major);
+  if (result.ec != std::errc()) {
+    return std::nullopt;
+  }
+  p = result.ptr;
+  if (p != end && *p == '.') {
+    result = std::from_chars(p + 1, end, minor);
+    if (result.ec != std::errc()) {
+      return std::nullopt;
+    }
+    p = result.ptr;
+  }
+  if (p != end) {
+    return std::nullopt;
+  }
+  return std::pair{major, minor};
+}
+
+// Each release is installed in its own '/opt/rocm/core-<MAJOR>[.<MINOR>]' directory; returns their 'lib' directories, newest first.
+PathList getRocmCoreLibDirs() {
+  // The lib directory is part of the sort key, so equal versions (core-10 and core-10.0) have a deterministic order.
+  std::vector<std::pair<std::pair<int, int>, std::string>> cores;
+
+  std::error_code error;
+  for (const auto &entry : std::filesystem::directory_iterator("/opt/rocm", error)) {
+    if (const auto version = parseCoreVersion(entry.path().filename().string())) {
+      cores.emplace_back(*version, (entry.path() / "lib").string());
+    }
+  }
+  std::ranges::sort(cores, std::greater<>());
+
+  PathList dirs;
+  for (auto &core : cores) {
+    dirs.push_back(std::move(core.second));
+  }
+  return dirs;
+}
+
+// 'libName' is e.g. "amdhip64". Candidates are ordered by preference: the newest core release, then the versioned
+// libraries of the traditional layout, then the generic symbolic link.
+PathList getLinuxBuiltinPaths(const std::string &libName) {
+  PathList paths;
+  const auto add = [&](const std::string &dir, const std::string &suffix) {
+    paths.push_back((dir.empty() ? "" : dir + "/") + "lib" + libName + ".so" + suffix);
+  };
+
+  for (const std::string &dir : getRocmCoreLibDirs()) {
+    for (const char *suffix : {".8", ".7", ""}) {
+      add(dir, suffix);
+    }
+  }
+  for (int soVersion = 8; soVersion >= 5; --soVersion) {
+    for (const char *dir : {"/opt/rocm/hip/lib", "/opt/rocm/lib", ""}) {
+      add(dir, "." + std::to_string(soVersion));
+    }
+  }
+  for (const char *dir : {"/opt/rocm/core/lib", "/opt/rocm/hip/lib", "/opt/rocm/lib", ""}) {
+    add(dir, "");
+  }
+  return paths;
+}
+
+PathList getHipBuiltinPaths() { return getLinuxBuiltinPaths("amdhip64"); }
+PathList getHiprtcBuiltinPaths() { return getLinuxBuiltinPaths("hiprtc"); }
+
+#endif
+
+DynamicLibrary openFirst(const PathList &paths) {
+  for (const std::string &path : paths) {
+    if (DynamicLibrary lib = dynamic_library_open(path.c_str())) {
+      return lib;
+    }
   }
   return NULL;
 }
+
+// Search order: 'customPaths' (NULL-terminated, replaces everything else), then the paths in the environment variable
+// 'envName', then 'getBuiltinPaths()'.
+DynamicLibrary dynamic_library_open_find(const char **customPaths, const char *envName, PathList (*getBuiltinPaths)()) {
+  if (customPaths != NULL) {
+    for (; *customPaths != NULL; ++customPaths) {
+      if (DynamicLibrary lib = dynamic_library_open(*customPaths)) {
+        return lib;
+      }
+    }
+    return NULL;
+  }
+
+  for (const std::string &path : getEnvPaths(envName)) {
+    if (DynamicLibrary lib = dynamic_library_open(path.c_str())) {
+      return lib;
+    }
+    fprintf(stderr, "hipew: %s: cannot load '%s' (%s)\n", envName, path.c_str(), lastLoadError().c_str());
+  }
+  return openFirst(getBuiltinPaths());
+}
+
+}  // namespace
+
 
 // Implementation function.
 static void hipewHipExit(void) {
@@ -615,140 +810,10 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   // - If you are using the 5.7 HIP API, then any library above 5.7 (like 6.0) should be able to run your program correctly.
   // - However, if you use the 6.0 HIP API, then loading older library (like 5.7) will fail to run API that has been introduced in HIP 6.0.
   // 
-  // All those fixed paths search can be overridden by the arguments of hipewInit/oroInitialize.
+  // The fixed search can be overridden by the arguments of hipewInit/oroInitialize, or extended with the
+  // ORO_AMDHIP64_PATH / ORO_HIPRTC_PATH environment variables (see dynamic_library_open_find).
   // This is important to keep in mind as depending on your project you may want to search in custom order.
   //
-
-#ifdef _WIN32
-  // Expected in C:/Windows/System32 or similar, no path needed.
-  const char* hip_paths[] = {
-      "amdhip64_8.dll",
-      "amdhip64_7.dll",
-      "amdhip64_6.dll",
-      "amdhip64.dll",   // <- hip '5.x' DLL.
-      NULL };
-  const char* hiprtc_paths[] = {
-      "hiprtc0801.dll",
-      "hiprtc0800.dll",
-      "hiprtc0717.dll",
-      "hiprtc0716.dll",
-      "hiprtc0715.dll",
-      "hiprtc0714.dll",
-      // Early 7.14 builds used this name before switching to hiprtc0714.dll.
-      "hiprtc07014.dll",
-      "hiprtc07013.dll",
-      "hiprtc07012.dll",
-      "hiprtc07011.dll",
-      "hiprtc07010.dll",
-      "hiprtc0709.dll",
-      "hiprtc0708.dll",
-      "hiprtc0707.dll",
-      "hiprtc0706.dll",
-      "hiprtc0705.dll",
-      "hiprtc0704.dll",
-      "hiprtc0703.dll",
-      "hiprtc0702.dll",
-      "hiprtc0701.dll",
-      "hiprtc0700.dll",
-      "hiprtc0605.dll",
-      "hiprtc0604.dll",
-      "hiprtc0603.dll",
-      "hiprtc0602.dll",
-      "hiprtc0601.dll",
-      "hiprtc0600.dll",
-      "hiprtc0507.dll",  
-      "hiprtc0506.dll", 
-      "hiprtc0505.dll", 
-      "hiprtc0504.dll",
-      "hiprtc0503.dll",
-      NULL };
-#elif defined(__APPLE__)
-  // Default installation path. 
-  const char *hip_paths[] = {"", NULL};
-  const char* hiprtc_paths[] = { NULL };
-#else
-  const char *hip_paths[] = {
-      // Each release is installed in its own '/opt/rocm/core-<MAJOR>.<MINOR>' directory,
-      "/opt/rocm/core-10.1/lib/libamdhip64.so.8",
-      "/opt/rocm/core-10.0/lib/libamdhip64.so.8",
-      "/opt/rocm/core-10/lib/libamdhip64.so.8",
-
-      "/opt/rocm/core-10.1/lib/libamdhip64.so.7",
-      "/opt/rocm/core-10.0/lib/libamdhip64.so.7",
-      "/opt/rocm/core-10/lib/libamdhip64.so.7",
-
-      "/opt/rocm/core-7.16/lib/libamdhip64.so.7",
-      "/opt/rocm/core-7.15/lib/libamdhip64.so.7",
-      "/opt/rocm/core-7.14/lib/libamdhip64.so.7",
-      "/opt/rocm/core-7/lib/libamdhip64.so.7",
-
-      // .. then the versioned libraries of the traditional layout.
-      "/opt/rocm/hip/lib/libamdhip64.so.8",
-      "/opt/rocm/lib/libamdhip64.so.8",
-      "libamdhip64.so.8",
-
-      "/opt/rocm/hip/lib/libamdhip64.so.7",
-      "/opt/rocm/lib/libamdhip64.so.7", 
-      "libamdhip64.so.7",
-
-      "/opt/rocm/hip/lib/libamdhip64.so.6",
-      "/opt/rocm/lib/libamdhip64.so.6", 
-      "libamdhip64.so.6",
-
-      "/opt/rocm/hip/lib/libamdhip64.so.5",
-      "/opt/rocm/lib/libamdhip64.so.5", 
-      "libamdhip64.so.5",
-
-      // .. if it doesn't exist, we take the generic symbolic link.
-      "/opt/rocm/core/lib/libamdhip64.so",
-      "/opt/rocm/hip/lib/libamdhip64.so",
-      "/opt/rocm/lib/libamdhip64.so",
-      "libamdhip64.so",
-
-      NULL };
-
-  const char* hiprtc_paths[] = {
-
-      // See the comment about the 'core-*' directories in 'hip_paths'.
-      "/opt/rocm/core-10.1/lib/libhiprtc.so.8",
-      "/opt/rocm/core-10.0/lib/libhiprtc.so.8",
-      "/opt/rocm/core-10/lib/libhiprtc.so.8",
-
-      "/opt/rocm/core-10.1/lib/libhiprtc.so.7",
-      "/opt/rocm/core-10.0/lib/libhiprtc.so.7",
-      "/opt/rocm/core-10/lib/libhiprtc.so.7",
-
-      "/opt/rocm/core-7.16/lib/libhiprtc.so.7",
-      "/opt/rocm/core-7.15/lib/libhiprtc.so.7",
-      "/opt/rocm/core-7.14/lib/libhiprtc.so.7",
-      "/opt/rocm/core-7/lib/libhiprtc.so.7",
-
-      // .. then the versioned libraries of the traditional layout.
-      "/opt/rocm/hip/lib/libhiprtc.so.8",
-      "/opt/rocm/lib/libhiprtc.so.8",
-      "libhiprtc.so.8",
-
-      "/opt/rocm/hip/lib/libhiprtc.so.7",
-      "/opt/rocm/lib/libhiprtc.so.7", 
-      "libhiprtc.so.7",
-
-      "/opt/rocm/hip/lib/libhiprtc.so.6",
-      "/opt/rocm/lib/libhiprtc.so.6", 
-      "libhiprtc.so.6",
-
-      "/opt/rocm/hip/lib/libhiprtc.so.5",
-      "/opt/rocm/lib/libhiprtc.so.5", 
-      "libhiprtc.so.5",
-
-      // .. if it doesn't exist, we take the generic symbolic link.
-      "/opt/rocm/core/lib/libhiprtc.so",
-      "/opt/rocm/hip/lib/libhiprtc.so",
-      "/opt/rocm/lib/libhiprtc.so",
-      "libhiprtc.so",
-      NULL };
-
-#endif
-
 
   static int initialized = 0;
   static int s_resultDriver = 0;
@@ -771,9 +836,22 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
     return;
   }
 
+  /* Load library. */
+  hip_lib = dynamic_library_open_find(customPaths_Hip, "ORO_AMDHIP64_PATH", getHipBuiltinPaths);
+  if (hip_lib == NULL) {
+    s_resultDriver = HIPEW_ERROR_OPEN_FAILED;
+    s_resultRtc = HIPEW_NOT_INITIALIZED;
+    *resultDriver = s_resultDriver;
+    *resultRtc = s_resultRtc;
+    return;
+  }
+
 #ifdef _WIN32
-  /* Test for driver version. */
-  if(hipewHasOldDriver(customPaths_Hip ? customPaths_Hip[0] : hip_paths[0])) {
+  /* Test for driver version, on the DLL that has actually been loaded. */
+  char hipLoadedPath[MAX_PATH];
+  if (GetModuleFileNameA(hip_lib, hipLoadedPath, MAX_PATH) != 0 && hipewHasOldDriver(hipLoadedPath)) {
+    dynamic_library_close(hip_lib);
+    hip_lib = NULL;
     s_resultDriver = HIPEW_ERROR_OLD_DRIVER;
     s_resultRtc = HIPEW_NOT_INITIALIZED;
     *resultDriver = s_resultDriver;
@@ -782,17 +860,7 @@ void hipewInit( int* resultDriver, int* resultRtc, uint32_t flags, const char** 
   }
 #endif
 
-  /* Load library. */
-  hip_lib = dynamic_library_open_find(customPaths_Hip ? customPaths_Hip : hip_paths);
-  hiprtc_lib = dynamic_library_open_find(customPaths_Hiprtc ? customPaths_Hiprtc : hiprtc_paths);
-
-  if (hip_lib == NULL) {
-    s_resultDriver = HIPEW_ERROR_ATEXIT_FAILED;
-    s_resultRtc = HIPEW_NOT_INITIALIZED;
-	*resultDriver = s_resultDriver;
-	*resultRtc = s_resultRtc;
-    return;
-  }
+  hiprtc_lib = dynamic_library_open_find(customPaths_Hiprtc, "ORO_HIPRTC_PATH", getHiprtcBuiltinPaths);
 
 
 
