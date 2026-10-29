@@ -54,6 +54,7 @@
 #include <vector>
 
 #ifdef _WIN32
+#  define NOMINMAX
 #  define WIN32_LEAN_AND_MEAN
 #  define VC_EXTRALEAN
 #  include <windows.h>
