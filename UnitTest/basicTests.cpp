@@ -280,7 +280,7 @@ TEST_F( OroTestBase, link )
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
 
-	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::string( "0" );
+	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::to_string( props.minor );
 
 	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
 											:  std::vector<const char *>({ "--device-c", arch.c_str() });
@@ -443,7 +443,7 @@ TEST_F( OroTestBase, link_null_name )
 	std::vector<char> data0;
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
-	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::string( "0" );
+	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::to_string( props.minor );
 	std::vector<const char*> opts = isAmd ? std::vector<const char *>({ "-fgpu-rdc", "-c", "--cuda-device-only" })
 											:  std::vector<const char *>({ "--device-c", arch.c_str() });
 	{
@@ -584,7 +584,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc )
 	std::vector<char> data0;
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
-	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::string( "0" );
+	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::to_string( props.minor );
 	{
 		std::string bcFile = isAmd ? "../UnitTest/bitcodes/moduleTestFunc-hip-amdgcn-amd-amdhsa.bc" : "../UnitTest/bitcodes/moduleTestFunc.fatbin";
 		loadFile( bcFile.c_str(), data1 );
@@ -667,7 +667,7 @@ TEST_F( OroTestBase, link_bundledBc_with_bc_loweredName )
 	std::vector<char> data0;
 	std::vector<char> data1;
 	const bool isAmd = oroGetCurAPI( 0 ) == ORO_API_HIP;
-	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::string( "0" );
+	std::string arch = "-arch=sm_" + std::to_string( props.major ) + std::to_string( props.minor );
 	const char* funcName = "testKernel<0>";
 	std::string loweredNameStr;
 	orortcProgram prog;
