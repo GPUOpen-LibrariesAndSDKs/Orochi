@@ -15,5 +15,5 @@ if not defined OROCHI_OFFLOAD_ARCH set "OROCHI_OFFLOAD_ARCH=gfx900,gfx906,gfx908
 
 rem See generate_bitcodes.sh for why each flag is needed.
 for %%S in (moduleTestKernel moduleTestFunc) do (
-	"%CXX%" -x hip -O3 --no-offload-new-driver --cuda-device-only -fgpu-rdc -c -emit-llvm --gpu-bundle-output --offload-arch=%OROCHI_OFFLOAD_ARCH% -cuid=%%S %DEVLIB% ../%%S.cpp -o %%S-hip-amdgcn-amd-amdhsa.bc || exit /b 1
+	"%CXX%" -x hip -O3 -Xclang -fno-cuda-host-device-constexpr --no-offload-new-driver --cuda-device-only -fgpu-rdc -c -emit-llvm --gpu-bundle-output --offload-arch=%OROCHI_OFFLOAD_ARCH% -cuid=%%S %DEVLIB% ../%%S.cpp -o %%S-hip-amdgcn-amd-amdhsa.bc || exit /b 1
 )

@@ -27,6 +27,7 @@ def amdclang():
     except FileNotFoundError:
         # Older HIP SDKs ship only hipcc, which takes the same flags ( and adds -x hip / -O3 itself ).
         command = [ rocmTool( "hipcc" ) ]
+    command += [ "-Xclang", "-fno-cuda-host-device-constexpr" ]
     root = rocmRoot()
     # pip-installed ROCm (TheRock) keeps the device libraries only under lib/llvm.
     devLib = os.path.join( root, "lib", "llvm", "amdgcn", "bitcode" )
