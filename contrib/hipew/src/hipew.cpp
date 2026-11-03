@@ -596,10 +596,10 @@ std::string lastLoadError() {
 
 #if defined(_WIN32)
 
-// Candidates are tried newest first: 'amdhip64_8.dll' .. 'amdhip64_6.dll' (HIP 8.x .. 6.x), then the unversioned DLL.
+// Candidates are tried newest first: 'amdhip64_12.dll' .. 'amdhip64_6.dll' (HIP 12.x .. 6.x), then the unversioned DLL.
 PathList getHipBuiltinPaths() {
   PathList paths;
-  for (int version = 8; version >= 6; --version) {
+  for (int version = 12; version >= 6; --version) {
     paths.push_back("amdhip64_" + std::to_string(version) + ".dll");
   }
   paths.push_back("amdhip64.dll");  // <- hip '5.x' DLL.
@@ -612,8 +612,8 @@ PathList getHiprtcBuiltinPaths() {
   struct Range {
     int major, maxMinor, minMinor;
   };
-  // Newest major first: 8.1-8.0, 7.17-7.0, 6.5-6.0, 5.7-5.3 (earlier 5.x releases are not probed).
-  constexpr Range ranges[] = {{8, 1, 0}, {7, 17, 0}, {6, 5, 0}, {5, 7, 3}};
+  // Newest major first: 12.99-12.0 .. 7.99-7.0, 6.5-6.0, 5.7-5.3 (earlier 5.x releases are not probed).
+  constexpr Range ranges[] = {{12, 99, 0}, {11, 99, 0}, {10, 99, 0}, {9, 99, 0}, {8, 99, 0}, {7, 99, 0}, {6, 5, 0}, {5, 7, 3}};
 
   PathList paths;
   for (const Range &range : ranges) {
@@ -693,11 +693,11 @@ PathList getLinuxBuiltinPaths(const std::string &libName) {
   };
 
   for (const std::string &dir : getRocmCoreLibDirs()) {
-    for (const char *suffix : {".8", ".7", ""}) {
+    for (const char *suffix : {".12", ".11", ".10", ".9", ".8", ".7", ""}) {
       add(dir, suffix);
     }
   }
-  for (int soVersion = 8; soVersion >= 5; --soVersion) {
+  for (int soVersion = 12; soVersion >= 5; --soVersion) {
     for (const char *dir : {"/opt/rocm/hip/lib", "/opt/rocm/lib", ""}) {
       add(dir, "." + std::to_string(soVersion));
     }
