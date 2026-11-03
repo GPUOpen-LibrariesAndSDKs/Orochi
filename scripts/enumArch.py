@@ -25,8 +25,8 @@ def amdclang():
     try:
         command = [ rocmTool( "amdclang++" ) ]
     except FileNotFoundError:
-        # Older HIP SDKs on Windows ship only clang++, the same driver under another name.
-        command = [ rocmTool( "clang++" ) ]
+        # Older HIP SDKs ship only hipcc, which takes the same flags ( and adds -x hip / -O3 itself ).
+        command = [ rocmTool( "hipcc" ) ]
     root = rocmRoot()
     # pip-installed ROCm (TheRock) keeps the device libraries only under lib/llvm.
     devLib = os.path.join( root, "lib", "llvm", "amdgcn", "bitcode" )

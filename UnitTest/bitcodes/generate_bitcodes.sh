@@ -4,7 +4,8 @@ set -e
 cd "$(dirname "$0")"
 
 ROCM="${ROCM_PATH:-${HIP_PATH:-/opt/rocm}}"
-for CXX in "$ROCM/lib/llvm/bin/amdclang++" "$ROCM/bin/amdclang++" "$ROCM/llvm/bin/amdclang++"; do
+# Older HIP SDKs ship only hipcc, which takes the same flags.
+for CXX in "$ROCM/lib/llvm/bin/amdclang++" "$ROCM/bin/amdclang++" "$ROCM/llvm/bin/amdclang++" "$ROCM/bin/hipcc"; do
 	[ -x "$CXX" ] && break
 done
 # pip-installed ROCm (TheRock) keeps the device libraries only under lib/llvm.
