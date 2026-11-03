@@ -20,6 +20,6 @@ ARCH="${OROCHI_OFFLOAD_ARCH:-gfx900,gfx906,gfx908,gfx90a,gfx942,gfx1010,gfx1011,
 # -cuid: a fixed id instead of a random one keeps the output reproducible.
 # No --offload-compress: orortcLink rejects compressed (CCOB) bundles.
 for SRC in moduleTestKernel moduleTestFunc; do
-	"$CXX" -x hip -O3 --no-offload-new-driver --cuda-device-only -fgpu-rdc -c -emit-llvm --gpu-bundle-output \
+	"$CXX" -x hip -O3 -Xclang -fno-cuda-host-device-constexpr --no-offload-new-driver --cuda-device-only -fgpu-rdc -c -emit-llvm --gpu-bundle-output \
 		--offload-arch="$ARCH" -cuid="$SRC" $DEVLIB "../$SRC.cpp" -o "$SRC-hip-amdgcn-amd-amdhsa.bc"
 done
