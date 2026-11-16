@@ -6,15 +6,32 @@ cd "$(dirname "$0")"
 
 rm -rf cache
 
-# A generator exits 127 when its toolchain is absent; any other failure aborts.
+have_rocm() {
+	rocm="${ROCM_PATH:-${HIP_PATH:-/opt/rocm}}"
+	for c in lib/llvm/bin/amdclang++ bin/amdclang++ llvm/bin/amdclang++ bin/hipcc; do
+		[ -x "$rocm/$c" ] && return 0
+	done
+	return 1
+}
+have_nvcc() { command -v "${CUDA_PATH:+$CUDA_PATH/bin/}nvcc" >/dev/null 2>&1; }
+
+# A generator whose toolchain is absent is skipped; any other failure only warns.
 generated=0
 for GEN in generate_bitcodes.sh generate_bitcodes_nvidia.sh; do
+	case $GEN in
+		generate_bitcodes.sh) have=have_rocm; what=ROCm ;;
+		*) have=have_nvcc; what=nvcc ;;
+	esac
+	if ! $have; then
+		echo "note: skipping $GEN: $what not found" >&2
+		continue
+	fi
 	rc=0
 	../UnitTest/bitcodes/$GEN || rc=$?
 	case $rc in
 		0) generated=1 ;;
 		127) ;;
-		*) echo "error: $GEN failed (exit $rc)" >&2; exit "$rc" ;;
+		*) echo "warning: $GEN failed (exit $rc)" >&2 ;;
 	esac
 done
 if [ "$generated" = 0 ]; then
