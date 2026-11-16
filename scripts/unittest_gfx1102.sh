@@ -1,4 +1,3 @@
-rm -rf cache
-cd ../UnitTest/bitcodes && ./generate_bitcodes_gfx1102.sh
-cd ../../scripts
-../dist/bin/Release/UnitTest64 --gtest_filter=-*link*:*getErrorString* --gtest_output=xml:../result.xml
+#!/bin/sh
+export OROCHI_OFFLOAD_ARCH=gfx1102
+UNITTEST_FILTER='-*link*:*getErrorString*' exec "$(dirname "$0")/unittest.sh"

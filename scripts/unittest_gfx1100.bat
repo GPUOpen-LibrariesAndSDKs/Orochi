@@ -1,5 +1,4 @@
-rd /s /q cache
-cd ..\UnitTest\bitcodes
-call generate_bitcodes_gfx1100.bat
-cd ..\..\scripts
-..\dist\bin\Release\UnitTest64 --gtest_filter=-*getErrorString* --gtest_output=xml:../result.xml
+@echo off
+set "OROCHI_OFFLOAD_ARCH=gfx1100"
+set "UNITTEST_FILTER=-*getErrorString*"
+call "%~dp0unittest.bat"
