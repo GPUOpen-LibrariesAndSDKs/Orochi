@@ -32,8 +32,11 @@ project "UnitTest"
         links { "pthread" }
     filter {}
 
-    -- Read by demosTest.cpp to locate the demo binaries; `!` keeps the path absolute.
-    defines { 'ORO_DEMO_BIN_DIR="%{!cfg.targetdir}"' }
+    -- Read by demosTest.cpp to locate the demo binaries; relative to scripts/, where the tests run.
+    local demoBinDir = path.join(
+        path.getrelative(path.getabsolute("../scripts"), path.getabsolute(_OPTIONS["distdir"] or "dist")),
+        "bin/%{cfg.buildcfg}")
+    defines { 'ORO_DEMO_BIN_DIR="' .. demoBinDir .. '"' }
 
     files { "*.cpp", "*.h" }
     removefiles { "moduleTestFunc.cpp", "moduleTestKernel.cpp" }
