@@ -8,6 +8,11 @@ ROCM="${ROCM_PATH:-${HIP_PATH:-/opt/rocm}}"
 for CXX in "$ROCM/lib/llvm/bin/amdclang++" "$ROCM/bin/amdclang++" "$ROCM/llvm/bin/amdclang++" "$ROCM/bin/hipcc"; do
 	[ -x "$CXX" ] && break
 done
+# 127 tells unittest.sh the toolchain is absent rather than the build broken.
+if [ ! -x "$CXX" ]; then
+	echo "error: no amdclang++/hipcc under $ROCM (set ROCM_PATH)" >&2
+	exit 127
+fi
 # pip-installed ROCm (TheRock) keeps the device libraries only under lib/llvm.
 DEVLIB=""
 if [ ! -d "$ROCM/amdgcn/bitcode" ] && [ -d "$ROCM/lib/llvm/amdgcn/bitcode" ]; then
