@@ -34,7 +34,7 @@ project "UnitTest"
 
     -- Read by demosTest.cpp to locate the demo binaries; relative to scripts/, where the tests run.
     local demoBinDir = path.join(
-        path.getrelative(path.getabsolute("../scripts"), path.getabsolute(_OPTIONS["distdir"] or "dist")),
+        path.getrelative(path.getabsolute("../scripts"), path.getabsolute(_OPTIONS["distdir"] or "dist", _MAIN_SCRIPT_DIR)),
         "bin/%{cfg.buildcfg}")
     defines { 'ORO_DEMO_BIN_DIR="' .. demoBinDir .. '"' }
 
