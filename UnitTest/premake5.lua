@@ -10,6 +10,10 @@ project "Unittest"
    if os.istarget("linux") then
       links { "pthread" }
    end
+   -- set by the root premake5.lua
+   if buildVulkanDemo then
+      defines { "ORO_HAS_VULKAN_DEMO" }
+   end
       includedirs { "../" }
       files { "../Orochi/**.h", "../Orochi/**.cpp" }
       files { "*.cpp", "*.h" }
