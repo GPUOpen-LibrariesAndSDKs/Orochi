@@ -1,26 +1,10 @@
 #pragma once
 #include <Orochi/Orochi.h>
-#include <string.h>
-#include <stdio.h>
+#include <Test/CommandLine.h>
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <vector>
-
-inline
-oroApi getApiType( int argc, char** argv )
-{
-	// By default, the 2 API are enabled, and will be automatically selected by Orochi depending on the devices.
-	oroApi api = ( oroApi )( ORO_API_CUDA | ORO_API_HIP ); 
-
-	if( argc >= 2 )
-	{
-		if( strcmp( argv[1], "hip" ) == 0 )
-			api = ORO_API_HIP;
-		if( strcmp( argv[1], "cuda" ) == 0 )
-			api = ORO_API_CUDA;
-	}
-	return api;
-}
 
 // return true if error
 inline bool checkError( oroError e )
@@ -29,11 +13,11 @@ inline bool checkError( oroError e )
 	{
 		const char* pStr = nullptr;
 		oroGetErrorString( e, &pStr );
-		printf("ERROR==================\n");
+		std::printf("ERROR==================\n");
 		if ( pStr )
-			printf("%s\n", pStr);
+			std::printf("%s\n", pStr);
 		else
-			printf("<No Error String>\n");
+			std::printf("<No Error String>\n");
 		return true;
 	}
 	return false;
@@ -44,7 +28,7 @@ inline bool checkError( orortcResult e )
 {
 	if ( e != ORORTC_SUCCESS )
 	{
-		printf("ERROR in RTC==================\n");
+		std::printf("ERROR in RTC==================\n");
 		return true;
 	}
 	return false;

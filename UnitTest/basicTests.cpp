@@ -58,14 +58,15 @@ TEST_F(OroTestBase, deviceGetSet)
 	if ( !isAmd )
 		return;
 
-	int deviceIndex = 0;
+	// HIP devices come first in the Orochi ordering, so the ordinal is also the raw HIP index here.
+	int deviceIndex = g_deviceIndex;
 	OROCHECK(oroSetDevice(deviceIndex));
 	deviceIndex = -1;
 	OROCHECK(oroGetDevice(&deviceIndex));
-	OROASSERT(deviceIndex == 0);
+	OROASSERT(deviceIndex == g_deviceIndex);
 	deviceIndex = -1;
 	OROCHECK(oroCtxGetDevice(&deviceIndex));
-	OROASSERT(deviceIndex == 0);
+	OROASSERT(deviceIndex == g_deviceIndex);
 }
 
 TEST_F( OroTestBase, kernelExec ) 
