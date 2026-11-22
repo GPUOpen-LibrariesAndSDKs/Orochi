@@ -52,9 +52,9 @@ int main( int argc, char** argv )
 	ERROR_CHECK( e );
 
 	oroDevice device;
-	// Get the device at index 0 (choose the index corresponding to your RDNA3 GPU in case you have multiple GPUs)
-	e = oroDeviceGet( &device, 0 );
-	ERROR_CHECK( e );
+	// '--device <n>' should name an RDNA3 GPU: this Demo only runs on HIP.
+	if( !acquireDevice( argc, argv, device ) )
+		return OROCHI_TEST_RETCODE__ERROR;
 
 	char name[128];
 	e = oroDeviceGetName( name, 128, device );

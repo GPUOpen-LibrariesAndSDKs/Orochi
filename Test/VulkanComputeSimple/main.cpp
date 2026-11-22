@@ -304,7 +304,8 @@ int main(int argc, char **argv) {
 	oroError e;
 	e = oroInit(0);
 	oroDevice device;
-	e = oroDeviceGet(&device, 0);
+	if( !acquireDevice( argc, argv, device ) )
+		return OROCHI_TEST_RETCODE__ERROR;
 	oroCtx ctx;
 	e = oroCtxCreate(&ctx, 0, device);
 	oroDeviceProp props;
