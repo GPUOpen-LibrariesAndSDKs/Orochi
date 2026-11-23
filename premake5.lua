@@ -115,6 +115,7 @@ workspace "YamatanoOrochi"
    group "Demos"
    	include "./Test"
    	include "./Test/DeviceEnum"
+	include "./Test/SPIRV"
 	include "./Test/WMMA"
 	include "./Test/Texture"
    
