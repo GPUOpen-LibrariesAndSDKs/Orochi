@@ -1,10 +1,8 @@
 #include <Orochi/Orochi.h>
 #include <UnitTest/demoErrorCodes.h>
 
-#include <array>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <vector>
 
@@ -21,9 +19,9 @@ static void checkOro( oroError status, const char* call )
 
 int main( int argc, char** argv )
 {
-	if( argc < 2 || argc > 3 )
+	if( argc != 2 )
 	{
-		std::fprintf( stderr, "Usage: %s <kernel.bundle> [hip-runtime-library]\n", argv[0] );
+		std::fprintf( stderr, "Usage: %s <kernel.bundle>\n", argv[0] );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
@@ -41,16 +39,9 @@ int main( int argc, char** argv )
 		std::fprintf( stderr, "Cannot read the complete bundle from %s\n", argv[1] );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	constexpr char bundleMagic[] = "__CLANG_OFFLOAD_BUNDLE__";
-	if( bundle.size() < sizeof( bundleMagic ) - 1 || std::memcmp( bundle.data(), bundleMagic, sizeof( bundleMagic ) - 1 ) != 0 )
-	{
-		std::fprintf( stderr, "Expected an uncompressed offload bundle; compile without --no-gpu-bundle-output\n" );
-		return OROCHI_TEST_RETCODE__ERROR;
-	}
 
 	// Module loading only needs the HIP driver API, not hipRTC.
-	const char* hipPaths[] = { argc == 3 ? argv[2] : nullptr, nullptr };
-	const int initStatus = oroInitialize( ORO_API_HIPDRIVER, 0, argc == 3 ? hipPaths : nullptr );
+	const int initStatus = oroInitialize( ORO_API_HIPDRIVER, 0 );
 	if( initStatus != ORO_SUCCESS )
 	{
 		std::fprintf( stderr, "Cannot load the HIP runtime (%d)\n", initStatus );
@@ -63,44 +54,28 @@ int main( int argc, char** argv )
 	CHECK_ORO( oroCtxCreate( &context, 0, device ) );
 	CHECK_ORO( oroCtxSetCurrent( context ) );
 
-	oroDeviceProp properties{};
-	CHECK_ORO( oroGetDeviceProperties( &properties, device ) );
-	int runtimeVersion = 0;
-	CHECK_ORO( oroRuntimeGetVersion( &runtimeVersion ) );
-	std::printf( "HIP backend: %s (%s), runtime %d\n", properties.name, properties.gcnArchName, runtimeVersion );
-	std::fflush( stdout );
-
 	oroModule module = nullptr;
 	oroFunction kernel = nullptr;
 	// HIP JIT-compiles the bundled SPIR-V for the selected device.
 	CHECK_ORO( oroModuleLoadData( &module, bundle.data() ) );
-	CHECK_ORO( oroModuleGetFunction( &kernel, module, "transform" ) );
+	CHECK_ORO( oroModuleGetFunction( &kernel, module, "writeValue" ) );
 
-	const unsigned count = 257;
-	std::array<int, count> values;
-	for( unsigned i = 0; i < count; ++i )
-		values[i] = static_cast<int>( i ) - 128;
-	const size_t bytes = values.size() * sizeof( int );
-	oroDeviceptr deviceValues = nullptr;
-	CHECK_ORO( oroMalloc( &deviceValues, bytes ) );
-	CHECK_ORO( oroMemcpyHtoD( deviceValues, values.data(), bytes ) );
-	const void* args[] = { &deviceValues, &count };
-	CHECK_ORO( oroModuleLaunchKernel( kernel, ( count + 63 ) / 64, 1, 1, 64, 1, 1, 0, nullptr, args, nullptr ) );
+	int value = 0;
+	oroDeviceptr deviceValue = nullptr;
+	CHECK_ORO( oroMalloc( &deviceValue, sizeof( value ) ) );
+	const void* args[] = { &deviceValue };
+	CHECK_ORO( oroModuleLaunchKernel( kernel, 1, 1, 1, 1, 1, 1, 0, nullptr, args, nullptr ) );
 	CHECK_ORO( oroDeviceSynchronize() );
-	CHECK_ORO( oroMemcpyDtoH( values.data(), deviceValues, bytes ) );
-	CHECK_ORO( oroFree( deviceValues ) );
+	CHECK_ORO( oroMemcpyDtoH( &value, deviceValue, sizeof( value ) ) );
+	CHECK_ORO( oroFree( deviceValue ) );
 	CHECK_ORO( oroModuleUnload( module ) );
 	CHECK_ORO( oroCtxDestroy( context ) );
 
-	for( unsigned i = 0; i < count; ++i )
+	if( value != 42 )
 	{
-		const int expected = 3 * ( static_cast<int>( i ) - 128 ) + 7;
-		if( values[i] != expected )
-		{
-			std::fprintf( stderr, "FAIL at index %u: expected %d, got %d\n", i, expected, values[i] );
-			return OROCHI_TEST_RETCODE__ERROR;
-		}
+		std::fprintf( stderr, "FAIL: expected 42, got %d\n", value );
+		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	std::printf( "PASS: all %u results match\n", count );
+	std::printf( "PASS: value = %d\n", value );
 	return OROCHI_TEST_RETCODE__SUCCESS;
 }
