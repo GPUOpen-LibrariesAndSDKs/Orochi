@@ -99,9 +99,6 @@ The test applications run on HIP by default. If you want to run on CUDA, run the
 
 The source code for the test applications can be found [here](./Test/).
 
-The [SPIR-V example](./Test/SPIRV/) demonstrates loading a precompiled
-`amdgcnspirv` bundle through the HIP backend and verifying kernel execution.
-
 ----
 
 ## Contribution
