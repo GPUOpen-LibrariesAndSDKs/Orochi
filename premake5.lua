@@ -1,6 +1,6 @@
 -- Orochi (YamatanoOrochi) workspace definition, build options, and helpers.
 
--- runtimechecks is a 5.0.0 API; older premake fails obscurely.
+-- usage/uses, runtimechecks and {COPYFILEIFNEWER} are 5.0.0 APIs; older premake fails obscurely.
 require("premake", ">=5.0.0")
 
 -- Snapshot before newoption so validateFlagOptions can tell premake's own options apart.
@@ -83,38 +83,15 @@ newoption {
 -- Utility Functions
 -- -----------------------------------------------------------------------------
 
-function copydir(src_dir, dst_dir, filter, single_dst_dir)
-	if not os.isdir(src_dir) then
-		print("copydir FAILED: " .. src_dir .. " is not an existing directory!" )
-		return nil
-	end
-	filter = filter or "**"
-	src_dir = src_dir .. "/"
---	print("copy '%s' to '%s'.", src_dir .. filter, dst_dir)
-	dst_dir = dst_dir .. "/"
-	local dir = path.rebase(".",path.getabsolute("."), src_dir) -- root dir, relative from src_dir
-
-	os.chdir( src_dir ) -- change current directory to src_dir
-		local matches = os.matchfiles(filter)
-	os.chdir( dir ) -- change current directory back to root
-
-	local counter = 0
-	for k, v in ipairs(matches) do
-		local target = iif(single_dst_dir, path.getname(v), v)
-		--make sure, that directory exists or os.copyfile() fails
-		os.mkdir( path.getdirectory(dst_dir .. target))
-		if os.copyfile( src_dir .. v, dst_dir .. target) then
-			counter = counter + 1
-		end
-	end
-
-	if counter == #matches then
---		print("    %d files copied.", counter)
-		return true
-	else
---		print("    %d/%d files copied.", counter, #matches)
-		return nil
-	end
+-- Ends with `filter {}`, so call it at project scope, never inside a filter.
+function linkWin32SystemLibs()
+    filter "system:windows"
+        links {
+            "kernel32", "user32", "gdi32", "winspool", "comdlg32",
+            "advapi32", "shell32", "ole32", "oleaut32", "uuid",
+            "odbc32", "odbccp32"
+        }
+    filter {}
 end
 
 -- A switch takes no value, so `--clang=foo` would otherwise be read as "on".
@@ -151,12 +128,14 @@ workspace "YamatanoOrochi"
     targetdir      (path.join(_OPTIONS["distdir"] or "dist", "bin/%{cfg.buildcfg}"))
     startproject   "UnitTest"
 
-    filter "kind:StaticLib or SharedLib"
-        pic "On"
+    -- `uses` can list a static library before its dependents; GNU ld needs a group. Apple ld
+    -- resolves static libraries in any order and rejects --start-group.
+    filter "system:not macosx"
+        linkgroups "On"
     filter {}
 
-    filter "system:linux"
-        links { "dl" }
+    filter "kind:StaticLib or SharedLib"
+        pic "On"
     filter {}
 
     multiprocessorcompile "On"
@@ -271,21 +250,10 @@ workspace "YamatanoOrochi"
 -- Projects
 -- -----------------------------------------------------------------------------
 
-    copydir("./contrib/bin/win64", "./dist/bin/Debug/")
-    copydir("./contrib/bin/win64", "./dist/bin/RelWithDebInfo/")
-    copydir("./contrib/bin/win64", "./dist/bin/Release/")
-    if _OPTIONS["bakeKernel"] then
-        if os.ishost("windows") then
-            os.execute(".\\tools\\bakeKernel.bat")
-        else
-            os.execute(".\\tools\\bakeKernel.sh")
-        end
-    end
-
-    -- try to enable CUDA if possible.
-    include "./Orochi/enable_cuew"
-
+    include "./Orochi"
+    include "./ParallelPrimitives"
     include "./UnitTest"
+
     group "Demos"
         include "./Test"
         include "./Test/DeviceEnum"
