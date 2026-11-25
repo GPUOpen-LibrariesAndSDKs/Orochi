@@ -1,15 +1,29 @@
 name: Build
-on: [push]
+on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
     - name: configure
       run: sudo apt-get install python3
     - name: chmod
       run: chmod +x ./tools/premake5/linux64/premake5
     - name: premake
-      run: ./tools/premake5/linux64/premake5 gmake
+      run: ./tools/premake5/linux64/premake5 gmake --builddir=build
     - name: make
-      run: make -j Test
+      run: make -C build -j all
+    - name: generate-test
+      run: scripts/ci/generate-test.sh
+  # GitHub-hosted runners ship Visual Studio 2022, whose action writes a .sln.
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: microsoft/setup-msbuild@v2
+    - name: premake
+      run: .\tools\premake5\win\premake5.exe vs2022 --builddir=build
+    - name: msbuild
+      run: msbuild build\YamatanoOrochi.sln -p:Configuration=Release -p:Platform=x64 -m -v:m
