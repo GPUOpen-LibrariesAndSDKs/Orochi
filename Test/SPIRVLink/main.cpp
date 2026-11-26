@@ -20,8 +20,8 @@
 // `userKernel` (kernels/user.hip) calls `libVec` (kernels/lib.hip), a function that returns a 12-byte struct by
 // value, and writes 2 10 40. The project's pre-build step compiles the kernels with the HIP SDK compiler into
 // <executable dir>/SPIRVLink/, and two cases are run:
-//   1. lib.bundle + user.bundle linked at run time                    <- the case under test
-//   2. all.bundle, both units compiled as one module (kernels/all.hip) <- control
+//   1. lib.spv + user.spv linked at run time                          <- the case under test
+//   2. all.spv, both units compiled as one module (kernels/all.hip) <- control
 // Exit code 100 if both cases produce the expected values, 99 otherwise.
 // If arguments are given, they are the module list of a single custom case instead.
 //
@@ -174,13 +174,13 @@ int main( int argc, char** argv )
 	else
 	{
 		const std::string dir = executableDir() + "SPIRVLink/";
-		if( !std::ifstream( dir + "lib.bundle", std::ios::binary ).good() )
+		if( !std::ifstream( dir + "lib.spv", std::ios::binary ).good() )
 		{
-			std::fprintf( stderr, "Cannot find %slib.bundle; the pre-build step compiles it with the HIP SDK compiler\n", dir.c_str() );
+			std::fprintf( stderr, "Cannot find %slib.spv; the pre-build step compiles it with the HIP SDK compiler\n", dir.c_str() );
 			return OROCHI_TEST_RETCODE__ERROR;
 		}
-		ok = runCase( "Case 1: lib.bundle + user.bundle linked at run time with hipLink*", { dir + "lib.bundle", dir + "user.bundle" } ) && ok;
-		ok = runCase( "Case 2 (control): all.bundle, both units compiled as one module", { dir + "all.bundle" } ) && ok;
+		ok = runCase( "Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
+		ok = runCase( "Case 2 (control): all.spv, both units compiled as one module", { dir + "all.spv" } ) && ok;
 	}
 
 	check( oroCtxDestroy( context ), "oroCtxDestroy" );

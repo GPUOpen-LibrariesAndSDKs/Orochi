@@ -21,6 +21,7 @@ project "SPIRVLink"
 
    -- The SPIR-V modules are compiled before the executable, by the HIP SDK compiler found through HIP_PATH on
    -- Windows and ROCM_PATH (default /opt/rocm) elsewhere, into <targetdir>/SPIRVLink/ where the test loads them.
+   -- Raw SPIR-V (no offload bundle) is what hipLinkAddData( hipJitInputSpirv ) takes directly.
    local clang
    if os.istarget("windows") then
       local hipPath = os.getenv("HIP_PATH")
@@ -38,8 +39,8 @@ project "SPIRVLink"
       prebuildcommands { "{MKDIR} " .. out }
       for _, m in ipairs { "lib", "user", "all" } do
          prebuildcommands {
-            clang .. ' -x hip --offload-arch=amdgcnspirv --cuda-device-only -O3 "' .. path.join(kernels, m .. ".hip") ..
-            '" -o "' .. out .. "/" .. m .. '.bundle"'
+            clang .. ' -x hip --offload-arch=amdgcnspirv --cuda-device-only --no-gpu-bundle-output -O3 "' .. path.join(kernels, m .. ".hip") ..
+            '" -o "' .. out .. "/" .. m .. '.spv"'
          }
       end
    end

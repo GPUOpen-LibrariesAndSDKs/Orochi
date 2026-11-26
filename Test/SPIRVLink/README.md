@@ -1,16 +1,16 @@
 # SPIR-V run-time linking on the HIP backend (test)
 
-Companion to the `SPIRV` example. Two HIP translation units are compiled to AMDGCN SPIR-V
-(`--offload-arch=amdgcnspirv`): `kernels/lib.hip` defines `Vec3 libVec( Vec3 )`, a function that returns a
+Companion to the `SPIRV` example. Two HIP translation units are compiled to raw AMDGCN SPIR-V
+(`--offload-arch=amdgcnspirv --no-gpu-bundle-output`): `kernels/lib.hip` defines `Vec3 libVec( Vec3 )`, a function that returns a
 12-byte struct by value, and `kernels/user.hip` has a kernel that calls it and writes `2 10 40`. The project's
 pre-build step compiles them with the HIP SDK compiler (`HIP_PATH` on Windows, `ROCM_PATH` or `/opt/rocm`
 elsewhere) into `<executable dir>/SPIRVLink/`, so the modules always match the installed runtime.
 
 The test takes no arguments and runs two cases:
 
-1. `lib.bundle` + `user.bundle` linked at run time with `hipLinkCreate` / `hipLinkAddData( hipJitInputSpirv )` /
+1. `lib.spv` + `user.spv` linked at run time with `hipLinkCreate` / `hipLinkAddData( hipJitInputSpirv )` /
    `hipLinkComplete`, loaded with `oroModuleLoadData` — the case under test.
-2. `all.bundle`, both units compiled as one module (`kernels/all.hip`) — the control.
+2. `all.spv`, both units compiled as one module (`kernels/all.hip`) — the control.
 
 It exits with **100** when both cases produce the expected values and **99** otherwise, following Orochi's
 demo conventions. Currently case 1 fails; depending on the compiler/runtime pair it either returns wrong values
@@ -18,9 +18,9 @@ or `hipLinkComplete` fails with `hipErrorInvalidConfiguration`:
 
 ```
 $ ./dist/bin/Release/SPIRVLink64
-Case 1: lib.bundle + user.bundle linked at run time with hipLink*
+Case 1: lib.spv + user.spv linked at run time with hipLink*
   out = 0 0 40 (expected 2 10 40): FAIL
-Case 2 (control): all.bundle, both units compiled as one module
+Case 2 (control): all.spv, both units compiled as one module
   out = 2 10 40 (expected 2 10 40): PASS
 SPIRVLink: FAIL
 ```
@@ -34,7 +34,7 @@ Linux:
 
 ```sh
 ./tools/premake5/linux64/premake5 gmake
-make config=release_x64 SPIRVLink      # the pre-build step writes dist/bin/Release/SPIRVLink/{lib,user,all}.bundle
+make config=release_x64 SPIRVLink      # the pre-build step writes dist/bin/Release/SPIRVLink/{lib,user,all}.spv
 ./dist/bin/Release/SPIRVLink64
 ```
 
@@ -47,8 +47,8 @@ runtime that hipew loaded. To see where comgr fails, set `AMD_COMGR_EMIT_VERBOSE
 
 ## Cause
 
-The SPIR-V is correct: in `user.bundle` the imported `libVec` has the same function type as its definition in
-`lib.bundle` (`OpTypeFunction` returning `OpTypeStruct { float, float, float }`). The mismatch is introduced
+The SPIR-V is correct: in `user.spv` the imported `libVec` has the same function type as its definition in
+`lib.spv` (`OpTypeFunction` returning `OpTypeStruct { float, float, float }`). The mismatch is introduced
 when comgr translates each module back to LLVM IR separately (`amd-llvm-spirv -r --spirv-target-env=CL2.0
 --spirv-preserve-auxdata`, action `AMD_COMGR_ACTION_TRANSLATE_SPIRV_TO_BC`) before linking them:
 
