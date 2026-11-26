@@ -2,28 +2,26 @@
 #include <UnitTest/demoErrorCodes.h>
 
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <string>
 #include <vector>
 
-// Links the given AMDGCN SPIR-V modules at run time with hipLink* and runs `userKernel`, which calls a
-// function defined in another module that returns a 12-byte struct by value. Expected output: 2 10 40.
+// Test for linking AMDGCN SPIR-V modules at run time with hipLink* (no arguments needed).
 //
-// Orochi does not wrap hipLink* yet, so the four entry points are resolved from the HIP runtime that
-// hipew already loaded. Linux only.
-
-static void checkOro( oroError status, const char* call )
-{
-	if( status == oroSuccess ) return;
-	const char* message = nullptr;
-	oroGetErrorString( status, &message );
-	std::fprintf( stderr, "%s failed (%d): %s\n", call, static_cast<int>( status ), message ? message : "unknown error" );
-	std::exit( OROCHI_TEST_RETCODE__ERROR );
-}
-
-#define CHECK_ORO( call ) checkOro( call, #call )
+// `userKernel` (user.spv) calls `libVec` (lib.spv), a function that returns a 12-byte struct by value, and
+// writes 2 10 40. Two cases are run on the prebuilt modules in Test/SPIRVLink/spirv/ (regenerate them with
+// build_kernels.sh):
+//   1. lib.spv + user.spv linked at run time        <- the case under test
+//   2. all.spv, the same code pre-linked into one module <- control
+// Exit code 100 if both cases produce the expected values, 99 otherwise.
+// If arguments are given, they are the module list of a single custom case instead.
+//
+// Orochi does not wrap hipLink* yet, so the four entry points are resolved from the HIP runtime that hipew
+// already loaded. Linux only.
 
 typedef struct ihipLinkState_t* hipLinkState_t;
 constexpr int hipJitInputSpirv = 103;
@@ -33,103 +31,140 @@ typedef hipError_t ( *PFN_hipLinkAddData )( hipLinkState_t, int, void*, size_t, 
 typedef hipError_t ( *PFN_hipLinkComplete )( hipLinkState_t, void**, size_t* );
 typedef hipError_t ( *PFN_hipLinkDestroy )( hipLinkState_t );
 
-template <typename T>
-static T resolve( void* library, const char* name )
+static PFN_hipLinkCreate   linkCreate;
+static PFN_hipLinkAddData  linkAddData;
+static PFN_hipLinkComplete linkComplete;
+static PFN_hipLinkDestroy  linkDestroy;
+
+static bool check( oroError status, const char* call )
 {
-	T fn = reinterpret_cast<T>( dlsym( library, name ) );
-	if( !fn )
+	if( status == oroSuccess ) return true;
+	const char* message = nullptr;
+	oroGetErrorString( status, &message );
+	std::fprintf( stderr, "  %s failed (%d): %s\n", call, static_cast<int>( status ), message ? message : "unknown error" );
+	return false;
+}
+
+#define CHECK( call ) if( !check( call, #call ) ) return false
+#define CHECK_HIP( call ) if( !check( static_cast<oroError>( call ), #call ) ) return false
+
+static bool readFile( const std::string& path, std::vector<char>& data )
+{
+	std::ifstream input( path, std::ios::binary );
+	data.assign( ( std::istreambuf_iterator<char>( input ) ), std::istreambuf_iterator<char>() );
+	if( data.empty() ) std::fprintf( stderr, "  cannot read %s\n", path.c_str() );
+	return !data.empty();
+}
+
+// Directory with the prebuilt modules: Test/SPIRVLink/spirv/, relative to the current directory (repository
+// root) or to the executable (dist/bin/<config>/).
+static std::string findModuleDir()
+{
+	std::vector<std::string> candidates = { "Test/SPIRVLink/spirv/" };
+	char exe[4096];
+	const ssize_t n = readlink( "/proc/self/exe", exe, sizeof( exe ) - 1 );
+	if( n > 0 )
 	{
-		std::fprintf( stderr, "Cannot resolve %s from the HIP runtime\n", name );
-		std::exit( OROCHI_TEST_RETCODE__ERROR );
+		exe[n] = '\0';
+		std::string dir( exe );
+		dir.erase( dir.find_last_of( '/' ) + 1 );
+		candidates.push_back( dir + "../../../Test/SPIRVLink/spirv/" );
 	}
-	return fn;
+	for( const auto& dir : candidates )
+		if( std::ifstream( dir + "lib.spv", std::ios::binary ).good() ) return dir;
+	return "";
+}
+
+static bool runCase( const char* title, const std::vector<std::string>& paths )
+{
+	std::printf( "%s\n", title );
+	std::vector<std::vector<char>> modules( paths.size() );
+	for( size_t i = 0; i < paths.size(); ++i )
+		if( !readFile( paths[i], modules[i] ) ) return false;
+
+	hipLinkState_t link = nullptr;
+	CHECK_HIP( linkCreate( 0, nullptr, nullptr, &link ) );
+	for( size_t i = 0; i < modules.size(); ++i )
+		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), paths[i].c_str(), 0, nullptr, nullptr ) );
+	void*  binary	  = nullptr;
+	size_t binarySize = 0;
+	CHECK_HIP( linkComplete( link, &binary, &binarySize ) );
+
+	oroModule	module = nullptr;
+	oroFunction kernel = nullptr;
+	CHECK( oroModuleLoadData( &module, binary ) );
+	CHECK( oroModuleGetFunction( &kernel, module, "userKernel" ) );
+	CHECK_HIP( linkDestroy( link ) );
+
+	int			 values[3] = { 0, 0, 0 };
+	oroDeviceptr deviceValues = nullptr;
+	CHECK( oroMalloc( &deviceValues, sizeof( values ) ) );
+	CHECK( oroMemsetD8( deviceValues, 0, sizeof( values ) ) );
+	const void* args[] = { &deviceValues };
+	CHECK( oroModuleLaunchKernel( kernel, 1, 1, 1, 1, 1, 1, 0, nullptr, args, nullptr ) );
+	CHECK( oroDeviceSynchronize() );
+	CHECK( oroMemcpyDtoH( values, deviceValues, sizeof( values ) ) );
+	CHECK( oroFree( deviceValues ) );
+	CHECK( oroModuleUnload( module ) );
+
+	const bool ok = values[0] == 2 && values[1] == 10 && values[2] == 40;
+	std::printf( "  out = %d %d %d (expected 2 10 40): %s\n", values[0], values[1], values[2], ok ? "PASS" : "FAIL" );
+	return ok;
 }
 
 int main( int argc, char** argv )
 {
-	if( argc < 2 )
-	{
-		std::fprintf( stderr, "Usage: %s <module.spv>...\n", argv[0] );
-		return OROCHI_TEST_RETCODE__ERROR;
-	}
-
-	std::vector<std::vector<char>> modules;
-	for( int i = 1; i < argc; ++i )
-	{
-		std::ifstream input( argv[i], std::ios::binary );
-		modules.emplace_back( ( std::istreambuf_iterator<char>( input ) ), std::istreambuf_iterator<char>() );
-		if( modules.back().empty() )
-		{
-			std::fprintf( stderr, "Cannot read %s\n", argv[i] );
-			return OROCHI_TEST_RETCODE__ERROR;
-		}
-	}
-
 	const int initStatus = oroInitialize( ORO_API_HIPDRIVER, 0 );
 	if( initStatus != ORO_SUCCESS )
 	{
 		std::fprintf( stderr, "Cannot load the HIP runtime (%d)\n", initStatus );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	CHECK_ORO( oroInit( 0 ) );
+	if( !check( oroInit( 0 ), "oroInit" ) ) return OROCHI_TEST_RETCODE__ERROR;
 	oroDevice device;
-	CHECK_ORO( oroDeviceGet( &device, 0 ) );
+	if( !check( oroDeviceGet( &device, 0 ), "oroDeviceGet" ) ) return OROCHI_TEST_RETCODE__ERROR;
 	oroCtx context = nullptr;
-	CHECK_ORO( oroCtxCreate( &context, 0, device ) );
-	CHECK_ORO( oroCtxSetCurrent( context ) );
+	if( !check( oroCtxCreate( &context, 0, device ), "oroCtxCreate" ) ) return OROCHI_TEST_RETCODE__ERROR;
+	if( !check( oroCtxSetCurrent( context ), "oroCtxSetCurrent" ) ) return OROCHI_TEST_RETCODE__ERROR;
 
 	// The HIP runtime library is the one that provides hipModuleLoadData to hipew.
 	Dl_info info{};
-	if( !dladdr( reinterpret_cast<void*>( hipModuleLoadData ), &info ) || !info.dli_fname )
+	void*	hip = nullptr;
+	if( dladdr( reinterpret_cast<void*>( hipModuleLoadData ), &info ) && info.dli_fname )
+		hip = dlopen( info.dli_fname, RTLD_NOW | RTLD_NOLOAD );
+	if( !hip )
 	{
 		std::fprintf( stderr, "Cannot locate the HIP runtime library\n" );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	void* hip = dlopen( info.dli_fname, RTLD_NOW | RTLD_NOLOAD );
-	if( !hip )
+	linkCreate	 = reinterpret_cast<PFN_hipLinkCreate>( dlsym( hip, "hipLinkCreate" ) );
+	linkAddData	 = reinterpret_cast<PFN_hipLinkAddData>( dlsym( hip, "hipLinkAddData" ) );
+	linkComplete = reinterpret_cast<PFN_hipLinkComplete>( dlsym( hip, "hipLinkComplete" ) );
+	linkDestroy	 = reinterpret_cast<PFN_hipLinkDestroy>( dlsym( hip, "hipLinkDestroy" ) );
+	if( !linkCreate || !linkAddData || !linkComplete || !linkDestroy )
 	{
-		std::fprintf( stderr, "Cannot reopen %s\n", info.dli_fname );
+		std::fprintf( stderr, "hipLink* not found in %s (ROCm 6.4 or later is required)\n", info.dli_fname );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	auto linkCreate	  = resolve<PFN_hipLinkCreate>( hip, "hipLinkCreate" );
-	auto linkAddData  = resolve<PFN_hipLinkAddData>( hip, "hipLinkAddData" );
-	auto linkComplete = resolve<PFN_hipLinkComplete>( hip, "hipLinkComplete" );
-	auto linkDestroy  = resolve<PFN_hipLinkDestroy>( hip, "hipLinkDestroy" );
 
-	hipLinkState_t link = nullptr;
-	CHECK_ORO( static_cast<oroError>( linkCreate( 0, nullptr, nullptr, &link ) ) );
-	for( size_t i = 0; i < modules.size(); ++i )
-		CHECK_ORO( static_cast<oroError>(
-			linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), argv[i + 1], 0, nullptr, nullptr ) ) );
-	void*  binary	  = nullptr;
-	size_t binarySize = 0;
-	CHECK_ORO( static_cast<oroError>( linkComplete( link, &binary, &binarySize ) ) );
+	bool ok = true;
+	if( argc > 1 )
+	{
+		ok = runCase( "Custom case: modules from the command line linked at run time", std::vector<std::string>( argv + 1, argv + argc ) );
+	}
+	else
+	{
+		const std::string dir = findModuleDir();
+		if( dir.empty() )
+		{
+			std::fprintf( stderr, "Cannot find Test/SPIRVLink/spirv/; run from the repository root\n" );
+			return OROCHI_TEST_RETCODE__ERROR;
+		}
+		ok = runCase( "Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
+		ok = runCase( "Case 2 (control): all.spv, the same code pre-linked into one module", { dir + "all.spv" } ) && ok;
+	}
 
-	oroModule	module = nullptr;
-	oroFunction kernel = nullptr;
-	CHECK_ORO( oroModuleLoadData( &module, binary ) );
-	CHECK_ORO( oroModuleGetFunction( &kernel, module, "userKernel" ) );
-	CHECK_ORO( static_cast<oroError>( linkDestroy( link ) ) );
-
-	int			 values[3] = { 0, 0, 0 };
-	oroDeviceptr deviceValues = nullptr;
-	CHECK_ORO( oroMalloc( &deviceValues, sizeof( values ) ) );
-	CHECK_ORO( oroMemsetD8( deviceValues, 0, sizeof( values ) ) );
-	const void* args[] = { &deviceValues };
-	CHECK_ORO( oroModuleLaunchKernel( kernel, 1, 1, 1, 1, 1, 1, 0, nullptr, args, nullptr ) );
-	CHECK_ORO( oroDeviceSynchronize() );
-	CHECK_ORO( oroMemcpyDtoH( values, deviceValues, sizeof( values ) ) );
-	CHECK_ORO( oroFree( deviceValues ) );
-	CHECK_ORO( oroModuleUnload( module ) );
-	CHECK_ORO( oroCtxDestroy( context ) );
-
-	const bool ok = values[0] == 2 && values[1] == 10 && values[2] == 40;
-	std::printf(
-		"%d module(s): out = %d %d %d (expected 2 10 40): %s\n",
-		argc - 1,
-		values[0],
-		values[1],
-		values[2],
-		ok ? "PASS" : "FAIL" );
+	check( oroCtxDestroy( context ), "oroCtxDestroy" );
+	std::printf( "SPIRVLink: %s\n", ok ? "PASS" : "FAIL" );
 	return ok ? OROCHI_TEST_RETCODE__SUCCESS : OROCHI_TEST_RETCODE__ERROR;
 }

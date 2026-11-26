@@ -1,19 +1,26 @@
-# SPIR-V run-time linking on the HIP backend (reproducer)
+# SPIR-V run-time linking on the HIP backend (test)
 
 Companion to the `SPIRV` example. Two HIP translation units are compiled to relocatable AMDGCN SPIR-V
-(`--offload-arch=amdgcnspirv -fgpu-rdc`): `lib.hip` defines `Vec3 libVec( Vec3 )`, a function that returns a
-12-byte struct by value, and `user.hip` has a kernel that calls it. The demo links the modules at run time
-with `hipLinkCreate` / `hipLinkAddData( hipJitInputSpirv )` / `hipLinkComplete`, loads the result with
-`oroModuleLoadData` and runs the kernel. Expected output is `2 10 40`.
+(`--offload-arch=amdgcnspirv -fgpu-rdc`): `kernels/lib.hip` defines `Vec3 libVec( Vec3 )`, a function that
+returns a 12-byte struct by value, and `kernels/user.hip` has a kernel that calls it and writes `2 10 40`.
+The prebuilt modules are committed in `spirv/`, so the test needs no compiler at run time.
 
-With the two modules linked at run time the struct result is lost. The same two units pre-linked into one
-SPIR-V module give the right answer:
+The test takes no arguments and runs two cases:
+
+1. `lib.spv` + `user.spv` linked at run time with `hipLinkCreate` / `hipLinkAddData( hipJitInputSpirv )` /
+   `hipLinkComplete`, loaded with `oroModuleLoadData` — the case under test.
+2. `all.spv`, the same two units pre-linked into one SPIR-V module — the control.
+
+It exits with **100** when both cases produce the expected values and **99** otherwise, following Orochi's
+demo conventions. Currently case 1 fails:
 
 ```
-$ ./dist/bin/Release/SPIRVLink64 dist/SPIRVLink/lib.spv dist/SPIRVLink/user.spv
-2 module(s): out = 0 0 40 (expected 2 10 40): FAIL
-$ ./dist/bin/Release/SPIRVLink64 dist/SPIRVLink/all.spv
-1 module(s): out = 2 10 40 (expected 2 10 40): PASS
+$ ./dist/bin/Release/SPIRVLink64
+Case 1: lib.spv + user.spv linked at run time with hipLink*
+  out = 0 0 40 (expected 2 10 40): FAIL
+Case 2 (control): all.spv, the same code pre-linked into one module
+  out = 2 10 40 (expected 2 10 40): PASS
+SPIRVLink: FAIL
 ```
 
 Observed with ROCm 10.2 (HIP 7.17, comgr 3.5, AMD clang 24) on a Radeon AI PRO R9700 (gfx1201).
@@ -23,16 +30,13 @@ Observed with ROCm 10.2 (HIP 7.17, comgr 3.5, AMD clang 24) on a Radeon AI PRO R
 ```sh
 ./tools/premake5/linux64/premake5 gmake
 make config=release_x64 SPIRVLink
-
-./Test/SPIRVLink/build_kernels.sh          # writes dist/SPIRVLink/{lib,user,all}.spv
-
-AMD_COMGR_CACHE=0 ./dist/bin/Release/SPIRVLink64 dist/SPIRVLink/lib.spv dist/SPIRVLink/user.spv   # wrong
-AMD_COMGR_CACHE=0 ./dist/bin/Release/SPIRVLink64 dist/SPIRVLink/all.spv                            # correct
+./dist/bin/Release/SPIRVLink64          # from the repository root; the modules are found relative to it or to the executable
 ```
 
-The demo exits with **100** when the kernel result is correct and **99** otherwise, following Orochi's demo
-conventions, so the two-module run exits with 99 until the issue below is fixed. Orochi does not wrap
-`hipLink*` yet; the demo resolves the four entry points from the HIP runtime that hipew loaded (Linux only).
+Arguments, if given, are treated as the module list of a single custom case. `build_kernels.sh` regenerates
+`spirv/*.spv` with the ROCm compiler (`ROCM_PATH` defaults to `/opt/rocm`) and prints the translated
+signatures shown below. Orochi does not wrap `hipLink*` yet; the test resolves the four entry points from the
+HIP runtime that hipew loaded (Linux only).
 
 ## Cause
 
@@ -67,5 +71,3 @@ Which declarations are rewritten (translator only, independent of `--spirv-targe
 | `Vec3 rt::nsFn( Vec3 )` | `_ZN2rt4nsFnE4Vec3` | unchanged |
 | `Vec3 Cls::member( Vec3 )` | `_ZN3Cls6memberE4Vec3` | unchanged |
 | `extern "C" Vec3 cFn( Vec3 )` | `cFn` | unchanged |
-
-`build_kernels.sh` prints the two translated signatures above when `amd-llvm-spirv` is available.

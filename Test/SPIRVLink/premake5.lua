@@ -9,9 +9,9 @@ project "SPIRVLink"
    includedirs { "../../" }
    files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
    files { "../../contrib/**.h", "../../contrib/**.cpp" }
-   files { "main.cpp", "kernels/*.h", "kernels/*.hip", "build_kernels.sh", "README.md" }
+   files { "main.cpp", "kernels/*.h", "kernels/*.hip", "spirv/*.spv", "build_kernels.sh", "README.md" }
 
-   -- The kernels are compiled separately to SPIR-V by build_kernels.sh.
-   filter "files:kernels/*.hip"
+   -- The kernels are prebuilt (spirv/*.spv); build_kernels.sh regenerates them.
+   filter { "files:kernels/*.hip or files:spirv/*.spv" }
       buildaction "None"
    filter {}
