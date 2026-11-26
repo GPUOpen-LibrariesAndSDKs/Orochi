@@ -39,9 +39,15 @@ Windows: `tools\premake5\win\premake5.exe vs2022`, open `build\YamatanoOrochi.sl
 `SPIRVLink` project (`dist\bin\Release\SPIRVLink64.exe`; the modules are found relative to the executable, so
 no working directory needs to be set).
 
-Arguments, if given, are treated as the module list of a single custom case. `build_kernels.sh` regenerates
-`spirv/*.spv` with the ROCm compiler (`ROCM_PATH` defaults to `/opt/rocm`) and prints the translated
-signatures shown below. Orochi does not wrap `hipLink*` yet; the test resolves the four entry points from the
+Arguments, if given, are treated as the module list of a single custom case.
+
+The committed modules were emitted by ROCm 10.2's compiler and declare the `SPV_KHR_untyped_pointers` and
+`SPV_AMD_weak_linkage` extensions. If the runtime cannot consume them, `hipLinkComplete` fails with
+`hipErrorInvalidConfiguration` for both cases; regenerate the modules with the compiler that matches the runtime:
+`build_kernels.sh` on Linux (`ROCM_PATH` defaults to `/opt/rocm`; it also prints the translated signatures
+shown below), `build_kernels.bat` on Windows (`HIP_PATH` must point at the HIP SDK). To see where comgr fails,
+set `AMD_COMGR_EMIT_VERBOSE_LOGS=1` and `AMD_COMGR_REDIRECT_LOGS=stdout` (and `AMD_LOG_LEVEL=4` for the HIP
+runtime) before running. Orochi does not wrap `hipLink*` yet; the test resolves the four entry points from the
 HIP runtime that hipew loaded.
 
 ## Cause
