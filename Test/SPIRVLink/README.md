@@ -25,7 +25,9 @@ SPIRVLink: FAIL
 
 Observed with ROCm 10.2 (HIP 7.17, comgr 3.5, AMD clang 24) on a Radeon AI PRO R9700 (gfx1201).
 
-## Build and run (Linux)
+## Build and run
+
+Linux:
 
 ```sh
 ./tools/premake5/linux64/premake5 gmake
@@ -33,10 +35,14 @@ make config=release_x64 SPIRVLink
 ./dist/bin/Release/SPIRVLink64          # from the repository root; the modules are found relative to it or to the executable
 ```
 
+Windows: `tools\premake5\win\premake5.exe vs2022`, open `build\YamatanoOrochi.sln`, build and run the
+`SPIRVLink` project (`dist\bin\Release\SPIRVLink64.exe`; the modules are found relative to the executable, so
+no working directory needs to be set).
+
 Arguments, if given, are treated as the module list of a single custom case. `build_kernels.sh` regenerates
 `spirv/*.spv` with the ROCm compiler (`ROCM_PATH` defaults to `/opt/rocm`) and prints the translated
 signatures shown below. Orochi does not wrap `hipLink*` yet; the test resolves the four entry points from the
-HIP runtime that hipew loaded (Linux only).
+HIP runtime that hipew loaded.
 
 ## Cause
 

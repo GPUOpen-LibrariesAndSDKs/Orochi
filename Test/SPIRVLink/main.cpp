@@ -1,8 +1,13 @@
 #include <Orochi/Orochi.h>
 #include <UnitTest/demoErrorCodes.h>
 
+#if defined( _WIN32 )
+#define NOMINMAX
+#include <windows.h>
+#else
 #include <dlfcn.h>
 #include <unistd.h>
+#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -21,7 +26,7 @@
 // If arguments are given, they are the module list of a single custom case instead.
 //
 // Orochi does not wrap hipLink* yet, so the four entry points are resolved from the HIP runtime that hipew
-// already loaded. Linux only.
+// already loaded.
 
 typedef struct ihipLinkState_t* hipLinkState_t;
 constexpr int hipJitInputSpirv = 103;
@@ -56,20 +61,28 @@ static bool readFile( const std::string& path, std::vector<char>& data )
 	return !data.empty();
 }
 
+static std::string executableDir()
+{
+	char exe[4096];
+#if defined( _WIN32 )
+	const DWORD n = GetModuleFileNameA( nullptr, exe, sizeof( exe ) );
+	if( n == 0 || n >= sizeof( exe ) ) return "";
+#else
+	const ssize_t n = readlink( "/proc/self/exe", exe, sizeof( exe ) - 1 );
+	if( n <= 0 ) return "";
+#endif
+	std::string dir( exe, static_cast<size_t>( n ) );
+	dir.erase( dir.find_last_of( "\\/" ) + 1 );
+	return dir;
+}
+
 // Directory with the prebuilt modules: Test/SPIRVLink/spirv/, relative to the current directory (repository
 // root) or to the executable (dist/bin/<config>/).
 static std::string findModuleDir()
 {
 	std::vector<std::string> candidates = { "Test/SPIRVLink/spirv/" };
-	char exe[4096];
-	const ssize_t n = readlink( "/proc/self/exe", exe, sizeof( exe ) - 1 );
-	if( n > 0 )
-	{
-		exe[n] = '\0';
-		std::string dir( exe );
-		dir.erase( dir.find_last_of( '/' ) + 1 );
-		candidates.push_back( dir + "../../../Test/SPIRVLink/spirv/" );
-	}
+	const std::string		 dir		= executableDir();
+	if( !dir.empty() ) candidates.push_back( dir + "../../../Test/SPIRVLink/spirv/" );
 	for( const auto& dir : candidates )
 		if( std::ifstream( dir + "lib.spv", std::ios::binary ).good() ) return dir;
 	return "";
@@ -128,22 +141,40 @@ int main( int argc, char** argv )
 	if( !check( oroCtxSetCurrent( context ), "oroCtxSetCurrent" ) ) return OROCHI_TEST_RETCODE__ERROR;
 
 	// The HIP runtime library is the one that provides hipModuleLoadData to hipew.
+	std::string hipPath;
+#if defined( _WIN32 )
+	HMODULE hip = nullptr;
+	if( GetModuleHandleExA(
+			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			reinterpret_cast<LPCSTR>( hipModuleLoadData ),
+			&hip ) )
+	{
+		char path[MAX_PATH];
+		if( GetModuleFileNameA( hip, path, MAX_PATH ) ) hipPath = path;
+	}
+	auto symbol = [&]( const char* name ) { return hip ? reinterpret_cast<void*>( GetProcAddress( hip, name ) ) : nullptr; };
+#else
 	Dl_info info{};
 	void*	hip = nullptr;
 	if( dladdr( reinterpret_cast<void*>( hipModuleLoadData ), &info ) && info.dli_fname )
-		hip = dlopen( info.dli_fname, RTLD_NOW | RTLD_NOLOAD );
+	{
+		hipPath = info.dli_fname;
+		hip		= dlopen( info.dli_fname, RTLD_NOW | RTLD_NOLOAD );
+	}
+	auto symbol = [&]( const char* name ) { return hip ? dlsym( hip, name ) : nullptr; };
+#endif
 	if( !hip )
 	{
 		std::fprintf( stderr, "Cannot locate the HIP runtime library\n" );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
-	linkCreate	 = reinterpret_cast<PFN_hipLinkCreate>( dlsym( hip, "hipLinkCreate" ) );
-	linkAddData	 = reinterpret_cast<PFN_hipLinkAddData>( dlsym( hip, "hipLinkAddData" ) );
-	linkComplete = reinterpret_cast<PFN_hipLinkComplete>( dlsym( hip, "hipLinkComplete" ) );
-	linkDestroy	 = reinterpret_cast<PFN_hipLinkDestroy>( dlsym( hip, "hipLinkDestroy" ) );
+	linkCreate	 = reinterpret_cast<PFN_hipLinkCreate>( symbol( "hipLinkCreate" ) );
+	linkAddData	 = reinterpret_cast<PFN_hipLinkAddData>( symbol( "hipLinkAddData" ) );
+	linkComplete = reinterpret_cast<PFN_hipLinkComplete>( symbol( "hipLinkComplete" ) );
+	linkDestroy	 = reinterpret_cast<PFN_hipLinkDestroy>( symbol( "hipLinkDestroy" ) );
 	if( !linkCreate || !linkAddData || !linkComplete || !linkDestroy )
 	{
-		std::fprintf( stderr, "hipLink* not found in %s (ROCm 6.4 or later is required)\n", info.dli_fname );
+		std::fprintf( stderr, "hipLink* not found in %s (ROCm 6.4 or later is required)\n", hipPath.c_str() );
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
 

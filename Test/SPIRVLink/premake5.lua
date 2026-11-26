@@ -4,7 +4,11 @@ project "SPIRVLink"
    targetdir "../../dist/bin/%{cfg.buildcfg}"
    location "../../build/"
 
-   links { "dl" }
+   if os.istarget("windows") then
+      links { "version" }
+   else
+      links { "dl" }
+   end
 
    includedirs { "../../" }
    files { "../../Orochi/Orochi.h", "../../Orochi/Orochi.cpp" }
