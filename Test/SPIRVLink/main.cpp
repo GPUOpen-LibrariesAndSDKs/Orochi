@@ -20,8 +20,9 @@
 // `userKernel` (kernels/user.hip) calls `libVec` (kernels/lib.hip), a function that returns a 12-byte struct by
 // value, and writes 2 10 40. The project's pre-build step compiles the kernels with the HIP SDK compiler into
 // <executable dir>/SPIRVLink/, and two cases are run:
-//   1. lib.spv + user.spv linked at run time                          <- the case under test
-//   2. all.spv, both units compiled as one module (kernels/all.hip) <- control
+//   0. all.bundle loaded with hipModuleLoadData (SPIR-V JIT without any linking) <- does the runtime JIT SPIR-V at all
+//   1. lib.spv + user.spv linked at run time with hipLink*                      <- the case under test
+//   2. all.spv, both units compiled as one module (kernels/all.hip), via hipLink* <- control for case 1
 // Exit code 100 if both cases produce the expected values, 99 otherwise.
 // If arguments are given, they are the module list of a single custom case instead.
 //
@@ -113,26 +114,11 @@ static void printComgrLog( const std::string& path, size_t offset )
 			}
 }
 
-static Result runCase( const char* title, const std::vector<std::string>& paths )
+// Runs userKernel from a loaded module and checks its output.
+static Result launchAndCheck( oroModule module )
 {
-	std::printf( "%s\n", title );
-	std::vector<std::vector<char>> modules( paths.size() );
-	for( size_t i = 0; i < paths.size(); ++i )
-		if( !readFile( paths[i], modules[i] ) ) return Result::Error;
-
-	hipLinkState_t link = nullptr;
-	CHECK_HIP( linkCreate( 0, nullptr, nullptr, &link ) );
-	for( size_t i = 0; i < modules.size(); ++i )
-		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), paths[i].c_str(), 0, nullptr, nullptr ) );
-	void*  binary	  = nullptr;
-	size_t binarySize = 0;
-	CHECK_HIP( linkComplete( link, &binary, &binarySize ) );
-
-	oroModule	module = nullptr;
 	oroFunction kernel = nullptr;
-	CHECK( oroModuleLoadData( &module, binary ) );
 	CHECK( oroModuleGetFunction( &kernel, module, "userKernel" ) );
-	CHECK_HIP( linkDestroy( link ) );
 
 	int			 values[3] = { 0, 0, 0 };
 	oroDeviceptr deviceValues = nullptr;
@@ -148,6 +134,39 @@ static Result runCase( const char* title, const std::vector<std::string>& paths 
 	const bool ok = values[0] == 2 && values[1] == 10 && values[2] == 40;
 	std::printf( "  out = %d %d %d (expected 2 10 40): %s\n", values[0], values[1], values[2], ok ? "PASS" : "FAIL" );
 	return ok ? Result::Passed : Result::WrongValues;
+}
+
+// Case 0: a bundle with one SPIR-V module, loaded directly (what the SPIRV example does).
+static Result runLoadCase( const char* title, const std::string& path )
+{
+	std::printf( "%s\n", title );
+	std::vector<char> bundle;
+	if( !readFile( path, bundle ) ) return Result::Error;
+	oroModule module = nullptr;
+	CHECK( oroModuleLoadData( &module, bundle.data() ) );
+	return launchAndCheck( module );
+}
+
+// Cases 1 and 2: SPIR-V modules linked at run time with hipLink*, then loaded.
+static Result runLinkCase( const char* title, const std::vector<std::string>& paths )
+{
+	std::printf( "%s\n", title );
+	std::vector<std::vector<char>> modules( paths.size() );
+	for( size_t i = 0; i < paths.size(); ++i )
+		if( !readFile( paths[i], modules[i] ) ) return Result::Error;
+
+	hipLinkState_t link = nullptr;
+	CHECK_HIP( linkCreate( 0, nullptr, nullptr, &link ) );
+	for( size_t i = 0; i < modules.size(); ++i )
+		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), paths[i].c_str(), 0, nullptr, nullptr ) );
+	void*  binary	  = nullptr;
+	size_t binarySize = 0;
+	CHECK_HIP( linkComplete( link, &binary, &binarySize ) );
+
+	oroModule module = nullptr;
+	CHECK( oroModuleLoadData( &module, binary ) );
+	CHECK_HIP( linkDestroy( link ) );
+	return launchAndCheck( module );
 }
 
 int main( int argc, char** argv )
@@ -214,17 +233,18 @@ int main( int argc, char** argv )
 
 	std::printf( "HIP runtime: %s\n", hipPath.c_str() );
 
-	auto run = [&]( const char* title, const std::vector<std::string>& paths ) {
-		const size_t before = fileSize( logPath );
-		const Result result = runCase( title, paths );
-		if( result == Result::Error ) printComgrLog( logPath, before );
+	auto report = [&]( size_t logOffset, Result result ) {
+		if( result == Result::Error ) printComgrLog( logPath, logOffset );
 		return result == Result::Passed;
+	};
+	auto run = [&]( const char* title, const std::vector<std::string>& paths ) {
+		return report( fileSize( logPath ), runLinkCase( title, paths ) );
 	};
 
 	bool ok = true;
 	if( argc > 1 )
 	{
-		ok = run("Custom case: modules from the command line linked at run time", std::vector<std::string>( argv + 1, argv + argc ) );
+		ok = run( "Custom case: modules from the command line linked at run time", std::vector<std::string>( argv + 1, argv + argc ) );
 	}
 	else
 	{
@@ -234,8 +254,9 @@ int main( int argc, char** argv )
 			std::fprintf( stderr, "Cannot find %slib.spv; the pre-build step compiles it with the HIP SDK compiler\n", dir.c_str() );
 			return OROCHI_TEST_RETCODE__ERROR;
 		}
-		ok = run("Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
-		ok = run("Case 2 (control): all.spv, both units compiled as one module", { dir + "all.spv" } ) && ok;
+		ok = report( fileSize( logPath ), runLoadCase( "Case 0: all.bundle loaded with hipModuleLoadData (SPIR-V JIT, no linking)", dir + "all.bundle" ) ) && ok;
+		ok = run( "Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
+		ok = run( "Case 2 (control for case 1): all.spv, both units compiled as one module, via hipLink*", { dir + "all.spv" } ) && ok;
 	}
 
 	check( oroCtxDestroy( context ), "oroCtxDestroy" );

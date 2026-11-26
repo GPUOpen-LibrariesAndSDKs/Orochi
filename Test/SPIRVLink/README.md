@@ -6,21 +6,28 @@ Companion to the `SPIRV` example. Two HIP translation units are compiled to raw 
 pre-build step compiles them with the HIP SDK compiler (`HIP_PATH` on Windows, `ROCM_PATH` or `/opt/rocm`
 elsewhere) into `<executable dir>/SPIRVLink/`, so the modules always match the installed runtime.
 
-The test takes no arguments and runs two cases:
+The test takes no arguments and runs three cases:
 
+0. `all.bundle`, both units compiled as one module (`kernels/all.hip`) in an offload bundle, loaded with
+   `oroModuleLoadData` — shows whether the runtime JIT-compiles SPIR-V at all (what the `SPIRV` example does).
 1. `lib.spv` + `user.spv` linked at run time with `hipLinkCreate` / `hipLinkAddData( hipJitInputSpirv )` /
    `hipLinkComplete`, loaded with `oroModuleLoadData` — the case under test.
-2. `all.spv`, both units compiled as one module (`kernels/all.hip`) — the control.
+2. `all.spv`, the single module again, through `hipLink*` — the control for case 1.
 
-It exits with **100** when both cases produce the expected values and **99** otherwise, following Orochi's
+It exits with **100** when all cases produce the expected values and **99** otherwise, following Orochi's
 demo conventions. Currently case 1 fails; depending on the compiler/runtime pair it either returns wrong values
-or `hipLinkComplete` fails with `hipErrorInvalidConfiguration`:
+or `hipLinkComplete` fails with `hipErrorInvalidConfiguration`. When an API call fails, the test prints the
+actions comgr ran and their messages (comgr's log is redirected to `SPIRVLink_comgr.log` next to the executable
+unless `AMD_COMGR_REDIRECT_LOGS` is already set):
 
 ```
 $ ./dist/bin/Release/SPIRVLink64
+HIP runtime: /opt/rocm/lib/libamdhip64.so.7
+Case 0: all.bundle loaded with hipModuleLoadData (SPIR-V JIT, no linking)
+  out = 2 10 40 (expected 2 10 40): PASS
 Case 1: lib.spv + user.spv linked at run time with hipLink*
   out = 0 0 40 (expected 2 10 40): FAIL
-Case 2 (control): all.spv, both units compiled as one module
+Case 2 (control for case 1): all.spv, both units compiled as one module, via hipLink*
   out = 2 10 40 (expected 2 10 40): PASS
 SPIRVLink: FAIL
 ```
@@ -42,8 +49,7 @@ Windows: `tools\premake5\win\premake5.exe vs2022` (with `HIP_PATH` set, as the H
 `build\YamatanoOrochi.sln`, build and run the `SPIRVLink` project. The modules are found relative to the
 executable, so no working directory needs to be set. Arguments, if given, are treated as the module list of a
 single custom case. Orochi does not wrap `hipLink*` yet; the test resolves the four entry points from the HIP
-runtime that hipew loaded. To see where comgr fails, set `AMD_COMGR_EMIT_VERBOSE_LOGS=1` and
-`AMD_COMGR_REDIRECT_LOGS=stdout` (and `AMD_LOG_LEVEL=4` for the HIP runtime) before running.
+runtime that hipew loaded.
 
 ## Cause
 

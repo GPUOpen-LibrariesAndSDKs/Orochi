@@ -43,4 +43,9 @@ project "SPIRVLink"
             '" -o "' .. out .. "/" .. m .. '.spv"'
          }
       end
+      -- Bundled form of the control module for hipModuleLoadData, which does not take raw SPIR-V.
+      prebuildcommands {
+         clang .. ' -x hip --offload-arch=amdgcnspirv --cuda-device-only -O3 "' .. path.join(kernels, "all.hip") ..
+         '" -o "' .. out .. '/all.bundle"'
+      }
    end
