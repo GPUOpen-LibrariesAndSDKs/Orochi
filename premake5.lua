@@ -116,6 +116,9 @@ workspace "YamatanoOrochi"
    	include "./Test"
    	include "./Test/DeviceEnum"
 	include "./Test/SPIRV"
+	if os.istarget("linux") then
+		include "./Test/SPIRVLink"
+	end
 	include "./Test/WMMA"
 	include "./Test/Texture"
    
