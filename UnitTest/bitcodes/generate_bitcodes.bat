@@ -8,6 +8,11 @@ set "CXX=%ROCM%\lib\llvm\bin\amdclang++.exe"
 if not exist "%CXX%" set "CXX=%ROCM%\bin\amdclang++.exe"
 rem Older HIP SDKs ship only hipcc.exe, which takes the same flags.
 if not exist "%CXX%" set "CXX=%ROCM%\bin\hipcc.exe"
+rem Exit code 127 tells unittest.bat the toolchain is absent rather than the build broken.
+if not exist "%CXX%" (
+	echo error: no amdclang++/hipcc under "%ROCM%" ^(set ROCM_PATH^) 1>&2
+	exit /b 127
+)
 set "DEVLIB="
 if not exist "%ROCM%\amdgcn\bitcode" if exist "%ROCM%\lib\llvm\amdgcn\bitcode" set DEVLIB="--hip-device-lib-path=%ROCM%\lib\llvm\amdgcn\bitcode"
 rem The test device's arch must be in the bundle. Override with e.g. OROCHI_OFFLOAD_ARCH=native.

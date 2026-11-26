@@ -82,3 +82,13 @@ Test/SimpleD3D12/cache/**
 ParallelPrimitives/cache/KernelArgs.h
 ParallelPrimitives/cache/Kernels.h
 ParallelPrimitives/cache/oro_compiled_kernels.h
+
+# -----------------------------------------------------------------------------
+# Local working files and editor / tool caches
+# -----------------------------------------------------------------------------
+/tmp/
+.vscode/
+__pycache__/
+*.pyc
+result_*.xml
+scripts/texture_out.png
