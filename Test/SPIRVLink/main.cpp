@@ -50,8 +50,10 @@ static bool check( oroError status, const char* call )
 	return false;
 }
 
-#define CHECK( call ) if( !check( call, #call ) ) return false
-#define CHECK_HIP( call ) if( !check( static_cast<oroError>( call ), #call ) ) return false
+enum class Result { Passed, WrongValues, Error };
+
+#define CHECK( call ) if( !check( call, #call ) ) return Result::Error
+#define CHECK_HIP( call ) if( !check( static_cast<oroError>( call ), #call ) ) return Result::Error
 
 static bool readFile( const std::string& path, std::vector<char>& data )
 {
@@ -76,12 +78,47 @@ static std::string executableDir()
 	return dir;
 }
 
-static bool runCase( const char* title, const std::vector<std::string>& paths )
+static void setEnvironmentVariable( const char* name, const char* value )
+{
+#if defined( _WIN32 )
+	SetEnvironmentVariableA( name, value );
+	_putenv_s( name, value );
+#else
+	setenv( name, value, 1 );
+#endif
+}
+
+static size_t fileSize( const std::string& path )
+{
+	std::ifstream f( path, std::ios::binary | std::ios::ate );
+	return f.good() ? static_cast<size_t>( f.tellg() ) : 0;
+}
+
+// Prints the relevant part of what comgr logged from `offset` on, i.e. during the case that just failed:
+// the actions it ran, their status and any error or translator message.
+static void printComgrLog( const std::string& path, size_t offset )
+{
+	std::ifstream f( path, std::ios::binary );
+	if( !f.good() ) return;
+	f.seekg( static_cast<std::streamoff>( offset ) );
+	static const char* keys[] = { "ActionKind", "ReturnStatus", "SPIR-V", "SPIRV", "spirv", "rror", "fail", "Fail", "nvalid", "not supported" };
+	std::string line;
+	std::printf( "  comgr log:\n" );
+	while( std::getline( f, line ) )
+		for( const char* key : keys )
+			if( line.find( key ) != std::string::npos )
+			{
+				std::printf( "  | %s\n", line.c_str() );
+				break;
+			}
+}
+
+static Result runCase( const char* title, const std::vector<std::string>& paths )
 {
 	std::printf( "%s\n", title );
 	std::vector<std::vector<char>> modules( paths.size() );
 	for( size_t i = 0; i < paths.size(); ++i )
-		if( !readFile( paths[i], modules[i] ) ) return false;
+		if( !readFile( paths[i], modules[i] ) ) return Result::Error;
 
 	hipLinkState_t link = nullptr;
 	CHECK_HIP( linkCreate( 0, nullptr, nullptr, &link ) );
@@ -110,11 +147,20 @@ static bool runCase( const char* title, const std::vector<std::string>& paths )
 
 	const bool ok = values[0] == 2 && values[1] == 10 && values[2] == 40;
 	std::printf( "  out = %d %d %d (expected 2 10 40): %s\n", values[0], values[1], values[2], ok ? "PASS" : "FAIL" );
-	return ok;
+	return ok ? Result::Passed : Result::WrongValues;
 }
 
 int main( int argc, char** argv )
 {
+	// Diagnostics, set before the HIP runtime is loaded so that comgr picks them up: its log goes to a file whose
+	// relevant lines are printed when an API call fails.
+	const std::string logPath = executableDir() + "SPIRVLink_comgr.log";
+	if( !std::getenv( "AMD_COMGR_REDIRECT_LOGS" ) )
+	{
+		setEnvironmentVariable( "AMD_COMGR_EMIT_VERBOSE_LOGS", "1" );
+		setEnvironmentVariable( "AMD_COMGR_REDIRECT_LOGS", logPath.c_str() );
+	}
+
 	const int initStatus = oroInitialize( ORO_API_HIPDRIVER, 0 );
 	if( initStatus != ORO_SUCCESS )
 	{
@@ -166,10 +212,19 @@ int main( int argc, char** argv )
 		return OROCHI_TEST_RETCODE__ERROR;
 	}
 
+	std::printf( "HIP runtime: %s\n", hipPath.c_str() );
+
+	auto run = [&]( const char* title, const std::vector<std::string>& paths ) {
+		const size_t before = fileSize( logPath );
+		const Result result = runCase( title, paths );
+		if( result == Result::Error ) printComgrLog( logPath, before );
+		return result == Result::Passed;
+	};
+
 	bool ok = true;
 	if( argc > 1 )
 	{
-		ok = runCase( "Custom case: modules from the command line linked at run time", std::vector<std::string>( argv + 1, argv + argc ) );
+		ok = run("Custom case: modules from the command line linked at run time", std::vector<std::string>( argv + 1, argv + argc ) );
 	}
 	else
 	{
@@ -179,11 +234,12 @@ int main( int argc, char** argv )
 			std::fprintf( stderr, "Cannot find %slib.spv; the pre-build step compiles it with the HIP SDK compiler\n", dir.c_str() );
 			return OROCHI_TEST_RETCODE__ERROR;
 		}
-		ok = runCase( "Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
-		ok = runCase( "Case 2 (control): all.spv, both units compiled as one module", { dir + "all.spv" } ) && ok;
+		ok = run("Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
+		ok = run("Case 2 (control): all.spv, both units compiled as one module", { dir + "all.spv" } ) && ok;
 	}
 
 	check( oroCtxDestroy( context ), "oroCtxDestroy" );
+	if( ok ) std::remove( logPath.c_str() );
 	std::printf( "SPIRVLink: %s\n", ok ? "PASS" : "FAIL" );
 	return ok ? OROCHI_TEST_RETCODE__SUCCESS : OROCHI_TEST_RETCODE__ERROR;
 }
