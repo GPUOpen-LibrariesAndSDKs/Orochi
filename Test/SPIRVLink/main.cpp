@@ -56,6 +56,9 @@ enum class Result { Passed, WrongValues, Error };
 #define CHECK( call ) if( !check( call, #call ) ) return Result::Error
 #define CHECK_HIP( call ) if( !check( static_cast<oroError>( call ), #call ) ) return Result::Error
 
+// Progress line for each API step, so that a hang shows where it happens (stdout is unbuffered, see main).
+static void step( const char* what ) { std::printf( "  ... %s\n", what ); }
+
 static bool readFile( const std::string& path, std::vector<char>& data )
 {
 	std::ifstream input( path, std::ios::binary );
@@ -118,6 +121,7 @@ static void printComgrLog( const std::string& path, size_t offset )
 static Result launchAndCheck( oroModule module )
 {
 	oroFunction kernel = nullptr;
+	step( "hipModuleGetFunction" );
 	CHECK( oroModuleGetFunction( &kernel, module, "userKernel" ) );
 
 	int			 values[3] = { 0, 0, 0 };
@@ -125,7 +129,9 @@ static Result launchAndCheck( oroModule module )
 	CHECK( oroMalloc( &deviceValues, sizeof( values ) ) );
 	CHECK( oroMemsetD8( deviceValues, 0, sizeof( values ) ) );
 	const void* args[] = { &deviceValues };
+	step( "hipModuleLaunchKernel" );
 	CHECK( oroModuleLaunchKernel( kernel, 1, 1, 1, 1, 1, 1, 0, nullptr, args, nullptr ) );
+	step( "hipDeviceSynchronize" );
 	CHECK( oroDeviceSynchronize() );
 	CHECK( oroMemcpyDtoH( values, deviceValues, sizeof( values ) ) );
 	CHECK( oroFree( deviceValues ) );
@@ -143,6 +149,7 @@ static Result runLoadCase( const char* title, const std::string& path )
 	std::vector<char> bundle;
 	if( !readFile( path, bundle ) ) return Result::Error;
 	oroModule module = nullptr;
+	step( "hipModuleLoadData (JIT)" );
 	CHECK( oroModuleLoadData( &module, bundle.data() ) );
 	return launchAndCheck( module );
 }
@@ -156,14 +163,20 @@ static Result runLinkCase( const char* title, const std::vector<std::string>& pa
 		if( !readFile( paths[i], modules[i] ) ) return Result::Error;
 
 	hipLinkState_t link = nullptr;
+	step( "hipLinkCreate" );
 	CHECK_HIP( linkCreate( 0, nullptr, nullptr, &link ) );
 	for( size_t i = 0; i < modules.size(); ++i )
+	{
+		step( "hipLinkAddData" );
 		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), paths[i].c_str(), 0, nullptr, nullptr ) );
+	}
 	void*  binary	  = nullptr;
 	size_t binarySize = 0;
+	step( "hipLinkComplete (JIT)" );
 	CHECK_HIP( linkComplete( link, &binary, &binarySize ) );
 
 	oroModule module = nullptr;
+	step( "hipModuleLoadData" );
 	CHECK( oroModuleLoadData( &module, binary ) );
 	CHECK_HIP( linkDestroy( link ) );
 	return launchAndCheck( module );
@@ -171,9 +184,12 @@ static Result runLinkCase( const char* title, const std::vector<std::string>& pa
 
 int main( int argc, char** argv )
 {
+	std::setvbuf( stdout, nullptr, _IONBF, 0 );
+
 	// Diagnostics, set before the HIP runtime is loaded so that comgr picks them up: its log goes to a file whose
-	// relevant lines are printed when an API call fails.
+	// relevant lines are printed when an API call fails. The comgr cache is off, as in the SPIRV example.
 	const std::string logPath = executableDir() + "SPIRVLink_comgr.log";
+	if( !std::getenv( "AMD_COMGR_CACHE" ) ) setEnvironmentVariable( "AMD_COMGR_CACHE", "0" );
 	if( !std::getenv( "AMD_COMGR_REDIRECT_LOGS" ) )
 	{
 		setEnvironmentVariable( "AMD_COMGR_EMIT_VERBOSE_LOGS", "1" );
