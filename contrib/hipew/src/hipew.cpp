@@ -45,7 +45,6 @@
 #include <algorithm>
 #include <charconv>
 #include <filesystem>
-#include <format>
 #include <functional>
 #include <optional>
 #include <string>
@@ -587,7 +586,7 @@ PathList getEnvPaths(const char *name) {
 std::string lastLoadError() {
 #ifdef _WIN32
   const DWORD code = GetLastError();
-  return std::format("{} (error code {})", std::system_category().message(static_cast<int>(code)), code);
+  return std::system_category().message(static_cast<int>(code)) + " (error code " + std::to_string(code) + ")";
 #else
   const char *error = dlerror();
   return error ? error : "unknown error";
@@ -606,6 +605,12 @@ PathList getHipBuiltinPaths() {
   return paths;
 }
 
+// Zero-pads 'value' to at least 'width' digits.
+std::string zeroPad(int value, int width) {
+  std::string digits = std::to_string(value);
+  return digits.size() < static_cast<size_t>(width) ? std::string(width - digits.size(), '0') + digits : digits;
+}
+
 PathList getHiprtcBuiltinPaths() {
   // 'hiprtc<MAJOR><MINOR>.dll', with two digits each.
   // Minor versions probed for one major release, inclusive: [minMinor, maxMinor].
@@ -619,10 +624,10 @@ PathList getHiprtcBuiltinPaths() {
   for (const Range &range : ranges) {
     // Minors run from maxMinor down to minMinor so the newest installed DLL is found first.
     for (int minor = range.maxMinor; minor >= range.minMinor; --minor) {
-      paths.push_back(std::format("hiprtc{:02}{:02}.dll", range.major, minor));
+      paths.push_back("hiprtc" + zeroPad(range.major, 2) + zeroPad(minor, 2) + ".dll");
       // Early 7.1x builds used a three-digit minor ('hiprtc07014.dll') before switching to hiprtc0714.dll.
       if (range.major == 7 && minor >= 10 && minor <= 14) {
-        paths.push_back(std::format("hiprtc{:02}{:03}.dll", range.major, minor));
+        paths.push_back("hiprtc" + zeroPad(range.major, 2) + zeroPad(minor, 3) + ".dll");
       }
     }
   }
