@@ -17,11 +17,11 @@
 
 // Test for linking AMDGCN SPIR-V modules at run time with hipLink* (no arguments needed).
 //
-// `userKernel` (user.spv) calls `libVec` (lib.spv), a function that returns a 12-byte struct by value, and
-// writes 2 10 40. Two cases are run on the prebuilt modules in Test/SPIRVLink/spirv/ (regenerate them with
-// build_kernels.sh):
-//   1. lib.spv + user.spv linked at run time        <- the case under test
-//   2. all.spv, the same code pre-linked into one module <- control
+// `userKernel` (kernels/user.hip) calls `libVec` (kernels/lib.hip), a function that returns a 12-byte struct by
+// value, and writes 2 10 40. The project's pre-build step compiles the kernels with the HIP SDK compiler into
+// <executable dir>/SPIRVLink/, and two cases are run:
+//   1. lib.bundle + user.bundle linked at run time                    <- the case under test
+//   2. all.bundle, both units compiled as one module (kernels/all.hip) <- control
 // Exit code 100 if both cases produce the expected values, 99 otherwise.
 // If arguments are given, they are the module list of a single custom case instead.
 //
@@ -74,18 +74,6 @@ static std::string executableDir()
 	std::string dir( exe, static_cast<size_t>( n ) );
 	dir.erase( dir.find_last_of( "\\/" ) + 1 );
 	return dir;
-}
-
-// Directory with the prebuilt modules: Test/SPIRVLink/spirv/, relative to the current directory (repository
-// root) or to the executable (dist/bin/<config>/).
-static std::string findModuleDir()
-{
-	std::vector<std::string> candidates = { "Test/SPIRVLink/spirv/" };
-	const std::string		 dir		= executableDir();
-	if( !dir.empty() ) candidates.push_back( dir + "../../../Test/SPIRVLink/spirv/" );
-	for( const auto& dir : candidates )
-		if( std::ifstream( dir + "lib.spv", std::ios::binary ).good() ) return dir;
-	return "";
 }
 
 static bool runCase( const char* title, const std::vector<std::string>& paths )
@@ -185,14 +173,14 @@ int main( int argc, char** argv )
 	}
 	else
 	{
-		const std::string dir = findModuleDir();
-		if( dir.empty() )
+		const std::string dir = executableDir() + "SPIRVLink/";
+		if( !std::ifstream( dir + "lib.bundle", std::ios::binary ).good() )
 		{
-			std::fprintf( stderr, "Cannot find Test/SPIRVLink/spirv/; run from the repository root\n" );
+			std::fprintf( stderr, "Cannot find %slib.bundle; the pre-build step compiles it with the HIP SDK compiler\n", dir.c_str() );
 			return OROCHI_TEST_RETCODE__ERROR;
 		}
-		ok = runCase( "Case 1: lib.spv + user.spv linked at run time with hipLink*", { dir + "lib.spv", dir + "user.spv" } ) && ok;
-		ok = runCase( "Case 2 (control): all.spv, the same code pre-linked into one module", { dir + "all.spv" } ) && ok;
+		ok = runCase( "Case 1: lib.bundle + user.bundle linked at run time with hipLink*", { dir + "lib.bundle", dir + "user.bundle" } ) && ok;
+		ok = runCase( "Case 2 (control): all.bundle, both units compiled as one module", { dir + "all.bundle" } ) && ok;
 	}
 
 	check( oroCtxDestroy( context ), "oroCtxDestroy" );
