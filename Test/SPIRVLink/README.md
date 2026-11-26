@@ -33,7 +33,10 @@ SPIRVLink: FAIL
 ```
 
 Observed with ROCm 10.2 (HIP 7.17, comgr 3.5, AMD clang 24) on a Radeon AI PRO R9700 (gfx1201); modules
-built by the ROCm 7.2.0 compiler fail case 1 on the same runtime with `hipErrorInvalidConfiguration`.
+built by the ROCm 7.2.0 compiler fail case 1 on the same runtime with `hipErrorInvalidConfiguration`. On
+Windows (HIP SDK 7.1 compiler, the display driver's `amdhip64_7.dll` with a clang 24.0.0git comgr, gfx1201)
+cases 0 and 2 pass and case 1 fails in `hipLinkComplete` with `Error in hip linker: unable to add device libs
+to linked bitcode`, i.e. in the bitcode link that follows the per-module translation.
 
 ## Build and run
 
