@@ -67,6 +67,9 @@ static bool readFile( const std::string& path, std::vector<char>& data )
 	return !data.empty();
 }
 
+// Name under which a module is registered with the linker; comgr uses it as a file name, so no directories.
+static std::string baseName( const std::string& path ) { return path.substr( path.find_last_of( "\\/" ) + 1 ); }
+
 static std::string executableDir()
 {
 	char exe[4096];
@@ -168,7 +171,8 @@ static Result runLinkCase( const char* title, const std::vector<std::string>& pa
 	for( size_t i = 0; i < modules.size(); ++i )
 	{
 		step( "hipLinkAddData" );
-		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), paths[i].c_str(), 0, nullptr, nullptr ) );
+		const std::string name = baseName( paths[i] );
+		CHECK_HIP( linkAddData( link, hipJitInputSpirv, modules[i].data(), modules[i].size(), name.c_str(), 0, nullptr, nullptr ) );
 	}
 	void*  binary	  = nullptr;
 	size_t binarySize = 0;
